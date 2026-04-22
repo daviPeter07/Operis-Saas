@@ -196,3 +196,8 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 - Do NOT delete tests without approval.
 
 </laravel-boost-guidelines>
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
