@@ -3,247 +3,170 @@
 ## Phase Handoff Rule
 
 - Antes de iniciar qualquer fase nova, apresentar um resumo objetivo do que foi concluído na fase anterior.
-- Antes de iniciar qualquer fase nova, apresentar o escopo objetivo do que sera executado na fase seguinte.
-- Nao avancar automaticamente de uma fase para outra sem essa transicao explícita no update ao usuario.
-- Ordem esperada de handoff: `fase concluida -> resumo do que foi feito -> resumo do que sera feito na proxima fase -> continuidade da execucao`.
+- Antes de iniciar qualquer fase nova, apresentar o escopo objetivo do que será executado na fase seguinte.
+- Nãoavançar automaticamente de uma fase para outra sem essatransiçãoexplícita no update.
+- Ordem esperada de handoff: `fase concluída -> resumo -> resumo do que será feito -> continuidade`.
 
-**Input**: Design documents from `/specs/001-mvp-foundation-dashboard/`
-**Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`, `contracts/`
+**Stack**: Laravel 13 + Inertia React 3 + Wayfinder + Tailwind CSS 4 + TanStack Query
 
-**Tests**: Include Pest feature coverage for each user story because this feature changes authenticated routing, role-aware visibility, and Inertia page contracts.
+**Arquitetura**: SSR via Inertia (padrão), Cache local (TanStack Query), Query params via Inertia, Quick Actions como modais
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Data-Model**: Tipos separados em `resources/js/types/*.ts` por módulo
+
+---
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (`US1`, `US2`, `US3`)
-- Include exact file paths in descriptions
+- **[P]**: Pode rodar em paralelo (arquivos diferentes, sem dependências)
+- **[Story]**: Qual user story (`US1`, `US2`, `US3`)
+- Incluir caminhos de arquivo exatos
 
 ## Path Conventions
 
-- Laravel backend code lives in `app/`, `routes/`, `database/`, and `tests/`
-- Inertia React pages live in `resources/js/pages/`
-- Feature-specific React UI lives in `resources/js/components/features/`
-- Shared shell components live in `resources/js/components/` and `resources/js/layouts/`
-- Wayfinder-generated helpers live in `resources/js/routes/` and `resources/js/actions/`
-
-## Phase 1: Setup (Shared Infrastructure)
-
-**Purpose**: Create the feature scaffolding and shared types required before domain and story work starts.
-
-- [ ] T001 Create shared workspace and dashboard type scaffolding in `resources/js/types/workspace.ts`, `resources/js/types/dashboard.ts`, and `resources/js/types/index.ts`
-- [ ] T002 Create backend workspace scaffolding in `app/Http/Controllers/Workspace/DashboardController.php`, `app/Http/Controllers/Workspace/PlaceholderModuleController.php`, `app/Http/Controllers/Workspace/CompanySwitchController.php`, and `app/Support/Workspace/WorkspaceResolver.php`
-- [ ] T003 [P] Create frontend workspace scaffolding in `resources/js/pages/workspace/module-placeholder.tsx`, `resources/js/components/features/workspace/module-placeholder-page-content.tsx`, `resources/js/components/features/workspace/company-switcher.tsx`, and `resources/js/components/features/workspace/quick-actions-menu.tsx`
+- Pages: `resources/js/pages/dashboard/{modulo}.tsx`
+- Features: `resources/js/components/features/dashboard/{modulo}/*.tsx`
+- Tipos: `resources/js/types/{modulo}.ts`
+- Mock: `resources/js/lib/mocks/*.ts`
+- Hooks: `resources/js/hooks/*.ts`
 
 ---
 
-## Phase 2: Foundational (Blocking Prerequisites)
+## Phase 1: Setup (Types, Cache e Scaffold)
 
-**Purpose**: Implement the shared multi-company and shared-props infrastructure that every story depends on.
+**Purpose**: Criar tipos, configurar TanStack Query e scaffold de pages/placeholder.
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete.
+- [ ] T001 Criar tipos em `resources/js/types/workspace.ts`, `resources/js/types/dashboard.ts` e atualizar `resources/js/types/index.ts`
+- [ ] T002 [P] Configurar TanStack Query provider em `resources/js/lib/query-provider.tsx` e integrar no app
+- [ ] T003 [P] Criar scaffold de pages placeholder em `resources/js/pages/dashboard/clients.tsx`, `sales.tsx`, `suppliers.tsx`, `products.tsx`, `categories.tsx`, `brands.tsx`, `inventory.tsx`, `purchases.tsx`, `accounts-receivable.tsx`, `accounts-payable.tsx`, `team.tsx`, `reports.tsx`, `settings.tsx`
 
-- [ ] T004 Create company persistence tables in `database/migrations/*_create_companies_table.php` and `database/migrations/*_create_company_memberships_table.php`
-- [ ] T005 [P] Implement `Company` and `CompanyMembership` models in `app/Models/Company.php` and `app/Models/CompanyMembership.php`
-- [ ] T006 [P] Create demo factories and seeders in `database/factories/CompanyFactory.php`, `database/factories/CompanyMembershipFactory.php`, `database/seeders/WorkspaceDemoSeeder.php`, and `database/seeders/DatabaseSeeder.php`
-- [ ] T007 Implement user-company relationships and active-company resolution in `app/Models/User.php` and `app/Support/Workspace/WorkspaceResolver.php`
-- [ ] T008 Implement shared Inertia workspace props and the switch-company action in `app/Http/Middleware/HandleInertiaRequests.php`, `app/Http/Controllers/Workspace/CompanySwitchController.php`, and `routes/web.php`
-- [ ] T009 Regenerate Wayfinder helpers for workspace routes in `resources/js/routes/**/*.ts` and `resources/js/actions/**/*.ts`
-
-**Checkpoint**: Multi-company demo data, workspace shared props, and route generation are ready for story work.
+**Checkpoint**: Tipos criados, cache configurado, todas as pages de módulos prontas (vazias/placeholder).
 
 ---
 
-## Phase 3: User Story 1 - Navigate the authenticated workspace (Priority: P1) 🎯 MVP
+## Phase 2: Shell (Workspace Context e Layout)
 
-**Goal**: Deliver the authenticated Operis shell with header, sidebar, quick actions, and navigable placeholder destinations.
+**Purpose**: Implementar o shell base com workspace context e cache provider.
 
-**Independent Test**: Sign in, land on the workspace, open quick actions, navigate across every top-level module, and confirm the shell stays consistent with clear active states and placeholder continuity.
+**⚠️ CRITICAL**: Nenhum trabalho de user story pode começar até estar completo.
 
-### Tests for User Story 1
+- [ ] T004 Criar dados mock em `resources/js/lib/mocks/workspace-mocks.ts` (empresa atual, lista de empresas, membership, role do usuário)
+- [ ] T005 [P] Criar workspace context provider em `resources/js/components/features/dashboard/workspace-context.tsx`
+- [ ] T006 Criar hook de cache com TanStack Query em `resources/js/hooks/use-workspace.ts`
+- [ ] T007 Atualizar `resources/js/components/app-sidebar.tsx` com mapa de módulos Operis (todos os 14 módulos)
+- [ ] T008 [P] Criar company switcher modal em `resources/js/components/features/dashboard/layout/company-switcher-modal.tsx`
+- [ ] T009 [P] Criar quick actions modal em `resources/js/components/features/dashboard/layout/quick-actions-modal.tsx`
+- [ ] T010 Integrar workspace context no `resources/js/layouts/app-layout.tsx` e `resources/js/layouts/app/app-sidebar-layout.tsx`
 
-> **NOTE**: Write these tests first, ensure they fail before implementation.
+**Checkpoint**: Shell pronto, empresa selecionada visual, quick actions funcionando.
 
-- [ ] T010 [P] [US1] Add authenticated workspace navigation coverage in `tests/Feature/Workspace/NavigationTest.php`
-- [ ] T011 [P] [US1] Add placeholder destination coverage in `tests/Feature/Workspace/PlaceholderModuleTest.php`
+---
+
+## Phase 3: User Story 1 - Dashboard Overview (Priority: P1) 🎯 MVP
+
+**Goal**: Entregar a Overview com KPI mode, chart mode, filtros de período e atividade recente.
+
+**Independent Test**: Abrir dashboard, trocar entre KPI/Chart, aplicar filtros evalidar atualização dos dados.
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Replace starter navigation with the Operis module map in `resources/js/components/app-sidebar.tsx`, `resources/js/components/nav-main.tsx`, and `resources/js/types/navigation.ts`
-- [ ] T013 [P] [US1] Build header quick-action and company-context UI in `resources/js/components/app-header.tsx`, `resources/js/components/features/workspace/company-switcher.tsx`, and `resources/js/components/features/workspace/quick-actions-menu.tsx`
-- [ ] T014 [P] [US1] Create placeholder workspace page content in `resources/js/pages/workspace/module-placeholder.tsx` and `resources/js/components/features/workspace/module-placeholder-page-content.tsx`
-- [ ] T015 [US1] Register top-level module routes and placeholder rendering in `app/Http/Controllers/Workspace/PlaceholderModuleController.php`, `app/Http/Controllers/Workspace/DashboardController.php`, and `routes/web.php`
-- [ ] T016 [US1] Attach the authenticated shell and breadcrumbs to `resources/js/layouts/app-layout.tsx`, `resources/js/pages/dashboard.tsx`, and `resources/js/components/features/dashboard/dashboard-page-content.tsx`
+- [ ] T011 [US1] Criar dados mock em `resources/js/lib/mocks/dashboard-mocks.ts`
+- [ ] T012 [P] [US1] Build `features/dashboard/overview/period-filter.tsx`
+- [ ] T013 [P] [US1] Build `features/dashboard/overview/view-switcher.tsx`
+- [ ] T014 [P] [US1] Build `features/dashboard/overview/metrics-grid.tsx`
+- [ ] T015 [P] [US1] Build `features/dashboard/overview/charts-panel.tsx`
+- [ ] T016 [P] [US1] Build `features/dashboard/overview/recent-activity.tsx`
+- [ ] T017 [US1] Build `features/dashboard/overview/index.tsx` (organiza as sub-seções)
+- [ ] T018 [US1] Consumir dados mock no `resources/js/pages/dashboard/index.tsx` via TanStack Query
+- [ ] T019 [US1] Conectar filtros de período via Inertia query params (useSearchParams)
 
-**Checkpoint**: User Story 1 is fully functional and can be demoed as the MVP shell.
+**Checkpoint**: Dashboard overview funcional com KPI, Chart, filtros e activity.
 
 ---
 
-## Phase 4: User Story 2 - Review business health from the overview dashboard (Priority: P2)
+## Phase 4: User Story 2 - Placeholder Modules (Priority: P2)
 
-**Goal**: Deliver the overview dashboard with KPI mode, chart mode, period filters, recent activity, and empty-state handling.
+**Goal**: Criar páginas placeholder para os módulos fora do escopo do MVP mas que precisam aparecer na sidebar.
 
-**Independent Test**: Open the overview page, switch between KPI and chart modes, apply each period filter including a custom range, and confirm metrics, charts, and activity update together.
-
-### Tests for User Story 2
-
-> **NOTE**: Write these tests first, ensure they fail before implementation.
-
-- [ ] T017 [P] [US2] Add overview contract coverage for filters and payload shape in `tests/Feature/Workspace/DashboardOverviewTest.php`
-- [ ] T018 [P] [US2] Add custom-range and empty-state coverage in `tests/Feature/Workspace/DashboardFilterTest.php`
+**Independent Test**: Clicar em qualquer módulo e chegar numa página com placeholder navegável.
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Implement the mocked overview provider and period validation in `app/Support/Dashboard/MockDashboardOverviewProvider.php` and `app/Http/Controllers/Workspace/DashboardController.php`
-- [ ] T020 [P] [US2] Build dashboard filter and view-mode controls in `resources/js/components/features/dashboard/dashboard-period-filter.tsx` and `resources/js/components/features/dashboard/dashboard-view-switcher.tsx`
-- [ ] T021 [P] [US2] Build KPI, chart, and recent-activity sections in `resources/js/components/features/dashboard/dashboard-metrics-grid.tsx`, `resources/js/components/features/dashboard/dashboard-charts-panel.tsx`, and `resources/js/components/features/dashboard/dashboard-recent-activity.tsx`
-- [ ] T022 [US2] Wire the overview page to server props, client-side mode switching, and empty states in `resources/js/pages/dashboard.tsx` and `resources/js/components/features/dashboard/dashboard-page-content.tsx`
+- [ ] T020 [P] [US2] Build `features/dashboard/clients/index.tsx` (placeholder content)
+- [ ] T021 [P] [US2] Build `features/dashboard/sales/index.tsx` (placeholder content)
+- [ ] T022 [P] [US2] Build `features/dashboard/suppliers/index.tsx` (placeholder content)
+- [ ] T023 [P] [US2] Build `features/dashboard/products/index.tsx` (placeholder content)
+- [ ] T024 [P] [US2] Build `features/dashboard/categories/index.tsx` (placeholder content)
+- [ ] T025 [P] [US2] Build `features/dashboard/brands/index.tsx` (placeholder content)
+- [ ] T026 [P] [US2] Build `features/dashboard/inventory/index.tsx` (placeholder content)
+- [ ] T027 [P] [US2] Build `features/dashboard/purchases/index.tsx` (placeholder content)
+- [ ] T028 [P] [US2] Build `features/dashboard/accounts-receivable/index.tsx` (placeholder content)
+- [ ] T029 [P] [US2] Build `features/dashboard/accounts-payable/index.tsx` (placeholder content)
+- [ ] T030 [P] [US2] Build `features/dashboard/team/index.tsx` (placeholder content)
+- [ ] T031 [P] [US2] Build `features/dashboard/reports/index.tsx` (placeholder content)
+- [ ] T032 [P] [US2] Build `features/dashboard/settings/index.tsx` (placeholder content)
 
-**Checkpoint**: User Story 2 works independently on top of the shared shell and supports all required demo filter states.
+### Wire nas Pages
+
+- [ ] T033 [US2] Conectar clients.tsx → `features/dashboard/clients/index.tsx`
+- [ ] T034 [US2] Conectar sales.tsx → `features/dashboard/sales/index.tsx`
+- [ ] T035 [US2] Conectar suppliers.tsx → `features/dashboard/suppliers/index.tsx`
+- [ ] T036 [US2] Conectar products.tsx → `features/dashboard/products/index.tsx`
+- [ ] T037 [US2] Conectar categories.tsx → `features/dashboard/categories/index.tsx`
+- [ ] T038 [US2] Conectar brands.tsx → `features/dashboard/brands/index.tsx`
+- [ ] T039 [US2] Conectar inventory.tsx → `features/dashboard/inventory/index.tsx`
+- [ ] T040 [US2] Conectar purchases.tsx → `features/dashboard/purchases/index.tsx`
+- [ ] T041 [US2] Conectar accounts-receivable.tsx → `features/dashboard/accounts-receivable/index.tsx`
+- [ ] T042 [US2] Conectar accounts-payable.tsx → `features/dashboard/accounts-payable/index.tsx`
+- [ ] T043 [US2] Conectar team.tsx → `features/dashboard/team/index.tsx`
+- [ ] T044 [US2] Conectar reports.tsx → `features/dashboard/reports/index.tsx`
+- [ ] T045 [US2] Conectar settings.tsx → `features/dashboard/settings/index.tsx`
+
+**Checkpoint**: Todos os 14 módulos navegáveis, cada um com sua página placeholder.
 
 ---
 
-## Phase 5: User Story 3 - Experience role-aware and company-aware presentation (Priority: P3)
+## Phase 5: User Story 3 - Role-Aware e Company-Aware (Priority: P3)
 
-**Goal**: Make the workspace adapt by active company and membership role, including team-area behavior, settings restriction, and brand identity changes.
+**Goal**: Workspace adapta por empresa e role ativa,team area e restrição de settings.
 
-**Independent Test**: Switch between seeded company memberships and role views, confirm branding updates, and verify that team/settings visibility changes correctly without a new sign-in.
-
-### Tests for User Story 3
-
-> **NOTE**: Write these tests first, ensure they fail before implementation.
-
-- [ ] T023 [P] [US3] Add role-aware navigation and settings restriction coverage in `tests/Feature/Workspace/RoleVisibilityTest.php`
-- [ ] T024 [P] [US3] Add company-switch and team-access coverage in `tests/Feature/Workspace/CompanySwitchTest.php`
+**Independent Test**: Trocar empresa e verificar visibilidade correta sem novo login.
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Implement role-aware navigation, quick-action visibility, and team-access rules in `app/Support/Workspace/WorkspaceResolver.php` and `resources/js/types/workspace.ts`
-- [ ] T026 [P] [US3] Apply company branding and active-membership presentation in `resources/js/components/app-logo.tsx`, `resources/js/components/app-logo-icon.tsx`, `resources/js/components/app-header.tsx`, and `resources/js/components/features/workspace/company-switcher.tsx`
-- [ ] T027 [P] [US3] Create team and admin-request pages in `resources/js/pages/workspace/team.tsx`, `resources/js/components/features/workspace/team-page-content.tsx`, `resources/js/pages/workspace/admin-request.tsx`, and `resources/js/components/features/workspace/admin-request-page-content.tsx`
-- [ ] T028 [US3] Enforce role-aware routes for team, admin-request, and settings access in `app/Http/Controllers/Workspace/TeamController.php`, `app/Http/Controllers/Workspace/AdminRequestController.php`, and `routes/web.php`
+- [ ] T046 [US3] Implementar role-aware navigation em `workspace-context.tsx` (admin vs supervisor vs user)
+- [ ] T047 [P] [US3] Aplicar company branding em `app-logo.tsx` e `company-switcher-modal.tsx`
+- [ ] T048 [P] [US3] Criar team page content em `features/dashboard/team/team-page-content.tsx`
+- [ ] T049 [US3] Criar admin-request page em `features/dashboard/team/admin-request-page.tsx`
+- [ ] T050 [US3] Atualizar routing em `routes/web.php` para refletir role-based access
 
-**Checkpoint**: All user stories are independently functional and the workspace demonstrates multi-company, role-aware behavior.
-
----
-
-## Phase 6: Polish & Cross-Cutting Concerns
-
-**Purpose**: Validate, format, and tighten the full Day 1 and Day 2 slice across backend and frontend.
-
-- [ ] T029 [P] Run `vendor/bin/pint --dirty --format agent` and resolve PHP style issues in `app/`, `database/`, and `tests/Feature/Workspace/`
-- [ ] T030 [P] Run `npm run types:check` and `npm run build` and resolve frontend issues in `resources/js/**/*.{ts,tsx}` and `resources/css/app.css`
-- [ ] T031 Run `php artisan test --compact tests/Feature/Workspace tests/Feature/DashboardTest.php` and fix regressions in `tests/Feature/`
-- [ ] T032 Validate the reviewer flow in `specs/001-mvp-foundation-dashboard/quickstart.md` against the implemented workspace demo
+**Checkpoint**: Todas as stories funcionam independentemente.
 
 ---
 
-## Dependencies & Execution Order
+## Phase 6: Polish & Validation
 
-### Phase Dependencies
-
-- **Setup (Phase 1)**: No dependencies; can start immediately.
-- **Foundational (Phase 2)**: Depends on Setup; blocks all user stories until complete.
-- **User Story 1 (Phase 3)**: Depends on Foundational; establishes the MVP shell.
-- **User Story 2 (Phase 4)**: Depends on Foundational and reuses the shell from US1 for the overview screen.
-- **User Story 3 (Phase 5)**: Depends on Foundational and layers company-role behavior onto the shell.
-- **Polish (Phase 6)**: Depends on the desired user stories being complete.
-
-### User Story Dependency Graph
-
-- `Setup -> Foundational -> US1 -> Polish`
-- `Setup -> Foundational -> US2 -> Polish`
-- `Setup -> Foundational -> US3 -> Polish`
-- Recommended delivery order: `US1 -> US2 -> US3`
-
-### Within Each User Story
-
-- Tests first, and confirm they fail before implementation.
-- Backend contract and route work before frontend consumption.
-- Shared layout work before page-specific refinement.
-- Story-specific validation before moving to the next priority.
-
-### Parallel Opportunities
-
-- `T003` can run while `T002` scaffolds backend files.
-- `T005` and `T006` can run in parallel after `T004` defines the persistence plan.
-- `T010` and `T011` can run in parallel for US1.
-- `T013` and `T014` can run in parallel after US1 tests are written.
-- `T017` and `T018` can run in parallel for US2.
-- `T020` and `T021` can run in parallel after `T019` locks the dashboard payload.
-- `T023` and `T024` can run in parallel for US3.
-- `T026` and `T027` can run in parallel after `T025` defines the role/company contract.
-- `T029` and `T030` can run in parallel before the final full test pass.
+- [ ] T051 [P] Rodar `npm run types:check` e `npm run build`
+- [ ] T052 Rodar `vendor/bin/pint --dirty --format agent`
+- [ ] T053 Validar reviewer flow em `quickstart.md`
 
 ---
 
-## Parallel Example: User Story 1
+## Dependencies
 
-```bash
-# Write both US1 feature tests together
-Task: "T010 [US1] Add authenticated workspace navigation coverage in tests/Feature/Workspace/NavigationTest.php"
-Task: "T011 [US1] Add placeholder destination coverage in tests/Feature/Workspace/PlaceholderModuleTest.php"
-
-# Build independent US1 UI pieces together
-Task: "T013 [US1] Build header quick-action and company-context UI in resources/js/components/app-header.tsx and resources/js/components/features/workspace/*"
-Task: "T014 [US1] Create placeholder workspace page content in resources/js/pages/workspace/module-placeholder.tsx and resources/js/components/features/workspace/module-placeholder-page-content.tsx"
-```
-
-## Parallel Example: User Story 2
-
-```bash
-# Write both US2 dashboard tests together
-Task: "T017 [US2] Add overview contract coverage for filters and payload shape in tests/Feature/Workspace/DashboardOverviewTest.php"
-Task: "T018 [US2] Add custom-range and empty-state coverage in tests/Feature/Workspace/DashboardFilterTest.php"
-
-# Build independent dashboard UI sections together
-Task: "T020 [US2] Build dashboard filter and view-mode controls in resources/js/components/features/dashboard/dashboard-period-filter.tsx and dashboard-view-switcher.tsx"
-Task: "T021 [US2] Build KPI, chart, and recent-activity sections in resources/js/components/features/dashboard/*"
-```
-
-## Parallel Example: User Story 3
-
-```bash
-# Write both US3 access tests together
-Task: "T023 [US3] Add role-aware navigation and settings restriction coverage in tests/Feature/Workspace/RoleVisibilityTest.php"
-Task: "T024 [US3] Add company-switch and team-access coverage in tests/Feature/Workspace/CompanySwitchTest.php"
-
-# Build independent US3 presentation pages together
-Task: "T026 [US3] Apply company branding and active-membership presentation in resources/js/components/app-logo.tsx, app-logo-icon.tsx, app-header.tsx, and company-switcher.tsx"
-Task: "T027 [US3] Create team and admin-request pages in resources/js/pages/workspace/* and resources/js/components/features/workspace/*"
-```
-
----
-
-## Implementation Strategy
-
-### MVP First (User Story 1 Only)
-
-1. Complete Phase 1: Setup.
-2. Complete Phase 2: Foundational.
-3. Complete Phase 3: User Story 1.
-4. Validate navigation, quick actions, and placeholder continuity before expanding scope.
-
-### Incremental Delivery
-
-1. Finish Setup + Foundational to establish multi-company shared props and route generation.
-2. Deliver US1 as the demo-ready workspace shell.
-3. Deliver US2 to add the value-heavy dashboard narrative.
-4. Deliver US3 to finish company-aware and role-aware behavior.
-5. Run Phase 6 validation before opening the PR.
-
-### Parallel Team Strategy
-
-1. One developer handles persistence/shared-props groundwork in Phase 2.
-2. One developer can build US1 shell UI while another prepares US2 dashboard sections after Foundation is stable.
-3. US3 can begin once the workspace contract is settled and seeded memberships are available.
+- **Phase 1**: Setup → pode começar
+- **Phase 2**: Depende de Phase 1 → bloqueia até completar
+- **Phase 3**: Depende de Phase 2 → dashboard overview
+- **Phase 4**: Depende de Phase 2 → placeholder modules
+- **Phase 5**: Depende de Phase 2 → role-aware
+- **Phase 6**: Validation final
 
 ---
 
 ## Notes
 
-- `[P]` tasks are limited to work that can happen on separate files without waiting on incomplete dependencies.
-- All visible routes must stay aligned with Wayfinder-generated helpers.
-- Keep placeholder modules navigable instead of disabled.
-- Keep tests focused on route protection, Inertia component selection, and prop contracts rather than brittle markup snapshots.
+- Todos os dados são mock locally via TanStack Query
+- SSR via Inertia (padrão)
+- Query params via Inertia useSearchParams
+- Quick Actions = modais, não rotas
+- Arquivos de tipos em `resources/js/types/` por módulo
+- Estrutura de features espelha estrutura de pages
