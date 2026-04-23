@@ -4,7 +4,7 @@ export const mockWorkspaceSeed: WorkspaceSeed = {
     companies: [
         {
             id: '1',
-            name: 'Dg Computer',
+            name: 'DG Computer',
             slug: 'dg-computer',
             role: 'admin',
             initials: 'DG',
