@@ -78,8 +78,8 @@ export default function DashboardPage() {
                             <div className="lg:col-span-2">
                                 <RecentActivity activities={recentActivity} />
                             </div>
-                            <div className="rounded-xl border bg-card p-6">
-                                <h3 className="mb-5 font-semibold">
+                            <div className="rounded-xl border bg-card p-4">
+                                <h3 className="mb-4 font-semibold">
                                     Alertas e lembretes
                                 </h3>
                                 <div className="space-y-4">

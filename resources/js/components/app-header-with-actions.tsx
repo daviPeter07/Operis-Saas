@@ -40,9 +40,9 @@ export function AppHeaderWithActions({
     };
 
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border bg-sidebar px-6 text-sidebar-foreground transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
             <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
+                <SidebarTrigger className="-ml-1 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
             <div className="flex-1" />
@@ -50,7 +50,7 @@ export function AppHeaderWithActions({
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="mr-2"
+                className="mr-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
                 {appearance === 'dark' ? (
                     <Sun className="h-4 w-4" />
@@ -60,7 +60,10 @@ export function AppHeaderWithActions({
             </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button size="sm">
+                    <Button
+                        size="sm"
+                        className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
+                    >
                         <Plus className="mr-2 h-4 w-4" />
                         Adicionar
                     </Button>
