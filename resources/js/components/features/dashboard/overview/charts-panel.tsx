@@ -1,62 +1,256 @@
-import { TrendingUp, ShoppingCart } from 'lucide-react';
+import { useState } from 'react';
 
-interface ChartData {
+interface ChartPoint {
+    date: string;
     label: string;
     value: number;
 }
 
-interface ChartsPanelProps {
-    revenueData: ChartData[];
-    salesData: ChartData[];
+interface OverviewChart {
+    id: 'vendas' | 'lucro';
+    title: string;
+    summary: string;
+    description: string;
+    color: string;
+    series: ChartPoint[];
 }
 
-export function ChartsPanel({ revenueData, salesData }: ChartsPanelProps) {
-    const maxRevenue = Math.max(...revenueData.map((d) => d.value));
-    const maxSales = Math.max(...salesData.map((d) => d.value));
+interface ChartsPanelProps {
+    charts: OverviewChart[];
+}
+
+export function ChartsPanel({ charts }: ChartsPanelProps) {
+    return (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {charts.map((chart) => (
+                <LineChartCard key={chart.id} chart={chart} />
+            ))}
+        </div>
+    );
+}
+
+function LineChartCard({ chart }: { chart: OverviewChart }) {
+    const [hoveredPoint, setHoveredPoint] = useState<{
+        x: number;
+        y: number;
+        label: string;
+        value: number;
+        bandStart: number;
+        bandWidth: number;
+    } | null>(null);
+    const width = Math.max(720, chart.series.length * 72);
+    const height = 260;
+    const paddingX = 24;
+    const paddingTop = 16;
+    const paddingBottom = 28;
+    const gridLines = 4;
+    const values = chart.series.map((point) => point.value);
+    const maxValue = Math.max(...values);
+    const minValue = Math.min(...values);
+    const range = Math.max(maxValue - minValue, 1);
+
+    const points = chart.series.map((point, index) => {
+        const x = paddingX + (index * (width - paddingX * 2)) / Math.max(chart.series.length - 1, 1);
+        const normalized = (point.value - minValue) / range;
+        const y = height - paddingBottom - normalized * (height - paddingTop - paddingBottom);
+
+        return { ...point, x, y };
+    });
+
+    const hoverBands = points.map((point, index) => {
+        const previousX = points[index - 1]?.x ?? paddingX;
+        const nextX = points[index + 1]?.x ?? width - paddingX;
+        const bandStart = index === 0 ? paddingX : (previousX + point.x) / 2;
+        const bandEnd = index === points.length - 1 ? width - paddingX : (point.x + nextX) / 2;
+
+        return {
+            ...point,
+            bandStart,
+            bandWidth: bandEnd - bandStart,
+        };
+    });
+
+    const linePath = buildLinePath(points);
+    const axisValues = Array.from({ length: gridLines + 1 }).map((_, index) => {
+        const ratio = (gridLines - index) / gridLines;
+
+        return Math.round(minValue + range * ratio);
+    });
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-card rounded-xl border p-6">
-                <div className="flex items-center gap-2 mb-6">
-                    <TrendingUp className="h-5 w-5 text-accent" />
-                    <h3 className="font-semibold">Receita Mensal</h3>
+        <div className="rounded-2xl border bg-card p-6">
+            <div className="mb-6 flex items-start justify-between gap-4">
+                <div>
+                    <h3 className="text-base font-semibold text-foreground">{chart.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{chart.description}</p>
                 </div>
-                <div className="flex items-end justify-between gap-2 h-40">
-                    {revenueData.map((item, index) => (
-                        <div key={index} className="flex flex-col items-center gap-2 flex-1">
-                            <div
-                                className="w-full bg-accent/20 rounded-t"
-                                style={{
-                                    height: `${(item.value / maxRevenue) * 100}%`,
-                                    minHeight: '8px',
-                                }}
-                            />
-                            <span className="text-xs text-muted-foreground">{item.label}</span>
-                        </div>
-                    ))}
+                <div className="text-right">
+                    <p className="text-2xl font-bold text-foreground">{chart.summary}</p>
                 </div>
             </div>
 
-            <div className="bg-card rounded-xl border p-6">
-                <div className="flex items-center gap-2 mb-6">
-                    <ShoppingCart className="h-5 w-5 text-accent" />
-                    <h3 className="font-semibold">Vendas Mensais</h3>
-                </div>
-                <div className="flex items-end justify-between gap-2 h-40">
-                    {salesData.map((item, index) => (
-                        <div key={index} className="flex flex-col items-center gap-2 flex-1">
-                            <div
-                                className="w-full bg-accent rounded-t"
-                                style={{
-                                    height: `${(item.value / maxSales) * 100}%`,
-                                    minHeight: '8px',
-                                }}
-                            />
-                            <span className="text-xs text-muted-foreground">{item.label}</span>
-                        </div>
+            <div className="relative pl-14">
+                <div className="pointer-events-none absolute top-4 left-0 flex h-[320px] w-11 flex-col justify-between text-left text-[11px] text-muted-foreground">
+                    {axisValues.map((value, index) => (
+                        <span key={index}>{formatAxisValue(value)}</span>
                     ))}
+                </div>
+
+                <div className="min-w-0 overflow-x-auto">
+                <div style={{ minWidth: `${width}px` }}>
+                    <div className="relative">
+                        <svg viewBox={`0 0 ${width} ${height}`} className="h-[320px] w-full" aria-hidden="true">
+                            {Array.from({ length: gridLines + 1 }).map((_, index) => {
+                                const y = paddingTop + (index * (height - paddingTop - paddingBottom)) / gridLines;
+
+                                return (
+                                    <line
+                                        key={index}
+                                        x1={paddingX}
+                                        y1={y}
+                                        x2={width - paddingX}
+                                        y2={y}
+                                        stroke="currentColor"
+                                        strokeDasharray="4 6"
+                                        className="text-border/70"
+                                    />
+                                );
+                            })}
+
+                            {hoveredPoint ? (
+                                <rect
+                                    x={hoveredPoint.bandStart}
+                                    y={paddingTop}
+                                    width={hoveredPoint.bandWidth}
+                                    height={height - paddingTop - paddingBottom}
+                                    rx="14"
+                                    fill="currentColor"
+                                    className="text-orange-500/10"
+                                />
+                            ) : null}
+
+                            <path
+                                d={linePath}
+                                fill="none"
+                                stroke={chart.color}
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+
+                            {hoverBands.map((point) => (
+                                <g key={point.date}>
+                                    <rect
+                                        x={point.bandStart}
+                                        y={paddingTop}
+                                        width={point.bandWidth}
+                                        height={height - paddingTop - paddingBottom}
+                                        fill="transparent"
+                                        onMouseEnter={() =>
+                                            setHoveredPoint({
+                                                x: point.x,
+                                                y: point.y,
+                                                label: point.label,
+                                                value: point.value,
+                                                bandStart: point.bandStart,
+                                                bandWidth: point.bandWidth,
+                                            })
+                                        }
+                                        onMouseLeave={() => setHoveredPoint(null)}
+                                    />
+                                    <circle
+                                        cx={point.x}
+                                        cy={point.y}
+                                        r={hoveredPoint?.label === point.label ? '5' : '3.5'}
+                                        fill="transparent"
+                                    />
+                                    <circle
+                                        cx={point.x}
+                                        cy={point.y}
+                                        r={hoveredPoint?.label === point.label ? '5' : '3.5'}
+                                        fill={chart.color}
+                                        onMouseEnter={() =>
+                                            setHoveredPoint({
+                                                x: point.x,
+                                                y: point.y,
+                                                label: point.label,
+                                                value: point.value,
+                                                bandStart: point.bandStart,
+                                                bandWidth: point.bandWidth,
+                                            })
+                                        }
+                                        onMouseLeave={() => setHoveredPoint(null)}
+                                    />
+                                </g>
+                            ))}
+                        </svg>
+
+                        {hoveredPoint ? (
+                            <div
+                                className="pointer-events-none absolute rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-lg"
+                                style={getTooltipStyle(hoveredPoint, width, height)}
+                            >
+                                <p className="font-semibold text-foreground">{hoveredPoint.label}</p>
+                                <p className="mt-1 text-muted-foreground">{formatCurrency(hoveredPoint.value)}</p>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <div className="mt-3 flex" style={{ width: `${width}px` }}>
+                        {chart.series.map((point) => (
+                            <span
+                                key={point.date}
+                                className="text-center text-xs whitespace-nowrap text-muted-foreground"
+                                style={{ width: `${width / chart.series.length}px` }}
+                            >
+                                {point.label}
+                            </span>
+                        ))}
+                    </div>
+                </div>
                 </div>
             </div>
         </div>
     );
+}
+
+function formatCurrency(value: number): string {
+    return value.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        maximumFractionDigits: 0,
+    });
+}
+
+function formatAxisValue(value: number): string {
+    return value.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        maximumFractionDigits: 0,
+    });
+}
+
+function getTooltipStyle(
+    hoveredPoint: { x: number; y: number; bandStart: number; bandWidth: number },
+    width: number,
+    height: number,
+): React.CSSProperties {
+    const centerX = ((hoveredPoint.bandStart + hoveredPoint.bandWidth / 2) / width) * 100;
+    const placeBelow = hoveredPoint.y < 72;
+
+    return {
+        left: `${centerX}%`,
+        top: `${(hoveredPoint.y / height) * 100}%`,
+        transform: placeBelow ? 'translate(-50%, 14px)' : 'translate(-50%, -115%)',
+    };
+}
+
+function buildLinePath(points: Array<{ x: number; y: number }>): string {
+    if (points.length === 0) {
+        return '';
+    }
+
+    return points.reduce((path, point, index) => {
+        return `${path}${index === 0 ? 'M' : ' L'} ${point.x} ${point.y}`;
+    }, '');
 }
