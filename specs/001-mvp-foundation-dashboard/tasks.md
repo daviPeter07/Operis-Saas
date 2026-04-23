@@ -71,23 +71,23 @@
 
 **Goal**: Entregar a Overview com KPI mode, chart mode, filtros de período e atividade recente.
 
-**Status**: 🔄 PENDING
+**Status**: ✅ COMPLETED
 
 **Independent Test**: Abrir dashboard, trocar entre KPI/Chart, aplicar filtros evalidar atualização dos dados.
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Criar dados mock em `resources/js/lib/mocks/dashboard-mocks.ts`
-- [ ] T012 [P] [US1] Build `features/dashboard/overview/period-filter.tsx`
-- [ ] T013 [P] [US1] Build `features/dashboard/overview/view-switcher.tsx`
-- [ ] T014 [P] [US1] Build `features/dashboard/overview/metrics-grid.tsx`
-- [ ] T015 [P] [US1] Build `features/dashboard/overview/charts-panel.tsx`
-- [ ] T016 [P] [US1] Build `features/dashboard/overview/recent-activity.tsx`
-- [ ] T017 [US1] Build `features/dashboard/overview/index.tsx` (organiza as sub-seções)
-- [ ] T018 [US1] Consumir dados mock no `resources/js/pages/dashboard/index.tsx` via TanStack Query
-- [ ] T019 [US1] Conectar filtros de período via Inertia query params (useSearchParams)
+- [x] T011 [US1] Criar dados mock em `resources/js/lib/mocks/dashboard-mocks.ts`
+- [x] T012 [P] [US1] Build `features/dashboard/overview/period-filter.tsx`
+- [x] T013 [P] [US1] Build `features/dashboard/overview/view-switcher.tsx`
+- [x] T014 [P] [US1] Build `features/dashboard/overview/metrics-grid.tsx`
+- [x] T015 [P] [US1] Build `features/dashboard/overview/charts-panel.tsx`
+- [x] T016 [P] [US1] Build `features/dashboard/overview/recent-activity.tsx`
+- [x] T017 [US1] Build `features/dashboard/overview/index.tsx` (organiza as sub-seções)
+- [x] T018 [US1] Consumir dados mock no `resources/js/pages/dashboard/index.tsx` via TanStack Query
+- [x] T019 [US1] Conectar filtros de período via Inertia query params (useSearchParams)
 
-**Checkpoint**: Dashboard overview funcional com KPI, Chart, filtros e activity.
+**Checkpoint**: ✅ Dashboard overview funcional com KPI, Chart, filtros e activity.
 
 ---
 
