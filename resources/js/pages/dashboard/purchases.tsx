@@ -4,7 +4,7 @@ import { PurchasesModule } from '@/components/features/dashboard/purchases';
 
 export default function PurchasesPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Purchases', href: '/dashboard/purchases' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Compras', href: '/dashboard/purchases' }]}>
             <PageContent>
                 <PurchasesModule />
             </PageContent>

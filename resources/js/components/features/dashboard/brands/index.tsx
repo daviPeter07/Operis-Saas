@@ -9,11 +9,11 @@ export function BrandsModule({ onAddBrand }: BrandsModuleProps) {
     return (
         <EmptyState
             icon={Award}
-            title="No brands yet"
-            description="Start by adding your first brand to organize products."
+            title="Nenhuma marca ainda"
+            description="Comece adicionando sua primeira marca para organizar produtos."
             action={
                 onAddBrand
-                    ? { label: 'Add Brand', onClick: onAddBrand }
+                    ? { label: 'Adicionar Marca', onClick: onAddBrand }
                     : undefined
             }
         />

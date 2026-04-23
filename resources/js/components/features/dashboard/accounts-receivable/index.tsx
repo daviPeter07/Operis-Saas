@@ -9,11 +9,11 @@ export function AccountsReceivableModule({ onAddInvoice }: AccountsReceivableMod
     return (
         <EmptyState
             icon={CreditCard}
-            title="No receivables yet"
-            description="Start by adding your first invoice to track payments."
+            title="Nenhuma conta a receber ainda"
+            description="Comece adicionando sua primeira fatura para acompanhar pagamentos."
             action={
                 onAddInvoice
-                    ? { label: 'Add Invoice', onClick: onAddInvoice }
+                    ? { label: 'Adicionar Fatura', onClick: onAddInvoice }
                     : undefined
             }
         />

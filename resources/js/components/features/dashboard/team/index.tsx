@@ -9,11 +9,11 @@ export function TeamModule({ onAddMember }: TeamModuleProps) {
     return (
         <EmptyState
             icon={UsersRound}
-            title="No team members yet"
-            description="Start by adding your first team member to collaborate."
+            title="Nenhum membro ainda"
+            description="Comece adicionando seu primeiro membro para colaborar."
             action={
                 onAddMember
-                    ? { label: 'Add Member', onClick: onAddMember }
+                    ? { label: 'Adicionar Membro', onClick: onAddMember }
                     : undefined
             }
         />

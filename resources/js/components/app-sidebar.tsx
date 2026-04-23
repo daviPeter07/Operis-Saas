@@ -29,20 +29,90 @@ import {
 } from '@/components/ui/sidebar';
 
 const navItems = [
-    { title: 'Overview', href: '/dashboard', icon: LayoutGrid, module: 'overview' },
-    { title: 'Clients', href: '/dashboard/clients', icon: Users, module: 'clients' },
-    { title: 'Sales', href: '/dashboard/sales', icon: TrendingUp, module: 'sales' },
-    { title: 'Suppliers', href: '/dashboard/suppliers', icon: Truck, module: 'suppliers' },
-    { title: 'Products', href: '/dashboard/products', icon: Package, module: 'products' },
-    { title: 'Categories', href: '/dashboard/categories', icon: Tags, module: 'categories' },
-    { title: 'Brands', href: '/dashboard/brands', icon: Award, module: 'brands' },
-    { title: 'Inventory', href: '/dashboard/inventory', icon: Warehouse, module: 'inventory' },
-    { title: 'Purchases', href: '/dashboard/purchases', icon: ShoppingCart, module: 'purchases' },
-    { title: 'Accounts Receivable', href: '/dashboard/accounts-receivable', icon: CreditCard, module: 'accounts-receivable' },
-    { title: 'Accounts Payable', href: '/dashboard/accounts-payable', icon: Receipt, module: 'accounts-payable' },
-    { title: 'Team', href: '/dashboard/team', icon: UsersRound, module: 'team' },
-    { title: 'Reports', href: '/dashboard/reports', icon: BarChart3, module: 'reports' },
-    { title: 'Settings', href: '/dashboard/settings', icon: Settings, module: 'settings' },
+    {
+        title: 'Visão Geral',
+        href: '/dashboard',
+        icon: LayoutGrid,
+        module: 'overview',
+    },
+    {
+        title: 'Clientes',
+        href: '/dashboard/clients',
+        icon: Users,
+        module: 'clients',
+    },
+    {
+        title: 'Vendas',
+        href: '/dashboard/sales',
+        icon: TrendingUp,
+        module: 'sales',
+    },
+    {
+        title: 'Fornecedores',
+        href: '/dashboard/suppliers',
+        icon: Truck,
+        module: 'suppliers',
+    },
+    {
+        title: 'Produtos',
+        href: '/dashboard/products',
+        icon: Package,
+        module: 'products',
+    },
+    {
+        title: 'Categorias',
+        href: '/dashboard/categories',
+        icon: Tags,
+        module: 'categories',
+    },
+    {
+        title: 'Marcas',
+        href: '/dashboard/brands',
+        icon: Award,
+        module: 'brands',
+    },
+    {
+        title: 'Estoque',
+        href: '/dashboard/inventory',
+        icon: Warehouse,
+        module: 'inventory',
+    },
+    {
+        title: 'Compras',
+        href: '/dashboard/purchases',
+        icon: ShoppingCart,
+        module: 'purchases',
+    },
+    {
+        title: 'Contas a Receber',
+        href: '/dashboard/accounts-receivable',
+        icon: CreditCard,
+        module: 'accounts-receivable',
+    },
+    {
+        title: 'Contas a Pagar',
+        href: '/dashboard/accounts-payable',
+        icon: Receipt,
+        module: 'accounts-payable',
+    },
+    {
+        title: 'Equipe',
+        href: '/dashboard/team',
+        icon: UsersRound,
+        module: 'team',
+    },
+    {
+        title: 'Relatórios',
+        href: '/dashboard/reports',
+        icon: BarChart3,
+        module: 'reports',
+    },
+    {
+        title: 'Configurações',
+        href: '/dashboard/settings',
+        icon: Settings,
+        module: 'settings',
+    },
 ];
 
 export function AppSidebar() {
@@ -63,8 +133,7 @@ export function AppSidebar() {
             <SidebarContent>
                 <nav className="flex flex-col gap-1 px-3">
                     {navItems.map((item) => {
-                        const isActive =
-                            item.href === location.pathname;
+                        const isActive = item.href === location.pathname;
                         const Icon = item.icon;
 
                         return (
@@ -79,9 +148,7 @@ export function AppSidebar() {
                                 } `}
                             >
                                 <Icon className="h-4 w-4 shrink-0" />
-                                <span className="truncate">
-                                    {item.title}
-                                </span>
+                                <span className="truncate">{item.title}</span>
                             </Link>
                         );
                     })}

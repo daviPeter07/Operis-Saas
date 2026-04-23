@@ -9,11 +9,11 @@ export function CategoriesModule({ onAddCategory }: CategoriesModuleProps) {
     return (
         <EmptyState
             icon={Tags}
-            title="No categories yet"
-            description="Start by adding your first category to organize products."
+            title="Nenhuma categoria ainda"
+            description="Comece adicionando sua primeira categoria para organizar produtos."
             action={
                 onAddCategory
-                    ? { label: 'Add Category', onClick: onAddCategory }
+                    ? { label: 'Adicionar Categoria', onClick: onAddCategory }
                     : undefined
             }
         />

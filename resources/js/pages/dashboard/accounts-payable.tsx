@@ -4,7 +4,7 @@ import { AccountsPayableModule } from '@/components/features/dashboard/accounts-
 
 export default function AccountsPayablePage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Accounts Payable', href: '/dashboard/accounts-payable' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Contas a Pagar', href: '/dashboard/accounts-payable' }]}>
             <PageContent>
                 <AccountsPayableModule />
             </PageContent>

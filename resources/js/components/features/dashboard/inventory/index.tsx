@@ -9,11 +9,11 @@ export function InventoryModule({ onAdjustInventory }: InventoryModuleProps) {
     return (
         <EmptyState
             icon={Warehouse}
-            title="No inventory yet"
-            description="Start by adding inventory to track stock levels."
+            title="Nenhum estoque ainda"
+            description="Comece adicionando estoque para acompanhar níveis."
             action={
                 onAdjustInventory
-                    ? { label: 'Add Inventory', onClick: onAdjustInventory }
+                    ? { label: 'Adicionar Estoque', onClick: onAdjustInventory }
                     : undefined
             }
         />

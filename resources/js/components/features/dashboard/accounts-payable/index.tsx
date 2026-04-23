@@ -9,11 +9,11 @@ export function AccountsPayableModule({ onAddBill }: AccountsPayableModuleProps)
     return (
         <EmptyState
             icon={Receipt}
-            title="No payables yet"
-            description="Start by adding your first bill to track expenses."
+            title="Nenhuma conta a pagar ainda"
+            description="Comece adicionando sua primeira conta para acompanhar despesas."
             action={
                 onAddBill
-                    ? { label: 'Add Bill', onClick: onAddBill }
+                    ? { label: 'Adicionar Conta', onClick: onAddBill }
                     : undefined
             }
         />

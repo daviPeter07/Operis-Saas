@@ -4,7 +4,7 @@ import { AccountsReceivableModule } from '@/components/features/dashboard/accoun
 
 export default function AccountsReceivablePage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Accounts Receivable', href: '/dashboard/accounts-receivable' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Contas a Receber', href: '/dashboard/accounts-receivable' }]}>
             <PageContent>
                 <AccountsReceivableModule />
             </PageContent>

@@ -9,11 +9,11 @@ export function SuppliersModule({ onAddSupplier }: SuppliersModuleProps) {
     return (
         <EmptyState
             icon={Truck}
-            title="No suppliers yet"
-            description="Start by adding your first supplier to manage procurement."
+            title="Nenhum fornecedor ainda"
+            description="Comece adicionando seu primeiro fornecedor para gerenciar compras."
             action={
                 onAddSupplier
-                    ? { label: 'Add Supplier', onClick: onAddSupplier }
+                    ? { label: 'Adicionar Fornecedor', onClick: onAddSupplier }
                     : undefined
             }
         />

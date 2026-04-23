@@ -4,7 +4,7 @@ import { InventoryModule } from '@/components/features/dashboard/inventory';
 
 export default function InventoryPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Inventory', href: '/dashboard/inventory' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Estoque', href: '/dashboard/inventory' }]}>
             <PageContent>
                 <InventoryModule />
             </PageContent>

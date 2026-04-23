@@ -9,11 +9,11 @@ export function ProductsModule({ onAddProduct }: ProductsModuleProps) {
     return (
         <EmptyState
             icon={Package}
-            title="No products yet"
-            description="Start by adding your first product to manage inventory."
+            title="Nenhum produto ainda"
+            description="Comece adicionando seu primeiro produto para gerenciar estoque."
             action={
                 onAddProduct
-                    ? { label: 'Add Product', onClick: onAddProduct }
+                    ? { label: 'Adicionar Produto', onClick: onAddProduct }
                     : undefined
             }
         />

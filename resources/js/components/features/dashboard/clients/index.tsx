@@ -9,11 +9,11 @@ export function ClientsModule({ onAddClient }: ClientsModuleProps) {
     return (
         <EmptyState
             icon={Users}
-            title="No clients yet"
-            description="Start by adding your first client to manage relationships."
+            title="Nenhum cliente ainda"
+            description="Comece adicionando seu primeiro cliente para gerenciar relacionamentos."
             action={
                 onAddClient
-                    ? { label: 'Add Client', onClick: onAddClient }
+                    ? { label: 'Adicionar Cliente', onClick: onAddClient }
                     : undefined
             }
         />

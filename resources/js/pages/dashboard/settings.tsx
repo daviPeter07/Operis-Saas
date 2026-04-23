@@ -4,7 +4,7 @@ import { SettingsModule } from '@/components/features/dashboard/settings';
 
 export default function SettingsPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Settings', href: '/dashboard/settings' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Configurações', href: '/dashboard/settings' }]}>
             <PageContent>
                 <SettingsModule />
             </PageContent>

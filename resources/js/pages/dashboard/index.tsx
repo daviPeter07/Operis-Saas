@@ -4,11 +4,11 @@ import { PageHeader } from '@/components/features/dashboard/page-header';
 
 export default function DashboardPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/dashboard' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>
             <PageContent>
                 <PageHeader
-                    title="Dashboard"
-                    description="Welcome back! Here's an overview of your business."
+                    title="Visão Geral"
+                    description="Bem-vindo de volta! Aqui está uma visão geral do seu negócio."
                 />
                 <div className="grid gap-6">
                     <div className="text-muted-foreground">

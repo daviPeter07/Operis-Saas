@@ -9,11 +9,11 @@ export function SalesModule({ onAddSale }: SalesModuleProps) {
     return (
         <EmptyState
             icon={TrendingUp}
-            title="No sales yet"
-            description="Start by adding your first sale to track revenue."
+            title="Nenhuma venda ainda"
+            description="Comece adicionando sua primeira venda para acompanhar a receita."
             action={
                 onAddSale
-                    ? { label: 'Add Sale', onClick: onAddSale }
+                    ? { label: 'Adicionar Venda', onClick: onAddSale }
                     : undefined
             }
         />

@@ -7,8 +7,8 @@ export function ReportsModule() {
     return (
         <EmptyState
             icon={BarChart3}
-            title="No reports yet"
-            description="Reports and analytics will appear here."
+            title="Nenhum relatório ainda"
+            description="Relatórios e análises aparecerão aqui."
         />
     );
 }

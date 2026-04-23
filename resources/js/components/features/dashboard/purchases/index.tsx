@@ -9,11 +9,11 @@ export function PurchasesModule({ onAddPurchase }: PurchasesModuleProps) {
     return (
         <EmptyState
             icon={ShoppingCart}
-            title="No purchases yet"
-            description="Start by adding your first purchase to track expenses."
+            title="Nenhuma compra ainda"
+            description="Comece adicionando sua primeira compra para acompanhar despesas."
             action={
                 onAddPurchase
-                    ? { label: 'Add Purchase', onClick: onAddPurchase }
+                    ? { label: 'Adicionar Compra', onClick: onAddPurchase }
                     : undefined
             }
         />

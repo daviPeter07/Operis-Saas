@@ -4,7 +4,7 @@ import { TeamModule } from '@/components/features/dashboard/team';
 
 export default function TeamPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Team', href: '/dashboard/team' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Equipe', href: '/dashboard/team' }]}>
             <PageContent>
                 <TeamModule />
             </PageContent>
