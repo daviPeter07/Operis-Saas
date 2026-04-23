@@ -12,7 +12,7 @@ export default function DashboardPage() {
                 />
                 <div className="grid gap-6">
                     <div className="text-muted-foreground">
-                        Overview content coming soon...
+                        Nada aqui por enquanto...
                     </div>
                 </div>
             </PageContent>

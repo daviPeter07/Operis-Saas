@@ -12,7 +12,6 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    useSidebar,
 } from '@/components/ui/sidebar';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
@@ -22,7 +21,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export function NavUser() {
     const { auth } = usePage().props;
-    const { state } = useSidebar();
     const isMobile = useIsMobile();
     const { currentCompany, companies } = useWorkspace();
     const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
@@ -47,14 +45,12 @@ export function NavUser() {
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg user-menu"
                             align="end"
                             side={
                                 isMobile
                                     ? 'bottom'
-                                    : state === 'collapsed'
-                                      ? 'left'
-                                      : 'bottom'
+                                    : 'right'
                             }
                         >
                             <div className="flex items-center gap-2 px-2 py-1.5">
@@ -70,10 +66,11 @@ export function NavUser() {
                             </div>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
+                                variant="muted"
                                 className="cursor-pointer"
                                 onClick={() => setCompanySwitcherOpen(true)}
                             >
-                                Switch Company
+                                Trocar Empresa
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <UserMenuContent user={auth.user} />

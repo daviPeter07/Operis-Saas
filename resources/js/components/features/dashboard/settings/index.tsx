@@ -7,8 +7,8 @@ export function SettingsModule() {
     return (
         <EmptyState
             icon={Settings}
-            title="No settings yet"
-            description="Settings configuration will appear here."
+            title="Nenhuma configuração ainda"
+            description="As configurações aparecerão aqui."
         />
     );
 }

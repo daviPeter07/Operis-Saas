@@ -8,7 +8,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, UserPlus, Package, TrendingUp, ShoppingCart, Receipt, Tags, Building2 } from 'lucide-react';
+import { Plus, UserPlus, Package, TrendingUp, ShoppingCart, Receipt, Tags, Building2, Sun, Moon } from 'lucide-react';
+import { useAppearance } from '@/hooks/use-appearance';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 interface QuickActionsButtonProps {
@@ -28,17 +29,35 @@ const quickActions = [
 export function AppHeaderWithActions({
     breadcrumbs = [],
 }: QuickActionsButtonProps) {
+    const { appearance, updateAppearance } = useAppearance();
     const handleAction = (actionKey: string) => {
         console.log('Quick action:', actionKey);
     };
 
+    const toggleTheme = () => {
+        const newAppearance = appearance === 'dark' ? 'light' : 'dark';
+        updateAppearance(newAppearance);
+    };
+
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
             <div className="flex-1" />
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="mr-2"
+            >
+                {appearance === 'dark' ? (
+                    <Sun className="h-4 w-4" />
+                ) : (
+                    <Moon className="h-4 w-4" />
+                )}
+            </Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button size="sm">
@@ -46,7 +65,7 @@ export function AppHeaderWithActions({
                         Adicionar
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-52">
                     {quickActions.map((action, index) => (
                         <>
                             <DropdownMenuItem
