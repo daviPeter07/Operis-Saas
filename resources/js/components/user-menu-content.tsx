@@ -9,8 +9,8 @@ import {
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
+import { settings } from '@/routes/dashboard';
 import type { User } from '@/types';
-import { edit } from '@/routes/profile';
 
 type Props = {
     user: User;
@@ -36,7 +36,7 @@ export function UserMenuContent({ user }: Props) {
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
-                        href={edit()}
+                        href={settings()}
                         prefetch
                         onClick={cleanup}
                     >

@@ -1,8 +1,11 @@
 import { usePage } from '@inertiajs/react';
-import { ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, Building2 } from 'lucide-react';
+import { useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -13,46 +16,76 @@ import {
 } from '@/components/ui/sidebar';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { CompanySwitcherModal } from '@/components/features/dashboard/layout/company-switcher-modal';
+import { useWorkspace } from '@/components/features/dashboard/workspace-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export function NavUser() {
     const { auth } = usePage().props;
     const { state } = useSidebar();
     const isMobile = useIsMobile();
+    const { currentCompany, companies } = useWorkspace();
+    const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
 
     if (!auth.user) {
         return null;
     }
 
     return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
-                            data-test="sidebar-menu-button"
+        <>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <SidebarMenuButton
+                                size="lg"
+                                className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                                data-test="sidebar-menu-button"
+                            >
+                                <UserInfo user={auth.user} />
+                                <ChevronsUpDown className="ml-auto size-4" />
+                            </SidebarMenuButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                            align="end"
+                            side={
+                                isMobile
+                                    ? 'bottom'
+                                    : state === 'collapsed'
+                                      ? 'left'
+                                      : 'bottom'
+                            }
                         >
-                            <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-4" />
-                        </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                        align="end"
-                        side={
-                            isMobile
-                                ? 'bottom'
-                                : state === 'collapsed'
-                                  ? 'left'
-                                  : 'bottom'
-                        }
-                    >
-                        <UserMenuContent user={auth.user} />
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </SidebarMenuItem>
-        </SidebarMenu>
+                            <div className="flex items-center gap-2 px-2 py-1.5">
+                                <Building2 className="h-4 w-4 text-muted-foreground" />
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-medium">
+                                        {currentCompany.name}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground capitalize">
+                                        {currentCompany.role}
+                                    </span>
+                                </div>
+                            </div>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => setCompanySwitcherOpen(true)}
+                            >
+                                Switch Company
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <UserMenuContent user={auth.user} />
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </SidebarMenuItem>
+            </SidebarMenu>
+
+            <CompanySwitcherModal
+                open={companySwitcherOpen}
+                onOpenChange={setCompanySwitcherOpen}
+            />
+        </>
     );
 }
