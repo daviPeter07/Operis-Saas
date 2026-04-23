@@ -1,14 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
+Route::inertia('/', 'home', [
+    'message' => 'Landing page coming soon.',
 ])->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+Route::middleware(['auth'])->group(function () {
+    Route::inertia('dashboard', 'dashboard', [
+        'message' => 'hello world',
+    ])->name('dashboard');
 });
-
-require __DIR__.'/settings.php';
