@@ -130,7 +130,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <div className="h-px mx-3 bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+            <div className="h-px mx-3 bg-linear-to-r from-transparent via-accent/50 to-transparent" />
 
             <SidebarContent>
                 <nav className="flex flex-col gap-1 px-3">

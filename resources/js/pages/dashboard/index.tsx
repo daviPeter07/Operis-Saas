@@ -1,57 +1,109 @@
+import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { PageContent } from '@/components/features/dashboard/page-content';
 import { PageHeader } from '@/components/features/dashboard/page-header';
 import { ViewSwitcher } from '@/components/features/dashboard/overview/view-switcher';
-import { PeriodFilter, type Period } from '@/components/features/dashboard/overview/period-filter';
+import {
+    PeriodFilter,
+    type Period,
+} from '@/components/features/dashboard/overview/period-filter';
 import { MetricsGrid } from '@/components/features/dashboard/overview/metrics-grid';
 import { ChartsPanel } from '@/components/features/dashboard/overview/charts-panel';
 import { RecentActivity } from '@/components/features/dashboard/overview/recent-activity';
-import { metrics, recentActivity, revenueChartData, salesChartData } from '@/lib/mocks/dashboard-mocks';
+import {
+    metrics,
+    recentActivity,
+    revenueChartData,
+    salesChartData,
+} from '@/lib/mocks/dashboard-mocks';
 
 export default function DashboardPage() {
+    const { auth } = usePage().props as {
+        auth: {
+            user?: {
+                name?: string;
+            };
+        };
+    };
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
     const [period, setPeriod] = useState<Period>('30d');
+    const userName = auth.user?.name ?? 'usuário';
+
+    const alerts = [
+        {
+            id: 'late-payments',
+            label: 'Pagamentos atrasados',
+            value: 153,
+        },
+        {
+            id: 'undelivered-orders',
+            label: 'Pedidos não entregues',
+            value: 7,
+        },
+        {
+            id: 'orders-to-confirm',
+            label: 'Pedidos a confirmar',
+            value: 12,
+        },
+        {
+            id: 'critical-alerts',
+            label: 'Produtos sem estoque',
+            value: 4,
+        },
+    ];
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>
             <PageContent>
                 <PageHeader
-                    title="Visão Geral"
-                    description="Bem-vindo de volta! Aqui está uma visão geral do seu negócio."
+                    title={`Bem-vindo, ${userName}`}
+                    description="Aqui está uma visão geral do seu negócio."
                 >
-                    <div className="flex gap-3">
-                        <PeriodFilter period={period} onPeriodChange={setPeriod} />
+                    <div className="flex flex-col gap-3 pt-4 md:flex-row md:items-center md:justify-between">
                         <ViewSwitcher view={view} onViewChange={setView} />
+                        <div className="md:ml-auto">
+                            <PeriodFilter
+                                period={period}
+                                onPeriodChange={setPeriod}
+                            />
+                        </div>
                     </div>
                 </PageHeader>
 
                 {view === 'kpi' ? (
                     <div className="grid gap-6">
                         <MetricsGrid metrics={metrics} />
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
                                 <RecentActivity activities={recentActivity} />
                             </div>
-                            <div className="bg-card rounded-xl border p-6">
-                                <h3 className="font-semibold mb-4">Resumo Rápido</h3>
+                            <div className="rounded-xl border bg-card p-6">
+                                <h3 className="mb-5 font-semibold">
+                                    Alertas e lembretes
+                                </h3>
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Vendas Hoje</span>
-                                        <span className="font-semibold">R$ 3.450</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Pedidos Hoje</span>
-                                        <span className="font-semibold">12</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Novos Clientes</span>
-                                        <span className="font-semibold">5</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Produtos Ativos</span>
-                                        <span className="font-semibold">456</span>
-                                    </div>
+                                    {alerts.map((alert) => {
+                                        return (
+                                            <div
+                                                key={alert.id}
+                                                className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3"
+                                            >
+                                                <span className="text-sm font-medium text-foreground">
+                                                    {alert.label}
+                                                </span>
+                                                <span
+                                                    className={`inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
+                                                        alert.value > 0
+                                                            ? 'bg-orange-500 text-white'
+                                                            : 'bg-muted text-foreground'
+                                                    }`}
+                                                >
+                                                    {alert.value}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -62,20 +114,29 @@ export default function DashboardPage() {
                             revenueData={revenueChartData}
                             salesData={salesChartData}
                         />
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
                                 <RecentActivity activities={recentActivity} />
                             </div>
-                            <div className="bg-card rounded-xl border p-6">
-                                <h3 className="font-semibold mb-4">Tendência</h3>
+                            <div className="rounded-xl border bg-card p-6">
+                                <h3 className="mb-4 font-semibold">
+                                    Tendência
+                                </h3>
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-full bg-muted rounded-full h-2">
-                                            <div className="bg-accent h-2 rounded-full" style={{ width: '75%' }} />
+                                        <div className="h-2 w-full rounded-full bg-muted">
+                                            <div
+                                                className="h-2 rounded-full bg-accent"
+                                                style={{ width: '75%' }}
+                                            />
                                         </div>
-                                        <span className="text-sm font-medium">75%</span>
+                                        <span className="text-sm font-medium">
+                                            75%
+                                        </span>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">Meta de vendas atingida este mês</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Meta de vendas atingida este mês
+                                    </p>
                                 </div>
                             </div>
                         </div>

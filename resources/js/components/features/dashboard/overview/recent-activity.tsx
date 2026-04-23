@@ -3,6 +3,7 @@ import { DollarSign, ShoppingCart, Users, Package } from 'lucide-react';
 interface Activity {
     id: string;
     type: 'sale' | 'purchase' | 'client' | 'product';
+    responsible: string;
     description: string;
     amount?: string;
     time: string;
@@ -32,7 +33,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
             <div className="p-6 pb-4">
                 <h3 className="font-semibold">Últimas Atividades</h3>
             </div>
-            <div className="divide-y">
+            <div className="space-y-3 px-6 pb-6">
                 {activities.map((activity) => {
                     const Icon = iconMap[activity.type];
                     const colorClass = colorMap[activity.type];
@@ -40,13 +41,18 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                     return (
                         <div
                             key={activity.id}
-                            className="flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors"
+                            className="flex items-center gap-4 rounded-xl border border-border/70 px-4 py-4 transition-colors hover:bg-muted/30"
                         >
                             <div className={`p-2 rounded-lg ${colorClass}`}>
                                 <Icon className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{activity.description}</p>
+                                <div className="flex items-center gap-2 text-sm">
+                                    <p className="truncate font-medium">{activity.description}</p>
+                                    <span className="truncate text-xs text-muted-foreground">
+                                        por {activity.responsible}
+                                    </span>
+                                </div>
                                 <p className="text-xs text-muted-foreground">{activity.time}</p>
                             </div>
                             {activity.amount && (

@@ -8,21 +8,29 @@ interface ViewSwitcherProps {
 
 export function ViewSwitcher({ view, onViewChange }: ViewSwitcherProps) {
     return (
-        <div className="flex gap-1 p-1 bg-muted rounded-lg">
+        <div className="flex gap-1 rounded-lg bg-muted p-1">
             <Button
-                variant={view === 'kpi' ? 'secondary' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => onViewChange('kpi')}
-                className="gap-2"
+                className={`gap-2 text-xs ${
+                    view === 'kpi'
+                        ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+                        : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
                 <LayoutGrid className="h-4 w-4" />
                 KPI
             </Button>
             <Button
-                variant={view === 'chart' ? 'secondary' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => onViewChange('chart')}
-                className="gap-2"
+                className={`gap-2 text-xs ${
+                    view === 'chart'
+                        ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+                        : 'text-muted-foreground hover:text-foreground'
+                }`}
             >
                 <BarChart3 className="h-4 w-4" />
                 Gráfico
