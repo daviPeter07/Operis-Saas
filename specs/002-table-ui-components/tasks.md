@@ -104,11 +104,11 @@
 
 **Independent Test**: Navegar entre páginas e verificar dados corretos
 
-- [ ] T029 [US7] Implementar Pagination shadcn na DataTable
-- [ ] T030 [US7] Configurar 25 registros por página
-- [ ] T031 [US7] Implementar Previous/Next buttons
-- [ ] T032 [US7] Implementar page indicator (página atual de total)
-- [ ] T033 [US7] Sincronizar paginação com estado local via useTablePagination
+- [x] T029 ✅ [US7] Implementar Pagination shadcn na DataTable (pagination.tsx com Previous/Next/First/Last)
+- [x] T030 ✅ [US7] Configurar 25 registros por página (padrão configurável via props)
+- [x] T031 ✅ [US7] Implementar Previous/Next buttons com ícones ChevronLeft/ChevronRight
+- [x] T032 ✅ [US7] Implementar page indicator (PaginationInfo: página X de Y)
+- [x] T033 ✅ [US7] Sincronizar paginação com useTablePagination via URL state
 
 ---
 
