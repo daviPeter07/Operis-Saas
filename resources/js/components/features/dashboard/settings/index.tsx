@@ -12,12 +12,21 @@ import {
     Shield,
     Users,
     Save,
-    Check,
+    ChevronDown,
 } from 'lucide-react';
 import { useWorkspace } from '@/components/features/dashboard/workspace-context';
-import { Button, Checkbox, Input, Label } from '@/components/ui';
+import {
+    Button,
+    Checkbox,
+    Input,
+    Label,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui';
 import { toast } from 'sonner';
-import { formatDateBR } from '@/lib/format';
 
 export function SettingsModule() {
     const { canAccessSettings, currentCompany } = useWorkspace();
@@ -137,40 +146,88 @@ export function SettingsModule() {
                                 <CalendarDays className="mr-1 inline h-3 w-3" />
                                 Formato de Data
                             </Label>
-                            <Input
-                                defaultValue="DD/MM/YYYY"
-                                className="bg-background"
-                            />
+                            <Select defaultValue="DD/MM/YYYY">
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="DD/MM/YYYY">
+                                        DD/MM/YYYY
+                                    </SelectItem>
+                                    <SelectItem value="MM/DD/YYYY">
+                                        MM/DD/YYYY
+                                    </SelectItem>
+                                    <SelectItem value="YYYY-MM-DD">
+                                        YYYY-MM-DD
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-2">
                             <Label className="text-sm text-muted-foreground">
                                 <Clock className="mr-1 inline h-3 w-3" />
                                 Formato de Hora
                             </Label>
-                            <Input
-                                defaultValue="HH:mm"
-                                className="bg-background"
-                            />
+                            <Select defaultValue="HH:mm">
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="HH:mm">
+                                        HH:mm (24h)
+                                    </SelectItem>
+                                    <SelectItem value="hh:mm A">
+                                        hh:mm A (12h)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-2">
                             <Label className="text-sm text-muted-foreground">
                                 <Coins className="mr-1 inline h-3 w-3" />
                                 Moeda
                             </Label>
-                            <Input
-                                defaultValue="BRL (R$)"
-                                className="bg-background"
-                            />
+                            <Select defaultValue="BRL">
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="BRL">
+                                        Real (R$)
+                                    </SelectItem>
+                                    <SelectItem value="USD">
+                                        Dólar ($)
+                                    </SelectItem>
+                                    <SelectItem value="EUR">
+                                        Euro (€)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-2">
                             <Label className="text-sm text-muted-foreground">
                                 <Globe className="mr-1 inline h-3 w-3" />
                                 Fuso Horário
                             </Label>
-                            <Input
-                                defaultValue="America/Sao_Paulo"
-                                className="bg-background"
-                            />
+                            <Select defaultValue="America/Sao_Paulo">
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="America/Sao_Paulo">
+                                        Brasília
+                                    </SelectItem>
+                                    <SelectItem value="America/Manaus">
+                                        Manaus
+                                    </SelectItem>
+                                    <SelectItem value="America/Fortaleza">
+                                        Fortaleza
+                                    </SelectItem>
+                                    <SelectItem value="America/Recife">
+                                        Recife
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </div>
@@ -187,10 +244,18 @@ export function SettingsModule() {
                             <Label className="text-sm text-muted-foreground">
                                 Tema
                             </Label>
-                            <Input
-                                defaultValue="light"
-                                className="bg-background"
-                            />
+                            <Select defaultValue="light">
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="light">Claro</SelectItem>
+                                    <SelectItem value="dark">Escuro</SelectItem>
+                                    <SelectItem value="system">
+                                        Seguir sistema
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid gap-2">
                             <Label className="text-sm text-muted-foreground">
@@ -205,28 +270,27 @@ export function SettingsModule() {
                                             currentCompany.primaryColor,
                                     }}
                                 />
-                                <Input
+                                <Select
                                     defaultValue={currentCompany.primaryColor}
-                                    className="bg-background"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label className="text-sm text-muted-foreground">
-                                Cor Secundária
-                            </Label>
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className="h-10 w-10 rounded-lg border"
-                                    style={{
-                                        backgroundColor:
-                                            currentCompany.secondaryColor,
-                                    }}
-                                />
-                                <Input
-                                    defaultValue={currentCompany.secondaryColor}
-                                    className="bg-background"
-                                />
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="#f97316">
+                                            Laranja
+                                        </SelectItem>
+                                        <SelectItem value="#3b82f6">
+                                            Azul
+                                        </SelectItem>
+                                        <SelectItem value="#10b981">
+                                            Verde
+                                        </SelectItem>
+                                        <SelectItem value="#8b5cf6">
+                                            Roxo
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     </div>
@@ -277,24 +341,6 @@ export function SettingsModule() {
                                 </p>
                             </div>
                         </label>
-                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                            <Checkbox
-                                id="systemNotifications"
-                                defaultChecked
-                                className="mt-0.5"
-                            />
-                            <div className="grid gap-1">
-                                <Label
-                                    htmlFor="systemNotifications"
-                                    className="cursor-pointer font-normal"
-                                >
-                                    Notificações do sistema
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Sons e alertas visuais na aplicação
-                                </p>
-                            </div>
-                        </label>
                     </div>
                 </div>
 
@@ -335,24 +381,6 @@ export function SettingsModule() {
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
                                     Adicione uma camada extra de segurança
-                                </p>
-                            </div>
-                        </label>
-                        <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                            <Checkbox
-                                id="sessionTimeout"
-                                defaultChecked
-                                className="mt-0.5"
-                            />
-                            <div className="grid gap-1">
-                                <Label
-                                    htmlFor="sessionTimeout"
-                                    className="cursor-pointer font-normal"
-                                >
-                                    Timeout de sessão
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Desconectar após inatividade
                                 </p>
                             </div>
                         </label>
