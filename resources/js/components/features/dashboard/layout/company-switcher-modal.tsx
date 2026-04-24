@@ -25,31 +25,39 @@ export function CompanySwitcherModal({ open, onOpenChange }: CompanySwitcherModa
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Switch Company</DialogTitle>
+                    <DialogTitle>Trocar empresa</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col gap-2 py-4">
                     {companies.map((company) => (
                         <Button
                             key={company.id}
                             variant={company.id === currentCompany.id ? 'secondary' : 'ghost'}
-                            className="justify-start h-auto py-3 px-4"
+                            className="h-auto justify-start rounded-xl px-4 py-3"
+                            style={company.id === currentCompany.id ? {
+                                boxShadow: `inset 0 0 0 1px ${company.primaryColor}`,
+                            } : undefined}
                             onClick={() => handleSwitch(company.id)}
                         >
                             <div className="flex items-center gap-3 w-full">
                                 <div
-                                    className="w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-white"
-                                    style={{ backgroundColor: company.primaryColor }}
+                                    className="flex h-10 w-10 items-center justify-center rounded-xl font-semibold text-white"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${company.primaryColor}, ${company.secondaryColor})`,
+                                    }}
                                 >
                                     {company.initials}
                                 </div>
                                 <div className="flex-1 text-left">
                                     <div className="font-medium">{company.name}</div>
-                                    <div className="text-xs text-muted-foreground capitalize">
+                                    <div className="text-xs text-muted-foreground">
+                                        {company.description}
+                                    </div>
+                                    <div className="mt-1 text-[11px] text-muted-foreground capitalize">
                                         {company.role}
                                     </div>
                                 </div>
                                 {company.id === currentCompany.id && (
-                                    <Check className="w-4 h-4 text-green-600" />
+                                    <Check className="h-4 w-4" style={{ color: company.primaryColor }} />
                                 )}
                             </div>
                         </Button>

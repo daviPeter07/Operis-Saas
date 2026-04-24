@@ -33,6 +33,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useWorkspace } from '@/components/features/dashboard/workspace-context';
 
 const navItems = [
     {
@@ -136,6 +137,8 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+    const { navigation } = useWorkspace();
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -155,7 +158,13 @@ export function AppSidebar() {
             <SidebarContent>
                 <TooltipProvider>
                 <nav className="flex flex-col gap-1 px-3 group-data-[collapsible=icon]:gap-0.5">
-                    {navItems.map((item) => {
+                    {navigation.map((navigationItem) => {
+                        const item = navItems.find((navItem) => navItem.module === navigationItem.key);
+
+                        if (!item) {
+                            return null;
+                        }
+
                         const isActive = item.href === location.pathname;
                         const Icon = item.icon;
 

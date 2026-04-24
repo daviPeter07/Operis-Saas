@@ -1,21 +1,16 @@
-import { EmptyState } from '../empty-state';
-import { UsersRound } from 'lucide-react';
+import { useWorkspace } from '@/components/features/dashboard/workspace-context';
+import { TeamPageContent } from './team-page-content';
 
-interface TeamModuleProps {
-    onAddMember?: () => void;
-}
+export function TeamModule() {
+    const { currentCompany, teamAccessMode } = useWorkspace();
 
-export function TeamModule({ onAddMember }: TeamModuleProps) {
     return (
-        <EmptyState
-            icon={UsersRound}
-            title="Nenhum membro ainda"
-            description="Comece adicionando seu primeiro membro para colaborar."
-            action={
-                onAddMember
-                    ? { label: 'Adicionar Membro', onClick: onAddMember }
-                    : undefined
-            }
+        <TeamPageContent
+            currentRole={currentCompany.role}
+            teamAccessMode={teamAccessMode}
+            requestAdminHref="/dashboard/team?mode=admin-request"
         />
     );
 }
+
+export { AdminRequestPage } from './admin-request-page';

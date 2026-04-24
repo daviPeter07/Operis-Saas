@@ -50,6 +50,8 @@ export type WorkspaceQuickAction = {
     description: string;
 };
 
+export type WorkspaceTeamAccessMode = 'manage' | 'request-admin' | 'view';
+
 export type WorkspaceSeed = {
     companies: WorkspaceCompany[];
     navigation: WorkspaceModule[];

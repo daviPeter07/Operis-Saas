@@ -8,7 +8,18 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, UserPlus, Package, TrendingUp, ShoppingCart, Receipt, Tags, Building2, Sun, Moon } from 'lucide-react';
+import {
+    Plus,
+    UserPlus,
+    Package,
+    TrendingUp,
+    ShoppingCart,
+    Receipt,
+    Tags,
+    Building2,
+    Sun,
+    Moon,
+} from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
