@@ -11,133 +11,147 @@ import {
     MapPin,
     ShoppingCart,
     Tag,
-    ArrowRight,
+    ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const reports = [
+const reportCategories = [
     {
-        slug: 'vendas',
-        title: 'Vendas',
-        description: 'Vendas realizadas no período',
-        icon: TrendingUp,
-        color: 'bg-blue-500',
-    },
-    {
-        slug: 'produtos-mais-vendidos',
-        title: 'Produtos Mais Vendidos',
-        description: 'Ranking dos produtos mais vendidos',
-        icon: ShoppingCart,
-        color: 'bg-green-500',
-    },
-    {
-        slug: 'vendas-categoria',
-        title: 'Vendas por Categoria',
-        description: 'Vendas agrupadas por categoria',
-        icon: Tag,
-        color: 'bg-purple-500',
-    },
-    {
-        slug: 'vendas-marca',
-        title: 'Vendas por Marca',
-        description: 'Vendas agrupadas por marca',
-        icon: BarChart3,
-        color: 'bg-indigo-500',
-    },
-    {
-        slug: 'estoque-atual',
-        title: 'Estoque Atual',
-        description: 'Quantidades disponíveis em estoque',
-        icon: Package,
-        color: 'bg-cyan-500',
-    },
-    {
-        slug: 'estoque-marca',
-        title: 'Estoque por Marca',
-        description: 'Totais de estoque por marca',
-        icon: BarChart3,
-        color: 'bg-teal-500',
-    },
-    {
-        slug: 'proximos-vencer',
-        title: 'Próximos de Vencer',
-        description: 'Produtos próximos do vencimento',
-        icon: AlertTriangle,
-        color: 'bg-yellow-500',
-    },
-    {
-        slug: 'perdas',
-        title: 'Perdas',
-        description: 'Baixas por motivo',
-        icon: XCircle,
-        color: 'bg-red-500',
-    },
-    {
-        slug: 'inadimplencia',
-        title: 'Inadimplência',
-        description: 'Clientes com parcelas atrasadas',
-        icon: DollarSign,
+        category: 'Vendas',
         color: 'bg-orange-500',
+        reports: [
+            {
+                slug: 'vendas',
+                title: 'Vendas',
+                description: 'Vendas realizadas no período',
+                icon: TrendingUp,
+            },
+            {
+                slug: 'produtos-mais-vendidos',
+                title: 'Produtos Mais Vendidos',
+                description: 'Ranking dos produtos mais vendidos',
+                icon: ShoppingCart,
+            },
+            {
+                slug: 'vendas-categoria',
+                title: 'Vendas por Categoria',
+                description: 'Vendas agrupadas por categoria',
+                icon: Tag,
+            },
+            {
+                slug: 'vendas-marca',
+                title: 'Vendas por Marca',
+                description: 'Vendas agrupadas por marca',
+                icon: BarChart3,
+            },
+            {
+                slug: 'pagamentos-metodo',
+                title: 'Pagamentos por Método',
+                description: 'Pagamentos por método de pagamento',
+                icon: CreditCard,
+            },
+            {
+                slug: 'maiores-compradores',
+                title: 'Maiores Compradores',
+                description: 'Clientes que mais compraram',
+                icon: Users,
+            },
+        ],
     },
     {
-        slug: 'pagamentos-metodo',
-        title: 'Pagamentos por Método',
-        description: 'Pagamentos por método de pagamento',
-        icon: CreditCard,
-        color: 'bg-pink-500',
+        category: 'Estoque',
+        color: 'bg-orange-500',
+        reports: [
+            {
+                slug: 'estoque-atual',
+                title: 'Estoque Atual',
+                description: 'Quantidades disponíveis em estoque',
+                icon: Package,
+            },
+            {
+                slug: 'estoque-marca',
+                title: 'Estoque por Marca',
+                description: 'Totais de estoque por marca',
+                icon: BarChart3,
+            },
+            {
+                slug: 'proximos-vencer',
+                title: 'Próximos de Vencer',
+                description: 'Produtos próximos do vencimento',
+                icon: AlertTriangle,
+            },
+            {
+                slug: 'perdas',
+                title: 'Perdas',
+                description: 'Baixas por motivo',
+                icon: XCircle,
+            },
+        ],
     },
     {
-        slug: 'maiores-compradores',
-        title: 'Maiores Compradores',
-        description: 'Clientes que mais compraram',
-        icon: Users,
-        color: 'bg-violet-500',
-    },
-    {
-        slug: 'clientes-cidade',
-        title: 'Clientes por Cidade',
-        description: 'Clientes filtrados por cidade',
-        icon: MapPin,
-        color: 'bg-emerald-500',
+        category: 'Clientes',
+        color: 'bg-orange-500',
+        reports: [
+            {
+                slug: 'inadimplencia',
+                title: 'Inadimplência',
+                description: 'Clientes com parcelas atrasadas',
+                icon: DollarSign,
+            },
+            {
+                slug: 'clientes-cidade',
+                title: 'Clientes por Cidade',
+                description: 'Clientes filtrados por cidade',
+                icon: MapPin,
+            },
+        ],
     },
 ];
 
 export function ReportsModule() {
     return (
-        <div className={cn('space-y-6')}>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {reports.map((report) => {
-                    const Icon = report.icon;
+        <div className={cn('space-y-8')}>
+            {reportCategories.map((category) => (
+                <div key={category.category}>
+                    <div className="mb-3 flex items-center gap-2">
+                        <span
+                            className={cn(
+                                'h-3 w-3 rounded-full',
+                                category.color,
+                            )}
+                        />
+                        <h2 className="text-lg font-semibold">
+                            {category.category}
+                        </h2>
+                    </div>
+                    <div className="space-y-2">
+                        {category.reports.map((report) => {
+                            const Icon = report.icon;
 
-                    return (
-                        <Link
-                            key={report.slug}
-                            href={`/dashboard/reports/${report.slug}`}
-                            className="group relative overflow-hidden rounded-xl border bg-card p-5 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div
-                                    className={cn(
-                                        'flex h-11 w-11 items-center justify-center rounded-xl',
-                                        report.color,
-                                    )}
+                            return (
+                                <Link
+                                    key={report.slug}
+                                    href={`/dashboard/reports/${report.slug}`}
+                                    className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
                                 >
-                                    <Icon className="h-5 w-5 text-white" />
-                                </div>
-                                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                            </div>
-                            <div className="mt-4">
-                                <h3 className="font-semibold text-card-foreground">
-                                    {report.title}
-                                </h3>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    {report.description}
-                                </p>
-                            </div>
-                        </Link>
-                    );
-                })}
-            </div>
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                        <Icon className="h-5 w-5 text-foreground" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-medium text-card-foreground">
+                                            {report.title}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {report.description}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }
