@@ -1,21 +1,21 @@
-import { EmptyState } from '../empty-state';
-import { Truck } from 'lucide-react';
+import { GenericTable, type Column } from '../generic-table';
+import { mockSuppliers, type Supplier } from '@/lib/mocks/mock-data';
 
-interface SuppliersModuleProps {
-    onAddSupplier?: () => void;
-}
+export function SuppliersModule() {
+    const columns: Column<Supplier>[] = [
+        { key: 'name', header: 'Nome' },
+        { key: 'email', header: 'Email' },
+        { key: 'phone', header: 'Telefone' },
+        { key: 'document', header: 'Documento' },
+        { key: 'city', header: 'Cidade' },
+        { key: 'state', header: 'Estado' },
+    ];
 
-export function SuppliersModule({ onAddSupplier }: SuppliersModuleProps) {
     return (
-        <EmptyState
-            icon={Truck}
-            title="Nenhum fornecedor ainda"
-            description="Comece adicionando seu primeiro fornecedor para gerenciar compras."
-            action={
-                onAddSupplier
-                    ? { label: 'Adicionar Fornecedor', onClick: onAddSupplier }
-                    : undefined
-            }
+        <GenericTable
+            data={mockSuppliers}
+            columns={columns}
+            onCreate={() => {}}
         />
     );
 }

@@ -1,21 +1,24 @@
-import { EmptyState } from '../empty-state';
-import { ShoppingCart } from 'lucide-react';
+import { GenericTable, type Column } from '../generic-table';
+import { mockPurchases, type Purchase } from '@/lib/mocks/mock-data';
 
-interface PurchasesModuleProps {
-    onAddPurchase?: () => void;
-}
+export function PurchasesModule() {
+    const columns: Column<Purchase>[] = [
+        { key: 'supplierName', header: 'Fornecedor' },
+        {
+            key: 'total',
+            header: 'Total',
+            render: (val: unknown) => `R$ ${Number(val).toFixed(2)}`,
+        },
+        { key: 'status', header: 'Status' },
+        { key: 'items', header: 'Itens' },
+        { key: 'createdAt', header: 'Data' },
+    ];
 
-export function PurchasesModule({ onAddPurchase }: PurchasesModuleProps) {
     return (
-        <EmptyState
-            icon={ShoppingCart}
-            title="Nenhuma compra ainda"
-            description="Comece adicionando sua primeira compra para acompanhar despesas."
-            action={
-                onAddPurchase
-                    ? { label: 'Adicionar Compra', onClick: onAddPurchase }
-                    : undefined
-            }
+        <GenericTable
+            data={mockPurchases}
+            columns={columns}
+            onCreate={() => {}}
         />
     );
 }

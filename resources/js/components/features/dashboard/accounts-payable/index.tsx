@@ -1,23 +1,21 @@
-import { EmptyState } from '../empty-state';
-import { Receipt } from 'lucide-react';
+import { GenericTable, type Column } from '../generic-table';
+import { mockPurchases, type Purchase } from '@/lib/mocks/mock-data';
 
-interface AccountsPayableModuleProps {
-    onAddBill?: () => void;
-}
-
-export function AccountsPayableModule({
-    onAddBill,
-}: AccountsPayableModuleProps) {
-    return (
-        <EmptyState
-            icon={Receipt}
-            title="Nenhuma conta a pagar ainda"
-            description="Comece adicionando sua primeira conta para acompanhar despesas."
-            action={
-                onAddBill
-                    ? { label: 'Adicionar Conta', onClick: onAddBill }
-                    : undefined
-            }
-        />
+export function AccountsPayableModule() {
+    const pendingPurchases = mockPurchases.filter(
+        (p) => p.status === 'pending',
     );
+
+    const columns: Column<Purchase>[] = [
+        { key: 'supplierName', header: 'Fornecedor' },
+        {
+            key: 'total',
+            header: 'Valor',
+            render: (val: unknown) => `R$ ${Number(val).toFixed(2)}`,
+        },
+        { key: 'items', header: 'Itens' },
+        { key: 'createdAt', header: 'Data' },
+    ];
+
+    return <GenericTable data={pendingPurchases} columns={columns} />;
 }

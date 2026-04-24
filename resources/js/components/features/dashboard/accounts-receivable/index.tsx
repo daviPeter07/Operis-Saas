@@ -1,23 +1,19 @@
-import { EmptyState } from '../empty-state';
-import { CreditCard } from 'lucide-react';
+import { GenericTable, type Column } from '../generic-table';
+import { mockSales, type Sale } from '@/lib/mocks/mock-data';
 
-interface AccountsReceivableModuleProps {
-    onAddInvoice?: () => void;
-}
+export function AccountsReceivableModule() {
+    const pendingSales = mockSales.filter((s) => s.status === 'pending');
 
-export function AccountsReceivableModule({
-    onAddInvoice,
-}: AccountsReceivableModuleProps) {
-    return (
-        <EmptyState
-            icon={CreditCard}
-            title="Nenhuma conta a receber ainda"
-            description="Comece adicionando sua primeira fatura para acompanhar pagamentos."
-            action={
-                onAddInvoice
-                    ? { label: 'Adicionar Fatura', onClick: onAddInvoice }
-                    : undefined
-            }
-        />
-    );
+    const columns: Column<Sale>[] = [
+        { key: 'clientName', header: 'Cliente' },
+        {
+            key: 'total',
+            header: 'Valor',
+            render: (val: unknown) => `R$ ${Number(val).toFixed(2)}`,
+        },
+        { key: 'paymentMethod', header: 'Método' },
+        { key: 'createdAt', header: 'Data' },
+    ];
+
+    return <GenericTable data={pendingSales} columns={columns} />;
 }
