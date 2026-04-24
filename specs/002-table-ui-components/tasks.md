@@ -33,23 +33,29 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Instalar biblioteca xlsx para manipulação Excel/CSV em `package.json`
-- [ ] T002 Instalar biblioteca jsPDF e jspdf-autotable para geração PDF em `package.json`
-- [ ] T003 Verificar componentes shadcn/ui instalados (Table, Pagination, Dialog, Sheet, Button, Input, DropdownMenu, AlertDialog)
+- [x] T001 ✅ Instalar biblioteca xlsx para manipulação Excel/CSV em `package.json`
+- [x] T002 ✅ Instalar biblioteca jsPDF e jspdf-autotable para geração PDF em `package.json`
+- [x] T003 ✅ Verificar componentes shadcn/ui instalados (Table, Pagination, Dialog, Sheet, Button, Input, DropdownMenu, AlertDialog)
 
 ---
 
 ## Phase 2: Foundational
 
-- [ ] T004 [P] Criar mocks de dados em `resources/js/lib/mocks/mock-data.ts`
-- [ ] T005 [P] Criar mocks de relatórios em `resources/js/lib/mocks/mock-reports.ts`
-- [ ] T006 [P] Criar hook useTablePagination em `resources/js/hooks/use-table-pagination.ts`
-- [ ] T007 [P] Criar hook useTableFilters em `resources/js/hooks/use-table-filters.ts`
-- [ ] T008 [P] Criar hook useTableSearch em `resources/js/hooks/use-table-search.ts`
-- [ ] T009 [P] Criar componente DataTable base em `resources/js/components/table/data-table.tsx`
-- [ ] T010 [P] Criar componente DataTableRow em `resources/js/components/table/data-table-row.tsx`
-- [ ] T011 [P] Criar componente Pagination em `resources/js/components/table/pagination.tsx`
-- [ ] T012 [P] Criar EmptyState em `resources/js/components/table/empty-state.tsx`
+- [x] T004 ✅ [P] Criar mocks de dados em `resources/js/lib/mocks/mock-data.ts`
+- [x] T005 ✅ [P] Criar mocks de relatórios em `resources/js/lib/mocks/mock-reports.ts`
+- [x] T006 ✅ [P] Criar hook useTablePagination em `resources/js/hooks/use-table-pagination.ts`
+- [x] T007 ✅ [P] Criar hook useTableFilters em `resources/js/hooks/use-table-filters.ts`
+- [x] T008 ✅ [P] Criar hook useTableSearch em `resources/js/hooks/use-table-search.ts`
+- [x] T009 ✅ [P] Criar componente DataTable base em `resources/js/components/table/data-table.tsx`
+- [x] T010 ✅ [P] Criar componente DataTableRow em `resources/js/components/table/data-table-row.tsx`
+- [x] T011 ✅ [P] Criar componente Pagination em `resources/js/components/table/pagination.tsx`
+- [x] T012 ✅ [P] Criar EmptyState em `resources/js/components/table/empty-state.tsx`
+
+> **📝 URL State Management (Laravel + Inertia)**: Busca, filtros e paginação DEVEM ser controlados pela URL usando Inertia router.
+> - `?search=termo` - termo de busca
+> - `?page=1&per_page=25` - paginação
+> - `?filters[field]=value` - filtros aplicados
+> - Usar `router.get()` do Inertia para navegação com `preserveState: true`
 
 ---
 
@@ -57,11 +63,15 @@
 
 **Independent Test**: Digitar termo na busca e verificar filtragem; clicar filtro e verificar sidebar
 
-- [ ] T013 [US1] Implementar TableToolbar com Input de busca em `resources/js/components/table/table-toolbar.tsx`
-- [ ] T014 [US1] Implementar debounce de 300ms na busca via useTableSearch
-- [ ] T015 [US1] Implementar FilterSidebar com campos dinâmicos em `resources/js/components/table/filter-sidebar.tsx`
-- [ ] T016 [US1] Conectar busca e filtros ao estado da tabela via hooks
-- [ ] T017 [US1] Testar busca por todos os campos da tabela
+- [x] T013 ✅ [US1] Implementar TableToolbar com Input de busca em `resources/js/components/table/table-toolbar.tsx`
+- [x] T014 ✅ [US1] Implementar debounce de 300ms na busca via useTableSearch
+- [x] T015 ✅ [US1] Implementar FilterSidebar com campos dinâmicos em `resources/js/components/table/filter-sidebar.tsx`
+- [x] T016 ✅ [US1] Conectar busca e filtros ao estado da tabela via hooks (com controle de URL via Inertia router)
+
+> **📝 URL State Control**: Busca, filtros e paginação são controlados pela URL usando `router.get()` do Inertia.
+> - `?search=termo` - termo de busca
+> - `?page=1` - paginação
+> - `?filters[field]=value` - filtros aplicados
 
 ---
 
