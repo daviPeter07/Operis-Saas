@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 export type Period = '7d' | '30d' | '90d' | '12m' | 'all' | 'custom';
@@ -31,10 +31,30 @@ export function PeriodFilter({
 }: PeriodFilterProps) {
     const [open, setOpen] = useState(false);
     const [draftRange, setDraftRange] = useState<CustomRange>(customRange);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setDraftRange(customRange);
     }, [customRange]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target as Node)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        if (open) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [open]);
 
     const currentLabel =
         period === 'custom' && customRange.from && customRange.to
@@ -42,7 +62,7 @@ export function PeriodFilter({
             : periodLabels[period];
 
     return (
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
             <Button
                 variant="outline"
                 size="sm"

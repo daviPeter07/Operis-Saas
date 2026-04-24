@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 
 export interface Column<T> {
     key: string;
-    header: string;
+    header: string | React.ReactNode;
     render?: (value: unknown, row: T) => React.ReactNode;
 }
 
@@ -47,6 +47,9 @@ export interface GenericTableProps<T extends { id: string }> {
     onImport?: (data: T[]) => void;
     className?: string;
     routeUrl?: string;
+    showActions?: boolean;
+    clickableRow?: boolean;
+    onRowClick?: (row: T) => void;
 }
 
 function parseQueryParams(search: string) {
@@ -127,6 +130,9 @@ export function GenericTable<T extends { id: string }>({
     onImport,
     className,
     routeUrl,
+    showActions = true,
+    clickableRow = false,
+    onRowClick,
 }: GenericTableProps<T>) {
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
@@ -159,6 +165,10 @@ export function GenericTable<T extends { id: string }>({
                 return configuredField;
             }
 
+            if (typeof column.header !== 'string') {
+                return null;
+            }
+
             const values = data
                 .map((item) => (item as Record<string, unknown>)[column.key])
                 .filter((value) => value !== null && value !== undefined);
@@ -167,7 +177,7 @@ export function GenericTable<T extends { id: string }>({
             if (typeof firstValue === 'number') {
                 return {
                     key: column.key,
-                    label: column.header,
+                    label: String(column.header),
                     type: 'number' as const,
                 };
             }
@@ -179,7 +189,7 @@ export function GenericTable<T extends { id: string }>({
             if (uniqueOptions.length > 0 && uniqueOptions.length <= 30) {
                 return {
                     key: column.key,
-                    label: column.header,
+                    label: String(column.header),
                     type: 'select' as const,
                     options: uniqueOptions.map((value) => ({
                         value,
@@ -190,11 +200,16 @@ export function GenericTable<T extends { id: string }>({
 
             return {
                 key: column.key,
-                label: column.header,
+                label: String(column.header),
                 type: 'text' as const,
             };
         });
     }, [columns, data, filterFields]);
+
+    const activeFilterFields = React.useMemo(
+        () => allFilterFields.filter((f) => f !== null),
+        [allFilterFields],
+    );
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -292,7 +307,7 @@ export function GenericTable<T extends { id: string }>({
 
         Object.entries(filters).forEach(([key, value]) => {
             if (value && value !== '') {
-                const field = allFilterFields.find((item) => item.key === key);
+                const field = activeFilterFields.find((item) => item.key === key);
                 const operator =
                     filterOperators[key] ||
                     (field?.type === 'text' ? 'contains' : 'eq');
@@ -344,7 +359,7 @@ export function GenericTable<T extends { id: string }>({
         });
 
         return result;
-    }, [allFilterFields, data, filterOperators, filters, search]);
+    }, [activeFilterFields, data, filterOperators, filters, search]);
 
     const sortedData = React.useMemo(() => {
         if (!sortBy) {
@@ -428,7 +443,7 @@ export function GenericTable<T extends { id: string }>({
             const value = (selectedRow as Record<string, unknown>)[column.key];
 
             return {
-                label: column.header,
+                label: String(column.header),
                 value: column.render
                     ? column.render(value, selectedRow)
                     : String(value ?? ''),
@@ -440,7 +455,7 @@ export function GenericTable<T extends { id: string }>({
         () =>
             columns.map((column) => ({
                 name: column.key,
-                label: column.header,
+                label: String(column.header),
                 type:
                     typeof (selectedRow as Record<string, unknown> | null)?.[
                         column.key
@@ -477,15 +492,19 @@ export function GenericTable<T extends { id: string }>({
                                 {col.header}
                             </DataTableHeadCell>
                         ))}
-                        <DataTableHeadCell className="w-36 text-right">
-                            Ações
-                        </DataTableHeadCell>
+                        {showActions && (
+                            <DataTableHeadCell className="w-36 text-right">
+                                Ações
+                            </DataTableHeadCell>
+                        )}
                     </tr>
                 </thead>
                 <tbody>
                     {paginatedData.length === 0 ? (
                         <tr>
-                            <td colSpan={columns.length + 1}>
+                            <td
+                                colSpan={columns.length + (showActions ? 1 : 0)}
+                            >
                                 <TableEmptyState
                                     searchTerm={search}
                                     onClearSearch={() => handleSearchChange('')}
@@ -499,6 +518,18 @@ export function GenericTable<T extends { id: string }>({
                                     (row as { id: string }).id || index,
                                 )}
                                 index={index}
+                                onClick={
+                                    clickableRow && onRowClick
+                                        ? () => onRowClick(row)
+                                        : clickableRow && onEdit
+                                        ? () => onEdit(row)
+                                        : undefined
+                                }
+                                className={
+                                    (clickableRow && (onRowClick || onEdit))
+                                        ? 'cursor-pointer'
+                                        : undefined
+                                }
                             >
                                 {columns.map((col: Column<T>) => (
                                     <DataTableCell key={col.key}>
@@ -522,13 +553,15 @@ export function GenericTable<T extends { id: string }>({
                                               )}
                                     </DataTableCell>
                                 ))}
-                                <DataTableCell className="w-36">
-                                    <TableActions
-                                        onView={() => handleView(row)}
-                                        onEdit={() => handleEdit(row)}
-                                        onDelete={() => handleDelete(row)}
-                                    />
-                                </DataTableCell>
+                                {showActions && (
+                                    <DataTableCell className="w-36">
+                                        <TableActions
+                                            onView={() => handleView(row)}
+                                            onEdit={() => handleEdit(row)}
+                                            onDelete={() => handleDelete(row)}
+                                        />
+                                    </DataTableCell>
+                                )}
                             </DataTableRowZebra>
                         ))
                     )}
@@ -552,7 +585,7 @@ export function GenericTable<T extends { id: string }>({
             <FilterSidebar
                 open={isFilterOpen}
                 onOpenChange={setIsFilterOpen}
-                fields={allFilterFields}
+                fields={activeFilterFields}
                 activeFilters={Object.entries(filters).map(
                     ([field, value]) => ({
                         id: field,
@@ -590,7 +623,7 @@ export function GenericTable<T extends { id: string }>({
                 onClearFilters={handleClearFilters}
                 sortFields={columns.map((column) => ({
                     key: column.key,
-                    label: column.header,
+                    label: String(column.header),
                 }))}
                 sortBy={sortBy}
                 sortDirection={sortDirection}
