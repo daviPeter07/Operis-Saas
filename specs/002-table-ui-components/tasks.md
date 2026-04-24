@@ -79,12 +79,12 @@
 
 **Independent Test**: Clicar "Criar", preencher formulário, verificar novo registro na tabela
 
-- [ ] T018 [US2] Adicionar botão "Criar" no TableToolbar
-- [ ] T019 [US2] Criar CreateModal em `resources/js/components/table/create-modal.tsx`
-- [ ] T020 [US2] Implementar abertura do modal ao clicar "Criar"
-- [ ] T021 [US2] Implementar handleSubmit para adicionar registro aos mocks
-- [ ] T022 [US2] Mostrar toast de sucesso após criação
-- [ ] T023 [US2] Atualizar tabela após criação
+- [x] T018 ✅ [US2] Adicionar botão "Criar" no TableToolbar (já incluso em table-toolbar.tsx)
+- [x] T019 ✅ [US2] Criar CreateModal em `resources/js/components/table/create-modal.tsx`
+- [x] T020 ✅ [US2] Implementar abertura do modal ao clicar "Criar"
+- [x] T021 ✅ [US2] Implementar handleSubmit para adicionar registro aos mocks
+- [x] T022 ✅ [US2] Mostrar toast de sucesso após criação
+- [x] T023 ✅ [US2] Atualizar tabela após criação
 
 ---
 
@@ -92,11 +92,11 @@
 
 **Independent Test**: Clicar em Ver/Editar/Excluir e verificar comportamento
 
-- [ ] T024 [US5] Implementar TableActions na DataTable com ícones View, Edit, Delete em `resources/js/components/table/table-actions.tsx`
-- [ ] T025 [US5] Criar ViewDialog em `resources/js/components/table/view-dialog.tsx`
-- [ ] T026 [US5] Criar EditDialog em `resources/js/components/table/edit-dialog.tsx`
-- [ ] T027 [US5] Criar DeleteConfirmDialog em `resources/js/components/table/delete-confirm-dialog.tsx`
-- [ ] T028 [US5] Implementar handlers para cada ação (view, edit, delete) com estado local
+- [x] T024 ✅ [US5] Implementar TableActions na DataTable com ícones View, Edit, Delete em `resources/js/components/table/table-actions.tsx`
+- [x] T025 ✅ [US5] Criar ViewDialog em `resources/js/components/table/view-dialog.tsx`
+- [x] T026 ✅ [US5] Criar EditDialog em `resources/js/components/table/edit-dialog.tsx`
+- [x] T027 ✅ [US5] Criar DeleteConfirmDialog em `resources/js/components/table/delete-confirm-dialog.tsx`
+- [x] T028 ✅ [US5] Implementar handlers para cada ação (view, edit, delete) com estado local
 
 ---
 
