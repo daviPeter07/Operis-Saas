@@ -1,11 +1,9 @@
 import * as React from 'react';
-import {
-    ReportTable,
-    type ReportColumn,
-} from '@/components/table/report-table';
-import { getMockReportData } from '@/lib/mocks/mock-reports';
+import { ReportTable } from '@/components/table/report-table';
+import type { ReportColumn } from '@/components/table/report-table';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
+import { getMockReportData } from '@/lib/mocks/mock-reports';
 
 export interface ReportPageProps {
     slug: string;

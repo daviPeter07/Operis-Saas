@@ -1,6 +1,6 @@
+import { Package } from 'lucide-react';
 import * as React from 'react';
 import { Table } from '@/components/ui/table';
-import { Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface DataTableProps<TData> {

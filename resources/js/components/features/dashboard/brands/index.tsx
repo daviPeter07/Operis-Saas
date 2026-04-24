@@ -1,5 +1,7 @@
-import { GenericTable, type Column } from '../generic-table';
-import { mockBrands, type Brand } from '@/lib/mocks/mock-data';
+import { mockBrands } from '@/lib/mocks/mock-data';
+import type { Brand } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
 export function BrandsModule() {
     const columns: Column<Brand>[] = [

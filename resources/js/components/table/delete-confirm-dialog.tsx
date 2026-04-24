@@ -1,5 +1,6 @@
-import * as React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import * as React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,7 +10,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export interface DeleteConfirmDialogProps {

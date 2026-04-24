@@ -37,7 +37,10 @@ export function exportToPDF<T extends Record<string, unknown>>(
     const tableData = data.map((row) =>
         columns.map((col) => {
             const value = row[col.key];
-            if (value === null || value === undefined) return '-';
+
+            if (value === null || value === undefined) {
+                return '-';
+            }
 
             switch (col.format) {
                 case 'currency':
@@ -49,7 +52,10 @@ export function exportToPDF<T extends Record<string, unknown>>(
                 case 'number':
                     return Number(value).toLocaleString('pt-BR');
                 default:
-                    if (typeof value === 'object') return JSON.stringify(value);
+                    if (typeof value === 'object') {
+                        return JSON.stringify(value);
+                    }
+
                     return String(value);
             }
         }),
@@ -76,6 +82,7 @@ export function exportToPDF<T extends Record<string, unknown>>(
     });
 
     const pageCount = doc.getNumberOfPages();
+
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);

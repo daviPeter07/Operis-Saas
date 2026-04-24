@@ -1,5 +1,7 @@
-import { GenericTable, type Column } from '../generic-table';
-import { mockSuppliers, type Supplier } from '@/lib/mocks/mock-data';
+import { mockSuppliers } from '@/lib/mocks/mock-data';
+import type { Supplier } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
 export function SuppliersModule() {
     const columns: Column<Supplier>[] = [

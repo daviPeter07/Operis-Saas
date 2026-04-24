@@ -1,10 +1,10 @@
 import { usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { PageContent } from '@/components/features/dashboard/page-content';
 import {
     AdminRequestPage,
     TeamModule,
 } from '@/components/features/dashboard/team';
+import AppLayout from '@/layouts/app-layout';
 
 export default function TeamPage() {
     const page = usePage();

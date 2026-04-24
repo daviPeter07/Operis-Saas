@@ -1,6 +1,6 @@
-import AppLayout from '@/layouts/app-layout';
 import { PageContent } from '@/components/features/dashboard/page-content';
 import { ReportsModule } from '@/components/features/dashboard/reports';
+import AppLayout from '@/layouts/app-layout';
 
 export default function ReportsPage() {
     return (

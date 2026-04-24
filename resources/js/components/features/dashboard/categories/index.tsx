@@ -1,5 +1,7 @@
-import { GenericTable, type Column } from '../generic-table';
-import { mockCategories, type Category } from '@/lib/mocks/mock-data';
+import { mockCategories } from '@/lib/mocks/mock-data';
+import type { Category } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
 export function CategoriesModule() {
     const columns: Column<Category>[] = [

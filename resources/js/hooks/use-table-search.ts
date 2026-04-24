@@ -69,7 +69,9 @@ export function searchData<T extends Record<string, unknown>>(
     searchTerm: string,
     fields?: string[],
 ): T[] {
-    if (!searchTerm || searchTerm.trim() === '') return data;
+    if (!searchTerm || searchTerm.trim() === '') {
+        return data;
+    }
 
     const normalizedSearch = searchTerm.toLowerCase().trim();
 
@@ -77,13 +79,20 @@ export function searchData<T extends Record<string, unknown>>(
         if (fields && fields.length > 0) {
             return fields.some((field) => {
                 const value = item[field];
-                if (value === null || value === undefined) return false;
+
+                if (value === null || value === undefined) {
+                    return false;
+                }
+
                 return String(value).toLowerCase().includes(normalizedSearch);
             });
         }
 
         return Object.values(item).some((value) => {
-            if (value === null || value === undefined) return false;
+            if (value === null || value === undefined) {
+                return false;
+            }
+
             return String(value).toLowerCase().includes(normalizedSearch);
         });
     });

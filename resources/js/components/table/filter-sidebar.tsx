@@ -1,4 +1,3 @@
-import * as React from 'react';
 import {
     X,
     Filter,
@@ -9,16 +8,11 @@ import {
     ArrowDownAZ,
     ArrowUpZA,
 } from 'lucide-react';
+import * as React from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
     Select,
     SelectContent,
@@ -26,6 +20,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import type { FilterOperator } from '@/hooks/use-table-filters';
 
 export interface FilterField {
@@ -88,7 +88,9 @@ export function FilterSidebar({
     const [filterValue, setFilterValue] = React.useState<string>('');
 
     const handleAddFilter = () => {
-        if (!selectedField || !filterValue) return;
+        if (!selectedField || !filterValue) {
+            return;
+        }
 
         onAddFilter?.({
             field: selectedField,
@@ -227,6 +229,7 @@ export function FilterSidebar({
                                         const field = fields.find(
                                             (f) => f.key === val,
                                         );
+
                                         if (field?.type === 'select') {
                                             setSelectedOperator('eq');
                                         } else if (field?.type === 'number') {
@@ -416,6 +419,7 @@ export function FilterSidebar({
                                         const fieldConfig = fields.find(
                                             (f) => f.key === filter.field,
                                         );
+
                                         return (
                                             <Badge
                                                 key={filter.id}

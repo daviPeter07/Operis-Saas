@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Check, Copy, Mail, ShieldCheck, UsersRound } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

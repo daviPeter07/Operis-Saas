@@ -1,20 +1,23 @@
-import * as React from 'react';
 import { router } from '@inertiajs/react';
-import { TableToolbar } from '@/components/table/table-toolbar';
+import * as React from 'react';
+import { CreateModal } from '@/components/table/create-modal';
 import {
     DataTable,
     DataTableHeadCell,
     DataTableCell,
 } from '@/components/table/data-table';
 import { DataTableRowZebra } from '@/components/table/data-table-row';
-import { Pagination, PaginationInfo } from '@/components/table/pagination';
+import { DeleteConfirmDialog } from '@/components/table/delete-confirm-dialog';
+import { EditDialog } from '@/components/table/edit-dialog';
+import type { EditField } from '@/components/table/edit-dialog';
 import { TableEmptyState } from '@/components/table/empty-state';
-import { TableActions } from '@/components/table/table-actions';
 import { FilterSidebar } from '@/components/table/filter-sidebar';
 import { ImportDialog } from '@/components/table/import-dialog';
-import { ViewDialog, type ViewField } from '@/components/table/view-dialog';
-import { EditDialog, type EditField } from '@/components/table/edit-dialog';
-import { DeleteConfirmDialog } from '@/components/table/delete-confirm-dialog';
+import { Pagination, PaginationInfo } from '@/components/table/pagination';
+import { TableActions } from '@/components/table/table-actions';
+import { TableToolbar } from '@/components/table/table-toolbar';
+import { ViewDialog } from '@/components/table/view-dialog';
+import type { ViewField } from '@/components/table/view-dialog';
 import type { FilterOperator } from '@/hooks/use-table-filters';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
@@ -40,7 +43,7 @@ export interface GenericTableProps<T extends { id: string }> {
     onView?: (row: T) => void;
     onEdit?: (row: T) => void;
     onDelete?: (row: T) => void;
-    onCreate?: (data: Partial<T>) => void;
+    onCreate?: (data: T) => void;
     onImport?: (data: T[]) => void;
     className?: string;
     routeUrl?: string;
@@ -48,6 +51,7 @@ export interface GenericTableProps<T extends { id: string }> {
 
 function parseQueryParams(search: string) {
     const params = new URLSearchParams(search);
+
     return {
         page: parseInt(params.get('page') || '1'),
         perPage: parseInt(params.get('per_page') || '25'),
@@ -80,18 +84,33 @@ function buildQueryString(params: {
     filters?: Record<string, string>;
 }) {
     const paramsObj = new URLSearchParams();
-    if (params.page && params.page > 1)
+
+    if (params.page && params.page > 1) {
         paramsObj.set('page', String(params.page));
-    if (params.perPage && params.perPage !== 25)
+    }
+
+    if (params.perPage && params.perPage !== 25) {
         paramsObj.set('per_page', String(params.perPage));
-    if (params.search) paramsObj.set('search', params.search);
-    if (params.sortBy) paramsObj.set('sort_by', params.sortBy);
+    }
+
+    if (params.search) {
+        paramsObj.set('search', params.search);
+    }
+
+    if (params.sortBy) {
+        paramsObj.set('sort_by', params.sortBy);
+    }
+
     if (params.sortBy && params.sortDirection !== 'asc') {
         paramsObj.set('sort_direction', params.sortDirection || 'asc');
     }
+
     Object.entries(params.filters || {}).forEach(([key, value]) => {
-        if (value) paramsObj.set(key, value);
+        if (value) {
+            paramsObj.set(key, value);
+        }
     });
+
     return paramsObj.toString();
 }
 
@@ -122,6 +141,7 @@ export function GenericTable<T extends { id: string }>({
         'asc',
     );
     const [isImportOpen, setIsImportOpen] = React.useState(false);
+    const [isCreateOpen, setIsCreateOpen] = React.useState(false);
     const [selectedRow, setSelectedRow] = React.useState<T | null>(null);
     const [isViewOpen, setIsViewOpen] = React.useState(false);
     const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -301,14 +321,21 @@ export function GenericTable<T extends { id: string }>({
                             return false;
                         }
 
-                        if (operator === 'gt')
+                        if (operator === 'gt') {
                             return numericValue > numericFilter;
-                        if (operator === 'gte')
+                        }
+
+                        if (operator === 'gte') {
                             return numericValue >= numericFilter;
-                        if (operator === 'lt')
+                        }
+
+                        if (operator === 'lt') {
                             return numericValue < numericFilter;
-                        if (operator === 'lte')
+                        }
+
+                        if (operator === 'lte') {
                             return numericValue <= numericFilter;
+                        }
                     }
 
                     return String(rawValue) === value;
@@ -344,6 +371,7 @@ export function GenericTable<T extends { id: string }>({
 
     const paginatedData = React.useMemo(() => {
         const start = (currentPage - 1) * perPage;
+
         return sortedData.slice(start, start + perPage);
     }, [currentPage, perPage, sortedData]);
 
@@ -429,7 +457,7 @@ export function GenericTable<T extends { id: string }>({
                 searchValue={search}
                 onSearchChange={handleSearchChange}
                 showCreate={!!onCreate}
-                onCreate={() => {}}
+                onCreate={() => setIsCreateOpen(true)}
                 showImport
                 onImport={() => setIsImportOpen(true)}
                 onExportExcel={handleExportExcel}
@@ -554,6 +582,7 @@ export function GenericTable<T extends { id: string }>({
                     setFilterOperators((prev) => {
                         const nextOperators = { ...prev };
                         delete nextOperators[id];
+
                         return nextOperators;
                     });
                     updateUrl({ filters: nextFilters, page: 1 });
@@ -618,7 +647,20 @@ export function GenericTable<T extends { id: string }>({
                     if (selectedRow) {
                         onDelete?.(selectedRow);
                     }
+
                     setSelectedRow(null);
+                }}
+            />
+
+            <CreateModal
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                title={`Criar Novo ${title}`}
+                description="Preencha os dados abaixo para criar um novo registro."
+                fields={[]} // This will be dynamically generated in each module
+                onSubmit={(data) => {
+                    onCreate?.(data as T);
+                    setIsCreateOpen(false);
                 }}
             />
         </div>

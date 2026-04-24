@@ -1,5 +1,14 @@
-import { GenericTable, type Column } from '../generic-table';
-import { mockSales, type Sale } from '@/lib/mocks/mock-data';
+import {
+    formatDateBR,
+    formatCurrencyBR,
+    translateStatus,
+    translatePaymentMethod,
+    formatQuantityWithUnit,
+} from '@/lib/format';
+import { mockSales } from '@/lib/mocks/mock-data';
+import type { Sale } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
 export function SalesModule() {
     const columns: Column<Sale>[] = [

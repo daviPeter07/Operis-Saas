@@ -37,8 +37,15 @@ export function exportToExcelWithColumns<T extends Record<string, unknown>>(
     const dataRows = data.map((row) =>
         columns.map((col) => {
             const value = row[col.key];
-            if (value === null || value === undefined) return '';
-            if (typeof value === 'object') return JSON.stringify(value);
+
+            if (value === null || value === undefined) {
+                return '';
+            }
+
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+
             return value;
         }),
     );
@@ -58,6 +65,7 @@ export function formatCurrency(value: number): string {
 
 export function formatDate(value: string | Date): string {
     const date = typeof value === 'string' ? new Date(value) : value;
+
     return new Intl.DateTimeFormat('pt-BR').format(date);
 }
 

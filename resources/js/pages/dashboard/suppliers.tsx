@@ -1,6 +1,6 @@
-import AppLayout from '@/layouts/app-layout';
 import { PageContent } from '@/components/features/dashboard/page-content';
 import { SuppliersModule } from '@/components/features/dashboard/suppliers';
+import AppLayout from '@/layouts/app-layout';
 
 export default function SuppliersPage() {
     return (

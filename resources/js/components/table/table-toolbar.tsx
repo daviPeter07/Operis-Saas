@@ -1,6 +1,5 @@
-import * as React from 'react';
 import { Search, Filter, Plus, Upload, Download, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -9,6 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 export interface TableToolbarProps {

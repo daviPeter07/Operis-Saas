@@ -118,6 +118,7 @@ export function ReportsIndex({ className }: ReportsIndexProps) {
         >
             {reports.map((report) => {
                 const Icon = report.icon;
+
                 return (
                     <Link
                         key={report.slug}

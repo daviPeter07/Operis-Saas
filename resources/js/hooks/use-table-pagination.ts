@@ -37,7 +37,10 @@ export function useTablePagination(
     const [total, setTotal] = useState(options.total ?? 0);
 
     const totalPages = useMemo(() => {
-        if (total === 0) return 0;
+        if (total === 0) {
+            return 0;
+        }
+
         return Math.ceil(total / pageSize);
     }, [total, pageSize]);
 

@@ -48,6 +48,7 @@ export function useTableFilters(
             setFilters((prev) => {
                 const updated = [...prev, newFilter];
                 onFiltersChange?.(updated);
+
                 return updated;
             });
         },
@@ -59,6 +60,7 @@ export function useTableFilters(
             setFilters((prev) => {
                 const updated = prev.filter((f) => f.id !== id);
                 onFiltersChange?.(updated);
+
                 return updated;
             });
         },
@@ -72,6 +74,7 @@ export function useTableFilters(
                     f.id === id ? { ...f, ...updates } : f,
                 );
                 onFiltersChange?.(updated);
+
                 return updated;
             });
         },
@@ -99,14 +102,18 @@ export function applyFilters<T extends Record<string, unknown>>(
     data: T[],
     filters: Filter[],
 ): T[] {
-    if (filters.length === 0) return data;
+    if (filters.length === 0) {
+        return data;
+    }
 
     return data.filter((item) => {
         return filters.every((filter) => {
             const value = item[filter.field];
             const filterValue = filter.value;
 
-            if (filterValue === null || filterValue === '') return true;
+            if (filterValue === null || filterValue === '') {
+                return true;
+            }
 
             switch (filter.operator) {
                 case 'eq':

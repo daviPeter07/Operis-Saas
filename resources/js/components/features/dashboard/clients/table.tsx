@@ -1,17 +1,17 @@
 import * as React from 'react';
-import { TableToolbar } from '@/components/table/table-toolbar';
 import {
     DataTable,
     DataTableHeadCell,
     DataTableCell,
 } from '@/components/table/data-table';
 import { DataTableRowZebra } from '@/components/table/data-table-row';
-import { Pagination, PaginationInfo } from '@/components/table/pagination';
 import { TableEmptyState } from '@/components/table/empty-state';
-import { TableActions } from '@/components/table/table-actions';
 import { FilterSidebar } from '@/components/table/filter-sidebar';
-import { useTableSearch } from '@/hooks/use-table-search';
+import { Pagination, PaginationInfo } from '@/components/table/pagination';
+import { TableActions } from '@/components/table/table-actions';
+import { TableToolbar } from '@/components/table/table-toolbar';
 import { useTablePagination } from '@/hooks/use-table-pagination';
+import { useTableSearch } from '@/hooks/use-table-search';
 import type { Client } from '@/lib/mocks/mock-data';
 import { cn } from '@/lib/utils';
 
@@ -57,8 +57,12 @@ export function ClientsTable({ data, className }: ClientsTableProps) {
     ];
 
     const filteredData = React.useMemo(() => {
-        if (!search || search.trim() === '') return data;
+        if (!search || search.trim() === '') {
+            return data;
+        }
+
         const normalizedSearch = search.toLowerCase().trim();
+
         return data.filter((item) =>
             Object.values(item).some((val) =>
                 String(val).toLowerCase().includes(normalizedSearch),
@@ -68,6 +72,7 @@ export function ClientsTable({ data, className }: ClientsTableProps) {
 
     const paginatedData = React.useMemo(() => {
         const start = (pagination.page - 1) * pagination.perPage;
+
         return filteredData.slice(start, start + pagination.perPage);
     }, [filteredData, pagination.page, pagination.perPage]);
 

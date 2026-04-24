@@ -1,6 +1,6 @@
-import AppLayout from '@/layouts/app-layout';
 import { PageContent } from '@/components/features/dashboard/page-content';
 import { SalesModule } from '@/components/features/dashboard/sales';
+import AppLayout from '@/layouts/app-layout';
 
 export default function SalesPage() {
     return (

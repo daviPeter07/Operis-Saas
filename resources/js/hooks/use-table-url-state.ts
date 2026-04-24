@@ -55,14 +55,17 @@ export function useTableUrlState(
                     (updates.search as string) || state.search,
                 );
             }
+
             if (pageReset) {
                 params.set('page', '1');
             } else {
                 params.set('page', String(updates.page ?? state.page));
             }
+
             if (state.perPage !== initialPerPage) {
                 params.set('per_page', String(state.perPage));
             }
+
             Object.entries(state.filters).forEach(([field, value]) => {
                 params.set(`filters[${field}]`, String(value));
             });
@@ -124,11 +127,15 @@ export function useTableUrlState(
     );
 
     const nextPage = useCallback(() => {
-        if (hasNextPage) goToPage(state.page + 1);
+        if (hasNextPage) {
+            goToPage(state.page + 1);
+        }
     }, [state.page, hasNextPage, goToPage]);
 
     const previousPage = useCallback(() => {
-        if (hasPreviousPage) goToPage(state.page - 1);
+        if (hasPreviousPage) {
+            goToPage(state.page - 1);
+        }
     }, [state.page, hasPreviousPage, goToPage]);
 
     const setTotal = useCallback((newTotal: number) => {

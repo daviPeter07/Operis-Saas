@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
 import { Filter } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface PageFiltersProps {
     children: ReactNode;

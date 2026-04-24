@@ -1,8 +1,8 @@
-import * as React from 'react';
 import { Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
+import * as React from 'react';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
@@ -11,6 +11,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Table,
     TableBody,
@@ -19,9 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import * as XLSX from 'xlsx';
 
 export interface ImportDialogProps {
     open: boolean;
@@ -54,18 +54,23 @@ export function ImportDialog({
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
-        if (!selectedFile) return;
+
+        if (!selectedFile) {
+            return;
+        }
 
         setError(null);
         setParsedData(null);
         setFile(selectedFile);
 
         const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+
         if (
             !fileExtension ||
             !acceptFormats.some((f) => f.includes(fileExtension))
         ) {
             setError(`Formato inválido. Aceitos: ${acceptFormats.join(', ')}`);
+
             return;
         }
 
@@ -99,6 +104,7 @@ export function ImportDialog({
 
                     if (jsonData.length === 0) {
                         reject(new Error('Arquivo vazio'));
+
                         return;
                     }
 
@@ -131,7 +137,9 @@ export function ImportDialog({
     };
 
     const handleImport = () => {
-        if (!parsedData || parsedData.rows.length === 0) return;
+        if (!parsedData || parsedData.rows.length === 0) {
+            return;
+        }
 
         onImport(parsedData.rows);
         toast.success(

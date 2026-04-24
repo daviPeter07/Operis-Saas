@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
 import { Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
     icon?: React.ComponentType<{ className?: string }>;

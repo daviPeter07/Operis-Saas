@@ -1,5 +1,5 @@
-import { EmptyState } from '../empty-state';
 import { BarChart3 } from 'lucide-react';
+import { EmptyState } from '../empty-state';
 
 interface ReportsModuleProps {}
 

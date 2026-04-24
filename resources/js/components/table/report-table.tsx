@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { TableToolbar } from '@/components/table/table-toolbar';
 import { DataTable } from '@/components/table/data-table';
-import { DataTableRowZebra } from '@/components/table/data-table-row';
-import { Pagination, PaginationInfo } from '@/components/table/pagination';
-import { TableEmptyState } from '@/components/table/empty-state';
 import {
     DataTableHeadCell,
     DataTableCell,
 } from '@/components/table/data-table';
+import { DataTableRowZebra } from '@/components/table/data-table-row';
+import { TableEmptyState } from '@/components/table/empty-state';
 import type { FilterField } from '@/components/table/filter-sidebar';
+import { Pagination, PaginationInfo } from '@/components/table/pagination';
+import { TableToolbar } from '@/components/table/table-toolbar';
 import { useTableSearch, searchData } from '@/hooks/use-table-search';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +62,7 @@ export function ReportTable<T extends Record<string, unknown>>({
 
     const paginatedData = React.useMemo(() => {
         const start = (currentPage - 1) * perPage;
+
         return filteredData.slice(start, start + perPage);
     }, [filteredData, currentPage, perPage]);
 

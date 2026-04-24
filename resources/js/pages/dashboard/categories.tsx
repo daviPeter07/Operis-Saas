@@ -1,6 +1,6 @@
-import AppLayout from '@/layouts/app-layout';
-import { PageContent } from '@/components/features/dashboard/page-content';
 import { CategoriesModule } from '@/components/features/dashboard/categories';
+import { PageContent } from '@/components/features/dashboard/page-content';
+import AppLayout from '@/layouts/app-layout';
 
 export default function CategoriesPage() {
     return (
