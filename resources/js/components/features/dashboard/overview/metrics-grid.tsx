@@ -35,38 +35,38 @@ const iconMap: Record<string, LucideIcon> = {
 
 export function MetricsGrid({ metrics }: MetricsGridProps) {
     return (
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
             {metrics.map((metric) => {
                 const Icon = iconMap[metric.icon] || Wallet;
                 const isPositive = metric.trend === 'up';
 
                 return (
                     <Card key={metric.id} className="border-border/40 bg-card">
-                        <CardContent className="flex min-h-24 flex-col justify-between px-5 pb-3">
-                            <div className="flex items-start justify-between">
-                                <span className="text-sm font-medium text-muted-foreground/90">
+                        <CardContent className="flex min-h-20 flex-col justify-between px-3 py-2.5 sm:min-h-24 sm:px-5 sm:pb-3">
+                            <div className="flex items-start justify-between gap-1 sm:gap-2">
+                                <span className="text-xs font-medium text-muted-foreground/90 sm:text-sm">
                                     {metric.label}
                                 </span>
                                 <div
-                                    className={`flex h-8 w-8 items-center justify-center rounded-xl ring-1 ${metric.iconBackground} ${metric.iconRing}`}
+                                    className={`flex h-6 w-6 items-center justify-center rounded-lg sm:h-8 sm:w-8 sm:rounded-xl ring-1 ${metric.iconBackground} ${metric.iconRing}`}
                                 >
                                     <Icon
-                                        className={`h-4 w-4 ${metric.color}`}
+                                        className={`h-3 w-3 sm:h-4 sm:w-4 ${metric.color}`}
                                     />
                                 </div>
                             </div>
-                            <div className="flex items-end justify-between gap-3">
-                                <span className="text-xl leading-none font-bold text-foreground">
+                            <div className="flex items-end justify-between gap-2 sm:gap-3">
+                                <span className="text-lg leading-none font-bold text-foreground sm:text-xl">
                                     {metric.value}
                                 </span>
                                 <div
-                                    className={`flex items-center gap-1 text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+                                    className={`flex items-center gap-1 text-xs font-medium sm:text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}
                                 >
                                     <span>{Math.abs(metric.change)}%</span>
                                     {isPositive ? (
-                                        <TrendingUp className="h-3 w-3" />
+                                        <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     ) : (
-                                        <TrendingDown className="h-3 w-3" />
+                                        <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     )}
                                 </div>
                             </div>

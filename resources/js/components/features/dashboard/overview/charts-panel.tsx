@@ -21,7 +21,7 @@ interface ChartsPanelProps {
 
 export function ChartsPanel({ charts }: ChartsPanelProps) {
     return (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
             {charts.map((chart) => (
                 <LineChartCard key={chart.id} chart={chart} />
             ))}
@@ -39,10 +39,10 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
         bandWidth: number;
     } | null>(null);
     const width = Math.max(720, chart.series.length * 72);
-    const height = 260;
-    const paddingX = 24;
-    const paddingTop = 16;
-    const paddingBottom = 28;
+    const height = 240;
+    const paddingX = 20;
+    const paddingTop = 12;
+    const paddingBottom = 24;
     const gridLines = 4;
     const values = chart.series.map((point) => point.value);
     const maxValue = Math.max(...values);
@@ -87,25 +87,25 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
     });
 
     return (
-        <div className="rounded-2xl border bg-card p-6">
-            <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="rounded-2xl border bg-card p-3 sm:p-6">
+            <div className="mb-4 sm:mb-6 flex items-start justify-between gap-2 sm:gap-4">
                 <div>
-                    <h3 className="text-base font-semibold text-foreground">
+                    <h3 className="text-sm font-semibold text-foreground sm:text-base">
                         {chart.title}
                     </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-0.5 text-xs text-muted-foreground sm:mt-1 sm:text-sm">
                         {chart.description}
                     </p>
                 </div>
                 <div className="text-right">
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-lg font-bold text-foreground sm:text-2xl">
                         {chart.summary}
                     </p>
                 </div>
             </div>
 
-            <div className="relative pl-14">
-                <div className="pointer-events-none absolute top-4 left-0 flex h-[320px] w-11 flex-col justify-between text-left text-[11px] text-muted-foreground">
+            <div className="relative pl-10 sm:pl-14">
+                <div className="pointer-events-none absolute top-2 left-0 flex h-[200px] sm:h-[320px] w-9 sm:w-11 flex-col justify-between text-left text-[10px] sm:text-[11px] text-muted-foreground">
                     {axisValues.map((value, index) => (
                         <span key={index}>{formatAxisValue(value)}</span>
                     ))}
@@ -116,7 +116,7 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
                         <div className="relative">
                             <svg
                                 viewBox={`0 0 ${width} ${height}`}
-                                className="h-[320px] w-full"
+                                className="h-[200px] w-full sm:h-[320px]"
                                 aria-hidden="true"
                             >
                                 {Array.from({ length: gridLines + 1 }).map(

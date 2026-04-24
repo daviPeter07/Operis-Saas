@@ -50,6 +50,7 @@ export interface GenericTableProps<T extends { id: string }> {
     showActions?: boolean;
     clickableRow?: boolean;
     onRowClick?: (row: T) => void;
+    showMobileList?: boolean;
 }
 
 function parseQueryParams(search: string) {
@@ -133,6 +134,7 @@ export function GenericTable<T extends { id: string }>({
     showActions = true,
     clickableRow = false,
     onRowClick,
+    showMobileList = false,
 }: GenericTableProps<T>) {
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
@@ -483,7 +485,8 @@ export function GenericTable<T extends { id: string }>({
                 hasActiveFilters={Object.values(filters).some((v) => v !== '')}
             />
 
-            <DataTable
+            <div className="hidden md:block">
+                <DataTable
                 data={paginatedData}
                 emptyMessage="Nenhum registro encontrado"
             >
@@ -569,6 +572,53 @@ export function GenericTable<T extends { id: string }>({
                     )}
                 </tbody>
             </DataTable>
+            </div>
+
+            <div className="block md:hidden space-y-2">
+                {paginatedData.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                        Nenhum registro encontrado
+                    </div>
+                ) : (
+                    paginatedData.map((row: T) => (
+                        <div
+                            key={String((row as { id: string }).id)}
+                            className="rounded-lg border bg-card p-3"
+                        >
+                            {columns.map((col: Column<T>) => (
+                                <div
+                                    key={col.key}
+                                    className="flex justify-between gap-2 py-1"
+                                >
+                                    <span className="text-xs text-muted-foreground">
+                                        {col.header}
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                        {col.render
+                                            ? col.render(
+                                                  (
+                                                      row as Record<
+                                                          string,
+                                                          unknown
+                                                      >
+                                                  )[col.key],
+                                                  row,
+                                              )
+                                            : String(
+                                                  (
+                                                      row as Record<
+                                                          string,
+                                                          unknown
+                                                      >
+                                                  )[col.key] ?? '',
+                                              )}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    ))
+                )}
+            </div>
 
             <div className="flex items-center justify-between">
                 <PaginationInfo

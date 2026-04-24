@@ -166,16 +166,34 @@ export function PaginationInfo({
     );
     const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
+    if (totalItems === 0) {
+        return (
+            <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+                Nenhum registro encontrado
+            </div>
+        );
+    }
+
+    if (totalItems === 1) {
+        return (
+            <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+                1 registro
+            </div>
+        );
+    }
+
+    if (currentPage === totalPages && totalItems === endItem) {
+        return (
+            <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+                {totalItems} registros no total
+            </div>
+        );
+    }
+
     return (
-        <div className={cn('text-sm text-muted-foreground', className)}>
-            Mostrando <span className="font-medium">{startItem}</span> -{' '}
-            <span className="font-medium">{endItem}</span> de{' '}
-            <span className="font-medium">{totalItems}</span> registros
-            {totalPages > 1 && (
-                <span className="ml-1">
-                    (página {currentPage} de {totalPages})
-                </span>
-            )}
+        <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+            {startItem}-{endItem} de {totalItems} registros
+            {totalPages > 1 && <span className="hidden sm:inline"> · página {currentPage}/{totalPages}</span>}
         </div>
     );
 }
