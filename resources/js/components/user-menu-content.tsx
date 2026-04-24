@@ -9,7 +9,7 @@ import {
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
-import { edit } from '@/routes/profile';
+import { settings } from '@/routes/dashboard';
 import type { User } from '@/types';
 
 type Props = {
@@ -33,29 +33,30 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                    <Link
-                        className="block w-full cursor-pointer"
-                        href={edit()}
-                        prefetch
-                        onClick={cleanup}
-                    >
-                        <Settings className="mr-2" />
-                        Settings
-                    </Link>
-                </DropdownMenuItem>
+<DropdownMenuItem variant="muted" asChild>
+                <Link
+                    className="w-full cursor-pointer"
+                    href={settings()}
+                    prefetch
+                    onClick={cleanup}
+                >
+                    <Settings className="mr-2" />
+                    Configurações
+                </Link>
+            </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem variant="muted" asChild>
                 <Link
-                    className="block w-full cursor-pointer"
+                    className="w-full cursor-pointer"
+                    style={{ color: '#dc2626' }}
                     href={logout()}
                     as="button"
                     onClick={handleLogout}
                     data-test="logout-button"
                 >
                     <LogOut className="mr-2" />
-                    Log out
+                    Sair
                 </Link>
             </DropdownMenuItem>
         </>

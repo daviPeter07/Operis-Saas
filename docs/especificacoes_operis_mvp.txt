@@ -1,0 +1,397 @@
+ESPECIFICAÇÕES DE ENTIDADES E ATRIBUTOS — OPERIS MVP
+
+1. EMPRESA
+Atributos:
+- id_empresa
+- nome_empresa
+- email
+- telefone
+- cpf_cnpj
+- cep
+- rua
+- numero
+- complemento
+- bairro
+- cidade
+- estado
+- referencia
+- logo
+- cor_primaria
+- cor_secundaria
+- senha
+- criado_em
+- atualizado_em
+
+Observações:
+- Cada empresa possui seus próprios dados isolados no sistema.
+- Cada empresa poderá personalizar identidade visual e informações institucionais.
+
+2. USUÁRIO / EQUIPE
+Atributos:
+- id_usuario
+- id_empresa
+- nome
+- email
+- senha
+- role
+- status
+- foto
+- avatar
+- criado_em
+- atualizado_em
+
+Roles:
+- admin
+- supervisor
+- user
+
+Permissões:
+- Admin: acesso total ao sistema, equipe e configurações.
+- Supervisor: acesso aos módulos operacionais e relatórios, sem acesso à equipe e configurações.
+- User: acesso limitado, a definir posteriormente.
+
+3. CLIENTE
+Atributos:
+- id_cliente
+- id_empresa
+- nome
+- email
+- telefone
+- cpf_cnpj
+- tag
+- saldo_inicial
+- limite_credito
+- observacoes
+- status
+- cep
+- rua
+- numero
+- complemento
+- bairro
+- cidade
+- estado
+- referencia
+- criado_em
+- atualizado_em
+
+Filtros previstos:
+- status
+- tag
+- cidade
+- nome crescente/decrescente
+
+4. FORNECEDOR
+Atributos:
+- id_fornecedor
+- id_empresa
+- tipo_pessoa
+- nome
+- razao_social
+- cpf
+- cnpj
+- email
+- telefone
+- observacoes
+- status
+- criado_em
+- atualizado_em
+
+Filtros previstos:
+- nome
+- status
+- nome crescente/decrescente
+
+5. MARCA
+Atributos:
+- id_marca
+- id_empresa
+- nome
+- descricao
+- status
+- criado_em
+- atualizado_em
+
+6. CATEGORIA
+Atributos:
+- id_categoria
+- id_empresa
+- nome
+- descricao
+- status
+- criado_em
+- atualizado_em
+
+7. PRODUTO / ESTOQUE
+Atributos:
+- id_produto
+- id_empresa
+- codigo_barras
+- gerar_codigo_barras_automatico
+- nome
+- descricao
+- imagem
+- preco_venda
+- preco_custo
+- desconto
+- quantidade_estoque
+- estoque_minimo
+- id_categoria
+- id_marca
+- unidade_medida
+- localizacao
+- status
+- criado_em
+- atualizado_em
+
+Status previstos:
+- ativo
+- inativo
+- sem_estoque
+
+Filtros previstos:
+- nome
+- categoria
+- marca
+- status
+- estoque baixo
+- ordem alfabética
+- maior/menor preço
+
+8. COMPRA
+Atributos:
+- id_compra
+- id_empresa
+- id_fornecedor
+- numero_compra
+- data_compra
+- subtotal
+- desconto_total
+- total
+- status
+- observacoes
+- criado_em
+- atualizado_em
+
+Status previstos:
+- pendente
+- finalizada
+- cancelada
+
+Observações:
+- numero_compra pode ser manual ou automático.
+
+9. ITEM_COMPRA
+Atributos:
+- id_item_compra
+- id_compra
+- id_produto
+- quantidade
+- preco_custo
+- subtotal
+
+10. VENDA
+Atributos:
+- id_venda
+- id_empresa
+- id_cliente
+- numero_venda
+- data_venda
+- subtotal
+- desconto_total
+- acrescimo
+- total
+- forma_pagamento
+- status
+- observacoes
+- criado_em
+- atualizado_em
+
+Formas de pagamento previstas:
+- dinheiro
+- pix
+- cartao_debito
+- cartao_credito
+- transferencia
+- boleto
+
+Status previstos:
+- pendente
+- concluida
+- cancelada
+
+Observações:
+- numero_venda pode ser manual ou automático.
+
+11. ITEM_VENDA
+Atributos:
+- id_item_venda
+- id_venda
+- id_produto
+- quantidade
+- preco_unitario
+- desconto_unitario
+- subtotal
+
+12. COMPROVANTE DE VENDA
+Variações previstas:
+- prévia
+- digital
+- térmico 58mm
+- térmico 80mm
+- PDF para download
+- impressão direta
+
+Dados exibíveis:
+- nome da empresa
+- telefone
+- data e hora
+- numero_venda
+- nome do cliente
+- lista de produtos
+- quantidades
+- valores unitários
+- subtotal
+- desconto
+- valor final
+- parcelas/pagamentos
+- valor pago
+- valor restante
+- status
+
+13. CONTA A PAGAR
+Atributos:
+- id_conta_pagar
+- id_empresa
+- id_fornecedor
+- id_compra
+- descricao
+- categoria_despesa
+- valor_total
+- valor_pago
+- valor_pendente
+- data_emissao
+- data_vencimento
+- data_pagamento
+- forma_pagamento
+- status
+- observacoes
+- criado_em
+- atualizado_em
+
+Status previstos:
+- pendente
+- pago
+- vencido
+- cancelado
+
+Filtros previstos:
+- status
+- vencimento
+- fornecedor
+- ordem por data
+- maior/menor valor
+
+14. CONTA A RECEBER
+Atributos:
+- id_conta_receber
+- id_empresa
+- id_cliente
+- id_venda
+- descricao
+- valor_total
+- valor_recebido
+- valor_pendente
+- data_emissao
+- data_vencimento
+- data_recebimento
+- forma_recebimento
+- status
+- observacoes
+- criado_em
+- atualizado_em
+
+Status previstos:
+- pendente
+- recebido
+- vencido
+- cancelado
+
+Filtros previstos:
+- status
+- vencimento
+- cliente
+- ordem por data
+- maior/menor valor
+
+15. RELATÓRIOS
+Escopo previsto:
+- clientes
+- fornecedores
+- marcas
+- categorias
+- estoque
+- compras
+- vendas
+- contas a pagar
+- contas a receber
+- equipe
+
+Recursos previstos:
+- filtros por módulo
+- visualização de dados no sistema
+- exportação em Excel
+- exportação em PDF
+
+16. VISÃO GERAL
+Dados previstos no dashboard:
+- vendas
+- lucro
+- contas a receber
+- contas a pagar
+
+Modos de visualização:
+- KPI
+- gráficos
+
+Filtros de período:
+- últimos 7 dias
+- último mês
+- últimos 3 meses
+- último ano
+- todos os períodos
+- intervalo personalizado
+
+Elementos visuais previstos:
+- cards de indicadores
+- gráficos comparativos
+- atividades recentes
+- ações rápidas no header
+
+17. CONFIGURAÇÕES
+Disponível apenas para:
+- admin
+
+Dados editáveis:
+- nome da empresa
+- email
+- telefone
+- cpf_cnpj
+- endereço completo
+- logo
+- cor primária
+- cor secundária
+- senha
+
+18. IMPORTAÇÃO
+Status atual:
+- ainda não detalhada
+
+Observação:
+- a modelagem da importação será definida posteriormente, conforme padrão de planilha e regras de entrada de dados.
+
+19. REGRAS GERAIS DO MVP
+- O MVP será apenas front-end responsivo.
+- Todas as ações serão visuais, sem backend funcional nesta etapa.
+- Os dados do sistema serão mockados para apresentação.
+- O sistema terá arquitetura visual multiempresa.
+- Cada empresa visualizará apenas seu próprio contexto e seus próprios dados.
