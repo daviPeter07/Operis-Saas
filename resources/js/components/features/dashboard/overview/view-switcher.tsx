@@ -20,7 +20,7 @@ export function ViewSwitcher({ view, onViewChange }: ViewSwitcherProps) {
                 }`}
             >
                 <LayoutGrid className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">KPI</span>
+                <span className="text-[10px] sm:text-xs">KPI</span>
             </Button>
             <Button
                 variant="ghost"
@@ -33,7 +33,7 @@ export function ViewSwitcher({ view, onViewChange }: ViewSwitcherProps) {
                 }`}
             >
                 <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">Gráfico</span>
+                <span className="text-[10px] sm:text-xs">Gráfico</span>
             </Button>
         </div>
     );
