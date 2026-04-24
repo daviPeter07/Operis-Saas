@@ -1,5 +1,11 @@
 # Implementation Tasks: Table UI Components
 
+> **⚠️ AVISO IMPORTANTE**: As tarefas DEVEM ser executadas SEQUENCIALMENTE.
+> - **NÃO** inicie a próxima tarefa sem ter completado a anterior
+> - Ao completar cada tarefa, traga o **relatório completo** do que foi feito
+> - A próxima tarefa só será iniciada após a aprovação e reporte da anterior
+> - Aguarde instrução do usuário para prosseguir
+
 **Feature**: Telas de Tabela com Componentes UI  
 **Plan**: `specs/002-table-ui-components/plan.md`  
 **Generated**: 2026-04-24  
