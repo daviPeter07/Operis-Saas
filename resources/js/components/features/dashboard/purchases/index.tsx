@@ -18,6 +18,7 @@ export function PurchasesModule() {
         <GenericTable
             data={mockPurchases}
             columns={columns}
+            title="Compras"
             onCreate={() => {}}
         />
     );

@@ -17,5 +17,11 @@ export function AccountsPayableModule() {
         { key: 'createdAt', header: 'Data' },
     ];
 
-    return <GenericTable data={pendingPurchases} columns={columns} />;
+    return (
+        <GenericTable
+            data={pendingPurchases}
+            columns={columns}
+            title="Contas a Pagar"
+        />
+    );
 }

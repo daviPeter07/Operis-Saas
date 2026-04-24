@@ -15,5 +15,11 @@ export function AccountsReceivableModule() {
         { key: 'createdAt', header: 'Data' },
     ];
 
-    return <GenericTable data={pendingSales} columns={columns} />;
+    return (
+        <GenericTable
+            data={pendingSales}
+            columns={columns}
+            title="Contas a Receber"
+        />
+    );
 }

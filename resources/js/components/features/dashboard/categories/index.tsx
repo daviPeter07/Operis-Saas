@@ -12,6 +12,7 @@ export function CategoriesModule() {
         <GenericTable
             data={mockCategories}
             columns={columns}
+            title="Categorias"
             onCreate={() => {}}
         />
     );

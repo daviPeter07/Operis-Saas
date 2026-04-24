@@ -19,6 +19,7 @@ export function ProductsModule() {
         <GenericTable
             data={mockProducts}
             columns={columns}
+            title="Produtos"
             onCreate={() => {}}
         />
     );

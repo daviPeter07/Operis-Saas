@@ -9,6 +9,11 @@ export function BrandsModule() {
     ];
 
     return (
-        <GenericTable data={mockBrands} columns={columns} onCreate={() => {}} />
+        <GenericTable
+            data={mockBrands}
+            columns={columns}
+            title="Marcas"
+            onCreate={() => {}}
+        />
     );
 }

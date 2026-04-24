@@ -15,6 +15,7 @@ export function InventoryModule() {
         <GenericTable
             data={mockProducts}
             columns={columns}
+            title="Estoque"
             onCreate={() => {}}
         />
     );

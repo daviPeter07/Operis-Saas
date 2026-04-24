@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { router } from '@inertiajs/react';
 import { TableToolbar } from '@/components/table/table-toolbar';
 import {
     DataTable,
@@ -10,7 +11,8 @@ import { Pagination, PaginationInfo } from '@/components/table/pagination';
 import { TableEmptyState } from '@/components/table/empty-state';
 import { TableActions } from '@/components/table/table-actions';
 import { FilterSidebar } from '@/components/table/filter-sidebar';
-import { useTablePagination } from '@/hooks/use-table-pagination';
+import { exportToExcel } from '@/lib/export-excel';
+import { exportToPDF } from '@/lib/export-pdf';
 import { cn } from '@/lib/utils';
 
 export interface Column<T> {
@@ -22,6 +24,7 @@ export interface Column<T> {
 export interface GenericTableProps<T extends { id: string }> {
     data: T[];
     columns: Column<T>[];
+    title: string;
     searchPlaceholder?: string;
     filterFields?: {
         key: string;
@@ -32,14 +35,48 @@ export interface GenericTableProps<T extends { id: string }> {
     onView?: (row: T) => void;
     onEdit?: (row: T) => void;
     onDelete?: (row: T) => void;
-    onCreate?: () => void;
-    onImport?: () => void;
+    onCreate?: (data: Partial<T>) => void;
+    onImport?: (data: T[]) => void;
     className?: string;
+    routeUrl?: string;
+}
+
+function parseQueryParams(search: string) {
+    const params = new URLSearchParams(search);
+    return {
+        page: parseInt(params.get('page') || '1'),
+        perPage: parseInt(params.get('per_page') || '25'),
+        search: params.get('search') || '',
+        filters: Object.fromEntries(
+            Array.from(params.entries()).filter(
+                ([key]) => !['page', 'per_page', 'search'].includes(key),
+            ),
+        ),
+    };
+}
+
+function buildQueryString(params: {
+    page?: number;
+    perPage?: number;
+    search?: string;
+    filters?: Record<string, string>;
+}) {
+    const paramsObj = new URLSearchParams();
+    if (params.page && params.page > 1)
+        paramsObj.set('page', String(params.page));
+    if (params.perPage && params.perPage !== 25)
+        paramsObj.set('per_page', String(params.perPage));
+    if (params.search) paramsObj.set('search', params.search);
+    Object.entries(params.filters || {}).forEach(([key, value]) => {
+        if (value) paramsObj.set(key, value);
+    });
+    return paramsObj.toString();
 }
 
 export function GenericTable<T extends { id: string }>({
     data,
     columns,
+    title,
     searchPlaceholder = 'Buscar...',
     filterFields = [],
     onView,
@@ -48,39 +85,152 @@ export function GenericTable<T extends { id: string }>({
     onCreate,
     onImport,
     className,
+    routeUrl,
 }: GenericTableProps<T>) {
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const [perPage, setPerPage] = React.useState(25);
+    const [filters, setFilters] = React.useState<Record<string, string>>({});
 
-    const { pagination, goToPage } = useTablePagination({ total: data.length });
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = parseQueryParams(window.location.search);
+            setSearch(params.search);
+            setCurrentPage(params.page);
+            setPerPage(params.perPage);
+            setFilters(params.filters);
+        }
+    }, []);
+
+    const updateUrl = React.useCallback(
+        (opts: {
+            page?: number;
+            perPage?: number;
+            search?: string;
+            filters?: Record<string, string>;
+        }) => {
+            const newPage = opts.page ?? currentPage;
+            const newPerPage = opts.perPage ?? perPage;
+            const newSearch = opts.search ?? search;
+            const newFilters = opts.filters ?? filters;
+
+            const queryString = buildQueryString({
+                page: newPage,
+                perPage: newPerPage,
+                search: newSearch,
+                filters: newFilters,
+            });
+
+            const url = routeUrl
+                ? `${routeUrl}${queryString ? `?${queryString}` : ''}`
+                : queryString
+                  ? `?${queryString}`
+                  : '/dashboard';
+
+            router.get(url, {}, { replace: true, preserveState: true });
+        },
+        [currentPage, perPage, search, filters, routeUrl],
+    );
+
+    const handleSearchChange = (value: string) => {
+        setSearch(value);
+        updateUrl({ search: value, page: 1 });
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        updateUrl({ page });
+    };
+
+    const handleFilterChange = (newFilters: Record<string, string>) => {
+        setFilters(newFilters);
+        updateUrl({ filters: newFilters, page: 1 });
+    };
+
+    const handleClearFilters = () => {
+        setFilters({});
+        updateUrl({ filters: {}, page: 1 });
+    };
 
     const filteredData = React.useMemo(() => {
-        if (!search || search.trim() === '') return data;
-        const normalizedSearch = search.toLowerCase().trim();
-        return data.filter((item: T) =>
-            Object.values(item).some((val) =>
-                String(val).toLowerCase().includes(normalizedSearch),
-            ),
-        );
-    }, [data, search]);
+        let result = data;
+
+        if (search) {
+            const normalizedSearch = search.toLowerCase().trim();
+            result = result.filter((item) =>
+                Object.values(item).some((val) =>
+                    String(val).toLowerCase().includes(normalizedSearch),
+                ),
+            );
+        }
+
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value && value !== '') {
+                result = result.filter(
+                    (item) =>
+                        String((item as Record<string, unknown>)[key]) ===
+                        value,
+                );
+            }
+        });
+
+        return result;
+    }, [data, search, filters]);
 
     const paginatedData = React.useMemo(() => {
-        const start = (pagination.page - 1) * pagination.perPage;
-        return filteredData.slice(start, start + pagination.perPage);
-    }, [filteredData, pagination.page, pagination.perPage]);
+        const start = (currentPage - 1) * perPage;
+        return filteredData.slice(start, start + perPage);
+    }, [filteredData, currentPage, perPage]);
 
-    const totalPages = Math.ceil(filteredData.length / pagination.perPage);
+    const totalPages = Math.ceil(filteredData.length / perPage);
+
+    const handleExportExcel = async () => {
+        await exportToExcel(
+            filteredData as unknown as Record<string, unknown>[],
+            {
+                fileName: title,
+            },
+        );
+    };
+
+    const handleExportPDF = async () => {
+        const pdfColumns = columns.map((col) => ({
+            key: col.key,
+            header: col.header,
+        }));
+        await exportToPDF(
+            filteredData as unknown as Record<string, unknown>[],
+            pdfColumns as never,
+            { fileName: title, title },
+        );
+    };
+
+    const handleView = (row: T) => {
+        if (onView) onView(row);
+    };
+
+    const handleEdit = (row: T) => {
+        if (onEdit) onEdit(row);
+    };
+
+    const handleDelete = (row: T) => {
+        if (onDelete) onDelete(row);
+    };
 
     return (
         <div className={cn('space-y-4', className)}>
             <TableToolbar
                 searchValue={search}
-                onSearchChange={setSearch}
+                onSearchChange={handleSearchChange}
                 showCreate={!!onCreate}
-                onCreate={onCreate}
+                onCreate={() => {}}
                 showImport={!!onImport}
-                onImport={onImport}
+                onImport={() => {}}
+                onExportExcel={handleExportExcel}
+                onExportPDF={handleExportPDF}
                 onOpenFilters={() => setIsFilterOpen(true)}
+                hasActiveFilters={Object.values(filters).some((v) => v !== '')}
             />
 
             <DataTable
@@ -105,7 +255,7 @@ export function GenericTable<T extends { id: string }>({
                             <td colSpan={columns.length + 1}>
                                 <TableEmptyState
                                     searchTerm={search}
-                                    onClearSearch={() => setSearch('')}
+                                    onClearSearch={() => handleSearchChange('')}
                                 />
                             </td>
                         </tr>
@@ -144,17 +294,17 @@ export function GenericTable<T extends { id: string }>({
                                         <TableActions
                                             onView={
                                                 onView
-                                                    ? () => onView(row)
+                                                    ? () => handleView(row)
                                                     : undefined
                                             }
                                             onEdit={
                                                 onEdit
-                                                    ? () => onEdit(row)
+                                                    ? () => handleEdit(row)
                                                     : undefined
                                             }
                                             onDelete={
                                                 onDelete
-                                                    ? () => onDelete(row)
+                                                    ? () => handleDelete(row)
                                                     : undefined
                                             }
                                         />
@@ -168,15 +318,15 @@ export function GenericTable<T extends { id: string }>({
 
             <div className="flex items-center justify-between">
                 <PaginationInfo
-                    currentPage={pagination.page}
+                    currentPage={currentPage}
                     totalPages={totalPages}
                     totalItems={filteredData.length}
-                    itemsPerPage={pagination.perPage}
+                    itemsPerPage={perPage}
                 />
                 <Pagination
-                    currentPage={pagination.page}
+                    currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={goToPage}
+                    onPageChange={handlePageChange}
                 />
             </div>
 
@@ -185,6 +335,28 @@ export function GenericTable<T extends { id: string }>({
                     open={isFilterOpen}
                     onOpenChange={setIsFilterOpen}
                     fields={filterFields}
+                    activeFilters={Object.entries(filters).map(
+                        ([field, value]) => ({
+                            id: field,
+                            field,
+                            operator: 'eq' as const,
+                            value,
+                        }),
+                    )}
+                    onAddFilter={(filter) => {
+                        setFilters((prev) => ({
+                            ...prev,
+                            [filter.field]: String(filter.value),
+                        }));
+                    }}
+                    onRemoveFilter={(id) => {
+                        setFilters((prev) => {
+                            const next = { ...prev };
+                            delete next[id];
+                            return next;
+                        });
+                    }}
+                    onClearFilters={handleClearFilters}
                 />
             )}
         </div>

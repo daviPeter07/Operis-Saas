@@ -16,6 +16,11 @@ export function SalesModule() {
     ];
 
     return (
-        <GenericTable data={mockSales} columns={columns} onCreate={() => {}} />
+        <GenericTable
+            data={mockSales}
+            columns={columns}
+            title="Vendas"
+            onCreate={() => {}}
+        />
     );
 }

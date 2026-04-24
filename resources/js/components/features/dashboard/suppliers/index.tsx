@@ -15,6 +15,7 @@ export function SuppliersModule() {
         <GenericTable
             data={mockSuppliers}
             columns={columns}
+            title="Fornecedores"
             onCreate={() => {}}
         />
     );
