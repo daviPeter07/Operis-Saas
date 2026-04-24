@@ -1,21 +1,33 @@
-import { EmptyState } from '../empty-state';
-import { Warehouse } from 'lucide-react';
+import { mockProducts } from '@/lib/mocks/mock-data';
+import type { Product } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
+import { formatQuantityWithUnit } from '@/lib/format';
 
-interface InventoryModuleProps {
-    onAdjustInventory?: () => void;
-}
+export function InventoryModule() {
+    const columns: Column<Product>[] = [
+        { key: 'name', header: 'Produto' },
+        { key: 'sku', header: 'Código' },
+        { key: 'category', header: 'Categoria' },
+        { key: 'brand', header: 'Marca' },
+        {
+            key: 'stock',
+            header: 'Estoque',
+            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
+        },
+        {
+            key: 'minStock',
+            header: 'Estoque Mínimo',
+            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
+        },
+    ];
 
-export function InventoryModule({ onAdjustInventory }: InventoryModuleProps) {
     return (
-        <EmptyState
-            icon={Warehouse}
-            title="Nenhum estoque ainda"
-            description="Comece adicionando estoque para acompanhar níveis."
-            action={
-                onAdjustInventory
-                    ? { label: 'Adicionar Estoque', onClick: onAdjustInventory }
-                    : undefined
-            }
+        <GenericTable
+            data={mockProducts}
+            columns={columns}
+            title="Estoque"
+            onCreate={() => {}}
         />
     );
 }

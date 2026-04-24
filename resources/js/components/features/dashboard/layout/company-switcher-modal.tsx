@@ -13,7 +13,10 @@ interface CompanySwitcherModalProps {
     onOpenChange: (open: boolean) => void;
 }
 
-export function CompanySwitcherModal({ open, onOpenChange }: CompanySwitcherModalProps) {
+export function CompanySwitcherModal({
+    open,
+    onOpenChange,
+}: CompanySwitcherModalProps) {
     const { companies, currentCompany, switchCompany } = useWorkspace();
 
     const handleSwitch = (companyId: string) => {
@@ -31,14 +34,22 @@ export function CompanySwitcherModal({ open, onOpenChange }: CompanySwitcherModa
                     {companies.map((company) => (
                         <Button
                             key={company.id}
-                            variant={company.id === currentCompany.id ? 'secondary' : 'ghost'}
+                            variant={
+                                company.id === currentCompany.id
+                                    ? 'secondary'
+                                    : 'ghost'
+                            }
                             className="h-auto justify-start rounded-xl px-4 py-3"
-                            style={company.id === currentCompany.id ? {
-                                boxShadow: `inset 0 0 0 1px ${company.primaryColor}`,
-                            } : undefined}
+                            style={
+                                company.id === currentCompany.id
+                                    ? {
+                                          boxShadow: `inset 0 0 0 1px ${company.primaryColor}`,
+                                      }
+                                    : undefined
+                            }
                             onClick={() => handleSwitch(company.id)}
                         >
-                            <div className="flex items-center gap-3 w-full">
+                            <div className="flex w-full items-center gap-3">
                                 <div
                                     className="flex h-10 w-10 items-center justify-center rounded-xl font-semibold text-white"
                                     style={{
@@ -48,7 +59,9 @@ export function CompanySwitcherModal({ open, onOpenChange }: CompanySwitcherModa
                                     {company.initials}
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <div className="font-medium">{company.name}</div>
+                                    <div className="font-medium">
+                                        {company.name}
+                                    </div>
                                     <div className="text-xs text-muted-foreground">
                                         {company.description}
                                     </div>
@@ -57,7 +70,10 @@ export function CompanySwitcherModal({ open, onOpenChange }: CompanySwitcherModa
                                     </div>
                                 </div>
                                 {company.id === currentCompany.id && (
-                                    <Check className="h-4 w-4" style={{ color: company.primaryColor }} />
+                                    <Check
+                                        className="h-4 w-4"
+                                        style={{ color: company.primaryColor }}
+                                    />
                                 )}
                             </div>
                         </Button>

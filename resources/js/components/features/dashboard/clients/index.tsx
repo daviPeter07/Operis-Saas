@@ -1,21 +1,46 @@
-import { EmptyState } from '../empty-state';
-import { Users } from 'lucide-react';
+import { mockClients } from '@/lib/mocks/mock-data';
+import type { Client } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
-interface ClientsModuleProps {
-    onAddClient?: () => void;
-}
+export function ClientsModule() {
+    const columns: Column<Client>[] = [
+        { key: 'name', header: 'Nome' },
+        { key: 'email', header: 'Email' },
+        { key: 'phone', header: 'Telefone' },
+        { key: 'document', header: 'Documento' },
+        { key: 'city', header: 'Cidade' },
+        { key: 'state', header: 'Estado' },
+    ];
 
-export function ClientsModule({ onAddClient }: ClientsModuleProps) {
+    const filterFields = [
+        { key: 'name', label: 'Nome', type: 'text' as const },
+        { key: 'email', label: 'Email', type: 'text' as const },
+        {
+            key: 'city',
+            label: 'Cidade',
+            type: 'select' as const,
+            options: [...new Set(mockClients.map((c) => c.city))]
+                .sort()
+                .map((v) => ({ value: v, label: v })),
+        },
+        {
+            key: 'state',
+            label: 'Estado',
+            type: 'select' as const,
+            options: [...new Set(mockClients.map((c) => c.state))]
+                .sort()
+                .map((v) => ({ value: v, label: v })),
+        },
+    ];
+
     return (
-        <EmptyState
-            icon={Users}
-            title="Nenhum cliente ainda"
-            description="Comece adicionando seu primeiro cliente para gerenciar relacionamentos."
-            action={
-                onAddClient
-                    ? { label: 'Adicionar Cliente', onClick: onAddClient }
-                    : undefined
-            }
+        <GenericTable
+            data={mockClients}
+            columns={columns}
+            title="Clientes"
+            filterFields={filterFields}
+            onCreate={() => {}}
         />
     );
 }

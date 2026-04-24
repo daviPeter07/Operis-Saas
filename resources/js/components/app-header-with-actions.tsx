@@ -1,17 +1,6 @@
-import { Breadcrumbs } from '@/components/breadcrumbs';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
     Plus,
     UserPlus,
-    Package,
     TrendingUp,
     ShoppingCart,
     Receipt,
@@ -20,6 +9,16 @@ import {
     Sun,
     Moon,
 } from 'lucide-react';
+import { Breadcrumbs } from '@/components/breadcrumbs';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
@@ -29,7 +28,6 @@ interface QuickActionsButtonProps {
 
 const quickActions = [
     { key: 'create-client', label: 'Adicionar Cliente', icon: UserPlus },
-    { key: 'create-product', label: 'Adicionar Produto', icon: Package },
     { key: 'create-sale', label: 'Adicionar Venda', icon: TrendingUp },
     { key: 'create-purchase', label: 'Adicionar Compra', icon: ShoppingCart },
     { key: 'create-expense', label: 'Adicionar Despesa', icon: Receipt },

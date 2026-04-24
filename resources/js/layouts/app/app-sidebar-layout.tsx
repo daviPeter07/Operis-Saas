@@ -4,9 +4,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { WorkspaceProvider } from '@/components/features/dashboard/workspace-context';
 import type { AppLayoutProps } from '@/types';
 
-export default function AppSidebarLayout({
-    children,
-}: AppLayoutProps) {
+export default function AppSidebarLayout({ children }: AppLayoutProps) {
     return (
         <WorkspaceProvider>
             <AppShell variant="sidebar">

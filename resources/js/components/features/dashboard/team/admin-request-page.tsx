@@ -8,16 +8,26 @@ export function AdminRequestPage() {
                 <ShieldAlert className="h-6 w-6" />
             </div>
 
-            <h2 className="text-xl font-semibold text-foreground">Solicitação para o admin</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+                Solicitação para o admin
+            </h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                A ação que você tentou executar exige aprovação administrativa. No MVP, esse fluxo é demonstrado como uma solicitação visual ao responsável da empresa.
+                A ação que você tentou executar exige aprovação administrativa.
+                No MVP, esse fluxo é demonstrado como uma solicitação visual ao
+                responsável da empresa.
             </p>
 
             <div className="mt-6 rounded-xl border border-border/70 bg-background/40 p-4 text-left">
-                <p className="text-sm font-medium text-foreground">Próximos passos</p>
+                <p className="text-sm font-medium text-foreground">
+                    Próximos passos
+                </p>
                 <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    <li>1. Solicite a alteração ao administrador da empresa.</li>
-                    <li>2. Aguarde a liberação do acesso ou a execução da ação.</li>
+                    <li>
+                        1. Solicite a alteração ao administrador da empresa.
+                    </li>
+                    <li>
+                        2. Aguarde a liberação do acesso ou a execução da ação.
+                    </li>
                     <li>3. Retorne à equipe após a aprovação.</li>
                 </ul>
             </div>

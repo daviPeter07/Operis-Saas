@@ -5,7 +5,6 @@ export type WorkspaceModuleKey =
     | 'clients'
     | 'sales'
     | 'suppliers'
-    | 'products'
     | 'categories'
     | 'brands'
     | 'inventory'
@@ -38,7 +37,6 @@ export type WorkspaceModule = {
 
 export type WorkspaceQuickActionKey =
     | 'create-client'
-    | 'create-product'
     | 'create-sale'
     | 'create-purchase'
     | 'create-expense'

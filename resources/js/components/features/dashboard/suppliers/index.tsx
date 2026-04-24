@@ -1,21 +1,46 @@
-import { EmptyState } from '../empty-state';
-import { Truck } from 'lucide-react';
+import { mockSuppliers } from '@/lib/mocks/mock-data';
+import type { Supplier } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
-interface SuppliersModuleProps {
-    onAddSupplier?: () => void;
-}
+export function SuppliersModule() {
+    const columns: Column<Supplier>[] = [
+        { key: 'name', header: 'Nome' },
+        { key: 'email', header: 'Email' },
+        { key: 'phone', header: 'Telefone' },
+        { key: 'document', header: 'Documento' },
+        { key: 'city', header: 'Cidade' },
+        { key: 'state', header: 'Estado' },
+    ];
 
-export function SuppliersModule({ onAddSupplier }: SuppliersModuleProps) {
+    const filterFields = [
+        { key: 'name', label: 'Nome', type: 'text' as const },
+        { key: 'email', label: 'Email', type: 'text' as const },
+        {
+            key: 'city',
+            label: 'Cidade',
+            type: 'select' as const,
+            options: [...new Set(mockSuppliers.map((s) => s.city))]
+                .sort()
+                .map((v) => ({ value: v, label: v })),
+        },
+        {
+            key: 'state',
+            label: 'Estado',
+            type: 'select' as const,
+            options: [...new Set(mockSuppliers.map((s) => s.state))]
+                .sort()
+                .map((v) => ({ value: v, label: v })),
+        },
+    ];
+
     return (
-        <EmptyState
-            icon={Truck}
-            title="Nenhum fornecedor ainda"
-            description="Comece adicionando seu primeiro fornecedor para gerenciar compras."
-            action={
-                onAddSupplier
-                    ? { label: 'Adicionar Fornecedor', onClick: onAddSupplier }
-                    : undefined
-            }
+        <GenericTable
+            data={mockSuppliers}
+            columns={columns}
+            title="Fornecedores"
+            filterFields={filterFields}
+            onCreate={() => {}}
         />
     );
 }

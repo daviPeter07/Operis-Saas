@@ -1,17 +1,17 @@
 import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import AppLayout from '@/layouts/app-layout';
+import { ChartsPanel } from '@/components/features/dashboard/overview/charts-panel';
+import { MetricsGrid } from '@/components/features/dashboard/overview/metrics-grid';
+import { PeriodFilter } from '@/components/features/dashboard/overview/period-filter';
+import type {
+    Period,
+    CustomRange,
+} from '@/components/features/dashboard/overview/period-filter';
+import { RecentActivity } from '@/components/features/dashboard/overview/recent-activity';
+import { ViewSwitcher } from '@/components/features/dashboard/overview/view-switcher';
 import { PageContent } from '@/components/features/dashboard/page-content';
 import { PageHeader } from '@/components/features/dashboard/page-header';
-import { ViewSwitcher } from '@/components/features/dashboard/overview/view-switcher';
-import {
-    CustomRange,
-    PeriodFilter,
-    type Period,
-} from '@/components/features/dashboard/overview/period-filter';
-import { MetricsGrid } from '@/components/features/dashboard/overview/metrics-grid';
-import { ChartsPanel } from '@/components/features/dashboard/overview/charts-panel';
-import { RecentActivity } from '@/components/features/dashboard/overview/recent-activity';
+import AppLayout from '@/layouts/app-layout';
 import {
     alerts,
     getOverviewCharts,
@@ -49,10 +49,16 @@ export default function DashboardPage() {
                             <PeriodFilter
                                 period={period}
                                 customRange={customRange}
-                                onPeriodChange={(nextPeriod, nextCustomRange) => {
+                                onPeriodChange={(
+                                    nextPeriod,
+                                    nextCustomRange,
+                                ) => {
                                     setPeriod(nextPeriod);
 
-                                    if (nextPeriod === 'custom' && nextCustomRange) {
+                                    if (
+                                        nextPeriod === 'custom' &&
+                                        nextCustomRange
+                                    ) {
                                         setCustomRange(nextCustomRange);
                                     }
                                 }}

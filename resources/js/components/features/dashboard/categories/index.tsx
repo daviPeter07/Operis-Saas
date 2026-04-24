@@ -1,21 +1,20 @@
-import { EmptyState } from '../empty-state';
-import { Tags } from 'lucide-react';
+import { mockCategories } from '@/lib/mocks/mock-data';
+import type { Category } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
-interface CategoriesModuleProps {
-    onAddCategory?: () => void;
-}
+export function CategoriesModule() {
+    const columns: Column<Category>[] = [
+        { key: 'name', header: 'Nome' },
+        { key: 'description', header: 'Descrição' },
+    ];
 
-export function CategoriesModule({ onAddCategory }: CategoriesModuleProps) {
     return (
-        <EmptyState
-            icon={Tags}
-            title="Nenhuma categoria ainda"
-            description="Comece adicionando sua primeira categoria para organizar produtos."
-            action={
-                onAddCategory
-                    ? { label: 'Adicionar Categoria', onClick: onAddCategory }
-                    : undefined
-            }
+        <GenericTable
+            data={mockCategories}
+            columns={columns}
+            title="Categorias"
+            onCreate={() => {}}
         />
     );
 }

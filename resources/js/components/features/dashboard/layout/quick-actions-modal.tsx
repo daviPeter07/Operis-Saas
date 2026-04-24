@@ -15,14 +15,16 @@ interface QuickActionsModalProps {
 
 const actionIcons: Record<string, typeof Plus> = {
     'create-client': Plus,
-    'create-product': Plus,
     'create-sale': Plus,
     'create-purchase': Plus,
     'create-expense': Plus,
     'create-brand': Plus,
 };
 
-export function QuickActionsModal({ open, onOpenChange }: QuickActionsModalProps) {
+export function QuickActionsModal({
+    open,
+    onOpenChange,
+}: QuickActionsModalProps) {
     const { quickActions } = useWorkspace();
 
     return (
@@ -39,14 +41,16 @@ export function QuickActionsModal({ open, onOpenChange }: QuickActionsModalProps
                             <Button
                                 key={action.key}
                                 variant="outline"
-                                className="h-auto py-4 flex flex-col items-center gap-2"
+                                className="flex h-auto flex-col items-center gap-2 py-4"
                                 onClick={() => {
                                     console.log('Action:', action.key);
                                     onOpenChange(false);
                                 }}
                             >
-                                <Icon className="w-5 h-5" />
-                                <span className="text-sm font-medium">{action.label}</span>
+                                <Icon className="h-5 w-5" />
+                                <span className="text-sm font-medium">
+                                    {action.label}
+                                </span>
                             </Button>
                         );
                     })}

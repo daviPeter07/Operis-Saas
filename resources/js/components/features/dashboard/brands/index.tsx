@@ -1,21 +1,20 @@
-import { EmptyState } from '../empty-state';
-import { Award } from 'lucide-react';
+import { mockBrands } from '@/lib/mocks/mock-data';
+import type { Brand } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
-interface BrandsModuleProps {
-    onAddBrand?: () => void;
-}
+export function BrandsModule() {
+    const columns: Column<Brand>[] = [
+        { key: 'name', header: 'Nome' },
+        { key: 'description', header: 'Descrição' },
+    ];
 
-export function BrandsModule({ onAddBrand }: BrandsModuleProps) {
     return (
-        <EmptyState
-            icon={Award}
-            title="Nenhuma marca ainda"
-            description="Comece adicionando sua primeira marca para organizar produtos."
-            action={
-                onAddBrand
-                    ? { label: 'Adicionar Marca', onClick: onAddBrand }
-                    : undefined
-            }
+        <GenericTable
+            data={mockBrands}
+            columns={columns}
+            title="Marcas"
+            onCreate={() => {}}
         />
     );
 }
