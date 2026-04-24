@@ -14,6 +14,7 @@ import {
     Save,
     ChevronDown,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useWorkspace } from '@/components/features/dashboard/workspace-context';
 import {
     Button,
@@ -30,6 +31,9 @@ import { toast } from 'sonner';
 
 export function SettingsModule() {
     const { canAccessSettings, currentCompany } = useWorkspace();
+    const [primaryColor, setPrimaryColor] = useState(
+        currentCompany.primaryColor || '#f97316',
+    );
 
     if (!canAccessSettings) {
         return (
@@ -263,34 +267,19 @@ export function SettingsModule() {
                                 Cor Primária
                             </Label>
                             <div className="flex items-center gap-3">
-                                <div
-                                    className="h-10 w-10 rounded-lg border"
-                                    style={{
-                                        backgroundColor:
-                                            currentCompany.primaryColor,
-                                    }}
+                                <input
+                                    type="color"
+                                    value={primaryColor}
+                                    onChange={(e) => setPrimaryColor(e.target.value)}
+                                    className="h-10 w-10 cursor-pointer rounded-lg border-0 p-0"
                                 />
-                                <Select
-                                    defaultValue={currentCompany.primaryColor}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="#f97316">
-                                            Laranja
-                                        </SelectItem>
-                                        <SelectItem value="#3b82f6">
-                                            Azul
-                                        </SelectItem>
-                                        <SelectItem value="#10b981">
-                                            Verde
-                                        </SelectItem>
-                                        <SelectItem value="#8b5cf6">
-                                            Roxo
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Input
+                                    type="text"
+                                    value={primaryColor}
+                                    onChange={(e) => setPrimaryColor(e.target.value)}
+                                    placeholder="#f97316"
+                                    className="font-mono uppercase"
+                                />
                             </div>
                         </div>
                     </div>

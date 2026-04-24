@@ -307,7 +307,9 @@ export function GenericTable<T extends { id: string }>({
 
         Object.entries(filters).forEach(([key, value]) => {
             if (value && value !== '') {
-                const field = activeFilterFields.find((item) => item.key === key);
+                const field = activeFilterFields.find(
+                    (item) => item.key === key,
+                );
                 const operator =
                     filterOperators[key] ||
                     (field?.type === 'text' ? 'contains' : 'eq');
@@ -522,11 +524,11 @@ export function GenericTable<T extends { id: string }>({
                                     clickableRow && onRowClick
                                         ? () => onRowClick(row)
                                         : clickableRow && onEdit
-                                        ? () => onEdit(row)
-                                        : undefined
+                                          ? () => onEdit(row)
+                                          : undefined
                                 }
                                 className={
-                                    (clickableRow && (onRowClick || onEdit))
+                                    clickableRow && (onRowClick || onEdit)
                                         ? 'cursor-pointer'
                                         : undefined
                                 }
