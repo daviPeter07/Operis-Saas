@@ -20,5 +20,17 @@ Route::middleware(['auth'])->group(function () {
     Route::inertia('dashboard/accounts-payable', 'dashboard/accounts-payable')->name('dashboard.accounts-payable');
     Route::inertia('dashboard/team', 'dashboard/team')->name('dashboard.team');
     Route::inertia('dashboard/reports', 'dashboard/reports')->name('dashboard.reports');
+    Route::inertia('dashboard/reports/vendas', 'dashboard/reports/vendas')->name('dashboard.reports.vendas');
+    Route::inertia('dashboard/reports/produtos-mais-vendidos', 'dashboard/reports/produtos-mais-vendidos')->name('dashboard.reports.produtosmaisvendidos');
+    Route::inertia('dashboard/reports/vendas-categoria', 'dashboard/reports/vendas-categoria')->name('dashboard.reports.vendascategoria');
+    Route::inertia('dashboard/reports/vendas-marca', 'dashboard/reports/vendas-marca')->name('dashboard.reports.vendasmarca');
+    Route::inertia('dashboard/reports/estoque-atual', 'dashboard/reports/estoque-atual')->name('dashboard.reports.estoqueatual');
+    Route::inertia('dashboard/reports/estoque-marca', 'dashboard/reports/estoque-marca')->name('dashboard.reports.estoquemarca');
+    Route::inertia('dashboard/reports/proximos-vencer', 'dashboard/reports/proximos-vencer')->name('dashboard.reports.proximosvencer');
+    Route::inertia('dashboard/reports/perdas', 'dashboard/reports/perdas')->name('dashboard.reports.perdas');
+    Route::inertia('dashboard/reports/inadimplencia', 'dashboard/reports/inadimplencia')->name('dashboard.reports.inadimplencia');
+    Route::inertia('dashboard/reports/pagamentos-metodo', 'dashboard/reports/pagamentos-metodo')->name('dashboard.reports.pagamentosmetodo');
+    Route::inertia('dashboard/reports/maiores-compradores', 'dashboard/reports/maiores-compradores')->name('dashboard.reports.maiorescompradores');
+    Route::inertia('dashboard/reports/clientes-cidade', 'dashboard/reports/clientes-cidade')->name('dashboard.reports.clientescidade');
     Route::inertia('dashboard/settings', 'dashboard/settings')->name('dashboard.settings');
 });
