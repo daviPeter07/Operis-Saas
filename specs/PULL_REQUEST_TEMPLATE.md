@@ -1,20 +1,18 @@
-## 📌 Resumo
+## Resumo
 
 <!--
-Explique em 3-6 linhas o que este PR faz e por que ele existe.
-Foque no problema resolvido e no resultado esperado para o usuário/negócio.
+Descreva objetivamente o que este PR altera e qual problema ele resolve.
+Mantenha o texto curto e direto.
 -->
 
-## 🎯 Objetivo de negócio
+## Objetivo de negócio
 
 <!--
-Qual dor/objetivo este PR atende?
-Exemplo: reduzir erros no checkout, acelerar cadastro, melhorar confiabilidade.
+Explique qual valor de negócio esta mudança entrega.
+Exemplos: reduzir atrito, melhorar confiabilidade, acelerar uma operação, corrigir um fluxo crítico.
 -->
 
-## 🧩 Tipo de mudança
-
-Marque tudo que se aplica:
+## Tipo de mudança
 
 - [ ] Feature
 - [ ] Bugfix
@@ -24,9 +22,9 @@ Marque tudo que se aplica:
 - [ ] UI/UX
 - [ ] Testes
 - [ ] Documentação
-- [ ] Infra/DevEx
+- [ ] Infraestrutura / DevEx
 
-## 🔎 Escopo
+## Escopo
 
 ### Incluído neste PR
 
@@ -39,48 +37,49 @@ Marque tudo que se aplica:
 -
 -
 
-## 🧠 Contexto técnico
+## Contexto técnico
 
 <!--
-Liste decisões importantes, trade-offs e pontos de arquitetura.
-Inclua motivação para escolhas não óbvias.
+Registre decisões importantes, trade-offs, limitações e qualquer detalhe de arquitetura que ajude na revisão.
 -->
 
 -
 -
 
-## 🔗 Issue / Spec / Referências
+## Referências
 
 - Issue:
 - Spec:
-- Design (Figma, etc.):
-- Outros links relevantes:
+- Design:
+- Outros links:
 
-## 🖼️ Evidências visuais (quando aplicável)
+## Evidências visuais
 
 <!--
-Adicione screenshots/GIFs antes/depois para mudanças visuais.
+Use esta seção para mudanças visuais, quando aplicável.
+Adicione imagens, GIFs ou anotações de antes e depois.
 -->
 
 ### Antes
 
 ### Depois
 
-## 🧪 Como foi testado
+## Validação
 
 ### Testes automatizados executados
 
 <!--
 Liste os comandos executados e o resultado.
-Exemplo:
-- php artisan test --compact
-- pnpm exec tsc --noEmit
+Exemplos:
+- pnpm run types:check
+- pnpm run build
+- vendor/bin/pint --dirty --format agent
 -->
 
 - [ ] Testes automatizados executados
 - [ ] Todos passaram localmente
 
-Comandos:
+Comandos executados:
 
 ```bash
 # cole aqui os comandos executados
@@ -89,41 +88,41 @@ Comandos:
 Resultado resumido:
 
 <!--
-Exemplo: 24 passed, 0 failed
+Exemplo: types check passou, build passou, Pint passou.
 -->
 
 ### Testes manuais executados
 
 <!--
-Descreva passos objetivos para reproduzir e validar.
+Descreva os passos usados para validar o comportamento na interface.
 -->
 
 1.
 2.
 3.
 
-## ✅ Checklist de qualidade
+## Checklist de qualidade
 
-- [ ] Código segue padrões do projeto
+- [ ] Código segue os padrões do projeto
 - [ ] Sem impacto colateral conhecido
-- [ ] Casos de erro/edge cases considerados
+- [ ] Casos de erro e edge cases considerados
 - [ ] Logs e mensagens de erro adequados
 - [ ] Nomes, validações e tratamento de erros revisados
-- [ ] Sem segredos/senhas/chaves expostos
+- [ ] Sem segredos, senhas ou chaves expostos
 
-## 🗃️ Banco de dados
+## Banco de dados
 
 - [ ] Sem alteração de banco
 - [ ] Com migration
-- [ ] Com seed/update de dados
+- [ ] Com seed ou atualização de dados
 - [ ] Mudança retrocompatível
 
-Detalhes (se aplicável):
+Detalhes, se aplicável:
 
 -
 -
 
-## ⚠️ Riscos e impacto
+## Riscos e impacto
 
 ### Risco da mudança
 
@@ -139,46 +138,46 @@ Detalhes (se aplicável):
 ### Plano de rollback
 
 <!--
-Descreva como reverter com segurança caso algo dê errado.
+Explique como reverter com segurança caso algo dê errado.
 -->
 
 -
 -
 
-## 🚀 Deploy e operação
+## Deploy e operação
 
 - [ ] Não requer ação especial
 - [ ] Requer ordem específica de deploy
-- [ ] Requer configuração/env vars
+- [ ] Requer configuração ou variáveis de ambiente
 - [ ] Requer ativação por feature flag
 
-Passos de deploy (se aplicável):
+Passos de deploy, se aplicável:
 
 1.
 2.
 3.
 
-## 📚 Documentação
+## Documentação
 
 - [ ] Não necessária
 - [ ] Atualizada neste PR
 - [ ] Será atualizada em PR separado
 
-Links/documentos atualizados:
+Links ou documentos atualizados:
 
 -
 
-## 👀 Pontos de atenção para revisão
+## Pontos de atenção para revisão
 
 <!--
-Indique onde o reviewer deve focar para revisar melhor.
+Indique o que o reviewer deve observar com mais atenção.
 -->
 
 -
 -
 
-## 📝 Observações finais
+## Observações finais
 
 <!--
-Informações adicionais que ajudem o time a aprovar e operar esta mudança com segurança.
+Inclua qualquer informação adicional relevante para aprovação, validação ou operação desta mudança.
 -->
