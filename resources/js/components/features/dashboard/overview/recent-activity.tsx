@@ -29,7 +29,7 @@ const colorMap = {
 
 export function RecentActivity({ activities }: RecentActivityProps) {
     return (
-        <div className="bg-card rounded-xl border">
+        <div className="rounded-xl border bg-card">
             <div className="p-6 pb-4">
                 <h3 className="font-semibold">Últimas Atividades</h3>
             </div>
@@ -43,20 +43,26 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                             key={activity.id}
                             className="flex items-center gap-4 rounded-xl border border-border/70 px-4 py-4 transition-colors hover:bg-muted/30"
                         >
-                            <div className={`p-2 rounded-lg ${colorClass}`}>
+                            <div className={`rounded-lg p-2 ${colorClass}`}>
                                 <Icon className="h-4 w-4" />
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 text-sm">
-                                    <p className="truncate font-medium">{activity.description}</p>
+                                    <p className="truncate font-medium">
+                                        {activity.description}
+                                    </p>
                                     <span className="truncate text-xs text-muted-foreground">
                                         por {activity.responsible}
                                     </span>
                                 </div>
-                                <p className="text-xs text-muted-foreground">{activity.time}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {activity.time}
+                                </p>
                             </div>
                             {activity.amount && (
-                                <span className="text-sm font-semibold text-accent">{activity.amount}</span>
+                                <span className="text-sm font-semibold text-accent">
+                                    {activity.amount}
+                                </span>
                             )}
                         </div>
                     );

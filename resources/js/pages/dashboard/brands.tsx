@@ -4,7 +4,9 @@ import { BrandsModule } from '@/components/features/dashboard/brands';
 
 export default function BrandsPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Marcas', href: '/dashboard/brands' }]}>
+        <AppLayout
+            breadcrumbs={[{ title: 'Marcas', href: '/dashboard/brands' }]}
+        >
             <PageContent>
                 <BrandsModule />
             </PageContent>

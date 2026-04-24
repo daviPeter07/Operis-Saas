@@ -50,9 +50,15 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
     const range = Math.max(maxValue - minValue, 1);
 
     const points = chart.series.map((point, index) => {
-        const x = paddingX + (index * (width - paddingX * 2)) / Math.max(chart.series.length - 1, 1);
+        const x =
+            paddingX +
+            (index * (width - paddingX * 2)) /
+                Math.max(chart.series.length - 1, 1);
         const normalized = (point.value - minValue) / range;
-        const y = height - paddingBottom - normalized * (height - paddingTop - paddingBottom);
+        const y =
+            height -
+            paddingBottom -
+            normalized * (height - paddingTop - paddingBottom);
 
         return { ...point, x, y };
     });
@@ -61,7 +67,10 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
         const previousX = points[index - 1]?.x ?? paddingX;
         const nextX = points[index + 1]?.x ?? width - paddingX;
         const bandStart = index === 0 ? paddingX : (previousX + point.x) / 2;
-        const bandEnd = index === points.length - 1 ? width - paddingX : (point.x + nextX) / 2;
+        const bandEnd =
+            index === points.length - 1
+                ? width - paddingX
+                : (point.x + nextX) / 2;
 
         return {
             ...point,
@@ -81,11 +90,17 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
         <div className="rounded-2xl border bg-card p-6">
             <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
-                    <h3 className="text-base font-semibold text-foreground">{chart.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{chart.description}</p>
+                    <h3 className="text-base font-semibold text-foreground">
+                        {chart.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        {chart.description}
+                    </p>
                 </div>
                 <div className="text-right">
-                    <p className="text-2xl font-bold text-foreground">{chart.summary}</p>
+                    <p className="text-2xl font-bold text-foreground">
+                        {chart.summary}
+                    </p>
                 </div>
             </div>
 
@@ -97,117 +112,162 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
                 </div>
 
                 <div className="min-w-0 overflow-x-auto">
-                <div style={{ minWidth: `${width}px` }}>
-                    <div className="relative">
-                        <svg viewBox={`0 0 ${width} ${height}`} className="h-[320px] w-full" aria-hidden="true">
-                            {Array.from({ length: gridLines + 1 }).map((_, index) => {
-                                const y = paddingTop + (index * (height - paddingTop - paddingBottom)) / gridLines;
+                    <div style={{ minWidth: `${width}px` }}>
+                        <div className="relative">
+                            <svg
+                                viewBox={`0 0 ${width} ${height}`}
+                                className="h-[320px] w-full"
+                                aria-hidden="true"
+                            >
+                                {Array.from({ length: gridLines + 1 }).map(
+                                    (_, index) => {
+                                        const y =
+                                            paddingTop +
+                                            (index *
+                                                (height -
+                                                    paddingTop -
+                                                    paddingBottom)) /
+                                                gridLines;
 
-                                return (
-                                    <line
-                                        key={index}
-                                        x1={paddingX}
-                                        y1={y}
-                                        x2={width - paddingX}
-                                        y2={y}
-                                        stroke="currentColor"
-                                        strokeDasharray="4 6"
-                                        className="text-border/70"
+                                        return (
+                                            <line
+                                                key={index}
+                                                x1={paddingX}
+                                                y1={y}
+                                                x2={width - paddingX}
+                                                y2={y}
+                                                stroke="currentColor"
+                                                strokeDasharray="4 6"
+                                                className="text-border/70"
+                                            />
+                                        );
+                                    },
+                                )}
+
+                                {hoveredPoint ? (
+                                    <rect
+                                        x={hoveredPoint.bandStart}
+                                        y={paddingTop}
+                                        width={hoveredPoint.bandWidth}
+                                        height={
+                                            height - paddingTop - paddingBottom
+                                        }
+                                        rx="14"
+                                        fill="currentColor"
+                                        className="text-orange-500/10"
                                     />
-                                );
-                            })}
+                                ) : null}
+
+                                <path
+                                    d={linePath}
+                                    fill="none"
+                                    stroke={chart.color}
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+
+                                {hoverBands.map((point) => (
+                                    <g key={point.date}>
+                                        <rect
+                                            x={point.bandStart}
+                                            y={paddingTop}
+                                            width={point.bandWidth}
+                                            height={
+                                                height -
+                                                paddingTop -
+                                                paddingBottom
+                                            }
+                                            fill="transparent"
+                                            onMouseEnter={() =>
+                                                setHoveredPoint({
+                                                    x: point.x,
+                                                    y: point.y,
+                                                    label: point.label,
+                                                    value: point.value,
+                                                    bandStart: point.bandStart,
+                                                    bandWidth: point.bandWidth,
+                                                })
+                                            }
+                                            onMouseLeave={() =>
+                                                setHoveredPoint(null)
+                                            }
+                                        />
+                                        <circle
+                                            cx={point.x}
+                                            cy={point.y}
+                                            r={
+                                                hoveredPoint?.label ===
+                                                point.label
+                                                    ? '5'
+                                                    : '3.5'
+                                            }
+                                            fill="transparent"
+                                        />
+                                        <circle
+                                            cx={point.x}
+                                            cy={point.y}
+                                            r={
+                                                hoveredPoint?.label ===
+                                                point.label
+                                                    ? '5'
+                                                    : '3.5'
+                                            }
+                                            fill={chart.color}
+                                            onMouseEnter={() =>
+                                                setHoveredPoint({
+                                                    x: point.x,
+                                                    y: point.y,
+                                                    label: point.label,
+                                                    value: point.value,
+                                                    bandStart: point.bandStart,
+                                                    bandWidth: point.bandWidth,
+                                                })
+                                            }
+                                            onMouseLeave={() =>
+                                                setHoveredPoint(null)
+                                            }
+                                        />
+                                    </g>
+                                ))}
+                            </svg>
 
                             {hoveredPoint ? (
-                                <rect
-                                    x={hoveredPoint.bandStart}
-                                    y={paddingTop}
-                                    width={hoveredPoint.bandWidth}
-                                    height={height - paddingTop - paddingBottom}
-                                    rx="14"
-                                    fill="currentColor"
-                                    className="text-orange-500/10"
-                                />
+                                <div
+                                    className="pointer-events-none absolute rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-lg"
+                                    style={getTooltipStyle(
+                                        hoveredPoint,
+                                        width,
+                                        height,
+                                    )}
+                                >
+                                    <p className="font-semibold text-foreground">
+                                        {hoveredPoint.label}
+                                    </p>
+                                    <p className="mt-1 text-muted-foreground">
+                                        {formatCurrency(hoveredPoint.value)}
+                                    </p>
+                                </div>
                             ) : null}
+                        </div>
 
-                            <path
-                                d={linePath}
-                                fill="none"
-                                stroke={chart.color}
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-
-                            {hoverBands.map((point) => (
-                                <g key={point.date}>
-                                    <rect
-                                        x={point.bandStart}
-                                        y={paddingTop}
-                                        width={point.bandWidth}
-                                        height={height - paddingTop - paddingBottom}
-                                        fill="transparent"
-                                        onMouseEnter={() =>
-                                            setHoveredPoint({
-                                                x: point.x,
-                                                y: point.y,
-                                                label: point.label,
-                                                value: point.value,
-                                                bandStart: point.bandStart,
-                                                bandWidth: point.bandWidth,
-                                            })
-                                        }
-                                        onMouseLeave={() => setHoveredPoint(null)}
-                                    />
-                                    <circle
-                                        cx={point.x}
-                                        cy={point.y}
-                                        r={hoveredPoint?.label === point.label ? '5' : '3.5'}
-                                        fill="transparent"
-                                    />
-                                    <circle
-                                        cx={point.x}
-                                        cy={point.y}
-                                        r={hoveredPoint?.label === point.label ? '5' : '3.5'}
-                                        fill={chart.color}
-                                        onMouseEnter={() =>
-                                            setHoveredPoint({
-                                                x: point.x,
-                                                y: point.y,
-                                                label: point.label,
-                                                value: point.value,
-                                                bandStart: point.bandStart,
-                                                bandWidth: point.bandWidth,
-                                            })
-                                        }
-                                        onMouseLeave={() => setHoveredPoint(null)}
-                                    />
-                                </g>
+                        <div
+                            className="mt-3 flex"
+                            style={{ width: `${width}px` }}
+                        >
+                            {chart.series.map((point) => (
+                                <span
+                                    key={point.date}
+                                    className="text-center text-xs whitespace-nowrap text-muted-foreground"
+                                    style={{
+                                        width: `${width / chart.series.length}px`,
+                                    }}
+                                >
+                                    {point.label}
+                                </span>
                             ))}
-                        </svg>
-
-                        {hoveredPoint ? (
-                            <div
-                                className="pointer-events-none absolute rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-lg"
-                                style={getTooltipStyle(hoveredPoint, width, height)}
-                            >
-                                <p className="font-semibold text-foreground">{hoveredPoint.label}</p>
-                                <p className="mt-1 text-muted-foreground">{formatCurrency(hoveredPoint.value)}</p>
-                            </div>
-                        ) : null}
+                        </div>
                     </div>
-
-                    <div className="mt-3 flex" style={{ width: `${width}px` }}>
-                        {chart.series.map((point) => (
-                            <span
-                                key={point.date}
-                                className="text-center text-xs whitespace-nowrap text-muted-foreground"
-                                style={{ width: `${width / chart.series.length}px` }}
-                            >
-                                {point.label}
-                            </span>
-                        ))}
-                    </div>
-                </div>
                 </div>
             </div>
         </div>
@@ -231,17 +291,25 @@ function formatAxisValue(value: number): string {
 }
 
 function getTooltipStyle(
-    hoveredPoint: { x: number; y: number; bandStart: number; bandWidth: number },
+    hoveredPoint: {
+        x: number;
+        y: number;
+        bandStart: number;
+        bandWidth: number;
+    },
     width: number,
     height: number,
 ): React.CSSProperties {
-    const centerX = ((hoveredPoint.bandStart + hoveredPoint.bandWidth / 2) / width) * 100;
+    const centerX =
+        ((hoveredPoint.bandStart + hoveredPoint.bandWidth / 2) / width) * 100;
     const placeBelow = hoveredPoint.y < 72;
 
     return {
         left: `${centerX}%`,
         top: `${(hoveredPoint.y / height) * 100}%`,
-        transform: placeBelow ? 'translate(-50%, 14px)' : 'translate(-50%, -115%)',
+        transform: placeBelow
+            ? 'translate(-50%, 14px)'
+            : 'translate(-50%, -115%)',
     };
 }
 

@@ -26,14 +26,14 @@ export function DataTable<T extends { id: string | number }>({
 }: DataTableProps<T>) {
     if (data.length === 0) {
         return (
-            <div className="flex items-center justify-center h-32 text-muted-foreground">
+            <div className="flex h-32 items-center justify-center text-muted-foreground">
                 {emptyMessage}
             </div>
         );
     }
 
     return (
-        <div className="border rounded-lg">
+        <div className="rounded-lg border">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -46,7 +46,9 @@ export function DataTable<T extends { id: string | number }>({
                     {data.map((row) => (
                         <TableRow key={row.id}>
                             {columns.map((col) => (
-                                <TableCell key={col.key}>{col.render(row)}</TableCell>
+                                <TableCell key={col.key}>
+                                    {col.render(row)}
+                                </TableCell>
                             ))}
                         </TableRow>
                     ))}

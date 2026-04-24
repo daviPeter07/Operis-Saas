@@ -5,7 +5,9 @@ interface AccountsReceivableModuleProps {
     onAddInvoice?: () => void;
 }
 
-export function AccountsReceivableModule({ onAddInvoice }: AccountsReceivableModuleProps) {
+export function AccountsReceivableModule({
+    onAddInvoice,
+}: AccountsReceivableModuleProps) {
     return (
         <EmptyState
             icon={CreditCard}

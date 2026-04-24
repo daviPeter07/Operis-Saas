@@ -4,7 +4,11 @@ import { CategoriesModule } from '@/components/features/dashboard/categories';
 
 export default function CategoriesPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Categorias', href: '/dashboard/categories' }]}>
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Categorias', href: '/dashboard/categories' },
+            ]}
+        >
             <PageContent>
                 <CategoriesModule />
             </PageContent>

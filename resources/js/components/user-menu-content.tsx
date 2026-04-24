@@ -33,17 +33,17 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-<DropdownMenuItem variant="muted" asChild>
-                <Link
-                    className="w-full cursor-pointer"
-                    href={settings()}
-                    prefetch
-                    onClick={cleanup}
-                >
-                    <Settings className="mr-2" />
-                    Configurações
-                </Link>
-            </DropdownMenuItem>
+                <DropdownMenuItem variant="muted" asChild>
+                    <Link
+                        className="w-full cursor-pointer"
+                        href={settings()}
+                        prefetch
+                        onClick={cleanup}
+                    >
+                        <Settings className="mr-2" />
+                        Configurações
+                    </Link>
+                </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="muted" asChild>

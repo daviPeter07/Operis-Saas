@@ -48,7 +48,8 @@ const navItems = [
         href: '/dashboard/clients',
         icon: Users,
         module: 'clients',
-        description: 'Gerencie clientes e acompanhe o relacionamento comercial.',
+        description:
+            'Gerencie clientes e acompanhe o relacionamento comercial.',
     },
     {
         title: 'Vendas',
@@ -153,45 +154,58 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <div className="h-px mx-3 bg-linear-to-r from-transparent via-accent/50 to-transparent" />
+            <div className="mx-3 h-px bg-linear-to-r from-transparent via-accent/50 to-transparent" />
 
             <SidebarContent>
                 <TooltipProvider>
-                <nav className="flex flex-col gap-1 px-3 group-data-[collapsible=icon]:gap-0.5">
-                    {navigation.map((navigationItem) => {
-                        const item = navItems.find((navItem) => navItem.module === navigationItem.key);
+                    <nav className="flex flex-col gap-1 px-3 group-data-[collapsible=icon]:gap-0.5">
+                        {navigation.map((navigationItem) => {
+                            const item = navItems.find(
+                                (navItem) =>
+                                    navItem.module === navigationItem.key,
+                            );
 
-                        if (!item) {
-                            return null;
-                        }
+                            if (!item) {
+                                return null;
+                            }
 
-                        const isActive = item.href === location.pathname;
-                        const Icon = item.icon;
+                            const isActive = item.href === location.pathname;
+                            const Icon = item.icon;
 
-                        return (
-                            <Tooltip key={item.module}>
-                                <TooltipTrigger asChild>
-                                    <Link
-                                        href={item.href}
-                                        prefetch
-                                        className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 ${
-                                            isActive
-                                                ? 'bg-sidebar-accent text-accent shadow-[0_0_0_1px_hsl(var(--sidebar-border))]'
-                                                : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground hover:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)]'
-                                        } `}
+                            return (
+                                <Tooltip key={item.module}>
+                                    <TooltipTrigger asChild>
+                                        <Link
+                                            href={item.href}
+                                            prefetch
+                                            className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 ${
+                                                isActive
+                                                    ? 'bg-sidebar-accent text-accent shadow-[0_0_0_1px_hsl(var(--sidebar-border))]'
+                                                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground hover:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)]'
+                                            } `}
+                                        >
+                                            <Icon className="h-4 w-4 shrink-0" />
+                                            <span className="truncate group-data-[collapsible=icon]:hidden">
+                                                {item.title}
+                                            </span>
+                                        </Link>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="right"
+                                        align="center"
+                                        className="max-w-64 rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 text-sidebar-foreground shadow-xl"
                                     >
-                                        <Icon className="h-4 w-4 shrink-0" />
-                                        <span className="truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
-                                    </Link>
-                                </TooltipTrigger>
-                                <TooltipContent side="right" align="center" className="max-w-64 rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 text-sidebar-foreground shadow-xl">
-                                    <p className="text-sm font-semibold text-sidebar-foreground">{item.title}</p>
-                                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        );
-                    })}
-                </nav>
+                                        <p className="text-sm font-semibold text-sidebar-foreground">
+                                            {item.title}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                            {item.description}
+                                        </p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            );
+                        })}
+                    </nav>
                 </TooltipProvider>
             </SidebarContent>
 

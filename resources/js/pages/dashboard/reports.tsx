@@ -4,7 +4,9 @@ import { ReportsModule } from '@/components/features/dashboard/reports';
 
 export default function ReportsPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Relatórios', href: '/dashboard/reports' }]}>
+        <AppLayout
+            breadcrumbs={[{ title: 'Relatórios', href: '/dashboard/reports' }]}
+        >
             <PageContent>
                 <ReportsModule />
             </PageContent>

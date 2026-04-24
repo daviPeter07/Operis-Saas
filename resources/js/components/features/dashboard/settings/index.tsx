@@ -7,7 +7,7 @@ interface SettingsModuleProps {}
 export function SettingsModule() {
     const { canAccessSettings } = useWorkspace();
 
-    if (! canAccessSettings) {
+    if (!canAccessSettings) {
         return (
             <EmptyState
                 icon={Settings}

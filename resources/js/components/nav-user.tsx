@@ -45,13 +45,9 @@ export function NavUser() {
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg user-menu"
+                            className="user-menu w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
                             align="end"
-                            side={
-                                isMobile
-                                    ? 'bottom'
-                                    : 'right'
-                            }
+                            side={isMobile ? 'bottom' : 'right'}
                         >
                             <div className="flex items-center gap-2 px-2 py-1.5">
                                 <Building2 className="h-4 w-4 text-muted-foreground" />

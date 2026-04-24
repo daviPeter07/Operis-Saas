@@ -5,7 +5,9 @@ interface AccountsPayableModuleProps {
     onAddBill?: () => void;
 }
 
-export function AccountsPayableModule({ onAddBill }: AccountsPayableModuleProps) {
+export function AccountsPayableModule({
+    onAddBill,
+}: AccountsPayableModuleProps) {
     return (
         <EmptyState
             icon={Receipt}

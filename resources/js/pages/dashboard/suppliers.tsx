@@ -4,7 +4,11 @@ import { SuppliersModule } from '@/components/features/dashboard/suppliers';
 
 export default function SuppliersPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Fornecedores', href: '/dashboard/suppliers' }]}>
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Fornecedores', href: '/dashboard/suppliers' },
+            ]}
+        >
             <PageContent>
                 <SuppliersModule />
             </PageContent>

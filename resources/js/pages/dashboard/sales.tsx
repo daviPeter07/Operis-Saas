@@ -4,7 +4,9 @@ import { SalesModule } from '@/components/features/dashboard/sales';
 
 export default function SalesPage() {
     return (
-        <AppLayout breadcrumbs={[{ title: 'Vendas', href: '/dashboard/sales' }]}>
+        <AppLayout
+            breadcrumbs={[{ title: 'Vendas', href: '/dashboard/sales' }]}
+        >
             <PageContent>
                 <SalesModule />
             </PageContent>

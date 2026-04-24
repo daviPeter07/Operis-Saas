@@ -49,10 +49,16 @@ export default function DashboardPage() {
                             <PeriodFilter
                                 period={period}
                                 customRange={customRange}
-                                onPeriodChange={(nextPeriod, nextCustomRange) => {
+                                onPeriodChange={(
+                                    nextPeriod,
+                                    nextCustomRange,
+                                ) => {
                                     setPeriod(nextPeriod);
 
-                                    if (nextPeriod === 'custom' && nextCustomRange) {
+                                    if (
+                                        nextPeriod === 'custom' &&
+                                        nextCustomRange
+                                    ) {
                                         setCustomRange(nextCustomRange);
                                     }
                                 }}
