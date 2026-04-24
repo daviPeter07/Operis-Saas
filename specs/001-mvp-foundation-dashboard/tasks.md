@@ -139,16 +139,16 @@
 
 **Goal**: Workspace adapta por empresa e role ativa,team area e restrição de settings.
 
-**Status**: 🔄 PENDING
+**Status**: 🔄 PARTIALLY COMPLETE (4/5 tasks concluídas)
 
 **Independent Test**: Trocar empresa e verificar visibilidade correta sem novo login.
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] Implementar role-aware navigation em `workspace-context.tsx` (admin vs supervisor vs user)
-- [ ] T047 [P] [US3] Aplicar company branding em `app-logo.tsx` e `company-switcher-modal.tsx`
-- [ ] T048 [P] [US3] Criar team page content em `features/dashboard/team/team-page-content.tsx`
-- [ ] T049 [US3] Criar admin-request page em `features/dashboard/team/admin-request-page.tsx`
+- [x] T046 [US3] Implementar role-aware navigation em `workspace-context.tsx` (admin vs supervisor vs user)
+- [x] T047 [P] [US3] Aplicar company branding em `app-logo.tsx` e `company-switcher-modal.tsx`
+- [x] T048 [P] [US3] Criar team page content em `features/dashboard/team/team-page-content.tsx`
+- [x] T049 [US3] Criar admin-request page em `features/dashboard/team/admin-request-page.tsx`
 - [ ] T050 [US3] Atualizar routing em `routes/web.php` para refletir role-based access
 
 **Checkpoint**: Todas as stories funcionam independentemente.
@@ -157,10 +157,10 @@
 
 ## Phase 6: Polish & Validation
 
-**Status**: 🔄 PENDING
+**Status**: 🔄 PARTIALLY COMPLETE (build, types check e Pint ok; reviewer flow ainda pendente)
 
-- [ ] T051 [P] Rodar `npm run types:check` e `npm run build`
-- [ ] T052 Rodar `vendor/bin/pint --dirty --format agent`
+- [x] T051 [P] Rodar `npm run types:check` e `npm run build`
+- [x] T052 Rodar `vendor/bin/pint --dirty --format agent`
 - [ ] T053 Validar reviewer flow em `quickstart.md`
 
 ---
@@ -171,8 +171,8 @@
 - **Phase 2**: Depende de Phase 1 → ✅ COMPLETED
 - **Phase 3**: Depende de Phase 2 → 🔄 PENDING (dashboard overview)
 - **Phase 4**: Depende de Phase 2 → ✅ COMPLETED
-- **Phase 5**: Depende de Phase 2 → 🔄 PENDING (role-aware)
-- **Phase 6**: Validation final → 🔄 PENDING
+- **Phase 5**: Depende de Phase 2 → 🔄 PARTIALLY COMPLETE (role-aware quase concluída; routing ainda pendente)
+- **Phase 6**: Validation final → 🔄 PARTIALLY COMPLETE (build/types/Pint ok; reviewer flow pendente)
 
 ---
 
@@ -181,12 +181,12 @@
 - [x] EX1 Criar BypassAuth middleware para desenvolvimento (`app/Http/Middleware/BypassAuth.php`)
 - [x] EX2 Criar TestUserSeeder para usuário demo (`database/seeders/TestUserSeeder.php`)
 - [x] EX3 Criar UI components reutilizáveis:
-  - `page-header.tsx` - Header de página com título e ação
-  - `page-content.tsx` - Container com padding
-  - `page-filters.tsx` - Barra de filtros
-  - `stat-card.tsx` - Card de estatísticas
-  - `data-table.tsx` - Tabela genérica
-  - `empty-state.tsx` - Estado vazio
+    - `page-header.tsx` - Header de página com título e ação
+    - `page-content.tsx` - Container com padding
+    - `page-filters.tsx` - Barra de filtros
+    - `stat-card.tsx` - Card de estatísticas
+    - `data-table.tsx` - Tabela genérica
+    - `empty-state.tsx` - Estado vazio
 - [x] EX4 Criar Table component (`resources/js/components/ui/table.tsx`)
 - [x] EX5 Aplicar paleta de cores preto/laranja em `resources/css/app.css`
 - [x] EX6 Configurar rota "/" com landing page placeholder
