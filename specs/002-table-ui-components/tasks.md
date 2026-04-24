@@ -116,11 +116,11 @@
 
 **Independent Test**: Importar arquivo Excel/CSV e verificar dados na tabela
 
-- [ ] T034 [US3] Implementar ImportDialog em `resources/js/components/table/import-dialog.tsx`
-- [ ] T035 [US3] Adicionar input file aceite .xlsx, .xls, .csv
-- [ ] T036 [US3] Implementar preview dos dados antes de importar (xlsx parsing)
-- [ ] T037 [US3] Implementar merge dos dados importados com estado local
-- [ ] T038 [US3] Tratar erros de arquivo inválido com mensagem clara
+- [x] T034 ✅ [US3] Implementar ImportDialog em `resources/js/components/table/import-dialog.tsx`
+- [x] T035 ✅ [US3] Adicionar input file aceite .xlsx, .xls, .csv
+- [x] T036 ✅ [US3] Implementar preview dos dados antes de importar (xlsx parsing)
+- [x] T037 ✅ [US3] Implementar merge dos dados importados com estado local
+- [x] T038 ✅ [US3] Tratar erros de arquivo inválido com mensagem clara
 
 ---
 
@@ -128,10 +128,10 @@
 
 **Independent Test**: Exportar tabela para PDF/Excel e verificar arquivo
 
-- [ ] T039 [US4] Adicionar dropdown "Exportar" no TableToolbar
-- [ ] T040 [US4] Implementar exportação Excel via xlsx
-- [ ] T041 [US4] Implementar exportação PDF via jsPDF + autotable
-- [ ] T042 [US4] Manter formatação de colunas na exportação
+- [x] T039 ✅ [US4] Adicionar dropdown "Exportar" no TableToolbar (showExport prop com opções Excel/PDF)
+- [x] T040 ✅ [US4] Implementar exportação Excel via xlsx em `resources/js/lib/export-excel.ts`
+- [x] T041 ✅ [US4] Implementar exportação PDF via jsPDF + autotable em `resources/js/lib/export-pdf.ts`
+- [x] T042 ✅ [US4] Manter formatação de colunas na exportação
 
 ---
 
