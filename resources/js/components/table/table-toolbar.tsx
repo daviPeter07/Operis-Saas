@@ -60,11 +60,11 @@ export function TableToolbar({
     return (
         <div
             className={cn(
-                'flex flex-col gap-4 sm:flex-row sm:items-center',
+                'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between',
                 className,
             )}
         >
-            <div className="relative max-w-sm flex-1">
+            <div className="relative w-full max-w-sm sm:flex-1">
                 <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     type="search"
@@ -85,7 +85,7 @@ export function TableToolbar({
                 )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:ml-auto sm:flex-nowrap">
                 <Button
                     variant="outline"
                     size="sm"

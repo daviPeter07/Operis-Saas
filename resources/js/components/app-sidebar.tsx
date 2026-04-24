@@ -66,13 +66,6 @@ const navItems = [
         description: 'Organize fornecedores e histórico de abastecimento.',
     },
     {
-        title: 'Produtos',
-        href: '/dashboard/products',
-        icon: Package,
-        module: 'products',
-        description: 'Cadastre produtos e acompanhe o catálogo disponível.',
-    },
-    {
         title: 'Categorias',
         href: '/dashboard/categories',
         icon: Tags,

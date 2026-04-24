@@ -5,7 +5,6 @@ export function BrandsModule() {
     const columns: Column<Brand>[] = [
         { key: 'name', header: 'Nome' },
         { key: 'description', header: 'Descrição' },
-        { key: 'productsCount', header: 'Produtos' },
     ];
 
     return (

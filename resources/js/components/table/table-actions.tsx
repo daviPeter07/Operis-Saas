@@ -42,7 +42,7 @@ export function TableActions({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
                     onClick={onView}
                     title="Ver detalhes"
                 >
@@ -53,7 +53,7 @@ export function TableActions({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-950/40"
                     onClick={onEdit}
                     title="Editar"
                 >
@@ -64,7 +64,7 @@ export function TableActions({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
                     onClick={onDelete}
                     title="Excluir"
                 >
@@ -113,7 +113,7 @@ export function TableActionsDropdown({
             <DropdownMenuContent align="end">
                 {showView && onView && (
                     <DropdownMenuItem onClick={onView}>
-                        <Eye className="mr-2 h-4 w-4" />
+                        <Eye className="mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         Ver detalhes
                     </DropdownMenuItem>
                 )}
@@ -121,7 +121,7 @@ export function TableActionsDropdown({
                     <>
                         {showView && <DropdownMenuSeparator />}
                         <DropdownMenuItem onClick={onEdit}>
-                            <Pencil className="mr-2 h-4 w-4" />
+                            <Pencil className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
                             Editar
                         </DropdownMenuItem>
                     </>
@@ -131,9 +131,9 @@ export function TableActionsDropdown({
                         {(showView || showEdit) && <DropdownMenuSeparator />}
                         <DropdownMenuItem
                             onClick={onDelete}
-                            className="text-destructive"
+                            className="text-red-600 focus:text-red-700 dark:text-red-400 dark:focus:text-red-300"
                         >
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash2 className="mr-2 h-4 w-4 text-red-600 dark:text-red-400" />
                             Excluir
                         </DropdownMenuItem>
                     </>

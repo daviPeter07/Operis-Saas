@@ -6,6 +6,8 @@ import {
     SlidersHorizontal,
     CheckCircle2,
     Circle,
+    ArrowDownAZ,
+    ArrowUpZA,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +26,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import type { FilterOperator } from '@/hooks/use-table-filters';
 
 export interface FilterField {
@@ -49,6 +50,10 @@ export interface FilterSidebarProps {
     onAddFilter?: (filter: Omit<ActiveFilter, 'id'>) => void;
     onRemoveFilter?: (id: string) => void;
     onClearFilters?: () => void;
+    sortFields?: { key: string; label: string }[];
+    sortBy?: string;
+    sortDirection?: 'asc' | 'desc';
+    onSortChange?: (field: string, direction: 'asc' | 'desc') => void;
     className?: string;
 }
 
@@ -63,17 +68,6 @@ const operatorLabels: Record<FilterOperator, string> = {
     in: 'está em',
 };
 
-const operatorIcons: Record<FilterOperator, React.ReactNode> = {
-    eq: <CheckCircle2 className="h-3 w-3" />,
-    neq: <Circle className="h-3 w-3" />,
-    gt: '>',
-    gte: '≥',
-    lt: '<',
-    lte: '≤',
-    contains: '~',
-    in: '∈',
-};
-
 export function FilterSidebar({
     open,
     onOpenChange,
@@ -82,6 +76,10 @@ export function FilterSidebar({
     onAddFilter,
     onRemoveFilter,
     onClearFilters,
+    sortFields = [],
+    sortBy = '',
+    sortDirection = 'asc',
+    onSortChange,
     className,
 }: FilterSidebarProps) {
     const [selectedField, setSelectedField] = React.useState<string>('');
@@ -112,11 +110,11 @@ export function FilterSidebar({
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent className="flex w-[380px] flex-col sm:max-w-[380px]">
-                <SheetHeader className="shrink-0 border-b pb-4">
+            <SheetContent className="flex w-[400px] flex-col gap-0 p-0 sm:max-w-[400px]">
+                <SheetHeader className="shrink-0 border-b px-6 py-5 pr-14">
                     <SheetTitle className="flex items-center gap-3 text-lg">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-purple-500/20">
-                            <SlidersHorizontal className="h-5 w-5 text-white" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-muted">
+                            <SlidersHorizontal className="h-5 w-5" />
                         </div>
                         <div className="flex flex-col">
                             <span>Filtros</span>
@@ -132,8 +130,90 @@ export function FilterSidebar({
                     </SheetTitle>
                 </SheetHeader>
 
-                <div className="flex-1 overflow-y-auto py-6">
+                <div className="flex-1 overflow-y-auto px-6 py-6">
                     <div className="space-y-6">
+                        {sortFields.length > 0 && onSortChange && (
+                            <div className="rounded-xl border bg-card p-4 shadow-xs">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <Label className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                                        Ordenação
+                                    </Label>
+                                    {sortBy && (
+                                        <Badge
+                                            variant="outline"
+                                            className="text-[10px]"
+                                        >
+                                            {sortDirection === 'asc'
+                                                ? 'A-Z'
+                                                : 'Z-A'}
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Select
+                                        value={sortBy || 'none'}
+                                        onValueChange={(field) =>
+                                            onSortChange(
+                                                field === 'none' ? '' : field,
+                                                sortDirection,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger className="h-11 bg-muted/50">
+                                            <SelectValue placeholder="Ordenar por" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">
+                                                Sem ordenação
+                                            </SelectItem>
+                                            {sortFields.map((field) => (
+                                                <SelectItem
+                                                    key={field.key}
+                                                    value={field.key}
+                                                >
+                                                    {field.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button
+                                            type="button"
+                                            variant={
+                                                sortDirection === 'asc'
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            className="gap-2"
+                                            onClick={() =>
+                                                onSortChange(sortBy, 'asc')
+                                            }
+                                        >
+                                            <ArrowDownAZ className="h-4 w-4" />
+                                            A-Z
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={
+                                                sortDirection === 'desc'
+                                                    ? 'default'
+                                                    : 'outline'
+                                            }
+                                            className="gap-2"
+                                            onClick={() =>
+                                                onSortChange(sortBy, 'desc')
+                                            }
+                                        >
+                                            <ArrowUpZA className="h-4 w-4" />
+                                            Z-A
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             <div className="space-y-3">
                                 <Label className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
@@ -256,8 +336,14 @@ export function FilterSidebar({
                                                     <SelectValue placeholder="Selecione um valor" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {selectedFieldConfig.options?.map(
-                                                        (opt) => (
+                                                    {selectedFieldConfig.options
+                                                        ?.sort((a, b) =>
+                                                            a.label.localeCompare(
+                                                                b.label,
+                                                                'pt-BR',
+                                                            ),
+                                                        )
+                                                        .map((opt) => (
                                                             <SelectItem
                                                                 key={opt.value}
                                                                 value={
@@ -266,8 +352,7 @@ export function FilterSidebar({
                                                             >
                                                                 {opt.label}
                                                             </SelectItem>
-                                                        ),
-                                                    )}
+                                                        ))}
                                                 </SelectContent>
                                             </Select>
                                         ) : (

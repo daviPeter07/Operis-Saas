@@ -59,12 +59,6 @@ export const mockWorkspaceSeed: WorkspaceSeed = {
             status: 'available',
         },
         {
-            key: 'products',
-            label: 'Produtos',
-            href: '/dashboard/products',
-            status: 'available',
-        },
-        {
             key: 'categories',
             label: 'Categorias',
             href: '/dashboard/categories',
@@ -124,11 +118,6 @@ export const mockWorkspaceSeed: WorkspaceSeed = {
             key: 'create-client',
             label: 'Criar Cliente',
             description: 'Adicione um novo cliente ao workspace',
-        },
-        {
-            key: 'create-product',
-            label: 'Criar Produto',
-            description: 'Cadastre um novo item no catálogo',
         },
         {
             key: 'create-sale',

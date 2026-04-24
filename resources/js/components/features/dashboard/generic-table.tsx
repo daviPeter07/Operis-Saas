@@ -11,6 +11,11 @@ import { Pagination, PaginationInfo } from '@/components/table/pagination';
 import { TableEmptyState } from '@/components/table/empty-state';
 import { TableActions } from '@/components/table/table-actions';
 import { FilterSidebar } from '@/components/table/filter-sidebar';
+import { ImportDialog } from '@/components/table/import-dialog';
+import { ViewDialog, type ViewField } from '@/components/table/view-dialog';
+import { EditDialog, type EditField } from '@/components/table/edit-dialog';
+import { DeleteConfirmDialog } from '@/components/table/delete-confirm-dialog';
+import type { FilterOperator } from '@/hooks/use-table-filters';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
 import { cn } from '@/lib/utils';
@@ -47,9 +52,20 @@ function parseQueryParams(search: string) {
         page: parseInt(params.get('page') || '1'),
         perPage: parseInt(params.get('per_page') || '25'),
         search: params.get('search') || '',
+        sortBy: params.get('sort_by') || '',
+        sortDirection: (params.get('sort_direction') || 'asc') as
+            | 'asc'
+            | 'desc',
         filters: Object.fromEntries(
             Array.from(params.entries()).filter(
-                ([key]) => !['page', 'per_page', 'search'].includes(key),
+                ([key]) =>
+                    ![
+                        'page',
+                        'per_page',
+                        'search',
+                        'sort_by',
+                        'sort_direction',
+                    ].includes(key),
             ),
         ),
     };
@@ -59,6 +75,8 @@ function buildQueryString(params: {
     page?: number;
     perPage?: number;
     search?: string;
+    sortBy?: string;
+    sortDirection?: 'asc' | 'desc';
     filters?: Record<string, string>;
 }) {
     const paramsObj = new URLSearchParams();
@@ -67,6 +85,10 @@ function buildQueryString(params: {
     if (params.perPage && params.perPage !== 25)
         paramsObj.set('per_page', String(params.perPage));
     if (params.search) paramsObj.set('search', params.search);
+    if (params.sortBy) paramsObj.set('sort_by', params.sortBy);
+    if (params.sortBy && params.sortDirection !== 'asc') {
+        paramsObj.set('sort_direction', params.sortDirection || 'asc');
+    }
     Object.entries(params.filters || {}).forEach(([key, value]) => {
         if (value) paramsObj.set(key, value);
     });
@@ -92,6 +114,67 @@ export function GenericTable<T extends { id: string }>({
     const [currentPage, setCurrentPage] = React.useState(1);
     const [perPage, setPerPage] = React.useState(25);
     const [filters, setFilters] = React.useState<Record<string, string>>({});
+    const [filterOperators, setFilterOperators] = React.useState<
+        Record<string, FilterOperator>
+    >({});
+    const [sortBy, setSortBy] = React.useState('');
+    const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>(
+        'asc',
+    );
+    const [isImportOpen, setIsImportOpen] = React.useState(false);
+    const [selectedRow, setSelectedRow] = React.useState<T | null>(null);
+    const [isViewOpen, setIsViewOpen] = React.useState(false);
+    const [isEditOpen, setIsEditOpen] = React.useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+
+    const allFilterFields = React.useMemo(() => {
+        const configuredFields = new Map(
+            filterFields.map((field) => [field.key, field]),
+        );
+
+        return columns.map((column) => {
+            const configuredField = configuredFields.get(column.key);
+
+            if (configuredField) {
+                return configuredField;
+            }
+
+            const values = data
+                .map((item) => (item as Record<string, unknown>)[column.key])
+                .filter((value) => value !== null && value !== undefined);
+            const firstValue = values[0];
+
+            if (typeof firstValue === 'number') {
+                return {
+                    key: column.key,
+                    label: column.header,
+                    type: 'number' as const,
+                };
+            }
+
+            const uniqueOptions = Array.from(
+                new Set(values.map((value) => String(value))),
+            ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+            if (uniqueOptions.length > 0 && uniqueOptions.length <= 30) {
+                return {
+                    key: column.key,
+                    label: column.header,
+                    type: 'select' as const,
+                    options: uniqueOptions.map((value) => ({
+                        value,
+                        label: value,
+                    })),
+                };
+            }
+
+            return {
+                key: column.key,
+                label: column.header,
+                type: 'text' as const,
+            };
+        });
+    }, [columns, data, filterFields]);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -100,6 +183,8 @@ export function GenericTable<T extends { id: string }>({
             setCurrentPage(params.page);
             setPerPage(params.perPage);
             setFilters(params.filters);
+            setSortBy(params.sortBy);
+            setSortDirection(params.sortDirection === 'desc' ? 'desc' : 'asc');
         }
     }, []);
 
@@ -108,29 +193,42 @@ export function GenericTable<T extends { id: string }>({
             page?: number;
             perPage?: number;
             search?: string;
+            sortBy?: string;
+            sortDirection?: 'asc' | 'desc';
             filters?: Record<string, string>;
         }) => {
             const newPage = opts.page ?? currentPage;
             const newPerPage = opts.perPage ?? perPage;
             const newSearch = opts.search ?? search;
+            const newSortBy = opts.sortBy ?? sortBy;
+            const newSortDirection = opts.sortDirection ?? sortDirection;
             const newFilters = opts.filters ?? filters;
 
             const queryString = buildQueryString({
                 page: newPage,
                 perPage: newPerPage,
                 search: newSearch,
+                sortBy: newSortBy,
+                sortDirection: newSortDirection,
                 filters: newFilters,
             });
 
-            const url = routeUrl
-                ? `${routeUrl}${queryString ? `?${queryString}` : ''}`
-                : queryString
-                  ? `?${queryString}`
-                  : '/dashboard';
+            const currentPath =
+                typeof window !== 'undefined' ? window.location.pathname : '';
+            const baseUrl = routeUrl || currentPath || '/dashboard';
+            const url = `${baseUrl}${queryString ? `?${queryString}` : ''}`;
 
             router.get(url, {}, { replace: true, preserveState: true });
         },
-        [currentPage, perPage, search, filters, routeUrl],
+        [
+            currentPage,
+            perPage,
+            search,
+            sortBy,
+            sortDirection,
+            filters,
+            routeUrl,
+        ],
     );
 
     const handleSearchChange = (value: string) => {
@@ -150,7 +248,14 @@ export function GenericTable<T extends { id: string }>({
 
     const handleClearFilters = () => {
         setFilters({});
+        setFilterOperators({});
         updateUrl({ filters: {}, page: 1 });
+    };
+
+    const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
+        setSortBy(field);
+        setSortDirection(direction);
+        updateUrl({ sortBy: field, sortDirection: direction, page: 1 });
     };
 
     const filteredData = React.useMemo(() => {
@@ -167,27 +272,86 @@ export function GenericTable<T extends { id: string }>({
 
         Object.entries(filters).forEach(([key, value]) => {
             if (value && value !== '') {
-                result = result.filter(
-                    (item) =>
-                        String((item as Record<string, unknown>)[key]) ===
-                        value,
-                );
+                const field = allFilterFields.find((item) => item.key === key);
+                const operator =
+                    filterOperators[key] ||
+                    (field?.type === 'text' ? 'contains' : 'eq');
+
+                result = result.filter((item) => {
+                    const rawValue = (item as Record<string, unknown>)[key];
+
+                    if (operator === 'contains') {
+                        return String(rawValue)
+                            .toLowerCase()
+                            .includes(value.toLowerCase());
+                    }
+
+                    if (operator === 'neq') {
+                        return String(rawValue) !== value;
+                    }
+
+                    if (['gt', 'gte', 'lt', 'lte'].includes(operator)) {
+                        const numericValue = Number(rawValue);
+                        const numericFilter = Number(value);
+
+                        if (
+                            Number.isNaN(numericValue) ||
+                            Number.isNaN(numericFilter)
+                        ) {
+                            return false;
+                        }
+
+                        if (operator === 'gt')
+                            return numericValue > numericFilter;
+                        if (operator === 'gte')
+                            return numericValue >= numericFilter;
+                        if (operator === 'lt')
+                            return numericValue < numericFilter;
+                        if (operator === 'lte')
+                            return numericValue <= numericFilter;
+                    }
+
+                    return String(rawValue) === value;
+                });
             }
         });
 
         return result;
-    }, [data, search, filters]);
+    }, [allFilterFields, data, filterOperators, filters, search]);
+
+    const sortedData = React.useMemo(() => {
+        if (!sortBy) {
+            return filteredData;
+        }
+
+        return [...filteredData].sort((first, second) => {
+            const firstValue = (first as Record<string, unknown>)[sortBy];
+            const secondValue = (second as Record<string, unknown>)[sortBy];
+
+            const comparison =
+                typeof firstValue === 'number' &&
+                typeof secondValue === 'number'
+                    ? firstValue - secondValue
+                    : String(firstValue ?? '').localeCompare(
+                          String(secondValue ?? ''),
+                          'pt-BR',
+                          { numeric: true },
+                      );
+
+            return sortDirection === 'asc' ? comparison : comparison * -1;
+        });
+    }, [filteredData, sortBy, sortDirection]);
 
     const paginatedData = React.useMemo(() => {
         const start = (currentPage - 1) * perPage;
-        return filteredData.slice(start, start + perPage);
-    }, [filteredData, currentPage, perPage]);
+        return sortedData.slice(start, start + perPage);
+    }, [currentPage, perPage, sortedData]);
 
     const totalPages = Math.ceil(filteredData.length / perPage);
 
     const handleExportExcel = async () => {
         await exportToExcel(
-            filteredData as unknown as Record<string, unknown>[],
+            sortedData as unknown as Record<string, unknown>[],
             {
                 fileName: title,
             },
@@ -200,23 +364,64 @@ export function GenericTable<T extends { id: string }>({
             header: col.header,
         }));
         await exportToPDF(
-            filteredData as unknown as Record<string, unknown>[],
+            sortedData as unknown as Record<string, unknown>[],
             pdfColumns as never,
             { fileName: title, title },
         );
     };
 
     const handleView = (row: T) => {
-        if (onView) onView(row);
+        setSelectedRow(row);
+        setIsViewOpen(true);
+        onView?.(row);
     };
 
     const handleEdit = (row: T) => {
-        if (onEdit) onEdit(row);
+        setSelectedRow(row);
+        setIsEditOpen(true);
     };
 
     const handleDelete = (row: T) => {
-        if (onDelete) onDelete(row);
+        setSelectedRow(row);
+        setIsDeleteOpen(true);
     };
+
+    const handleImport = (importedData: Record<string, unknown>[]) => {
+        onImport?.(importedData as T[]);
+        setIsImportOpen(false);
+    };
+
+    const viewFields: ViewField[] = React.useMemo(() => {
+        if (!selectedRow) {
+            return [];
+        }
+
+        return columns.map((column) => {
+            const value = (selectedRow as Record<string, unknown>)[column.key];
+
+            return {
+                label: column.header,
+                value: column.render
+                    ? column.render(value, selectedRow)
+                    : String(value ?? ''),
+            };
+        });
+    }, [columns, selectedRow]);
+
+    const editFields: EditField[] = React.useMemo(
+        () =>
+            columns.map((column) => ({
+                name: column.key,
+                label: column.header,
+                type:
+                    typeof (selectedRow as Record<string, unknown> | null)?.[
+                        column.key
+                    ] === 'number'
+                        ? 'number'
+                        : 'text',
+            })),
+        [columns, selectedRow],
+    );
 
     return (
         <div className={cn('space-y-4', className)}>
@@ -225,8 +430,8 @@ export function GenericTable<T extends { id: string }>({
                 onSearchChange={handleSearchChange}
                 showCreate={!!onCreate}
                 onCreate={() => {}}
-                showImport={!!onImport}
-                onImport={() => {}}
+                showImport
+                onImport={() => setIsImportOpen(true)}
                 onExportExcel={handleExportExcel}
                 onExportPDF={handleExportPDF}
                 onOpenFilters={() => setIsFilterOpen(true)}
@@ -244,9 +449,9 @@ export function GenericTable<T extends { id: string }>({
                                 {col.header}
                             </DataTableHeadCell>
                         ))}
-                        {(onView || onEdit || onDelete) && (
-                            <DataTableHeadCell>Ações</DataTableHeadCell>
-                        )}
+                        <DataTableHeadCell className="w-36 text-right">
+                            Ações
+                        </DataTableHeadCell>
                     </tr>
                 </thead>
                 <tbody>
@@ -289,27 +494,13 @@ export function GenericTable<T extends { id: string }>({
                                               )}
                                     </DataTableCell>
                                 ))}
-                                {(onView || onEdit || onDelete) && (
-                                    <DataTableCell>
-                                        <TableActions
-                                            onView={
-                                                onView
-                                                    ? () => handleView(row)
-                                                    : undefined
-                                            }
-                                            onEdit={
-                                                onEdit
-                                                    ? () => handleEdit(row)
-                                                    : undefined
-                                            }
-                                            onDelete={
-                                                onDelete
-                                                    ? () => handleDelete(row)
-                                                    : undefined
-                                            }
-                                        />
-                                    </DataTableCell>
-                                )}
+                                <DataTableCell className="w-36">
+                                    <TableActions
+                                        onView={() => handleView(row)}
+                                        onEdit={() => handleEdit(row)}
+                                        onDelete={() => handleDelete(row)}
+                                    />
+                                </DataTableCell>
                             </DataTableRowZebra>
                         ))
                     )}
@@ -330,35 +521,106 @@ export function GenericTable<T extends { id: string }>({
                 />
             </div>
 
-            {filterFields.length > 0 && (
-                <FilterSidebar
-                    open={isFilterOpen}
-                    onOpenChange={setIsFilterOpen}
-                    fields={filterFields}
-                    activeFilters={Object.entries(filters).map(
-                        ([field, value]) => ({
-                            id: field,
-                            field,
-                            operator: 'eq' as const,
-                            value,
-                        }),
-                    )}
-                    onAddFilter={(filter) => {
-                        setFilters((prev) => ({
-                            ...prev,
-                            [filter.field]: String(filter.value),
-                        }));
+            <FilterSidebar
+                open={isFilterOpen}
+                onOpenChange={setIsFilterOpen}
+                fields={allFilterFields}
+                activeFilters={Object.entries(filters).map(
+                    ([field, value]) => ({
+                        id: field,
+                        field,
+                        operator: filterOperators[field] || 'eq',
+                        value,
+                    }),
+                )}
+                onAddFilter={(filter) => {
+                    const nextFilters = {
+                        ...filters,
+                        [filter.field]: String(filter.value),
+                    };
+
+                    setFilters(nextFilters);
+                    setFilterOperators((prev) => ({
+                        ...prev,
+                        [filter.field]: filter.operator,
+                    }));
+                    updateUrl({ filters: nextFilters, page: 1 });
+                }}
+                onRemoveFilter={(id) => {
+                    const nextFilters = { ...filters };
+                    delete nextFilters[id];
+
+                    setFilters(nextFilters);
+                    setFilterOperators((prev) => {
+                        const nextOperators = { ...prev };
+                        delete nextOperators[id];
+                        return nextOperators;
+                    });
+                    updateUrl({ filters: nextFilters, page: 1 });
+                }}
+                onClearFilters={handleClearFilters}
+                sortFields={columns.map((column) => ({
+                    key: column.key,
+                    label: column.header,
+                }))}
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSortChange={handleSortChange}
+            />
+
+            <ImportDialog
+                open={isImportOpen}
+                onOpenChange={setIsImportOpen}
+                onImport={handleImport}
+            />
+
+            <ViewDialog
+                open={isViewOpen}
+                onOpenChange={setIsViewOpen}
+                title={`Detalhes de ${title}`}
+                fields={viewFields}
+            />
+
+            {selectedRow && (
+                <EditDialog
+                    open={isEditOpen}
+                    onOpenChange={setIsEditOpen}
+                    title={`Editar ${title}`}
+                    fields={editFields}
+                    initialData={
+                        selectedRow as unknown as Record<string, unknown>
+                    }
+                    onSubmit={(data) => {
+                        onEdit?.(data as T);
+                        setIsEditOpen(false);
                     }}
-                    onRemoveFilter={(id) => {
-                        setFilters((prev) => {
-                            const next = { ...prev };
-                            delete next[id];
-                            return next;
-                        });
-                    }}
-                    onClearFilters={handleClearFilters}
                 />
             )}
+
+            <DeleteConfirmDialog
+                open={isDeleteOpen}
+                onOpenChange={setIsDeleteOpen}
+                title={`Excluir ${title}`}
+                description="Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
+                itemName={
+                    selectedRow
+                        ? String(
+                              (selectedRow as Record<string, unknown>).name ??
+                                  (selectedRow as Record<string, unknown>)
+                                      .clientName ??
+                                  (selectedRow as Record<string, unknown>)
+                                      .supplierName ??
+                                  selectedRow.id,
+                          )
+                        : undefined
+                }
+                onConfirm={() => {
+                    if (selectedRow) {
+                        onDelete?.(selectedRow);
+                    }
+                    setSelectedRow(null);
+                }}
+            />
         </div>
     );
 }

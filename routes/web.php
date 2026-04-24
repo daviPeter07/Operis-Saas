@@ -11,7 +11,6 @@ Route::middleware(['auth'])->group(function () {
     Route::inertia('dashboard/clients', 'dashboard/clients')->name('dashboard.clients');
     Route::inertia('dashboard/sales', 'dashboard/sales')->name('dashboard.sales');
     Route::inertia('dashboard/suppliers', 'dashboard/suppliers')->name('dashboard.suppliers');
-    Route::inertia('dashboard/products', 'dashboard/products')->name('dashboard.products');
     Route::inertia('dashboard/categories', 'dashboard/categories')->name('dashboard.categories');
     Route::inertia('dashboard/brands', 'dashboard/brands')->name('dashboard.brands');
     Route::inertia('dashboard/inventory', 'dashboard/inventory')->name('dashboard.inventory');

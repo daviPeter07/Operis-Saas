@@ -11,7 +11,6 @@ import {
 import {
     Plus,
     UserPlus,
-    Package,
     TrendingUp,
     ShoppingCart,
     Receipt,
@@ -29,7 +28,6 @@ interface QuickActionsButtonProps {
 
 const quickActions = [
     { key: 'create-client', label: 'Adicionar Cliente', icon: UserPlus },
-    { key: 'create-product', label: 'Adicionar Produto', icon: Package },
     { key: 'create-sale', label: 'Adicionar Venda', icon: TrendingUp },
     { key: 'create-purchase', label: 'Adicionar Compra', icon: ShoppingCart },
     { key: 'create-expense', label: 'Adicionar Despesa', icon: Receipt },

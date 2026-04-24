@@ -15,11 +15,38 @@ export function SalesModule() {
         { key: 'createdAt', header: 'Data' },
     ];
 
+    const filterFields = [
+        { key: 'clientName', label: 'Cliente', type: 'text' as const },
+        {
+            key: 'status',
+            label: 'Status',
+            type: 'select' as const,
+            options: [
+                { value: 'pending', label: 'Pendente' },
+                { value: 'completed', label: 'Concluído' },
+                { value: 'cancelled', label: 'Cancelado' },
+            ],
+        },
+        {
+            key: 'paymentMethod',
+            label: 'Método de Pagamento',
+            type: 'select' as const,
+            options: [
+                { value: 'money', label: 'Dinheiro' },
+                { value: 'credit', label: 'Crédito' },
+                { value: 'debit', label: 'Débito' },
+                { value: 'pix', label: 'PIX' },
+                { value: 'installment', label: 'Parcelado' },
+            ],
+        },
+    ];
+
     return (
         <GenericTable
             data={mockSales}
             columns={columns}
             title="Vendas"
+            filterFields={filterFields}
             onCreate={() => {}}
         />
     );

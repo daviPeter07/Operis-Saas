@@ -15,7 +15,6 @@ interface QuickActionsModalProps {
 
 const actionIcons: Record<string, typeof Plus> = {
     'create-client': Plus,
-    'create-product': Plus,
     'create-sale': Plus,
     'create-purchase': Plus,
     'create-expense': Plus,

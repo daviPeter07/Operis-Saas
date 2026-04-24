@@ -5,7 +5,6 @@ export function CategoriesModule() {
     const columns: Column<Category>[] = [
         { key: 'name', header: 'Nome' },
         { key: 'description', header: 'Descrição' },
-        { key: 'productsCount', header: 'Produtos' },
     ];
 
     return (
