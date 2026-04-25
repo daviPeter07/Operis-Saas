@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -12,19 +11,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export interface FormField {
     name: string;
     label: string;
-    type: 'text' | 'number' | 'email' | 'password' | 'select';
+    type: 'text' | 'number' | 'email' | 'password' | 'select' | 'date';
     placeholder?: string;
     required?: boolean;
     options?: { value: string; label: string }[];
@@ -53,6 +45,47 @@ export function CreateModal<T extends Record<string, unknown>>({
 }: CreateModalProps<T>) {
     const [formData, setFormData] = React.useState<Partial<T>>({});
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+    const gridColumnsClass = React.useMemo(() => {
+        if (fields.length >= 9) {
+            return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+        }
+
+        if (fields.length >= 4) {
+            return 'grid-cols-1 sm:grid-cols-2';
+        }
+
+        return 'grid-cols-1';
+    }, [fields.length]);
+
+    const dialogWidthClass = React.useMemo(() => {
+        if (fields.length >= 9) {
+            return 'sm:max-w-[920px]';
+        }
+
+        if (fields.length >= 4) {
+            return 'sm:max-w-[760px]';
+        }
+
+        return 'sm:max-w-[500px]';
+    }, [fields.length]);
+
+    const getFieldSpanClass = (fieldName: string) => {
+        const normalized = fieldName.toLowerCase();
+        const isLongField = ['description', 'address', 'notes', 'obs'].some(
+            (keyword) => normalized.includes(keyword),
+        );
+
+        if (!isLongField) {
+            return '';
+        }
+
+        if (fields.length >= 9) {
+            return 'sm:col-span-2 lg:col-span-3';
+        }
+
+        return 'sm:col-span-2';
+    };
 
     React.useEffect(() => {
         if (open) {
@@ -92,16 +125,22 @@ export function CreateModal<T extends Record<string, unknown>>({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className={cn('sm:max-w-[500px]', className)}>
+            <DialogContent className={cn(dialogWidthClass, className)}>
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid gap-4 py-4">
+                    <div className={cn('grid gap-4 py-4', gridColumnsClass)}>
                         {fields.map((field) => (
-                            <div key={field.name} className="grid gap-2">
+                            <div
+                                key={field.name}
+                                className={cn(
+                                    'grid gap-2',
+                                    getFieldSpanClass(field.name),
+                                )}
+                            >
                                 <Label htmlFor={field.name}>
                                     {field.label}
                                     {field.required && (
@@ -112,34 +151,41 @@ export function CreateModal<T extends Record<string, unknown>>({
                                     )}
                                 </Label>
                                 {field.type === 'select' ? (
-                                    <Select
-                                        value={
-                                            (formData[field.name] as string) ||
-                                            ''
-                                        }
-                                        onValueChange={(value) =>
-                                            handleChange(field.name, value)
-                                        }
-                                    >
-                                        <SelectTrigger id={field.name}>
-                                            <SelectValue
-                                                placeholder={
-                                                    field.placeholder ||
-                                                    `Selecione ${field.label}`
-                                                }
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {field.options?.map((opt) => (
-                                                <SelectItem
-                                                    key={opt.value}
-                                                    value={opt.value}
-                                                >
-                                                    {opt.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <>
+                                        <Input
+                                            id={field.name}
+                                            list={`${field.name}-options`}
+                                            type="text"
+                                            placeholder={
+                                                field.placeholder ||
+                                                `Digite ou selecione ${field.label.toLowerCase()}`
+                                            }
+                                            value={
+                                                (formData[field.name] as string) ||
+                                                ''
+                                            }
+                                            onChange={(e) =>
+                                                handleChange(
+                                                    field.name,
+                                                    e.target.value,
+                                                )
+                                            }
+                                            required={field.required}
+                                        />
+                                        {field.options &&
+                                        field.options.length > 0 ? (
+                                            <datalist id={`${field.name}-options`}>
+                                                {field.options.map((opt) => (
+                                                    <option
+                                                        key={opt.value}
+                                                        value={opt.value}
+                                                    >
+                                                        {opt.label}
+                                                    </option>
+                                                ))}
+                                            </datalist>
+                                        ) : null}
+                                    </>
                                 ) : (
                                     <Input
                                         id={field.name}

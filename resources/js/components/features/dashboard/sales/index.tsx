@@ -57,6 +57,21 @@ export function SalesModule() {
             title="Vendas"
             filterFields={filterFields}
             onCreate={() => {}}
+            createFields={[
+                { name: 'clientName', label: 'Cliente', type: 'text', required: true, placeholder: 'Digite o nome do cliente' },
+                { name: 'total', label: 'Total', type: 'number', required: true, placeholder: 'Digite o valor total' },
+                { name: 'status', label: 'Status', type: 'select', required: true, options: [
+                    { value: 'pending', label: 'Pendente' },
+                    { value: 'completed', label: 'Concluído' },
+                    { value: 'cancelled', label: 'Cancelado' },
+                ]},
+                { name: 'paymentMethod', label: 'Método de Pagamento', type: 'select', required: true, options: [
+                    { value: 'money', label: 'Dinheiro' },
+                    { value: 'credit', label: 'Crédito' },
+                    { value: 'debit', label: 'Débito' },
+                    { value: 'pix', label: 'PIX' },
+                ]},
+            ]}
         />
     );
 }

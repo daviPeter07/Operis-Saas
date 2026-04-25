@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import * as React from 'react';
 import { CreateModal } from '@/components/table/create-modal';
+import type { FormField } from '@/components/table/create-modal';
 import {
     DataTable,
     DataTableHeadCell,
@@ -51,6 +52,7 @@ export interface GenericTableProps<T extends { id: string }> {
     clickableRow?: boolean;
     onRowClick?: (row: T) => void;
     showMobileList?: boolean;
+    createFields?: FormField[];
 }
 
 function parseQueryParams(search: string) {
@@ -135,6 +137,7 @@ export function GenericTable<T extends { id: string }>({
     clickableRow = false,
     onRowClick,
     showMobileList = false,
+    createFields,
 }: GenericTableProps<T>) {
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
@@ -209,9 +212,61 @@ export function GenericTable<T extends { id: string }>({
     }, [columns, data, filterFields]);
 
     const activeFilterFields = React.useMemo(
-        () => allFilterFields.filter((f) => f !== null),
+        () =>
+            allFilterFields.filter(
+                (
+                    field,
+                ): field is {
+                    key: string;
+                    label: string;
+                    type: 'text' | 'number' | 'select' | 'date';
+                    options?: { value: string; label: string }[];
+                } => field !== null,
+            ),
         [allFilterFields],
     );
+
+    const resolvedCreateFields = React.useMemo<FormField[]>(() => {
+        if (createFields && createFields.length > 0) {
+            return createFields;
+        }
+
+        return activeFilterFields
+            .filter(
+                (field) =>
+                    !['id', 'createdAt', 'updatedAt', 'deletedAt'].includes(
+                        field.key,
+                    ),
+            )
+            .map((field) => {
+                const key = field.key.toLowerCase();
+                const inferredType: FormField['type'] =
+                    key.includes('email')
+                        ? 'email'
+                        : key.includes('password')
+                          ? 'password'
+                          : field.type;
+
+                const placeholder =
+                    inferredType === 'select'
+                        ? `Selecione ${field.label.toLowerCase()}`
+                        : inferredType === 'number'
+                          ? 'Digite um valor'
+                          : inferredType === 'date'
+                            ? 'Selecione uma data'
+                            : `Digite ${field.label.toLowerCase()}`;
+
+                return {
+                    name: field.key,
+                    label: field.label,
+                    type: inferredType,
+                    placeholder,
+                    required: true,
+                    options:
+                        inferredType === 'select' ? field.options : undefined,
+                };
+            });
+    }, [activeFilterFields, createFields]);
 
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -742,7 +797,7 @@ export function GenericTable<T extends { id: string }>({
                 onOpenChange={setIsCreateOpen}
                 title={`Criar Novo ${title}`}
                 description="Preencha os dados abaixo para criar um novo registro."
-                fields={[]} // This will be dynamically generated in each module
+                fields={resolvedCreateFields}
                 onSubmit={(data) => {
                     onCreate?.(data as T);
                     setIsCreateOpen(false);
