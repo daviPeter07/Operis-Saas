@@ -53,6 +53,12 @@ export interface GenericTableProps<T extends { id: string }> {
     onRowClick?: (row: T) => void;
     showMobileList?: boolean;
     createFields?: FormField[];
+    createDialog?: (params: {
+        open: boolean;
+        onOpenChange: (open: boolean) => void;
+        onSubmit: (data: T) => void;
+        title: string;
+    }) => React.ReactNode;
 }
 
 function parseQueryParams(search: string) {
@@ -138,6 +144,7 @@ export function GenericTable<T extends { id: string }>({
     onRowClick,
     showMobileList = false,
     createFields,
+    createDialog,
 }: GenericTableProps<T>) {
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
@@ -792,17 +799,29 @@ export function GenericTable<T extends { id: string }>({
                 }}
             />
 
-            <CreateModal
-                open={isCreateOpen}
-                onOpenChange={setIsCreateOpen}
-                title={`Criar Novo ${title}`}
-                description="Preencha os dados abaixo para criar um novo registro."
-                fields={resolvedCreateFields}
-                onSubmit={(data) => {
-                    onCreate?.(data as T);
-                    setIsCreateOpen(false);
-                }}
-            />
+            {createDialog ? (
+                createDialog({
+                    open: isCreateOpen,
+                    onOpenChange: setIsCreateOpen,
+                    title: `Criar Novo ${title}`,
+                    onSubmit: (data) => {
+                        onCreate?.(data);
+                        setIsCreateOpen(false);
+                    },
+                })
+            ) : (
+                <CreateModal
+                    open={isCreateOpen}
+                    onOpenChange={setIsCreateOpen}
+                    title={`Criar Novo ${title}`}
+                    description="Preencha os dados abaixo para criar um novo registro."
+                    fields={resolvedCreateFields}
+                    onSubmit={(data) => {
+                        onCreate?.(data as T);
+                        setIsCreateOpen(false);
+                    }}
+                />
+            )}
         </div>
     );
 }

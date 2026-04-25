@@ -1,9 +1,13 @@
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
 export function ClientsModule() {
+    const [clients, setClients] = useState(() => [...mockClients]);
+
     const columns: Column<Client>[] = [
         { key: 'name', header: 'Nome' },
         { key: 'email', header: 'Email' },
@@ -13,6 +17,22 @@ export function ClientsModule() {
         { key: 'state', header: 'Estado' },
     ];
 
+    const cityOptions = useMemo(
+        () =>
+            Array.from(new Set(clients.map((client) => client.city)))
+                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+                .map((value) => ({ value, label: value })),
+        [clients],
+    );
+
+    const stateOptions = useMemo(
+        () =>
+            Array.from(new Set(clients.map((client) => client.state)))
+                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+                .map((value) => ({ value, label: value })),
+        [clients],
+    );
+
     const filterFields = [
         { key: 'name', label: 'Nome', type: 'text' as const },
         { key: 'email', label: 'Email', type: 'text' as const },
@@ -20,27 +40,90 @@ export function ClientsModule() {
             key: 'city',
             label: 'Cidade',
             type: 'select' as const,
-            options: [...new Set(mockClients.map((c) => c.city))]
-                .sort()
-                .map((v) => ({ value: v, label: v })),
+            options: cityOptions,
         },
         {
             key: 'state',
             label: 'Estado',
             type: 'select' as const,
-            options: [...new Set(mockClients.map((c) => c.state))]
-                .sort()
-                .map((v) => ({ value: v, label: v })),
+            options: stateOptions,
         },
     ];
 
+    const handleCreate = (data: Client) => {
+        const newClient: Client = {
+            id: crypto.randomUUID(),
+            name: String(data.name || '').trim(),
+            email: String(data.email || '').trim(),
+            phone: String(data.phone || '').trim(),
+            document: String(data.document || '').trim(),
+            city: String(data.city || '').trim(),
+            state: String(data.state || '').trim(),
+            address: String(data.address || '').trim(),
+            createdAt: new Date().toISOString().slice(0, 10),
+        };
+
+        if (!newClient.name) {
+            toast.error('Informe o nome do cliente');
+            return;
+        }
+
+        setClients((previous) => [newClient, ...previous]);
+        toast.success('Cliente cadastrado com sucesso');
+    };
+
     return (
         <GenericTable
-            data={mockClients}
+            data={clients}
             columns={columns}
             title="Clientes"
             filterFields={filterFields}
-            onCreate={() => {}}
+            onCreate={handleCreate}
+            createFields={[
+                {
+                    name: 'name',
+                    label: 'Nome',
+                    type: 'text',
+                    required: true,
+                    placeholder: 'Nome completo',
+                },
+                {
+                    name: 'email',
+                    label: 'Email',
+                    type: 'email',
+                    placeholder: 'cliente@empresa.com',
+                },
+                {
+                    name: 'phone',
+                    label: 'Telefone',
+                    type: 'text',
+                    placeholder: '(00) 00000-0000',
+                },
+                {
+                    name: 'document',
+                    label: 'Documento',
+                    type: 'text',
+                    placeholder: 'CPF/CNPJ',
+                },
+                {
+                    name: 'city',
+                    label: 'Cidade',
+                    type: 'select',
+                    options: cityOptions,
+                },
+                {
+                    name: 'state',
+                    label: 'Estado',
+                    type: 'select',
+                    options: stateOptions,
+                },
+                {
+                    name: 'address',
+                    label: 'Endereço',
+                    type: 'text',
+                    placeholder: 'Rua, número e complemento',
+                },
+            ]}
         />
     );
 }

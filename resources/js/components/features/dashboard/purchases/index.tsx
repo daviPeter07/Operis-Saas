@@ -1,5 +1,7 @@
 import { mockPurchases } from '@/lib/mocks/mock-data';
 import type { Purchase } from '@/lib/mocks/mock-data';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import {
@@ -11,6 +13,8 @@ import {
 } from '@/lib/format';
 
 export function PurchasesModule() {
+    const [purchases, setPurchases] = useState(() => [...mockPurchases]);
+
     const columns: Column<Purchase>[] = [
         { key: 'supplierName', header: 'Fornecedor' },
         {
@@ -79,13 +83,109 @@ export function PurchasesModule() {
         },
     ];
 
+    const handleCreate = (data: Purchase) => {
+        const status = ['pending', 'completed', 'cancelled'].includes(
+            String(data.status),
+        )
+            ? (String(data.status) as Purchase['status'])
+            : 'pending';
+
+        const paymentMethod = ['money', 'credit', 'debit', 'pix'].includes(
+            String(data.paymentMethod),
+        )
+            ? (String(data.paymentMethod) as Purchase['paymentMethod'])
+            : 'pix';
+
+        const newPurchase: Purchase = {
+            id: crypto.randomUUID(),
+            supplierId: crypto.randomUUID(),
+            supplierName: String(data.supplierName || '').trim(),
+            total: Number(data.total || 0),
+            status,
+            paymentMethod,
+            items: Number(data.items || 1),
+            dueDate:
+                String(data.dueDate || '').trim() ||
+                new Date().toISOString().slice(0, 10),
+            createdAt:
+                String(data.createdAt || '').trim() ||
+                new Date().toISOString().slice(0, 10),
+        };
+
+        if (!newPurchase.supplierName) {
+            toast.error('Informe o fornecedor');
+            return;
+        }
+
+        setPurchases((previous) => [newPurchase, ...previous]);
+        toast.success('Compra cadastrada com sucesso');
+    };
+
     return (
         <GenericTable
-            data={mockPurchases}
+            data={purchases}
             columns={columns}
             title="Compras"
             filterFields={filterFields}
-            onCreate={() => {}}
+            onCreate={handleCreate}
+            createFields={[
+                {
+                    name: 'supplierName',
+                    label: 'Fornecedor',
+                    type: 'text',
+                    required: true,
+                    placeholder: 'Nome do fornecedor',
+                },
+                {
+                    name: 'items',
+                    label: 'Itens',
+                    type: 'number',
+                    required: true,
+                    placeholder: 'Quantidade de itens',
+                },
+                {
+                    name: 'total',
+                    label: 'Total',
+                    type: 'number',
+                    required: true,
+                    placeholder: 'Valor total da compra',
+                },
+                {
+                    name: 'paymentMethod',
+                    label: 'Método de Pagamento',
+                    type: 'select',
+                    required: true,
+                    options: [
+                        { value: 'money', label: 'Dinheiro' },
+                        { value: 'credit', label: 'Crédito' },
+                        { value: 'debit', label: 'Débito' },
+                        { value: 'pix', label: 'PIX' },
+                    ],
+                },
+                {
+                    name: 'status',
+                    label: 'Status',
+                    type: 'select',
+                    required: true,
+                    options: [
+                        { value: 'pending', label: 'Pendente' },
+                        { value: 'completed', label: 'Concluído' },
+                        { value: 'cancelled', label: 'Cancelado' },
+                    ],
+                },
+                {
+                    name: 'dueDate',
+                    label: 'Vencimento',
+                    type: 'date',
+                    required: true,
+                },
+                {
+                    name: 'createdAt',
+                    label: 'Data',
+                    type: 'date',
+                    required: true,
+                },
+            ]}
         />
     );
 }
