@@ -7,8 +7,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CatalogPanel } from './catalog-panel';
 import { CheckoutPanel } from './checkout-panel';
 import { AddProductDialog, DiscountDialog } from './dialogs';
-import { QuickCreateDialog } from './quick-create-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';
+import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
 
 export function SalesDialog({
     open,

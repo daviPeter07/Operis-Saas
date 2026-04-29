@@ -25,6 +25,11 @@ import {
 } from '@/components/ui/tooltip';
 import { paymentMethodOptions } from '@/utils/sales-dialog';
 
+function parseLocalDate(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
+}
+
 interface CheckoutPanelProps {
     clientSearch: string;
     setClientSearch: (value: string) => void;
@@ -140,35 +145,39 @@ export function CheckoutPanel({
                         <CardContent className="space-y-3">
                             <div className="space-y-3" ref={clientPickerRef}>
                                 <div className="relative">
-                                <Input
-                                    value={clientSearch}
-                                    onChange={(event) => {
-                                        setClientSearch(
-                                            event.currentTarget.value,
-                                        );
-                                        setIsClientListOpen(true);
-                                    }}
-                                    onFocus={() => setIsClientListOpen(true)}
-                                    onClick={() => setIsClientListOpen(true)}
-                                    placeholder="Buscar cliente"
-                                    className="pr-10"
-                                />
-                                {selectedClient &&
-                                clientSearch === selectedClient.name ? (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                        onClick={() => {
-                                            selectClientById('');
-                                            setClientSearch('');
-                                            setIsClientListOpen(false);
+                                    <Input
+                                        value={clientSearch}
+                                        onChange={(event) => {
+                                            setClientSearch(
+                                                event.currentTarget.value,
+                                            );
+                                            setIsClientListOpen(true);
                                         }}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                ) : null}
+                                        onFocus={() =>
+                                            setIsClientListOpen(true)
+                                        }
+                                        onClick={() =>
+                                            setIsClientListOpen(true)
+                                        }
+                                        placeholder="Buscar cliente"
+                                        className="pr-10"
+                                    />
+                                    {selectedClient &&
+                                    clientSearch === selectedClient.name ? (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                            onClick={() => {
+                                                selectClientById('');
+                                                setClientSearch('');
+                                                setIsClientListOpen(false);
+                                            }}
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    ) : null}
                                 </div>
                                 {isClientListOpen ? (
                                     <div className="max-h-44 overflow-y-auto rounded-md border">
@@ -366,8 +375,8 @@ export function CheckoutPanel({
                         </div>
                         <Separator />
                         <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold">Total</span>
-                            <span className="text-3xl font-black text-primary">
+                            <span className="text-xl font-bold">Total</span>
+                            <span className="text-2xl font-black text-primary">
                                 {formatCurrencyBR(finalTotal)}
                             </span>
                         </div>
@@ -383,7 +392,7 @@ export function CheckoutPanel({
                         className="h-24 resize-none"
                     />
 
-                    <div className="space-y-2">
+                    <div className="relative space-y-2">
                         <Label>Data</Label>
                         <Button
                             type="button"
@@ -393,24 +402,28 @@ export function CheckoutPanel({
                         >
                             <CalendarDays className="mr-2 h-4 w-4" />
                             {saleDate
-                                ? format(new Date(saleDate), 'dd/MM/yyyy', {
-                                      locale: ptBR,
-                                  })
+                                ? format(
+                                      parseLocalDate(saleDate),
+                                      'dd/MM/yyyy',
+                                      {
+                                          locale: ptBR,
+                                      },
+                                  )
                                 : 'Selecionar data'}
                         </Button>
                         {calendarOpen && (
-                            <div className="rounded-md border p-2">
+                            <div className="absolute bottom-[calc(100%+0.25rem)] left-0 z-90 rounded-md border bg-background p-2 shadow-xl">
                                 <Calendar
                                     mode="single"
                                     selected={
                                         saleDate
-                                            ? new Date(saleDate)
+                                            ? parseLocalDate(saleDate)
                                             : undefined
                                     }
                                     onSelect={(date) => {
                                         if (date) {
                                             setSaleDate(
-                                                date.toISOString().slice(0, 10),
+                                                format(date, 'yyyy-MM-dd'),
                                             );
                                         }
                                         setCalendarOpen(false);
