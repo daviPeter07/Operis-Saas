@@ -61,12 +61,12 @@ export function SalesHeader({ metrics }: SalesHeaderProps) {
                                 <p className="text-sm font-medium text-muted-foreground">
                                     {card.label}
                                 </p>
-                                <p className="text-[2rem] leading-none font-black tracking-tight text-foreground">
+                                <p className="text-2xl leading-none font-black tracking-tight text-foreground">
                                     {card.format(value)}
                                 </p>
                             </div>
 
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-500/15 text-orange-500 ring-1 ring-orange-500/25">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/15 text-orange-500 ring-1 ring-orange-500/25">
                                 <Icon className="h-6 w-6" />
                             </div>
                         </CardContent>

@@ -5,7 +5,6 @@ import {
     Users,
     TrendingUp,
     Truck,
-    Package,
     Tags,
     Award,
     Warehouse,
@@ -251,7 +250,7 @@ export function AppSidebar() {
                             return (
                                 <Tooltip key={item.module}>
                                     <TooltipTrigger asChild>
-                                        <SidebarMenuItem className="relative">
+                                        <SidebarMenuItem className="relative list-none marker:content-none">
                                             <Link
                                                 href={item.href}
                                                 prefetch
