@@ -13,7 +13,7 @@ export function ViewSwitcher({ view, onViewChange }: ViewSwitcherProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => onViewChange('kpi')}
-                className={`gap-1 text-xs px-2 py-1 h-7 sm:gap-2 sm:text-xs sm:px-3 sm:h-8 ${
+                className={`h-7 gap-1 px-2 py-1 text-xs sm:h-8 sm:gap-2 sm:px-3 sm:text-xs ${
                     view === 'kpi'
                         ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
                         : 'text-muted-foreground hover:text-foreground'
@@ -26,7 +26,7 @@ export function ViewSwitcher({ view, onViewChange }: ViewSwitcherProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => onViewChange('chart')}
-                className={`gap-1 text-xs px-2 py-1 h-7 sm:gap-2 sm:text-xs sm:px-3 sm:h-8 ${
+                className={`h-7 gap-1 px-2 py-1 text-xs sm:h-8 sm:gap-2 sm:px-3 sm:text-xs ${
                     view === 'chart'
                         ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
                         : 'text-muted-foreground hover:text-foreground'

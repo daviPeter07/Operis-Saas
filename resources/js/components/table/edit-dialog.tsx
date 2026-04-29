@@ -163,8 +163,9 @@ export function EditDialog<T extends Record<string, unknown>>({
                                                 `Digite ou selecione ${field.label.toLowerCase()}`
                                             }
                                             value={
-                                                (formData[field.name] as string) ||
-                                                ''
+                                                (formData[
+                                                    field.name
+                                                ] as string) || ''
                                             }
                                             onChange={(e) =>
                                                 handleChange(

@@ -270,13 +270,17 @@ export function SettingsModule() {
                                 <input
                                     type="color"
                                     value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
+                                    onChange={(e) =>
+                                        setPrimaryColor(e.target.value)
+                                    }
                                     className="h-10 w-10 cursor-pointer rounded-lg border-0 p-0"
                                 />
                                 <Input
                                     type="text"
                                     value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
+                                    onChange={(e) =>
+                                        setPrimaryColor(e.target.value)
+                                    }
                                     placeholder="#f97316"
                                     className="font-mono uppercase"
                                 />

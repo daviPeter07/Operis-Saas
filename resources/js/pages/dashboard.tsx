@@ -9,9 +9,7 @@ export default function Dashboard({ message }: Props) {
     return (
         <>
             <Head title="Dashboard" />
-            <PageContent>
-                {message}
-            </PageContent>
+            <PageContent>{message}</PageContent>
         </>
     );
 }

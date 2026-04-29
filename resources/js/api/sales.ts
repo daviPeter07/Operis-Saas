@@ -19,7 +19,10 @@ export function useSalesQuery(options: UseSalesOptions = {}) {
             // return response.json() as Promise<{ data: Sale[]; meta: PaginationMeta }>;
 
             const { mockSales } = await import('@/lib/mocks/mock-data');
-            return { data: mockSales, meta: { total: mockSales.length, page: 1, perPage: 25 } };
+            return {
+                data: mockSales,
+                meta: { total: mockSales.length, page: 1, perPage: 25 },
+            };
         },
     };
 }
@@ -30,7 +33,7 @@ export function useSaleMutation() {
             // TODO: Substituir por chamada real
             // import { store } from '@/actions/App/Http/Controllers/SaleController';
             // await store.post(data);
-            
+
             return { id: crypto.randomUUID(), ...data };
         },
     };

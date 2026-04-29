@@ -364,14 +364,18 @@ export function CreateModal<T extends Record<string, unknown>>({
                                                 <datalist
                                                     id={`${field.name}-options`}
                                                 >
-                                                    {field.options.map((opt) => (
-                                                        <option
-                                                            key={opt.value}
-                                                            value={opt.value}
-                                                        >
-                                                            {opt.label}
-                                                        </option>
-                                                    ))}
+                                                    {field.options.map(
+                                                        (opt) => (
+                                                            <option
+                                                                key={opt.value}
+                                                                value={
+                                                                    opt.value
+                                                                }
+                                                            >
+                                                                {opt.label}
+                                                            </option>
+                                                        ),
+                                                    )}
                                                 </datalist>
                                             ) : null}
                                         </>

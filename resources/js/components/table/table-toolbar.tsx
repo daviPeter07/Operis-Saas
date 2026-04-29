@@ -1,5 +1,6 @@
 import { Search, Filter, Plus, Upload, Download, X } from 'lucide-react';
 import * as React from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -9,6 +10,11 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import {
+    getAltShortcutLabel,
+    isEditableElement,
+    matchesAltLetterShortcut,
+} from '@/lib/keyboard-shortcuts';
 import { cn } from '@/lib/utils';
 
 export interface TableToolbarProps {
@@ -41,6 +47,29 @@ export function TableToolbar({
     className,
 }: TableToolbarProps) {
     const [localSearch, setLocalSearch] = React.useState(searchValue);
+
+    React.useEffect(() => {
+        if (!onCreate || !showCreate) {
+            return;
+        }
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (!matchesAltLetterShortcut(event, 'n')) {
+                return;
+            }
+
+            if (isEditableElement(event.target)) {
+                return;
+            }
+
+            event.preventDefault();
+            onCreate();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onCreate, showCreate]);
 
     React.useEffect(() => {
         setLocalSearch(searchValue);
@@ -105,6 +134,12 @@ export function TableToolbar({
                     <Button size="sm" onClick={onCreate} className="gap-2">
                         <Plus className="h-4 w-4" />
                         Criar
+                        <Badge
+                            variant="outline"
+                            className="ml-1 h-5 min-w-5 rounded-md border-border/70 bg-background px-1.5 text-[10px] font-semibold text-foreground shadow-sm dark:border-zinc-200 dark:bg-zinc-100 dark:text-zinc-950"
+                        >
+                            {getAltShortcutLabel('N')}
+                        </Badge>
                     </Button>
                 )}
 

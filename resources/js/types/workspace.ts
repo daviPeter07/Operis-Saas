@@ -33,6 +33,7 @@ export type WorkspaceModule = {
     label: string;
     href: string;
     status: WorkspaceModuleStatus;
+    shortcut?: string;
 };
 
 export type WorkspaceQuickActionKey =
@@ -46,6 +47,7 @@ export type WorkspaceQuickAction = {
     key: WorkspaceQuickActionKey;
     label: string;
     description: string;
+    shortcut?: string;
 };
 
 export type WorkspaceTeamAccessMode = 'manage' | 'request-admin' | 'view';

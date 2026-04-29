@@ -48,7 +48,9 @@ export function AccountsReceivableModule() {
             header: (
                 <input
                     type="checkbox"
-                    checked={selectedIds.size === sales.length && sales.length > 0}
+                    checked={
+                        selectedIds.size === sales.length && sales.length > 0
+                    }
                     ref={(el) => {
                         if (el) {
                             el.indeterminate =
@@ -87,8 +89,7 @@ export function AccountsReceivableModule() {
             render: (val: unknown) => {
                 const statusText = translateStatus(String(val));
                 let bgColor = 'bg-gray-100 text-gray-800';
-                if (val === 'pending')
-                    bgColor = 'bg-amber-100 text-amber-800';
+                if (val === 'pending') bgColor = 'bg-amber-100 text-amber-800';
                 if (val === 'completed')
                     bgColor = 'bg-emerald-100 text-emerald-800';
                 if (val === 'cancelled') bgColor = 'bg-red-100 text-red-800';
@@ -160,7 +161,7 @@ export function AccountsReceivableModule() {
                     </div>
                     <button
                         onClick={handleConfirmReceipt}
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-gray-600 text-white hover:bg-gray-700 h-9 px-4"
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-gray-600 px-4 text-sm font-medium whitespace-nowrap text-white transition-colors hover:bg-gray-700"
                     >
                         Marcar como Recebida
                     </button>
@@ -172,7 +173,9 @@ export function AccountsReceivableModule() {
                 filterFields={filterFields}
                 title="Contas a Receber"
                 clickableRow
-                onRowClick={(row) => handleSelectOne(row.id, !selectedIds.has(row.id))}
+                onRowClick={(row) =>
+                    handleSelectOne(row.id, !selectedIds.has(row.id))
+                }
             />
         </div>
     );

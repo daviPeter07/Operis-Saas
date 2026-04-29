@@ -247,12 +247,11 @@ export function GenericTable<T extends { id: string }>({
             )
             .map((field) => {
                 const key = field.key.toLowerCase();
-                const inferredType: FormField['type'] =
-                    key.includes('email')
-                        ? 'email'
-                        : key.includes('password')
-                          ? 'password'
-                          : field.type;
+                const inferredType: FormField['type'] = key.includes('email')
+                    ? 'email'
+                    : key.includes('password')
+                      ? 'password'
+                      : field.type;
 
                 const placeholder =
                     inferredType === 'select'
@@ -549,94 +548,100 @@ export function GenericTable<T extends { id: string }>({
 
             <div className="hidden md:block">
                 <DataTable
-                data={paginatedData}
-                emptyMessage="Nenhum registro encontrado"
-            >
-                <thead>
-                    <tr>
-                        {columns.map((col: Column<T>) => (
-                            <DataTableHeadCell key={col.key}>
-                                {col.header}
-                            </DataTableHeadCell>
-                        ))}
-                        {showActions && (
-                            <DataTableHeadCell className="w-36 text-right">
-                                Ações
-                            </DataTableHeadCell>
-                        )}
-                    </tr>
-                </thead>
-                <tbody>
-                    {paginatedData.length === 0 ? (
+                    data={paginatedData}
+                    emptyMessage="Nenhum registro encontrado"
+                >
+                    <thead>
                         <tr>
-                            <td
-                                colSpan={columns.length + (showActions ? 1 : 0)}
-                            >
-                                <TableEmptyState
-                                    searchTerm={search}
-                                    onClearSearch={() => handleSearchChange('')}
-                                />
-                            </td>
+                            {columns.map((col: Column<T>) => (
+                                <DataTableHeadCell key={col.key}>
+                                    {col.header}
+                                </DataTableHeadCell>
+                            ))}
+                            {showActions && (
+                                <DataTableHeadCell className="w-36 text-right">
+                                    Ações
+                                </DataTableHeadCell>
+                            )}
                         </tr>
-                    ) : (
-                        paginatedData.map((row: T, index: number) => (
-                            <DataTableRowZebra
-                                key={String(
-                                    (row as { id: string }).id || index,
-                                )}
-                                index={index}
-                                onClick={
-                                    clickableRow && onRowClick
-                                        ? () => onRowClick(row)
-                                        : clickableRow && onEdit
-                                          ? () => onEdit(row)
-                                          : undefined
-                                }
-                                className={
-                                    clickableRow && (onRowClick || onEdit)
-                                        ? 'cursor-pointer'
-                                        : undefined
-                                }
-                            >
-                                {columns.map((col: Column<T>) => (
-                                    <DataTableCell key={col.key}>
-                                        {col.render
-                                            ? col.render(
-                                                  (
-                                                      row as Record<
-                                                          string,
-                                                          unknown
-                                                      >
-                                                  )[col.key],
-                                                  row,
-                                              )
-                                            : String(
-                                                  (
-                                                      row as Record<
-                                                          string,
-                                                          unknown
-                                                      >
-                                                  )[col.key] ?? '',
-                                              )}
-                                    </DataTableCell>
-                                ))}
-                                {showActions && (
-                                    <DataTableCell className="w-36">
-                                        <TableActions
-                                            onView={() => handleView(row)}
-                                            onEdit={() => handleEdit(row)}
-                                            onDelete={() => handleDelete(row)}
-                                        />
-                                    </DataTableCell>
-                                )}
-                            </DataTableRowZebra>
-                        ))
-                    )}
-                </tbody>
-            </DataTable>
+                    </thead>
+                    <tbody>
+                        {paginatedData.length === 0 ? (
+                            <tr>
+                                <td
+                                    colSpan={
+                                        columns.length + (showActions ? 1 : 0)
+                                    }
+                                >
+                                    <TableEmptyState
+                                        searchTerm={search}
+                                        onClearSearch={() =>
+                                            handleSearchChange('')
+                                        }
+                                    />
+                                </td>
+                            </tr>
+                        ) : (
+                            paginatedData.map((row: T, index: number) => (
+                                <DataTableRowZebra
+                                    key={String(
+                                        (row as { id: string }).id || index,
+                                    )}
+                                    index={index}
+                                    onClick={
+                                        clickableRow && onRowClick
+                                            ? () => onRowClick(row)
+                                            : clickableRow && onEdit
+                                              ? () => onEdit(row)
+                                              : undefined
+                                    }
+                                    className={
+                                        clickableRow && (onRowClick || onEdit)
+                                            ? 'cursor-pointer'
+                                            : undefined
+                                    }
+                                >
+                                    {columns.map((col: Column<T>) => (
+                                        <DataTableCell key={col.key}>
+                                            {col.render
+                                                ? col.render(
+                                                      (
+                                                          row as Record<
+                                                              string,
+                                                              unknown
+                                                          >
+                                                      )[col.key],
+                                                      row,
+                                                  )
+                                                : String(
+                                                      (
+                                                          row as Record<
+                                                              string,
+                                                              unknown
+                                                          >
+                                                      )[col.key] ?? '',
+                                                  )}
+                                        </DataTableCell>
+                                    ))}
+                                    {showActions && (
+                                        <DataTableCell className="w-36">
+                                            <TableActions
+                                                onView={() => handleView(row)}
+                                                onEdit={() => handleEdit(row)}
+                                                onDelete={() =>
+                                                    handleDelete(row)
+                                                }
+                                            />
+                                        </DataTableCell>
+                                    )}
+                                </DataTableRowZebra>
+                            ))
+                        )}
+                    </tbody>
+                </DataTable>
             </div>
 
-            <div className="block md:hidden space-y-2">
+            <div className="block space-y-2 md:hidden">
                 {paginatedData.length === 0 ? (
                     <div className="py-8 text-center text-muted-foreground">
                         Nenhum registro encontrado

@@ -48,7 +48,7 @@ export function MetricsGrid({ metrics }: MetricsGridProps) {
                                     {metric.label}
                                 </span>
                                 <div
-                                    className={`flex h-6 w-6 items-center justify-center rounded-lg sm:h-8 sm:w-8 sm:rounded-xl ring-1 ${metric.iconBackground} ${metric.iconRing}`}
+                                    className={`flex h-6 w-6 items-center justify-center rounded-lg ring-1 sm:h-8 sm:w-8 sm:rounded-xl ${metric.iconBackground} ${metric.iconRing}`}
                                 >
                                     <Icon
                                         className={`h-3 w-3 sm:h-4 sm:w-4 ${metric.color}`}

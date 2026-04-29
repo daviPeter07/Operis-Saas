@@ -168,7 +168,12 @@ export function PaginationInfo({
 
     if (totalItems === 0) {
         return (
-            <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+            <div
+                className={cn(
+                    'text-xs text-muted-foreground sm:text-sm',
+                    className,
+                )}
+            >
                 Nenhum registro encontrado
             </div>
         );
@@ -176,7 +181,12 @@ export function PaginationInfo({
 
     if (totalItems === 1) {
         return (
-            <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+            <div
+                className={cn(
+                    'text-xs text-muted-foreground sm:text-sm',
+                    className,
+                )}
+            >
                 1 registro
             </div>
         );
@@ -184,16 +194,31 @@ export function PaginationInfo({
 
     if (currentPage === totalPages && totalItems === endItem) {
         return (
-            <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+            <div
+                className={cn(
+                    'text-xs text-muted-foreground sm:text-sm',
+                    className,
+                )}
+            >
                 {totalItems} registros no total
             </div>
         );
     }
 
     return (
-        <div className={cn('text-xs text-muted-foreground sm:text-sm', className)}>
+        <div
+            className={cn(
+                'text-xs text-muted-foreground sm:text-sm',
+                className,
+            )}
+        >
             {startItem}-{endItem} de {totalItems} registros
-            {totalPages > 1 && <span className="hidden sm:inline"> · página {currentPage}/{totalPages}</span>}
+            {totalPages > 1 && (
+                <span className="hidden sm:inline">
+                    {' '}
+                    · página {currentPage}/{totalPages}
+                </span>
+            )}
         </div>
     );
 }

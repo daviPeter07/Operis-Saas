@@ -88,7 +88,7 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
 
     return (
         <div className="rounded-2xl border bg-card p-3 sm:p-6">
-            <div className="mb-4 sm:mb-6 flex items-start justify-between gap-2 sm:gap-4">
+            <div className="mb-4 flex items-start justify-between gap-2 sm:mb-6 sm:gap-4">
                 <div>
                     <h3 className="text-sm font-semibold text-foreground sm:text-base">
                         {chart.title}
@@ -105,7 +105,7 @@ function LineChartCard({ chart }: { chart: OverviewChart }) {
             </div>
 
             <div className="relative pl-10 sm:pl-14">
-                <div className="pointer-events-none absolute top-2 left-0 flex h-[200px] sm:h-[320px] w-9 sm:w-11 flex-col justify-between text-left text-[10px] sm:text-[11px] text-muted-foreground">
+                <div className="pointer-events-none absolute top-2 left-0 flex h-[200px] w-9 flex-col justify-between text-left text-[10px] text-muted-foreground sm:h-[320px] sm:w-11 sm:text-[11px]">
                     {axisValues.map((value, index) => (
                         <span key={index}>{formatAxisValue(value)}</span>
                     ))}
