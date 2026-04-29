@@ -1,5 +1,5 @@
-import { AccountsReceivableModule } from '@/components/features/dashboard/accounts-receivable';
-import { PageContent } from '@/components/features/dashboard/page-content';
+import { AccountsReceivableModule } from '@/features/dashboard/accounts-receivable';
+import { PageContent } from '@/features/dashboard/page-content';
 import AppLayout from '@/layouts/app-layout';
 
 export default function AccountsReceivablePage() {

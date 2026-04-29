@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import LoginPageContent from '@/components/features/auth/login-page-content';
+import LoginPageContent from '@/features/auth/login-page-content';
 
 type Props = {
     status?: string;

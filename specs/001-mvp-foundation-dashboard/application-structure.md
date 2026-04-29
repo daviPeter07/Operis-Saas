@@ -156,7 +156,7 @@ resources/js/lib/
 
 ```tsx
 import { Head } from '@inertiajs/react';
-import ClientsIndex from '@/components/features/dashboard/clients';
+import ClientsIndex from '@/features/dashboard/clients';
 
 export default function Clients() {
   return (

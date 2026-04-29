@@ -15,7 +15,7 @@ import {
     ChevronDown,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useWorkspace } from '@/components/features/dashboard/workspace-context';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 import {
     Button,
     Checkbox,

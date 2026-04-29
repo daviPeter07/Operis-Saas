@@ -1,16 +1,16 @@
 import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { ChartsPanel } from '@/components/features/dashboard/overview/charts-panel';
-import { MetricsGrid } from '@/components/features/dashboard/overview/metrics-grid';
-import { PeriodFilter } from '@/components/features/dashboard/overview/period-filter';
+import { ChartsPanel } from '@/features/dashboard/overview/charts-panel';
+import { MetricsGrid } from '@/features/dashboard/overview/metrics-grid';
+import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
 import type {
     Period,
     CustomRange,
-} from '@/components/features/dashboard/overview/period-filter';
-import { RecentActivity } from '@/components/features/dashboard/overview/recent-activity';
-import { ViewSwitcher } from '@/components/features/dashboard/overview/view-switcher';
-import { PageContent } from '@/components/features/dashboard/page-content';
-import { PageHeader } from '@/components/features/dashboard/page-header';
+} from '@/features/dashboard/overview/period-filter';
+import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
+import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
+import { PageContent } from '@/features/dashboard/page-content';
+import { PageHeader } from '@/features/dashboard/page-header';
 import AppLayout from '@/layouts/app-layout';
 import {
     alerts,

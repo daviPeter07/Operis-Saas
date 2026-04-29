@@ -1,5 +1,5 @@
-import { ClientsModule } from '@/components/features/dashboard/clients';
-import { PageContent } from '@/components/features/dashboard/page-content';
+import { ClientsModule } from '@/features/dashboard/clients';
+import { PageContent } from '@/features/dashboard/page-content';
 import AppLayout from '@/layouts/app-layout';
 
 export default function ClientsPage() {

@@ -1,4 +1,4 @@
-import { PageContent } from '@/components/features/dashboard/page-content';
+import { PageContent } from '@/features/dashboard/page-content';
 import { ReportPage } from '@/components/table/report-page';
 import AppLayout from '@/layouts/app-layout';
 

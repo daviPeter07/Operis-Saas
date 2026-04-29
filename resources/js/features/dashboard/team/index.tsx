@@ -1,4 +1,4 @@
-import { useWorkspace } from '@/components/features/dashboard/workspace-context';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 import { TeamPageContent } from './team-page-content';
 
 export function TeamModule() {

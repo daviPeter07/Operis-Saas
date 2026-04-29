@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import VerifyEmailPageContent from '@/components/features/auth/verify-email-page-content';
+import VerifyEmailPageContent from '@/features/auth/verify-email-page-content';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (

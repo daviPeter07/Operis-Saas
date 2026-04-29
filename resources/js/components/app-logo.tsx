@@ -1,5 +1,5 @@
 import { Building2 } from 'lucide-react';
-import { useWorkspace } from '@/components/features/dashboard/workspace-context';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 
 export default function AppLogo() {
     const { currentCompany } = useWorkspace();

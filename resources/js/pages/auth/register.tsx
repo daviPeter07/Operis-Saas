@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import RegisterPageContent from '@/components/features/auth/register-page-content';
+import RegisterPageContent from '@/features/auth/register-page-content';
 
 export default function Register() {
     return (

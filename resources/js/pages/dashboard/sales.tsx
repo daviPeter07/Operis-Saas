@@ -1,5 +1,5 @@
-import { PageContent } from '@/components/features/dashboard/page-content';
-import { SalesModule } from '@/components/features/dashboard/sales';
+import { PageContent } from '@/features/dashboard/page-content';
+import { SalesModule } from '@/features/dashboard/sales';
 import AppLayout from '@/layouts/app-layout';
 
 export default function SalesPage() {

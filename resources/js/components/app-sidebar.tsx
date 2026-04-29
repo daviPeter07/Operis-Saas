@@ -17,7 +17,7 @@ import {
     Settings,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { useWorkspace } from '@/components/features/dashboard/workspace-context';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
 import {

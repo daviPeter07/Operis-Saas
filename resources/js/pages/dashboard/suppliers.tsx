@@ -1,5 +1,5 @@
-import { PageContent } from '@/components/features/dashboard/page-content';
-import { SuppliersModule } from '@/components/features/dashboard/suppliers';
+import { PageContent } from '@/features/dashboard/page-content';
+import { SuppliersModule } from '@/features/dashboard/suppliers';
 import AppLayout from '@/layouts/app-layout';
 
 export default function SuppliersPage() {

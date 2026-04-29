@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import ForgotPasswordPageContent from '@/components/features/auth/forgot-password-page-content';
+import ForgotPasswordPageContent from '@/features/auth/forgot-password-page-content';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     return (

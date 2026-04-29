@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { PageContent } from '@/components/features/dashboard/page-content';
+import { PageContent } from '@/features/dashboard/page-content';
 
 type Props = {
     message: string;

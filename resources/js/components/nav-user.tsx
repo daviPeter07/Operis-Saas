@@ -1,8 +1,8 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronsUpDown, Building2 } from 'lucide-react';
 import { useState } from 'react';
-import { CompanySwitcherModal } from '@/components/features/dashboard/layout/company-switcher-modal';
-import { useWorkspace } from '@/components/features/dashboard/workspace-context';
+import { CompanySwitcherModal } from '@/features/dashboard/layout/company-switcher-modal';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 import {
     DropdownMenu,
     DropdownMenuContent,

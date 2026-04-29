@@ -1,5 +1,5 @@
-import { InventoryModule } from '@/components/features/dashboard/inventory';
-import { PageContent } from '@/components/features/dashboard/page-content';
+import { InventoryModule } from '@/features/dashboard/inventory';
+import { PageContent } from '@/features/dashboard/page-content';
 import AppLayout from '@/layouts/app-layout';
 
 export default function InventoryPage() {

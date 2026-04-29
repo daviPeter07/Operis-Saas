@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import ConfirmPasswordPageContent from '@/components/features/auth/confirm-password-page-content';
+import ConfirmPasswordPageContent from '@/features/auth/confirm-password-page-content';
 
 export default function ConfirmPassword() {
     return (
