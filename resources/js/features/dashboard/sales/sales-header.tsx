@@ -66,7 +66,7 @@ export function SalesHeader({ metrics }: SalesHeaderProps) {
                                 </p>
                             </div>
 
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/25">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-500/15 text-orange-500 ring-1 ring-orange-500/25">
                                 <Icon className="h-6 w-6" />
                             </div>
                         </CardContent>
