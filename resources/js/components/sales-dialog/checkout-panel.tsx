@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { CalendarDays, Trash2, UserPlus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -77,6 +78,26 @@ export function CheckoutPanel({
     canSubmit,
     onSubmit,
 }: CheckoutPanelProps) {
+    const [isClientListOpen, setIsClientListOpen] = React.useState(false);
+    const clientPickerRef = React.useRef<HTMLDivElement | null>(null);
+
+    React.useEffect(() => {
+        const handleMouseDown = (event: MouseEvent) => {
+            if (!clientPickerRef.current) {
+                return;
+            }
+
+            if (!clientPickerRef.current.contains(event.target as Node)) {
+                setIsClientListOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleMouseDown);
+        return () => {
+            document.removeEventListener('mousedown', handleMouseDown);
+        };
+    }, []);
+
     return (
         <section className="flex min-h-0 flex-col bg-card">
             <div className="border-b p-4">
@@ -117,14 +138,18 @@ export function CheckoutPanel({
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <div className="relative">
+                            <div className="space-y-3" ref={clientPickerRef}>
+                                <div className="relative">
                                 <Input
                                     value={clientSearch}
-                                    onChange={(event) =>
+                                    onChange={(event) => {
                                         setClientSearch(
                                             event.currentTarget.value,
-                                        )
-                                    }
+                                        );
+                                        setIsClientListOpen(true);
+                                    }}
+                                    onFocus={() => setIsClientListOpen(true)}
+                                    onClick={() => setIsClientListOpen(true)}
                                     placeholder="Buscar cliente"
                                     className="pr-10"
                                 />
@@ -135,31 +160,43 @@ export function CheckoutPanel({
                                         variant="ghost"
                                         size="icon"
                                         className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                        onClick={() => selectClientById('')}
+                                        onClick={() => {
+                                            selectClientById('');
+                                            setClientSearch('');
+                                            setIsClientListOpen(false);
+                                        }}
                                     >
                                         <X className="h-4 w-4" />
                                     </Button>
                                 ) : null}
-                            </div>
-                            <div className="max-h-44 overflow-y-auto rounded-md border">
-                                {filteredClients.length === 0 ? (
-                                    <p className="px-3 py-2 text-sm text-muted-foreground">
-                                        Nenhum cliente encontrado.
-                                    </p>
-                                ) : (
-                                    filteredClients.map((client) => (
-                                        <button
-                                            key={client.id}
-                                            type="button"
-                                            onClick={() =>
-                                                selectClientById(client.id)
-                                            }
-                                            className="w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-muted"
-                                        >
-                                            {client.name}
-                                        </button>
-                                    ))
-                                )}
+                                </div>
+                                {isClientListOpen ? (
+                                    <div className="max-h-44 overflow-y-auto rounded-md border">
+                                        {filteredClients.length === 0 ? (
+                                            <p className="px-3 py-2 text-sm text-muted-foreground">
+                                                Nenhum cliente encontrado.
+                                            </p>
+                                        ) : (
+                                            filteredClients.map((client) => (
+                                                <button
+                                                    key={client.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        selectClientById(
+                                                            client.id,
+                                                        );
+                                                        setIsClientListOpen(
+                                                            false,
+                                                        );
+                                                    }}
+                                                    className="w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-muted"
+                                                >
+                                                    {client.name}
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : null}
                             </div>
                         </CardContent>
                     </Card>
