@@ -1,0 +1,399 @@
+import { CalendarDays, Trash2, UserPlus, X } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import type { Client } from '@/lib/mocks/mock-data';
+import type { SalesLineItem } from '@/types/sales-dialog';
+import { formatCurrencyBR } from '@/lib/format';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { paymentMethodOptions } from '@/utils/sales-dialog';
+
+interface CheckoutPanelProps {
+    clientSearch: string;
+    setClientSearch: (value: string) => void;
+    filteredClients: Client[];
+    selectedClient: Client | null | undefined;
+    selectClientById: (id: string) => void;
+    openCreateClient: () => void;
+    lineItems: SalesLineItem[];
+    increaseLineItemQuantity: (id: string) => void;
+    decreaseLineItemQuantity: (id: string) => void;
+    removeLineItem: (id: string) => void;
+    paymentMethod: 'money' | 'pix' | 'card' | 'other';
+    setPaymentMethod: (value: 'money' | 'pix' | 'card' | 'other') => void;
+    total: number;
+    discountAmountApplied: number;
+    finalTotal: number;
+    openDiscountDialog: () => void;
+    notes: string;
+    setNotes: (value: string) => void;
+    saleDate: string;
+    calendarOpen: boolean;
+    setCalendarOpen: (open: boolean) => void;
+    setSaleDate: (value: string) => void;
+    canSubmit: boolean;
+    onSubmit: () => void;
+}
+
+export function CheckoutPanel({
+    clientSearch,
+    setClientSearch,
+    filteredClients,
+    selectedClient,
+    selectClientById,
+    openCreateClient,
+    lineItems,
+    increaseLineItemQuantity,
+    decreaseLineItemQuantity,
+    removeLineItem,
+    paymentMethod,
+    setPaymentMethod,
+    total,
+    discountAmountApplied,
+    finalTotal,
+    openDiscountDialog,
+    notes,
+    setNotes,
+    saleDate,
+    calendarOpen,
+    setCalendarOpen,
+    setSaleDate,
+    canSubmit,
+    onSubmit,
+}: CheckoutPanelProps) {
+    return (
+        <section className="flex min-h-0 flex-col bg-card">
+            <div className="border-b p-4">
+                <DialogHeader className="text-left">
+                    <DialogTitle className="text-lg">
+                        Finalizar venda
+                    </DialogTitle>
+                    <DialogDescription>
+                        Cliente, itens, pagamento e fechamento.
+                    </DialogDescription>
+                </DialogHeader>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                <div className="space-y-4">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm">
+                                    Cliente
+                                </CardTitle>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                            onClick={openCreateClient}
+                                        >
+                                            <UserPlus className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        Criar cliente
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="relative">
+                                <Input
+                                    value={clientSearch}
+                                    onChange={(event) =>
+                                        setClientSearch(
+                                            event.currentTarget.value,
+                                        )
+                                    }
+                                    placeholder="Buscar cliente"
+                                    className="pr-10"
+                                />
+                                {selectedClient &&
+                                clientSearch === selectedClient.name ? (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        onClick={() => selectClientById('')}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                ) : null}
+                            </div>
+                            <div className="max-h-44 overflow-y-auto rounded-md border">
+                                {filteredClients.length === 0 ? (
+                                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                                        Nenhum cliente encontrado.
+                                    </p>
+                                ) : (
+                                    filteredClients.map((client) => (
+                                        <button
+                                            key={client.id}
+                                            type="button"
+                                            onClick={() =>
+                                                selectClientById(client.id)
+                                            }
+                                            className="w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-muted"
+                                        >
+                                            {client.name}
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm">Carrinho</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {lineItems.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Nenhum item no carrinho.
+                                </p>
+                            ) : (
+                                lineItems.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="rounded-md border p-2"
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-medium">
+                                                    {item.productName}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatCurrencyBR(
+                                                        item.unitPrice,
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                decreaseLineItemQuantity(
+                                                                    item.id,
+                                                                )
+                                                            }
+                                                        >
+                                                            -
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        Diminuir quantidade
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                                <span className="w-6 text-center text-sm">
+                                                    {item.quantity}
+                                                </span>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                increaseLineItemQuantity(
+                                                                    item.id,
+                                                                )
+                                                            }
+                                                        >
+                                                            +
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        Aumentar quantidade
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                removeLineItem(
+                                                                    item.id,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        Remover item
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm">
+                                Forma de pagamento
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ToggleGroup
+                                type="single"
+                                value={paymentMethod}
+                                onValueChange={(value) => {
+                                    if (
+                                        value === 'money' ||
+                                        value === 'pix' ||
+                                        value === 'card' ||
+                                        value === 'other'
+                                    ) {
+                                        setPaymentMethod(value);
+                                    }
+                                }}
+                                className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                            >
+                                {paymentMethodOptions.map((option) => (
+                                    <ToggleGroupItem
+                                        key={option.value}
+                                        value={option.value}
+                                        variant="outline"
+                                        className="rounded-md border"
+                                    >
+                                        {option.label}
+                                    </ToggleGroupItem>
+                                ))}
+                            </ToggleGroup>
+                        </CardContent>
+                    </Card>
+
+                    <div className="space-y-2 rounded-md border p-3">
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                                Subtotal
+                            </span>
+                            <span>{formatCurrencyBR(total)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                                Desconto
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-primary">
+                                    - {formatCurrencyBR(discountAmountApplied)}
+                                </span>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={openDiscountDialog}
+                                        >
+                                            Aplicar
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        Aplicar desconto
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                        </div>
+                        <Separator />
+                        <div className="flex items-center justify-between">
+                            <span className="text-2xl font-bold">Total</span>
+                            <span className="text-3xl font-black text-primary">
+                                {formatCurrencyBR(finalTotal)}
+                            </span>
+                        </div>
+                    </div>
+
+                    <Textarea
+                        value={notes}
+                        onChange={(event) =>
+                            setNotes(event.currentTarget.value)
+                        }
+                        placeholder="Observacoes (opcional)"
+                        rows={3}
+                        className="h-24 resize-none"
+                    />
+
+                    <div className="space-y-2">
+                        <Label>Data</Label>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => setCalendarOpen(!calendarOpen)}
+                        >
+                            <CalendarDays className="mr-2 h-4 w-4" />
+                            {saleDate
+                                ? format(new Date(saleDate), 'dd/MM/yyyy', {
+                                      locale: ptBR,
+                                  })
+                                : 'Selecionar data'}
+                        </Button>
+                        {calendarOpen && (
+                            <div className="rounded-md border p-2">
+                                <Calendar
+                                    mode="single"
+                                    selected={
+                                        saleDate
+                                            ? new Date(saleDate)
+                                            : undefined
+                                    }
+                                    onSelect={(date) => {
+                                        if (date) {
+                                            setSaleDate(
+                                                date.toISOString().slice(0, 10),
+                                            );
+                                        }
+                                        setCalendarOpen(false);
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    <Button
+                        type="button"
+                        className="w-full"
+                        size="lg"
+                        disabled={!canSubmit}
+                        onClick={onSubmit}
+                    >
+                        Finalizar venda
+                    </Button>
+                </div>
+            </div>
+        </section>
+    );
+}

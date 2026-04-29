@@ -12,7 +12,7 @@ import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SalesHeader } from './sales-header';
 import type { SalesRecord } from '@/types/sales-dialog';
-import { SalesDialog } from './sales-dialog';
+import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 
 export function SalesModule() {
     const [sales, setSales] = useState<SalesRecord[]>(() =>

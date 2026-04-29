@@ -1,9 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { PageContent } from '@/features/dashboard/page-content';
-import {
-    AdminRequestPage,
-    TeamModule,
-} from '@/features/dashboard/team';
+import { AdminRequestPage, TeamModule } from '@/features/dashboard/team';
 import AppLayout from '@/layouts/app-layout';
 
 export default function TeamPage() {

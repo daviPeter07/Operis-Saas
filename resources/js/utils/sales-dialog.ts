@@ -34,16 +34,19 @@ export function sortByName<T extends { name: string }>(items: T[]): T[] {
 export function makeSaleLineItem(
     product: Product,
     quantity: number,
+    salePrice?: number,
 ): SalesLineItem {
+    const unitPrice = salePrice ?? product.price;
+
     return {
         id: crypto.randomUUID(),
         productId: product.id,
         productName: product.name,
         sku: product.sku,
         quantity,
-        unitPrice: product.price,
+        unitPrice,
         unitCost: product.cost,
-        subtotal: Number((product.price * quantity).toFixed(2)),
+        subtotal: Number((unitPrice * quantity).toFixed(2)),
     };
 }
 

@@ -35,7 +35,8 @@ export function useSalesDialog({
         useState<Sale['paymentMethod']>('pix');
     const [saleDate, setSaleDate] = useState(todayString());
     const [notes, setNotes] = useState('');
-    const [discountType, setDiscountType] = useState<SaleDiscountType>('amount');
+    const [discountType, setDiscountType] =
+        useState<SaleDiscountType>('amount');
     const [discountValue, setDiscountValue] = useState('0');
     const [appliedDiscountType, setAppliedDiscountType] =
         useState<SaleDiscountType>('amount');
@@ -118,10 +119,13 @@ export function useSalesDialog({
         }
 
         const quantityValue = Math.max(1, Number(quantity) || 1);
+        const selectedUnitPrice = selectedProduct.price;
 
         setLineItems((currentItems) => {
             const existingIndex = currentItems.findIndex(
-                (item) => item.productId === selectedProduct.id,
+                (item) =>
+                    item.productId === selectedProduct.id &&
+                    item.unitPrice === selectedUnitPrice,
             );
 
             if (existingIndex >= 0) {
@@ -142,7 +146,11 @@ export function useSalesDialog({
 
             return [
                 ...currentItems,
-                makeSaleLineItem(selectedProduct, quantityValue),
+                makeSaleLineItem(
+                    selectedProduct,
+                    quantityValue,
+                    selectedUnitPrice,
+                ),
             ];
         });
 
@@ -150,6 +158,44 @@ export function useSalesDialog({
         setProductSearch('');
         setQuantity('1');
         setIsScannerReady(false);
+    };
+
+    const addProductToCart = (
+        product: Product,
+        customQuantity: number,
+        customSalePrice: number,
+    ) => {
+        const quantityValue = Math.max(1, Number(customQuantity) || 1);
+        const salePrice = Math.max(0, Number(customSalePrice) || 0);
+
+        setLineItems((currentItems) => {
+            const existingIndex = currentItems.findIndex(
+                (item) =>
+                    item.productId === product.id &&
+                    item.unitPrice === salePrice,
+            );
+
+            if (existingIndex >= 0) {
+                const nextItems = [...currentItems];
+                const currentItem = nextItems[existingIndex];
+                const nextQuantity = currentItem.quantity + quantityValue;
+
+                nextItems[existingIndex] = {
+                    ...currentItem,
+                    quantity: nextQuantity,
+                    subtotal: Number(
+                        (currentItem.unitPrice * nextQuantity).toFixed(2),
+                    ),
+                };
+
+                return nextItems;
+            }
+
+            return [
+                ...currentItems,
+                makeSaleLineItem(product, quantityValue, salePrice),
+            ];
+        });
     };
 
     const updateLineItemQuantity = (itemId: string, value: string) => {
@@ -182,7 +228,9 @@ export function useSalesDialog({
                 return {
                     ...item,
                     quantity: nextQuantity,
-                    subtotal: Number((item.unitPrice * nextQuantity).toFixed(2)),
+                    subtotal: Number(
+                        (item.unitPrice * nextQuantity).toFixed(2),
+                    ),
                 };
             }),
         );
@@ -234,6 +282,7 @@ export function useSalesDialog({
 
     return {
         addSelectedProduct,
+        addProductToCart,
         applyDiscount,
         appliedDiscountType,
         appliedDiscountValue,
