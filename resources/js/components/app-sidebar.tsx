@@ -28,7 +28,6 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    useSidebar,
 } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -149,7 +148,6 @@ const navItems = [
 
 export function AppSidebar() {
     const { navigation } = useWorkspace();
-    const { state: sidebarState } = useSidebar();
 
     const navigationShortcuts = React.useMemo(() => {
         return new Map(
@@ -213,9 +211,7 @@ export function AppSidebar() {
                 variant="outline"
                 className="pointer-events-none absolute top-1/2 right-2 h-5 min-w-5 -translate-y-1/2 rounded-md border-sidebar-border bg-sidebar px-1.5 text-[10px] font-semibold text-sidebar-foreground shadow-none group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:right-1 group-data-[collapsible=icon]:translate-y-0"
             >
-                {sidebarState === 'collapsed'
-                    ? shortcut
-                    : getAltShortcutLabel(shortcut)}
+                {getAltShortcutLabel(shortcut)}
             </Badge>
         );
     };
@@ -256,19 +252,23 @@ export function AppSidebar() {
                                 <Tooltip key={item.module}>
                                     <TooltipTrigger asChild>
                                         <SidebarMenuItem className="relative">
-                                            <SidebarMenuButton
-                                                asChild
-                                                isActive={isActive}
-                                                className="justify-start px-3 pr-9 group-data-[collapsible=icon]:pr-2"
+                                            <Link
+                                                href={item.href}
+                                                prefetch
+                                                className={`relative flex items-center gap-3 rounded-xl px-3 py-2 pr-9 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:pr-0 ${
+                                                    isActive
+                                                        ? 'bg-sidebar-accent text-accent shadow-[0_0_0_1px_hsl(var(--sidebar-border))]'
+                                                        : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground hover:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)]'
+                                                } `}
                                             >
-                                                <Link href={item.href} prefetch>
-                                                    <Icon className="h-4 w-4 shrink-0" />
-                                                    <span className="truncate group-data-[collapsible=icon]:hidden">
-                                                        {item.title}
-                                                    </span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                            {renderShortcutBadge(item.shortcut)}
+                                                <Icon className="h-4 w-4 shrink-0" />
+                                                <span className="truncate group-data-[collapsible=icon]:hidden">
+                                                    {item.title}
+                                                </span>
+                                                {renderShortcutBadge(
+                                                    item.shortcut,
+                                                )}
+                                            </Link>
                                         </SidebarMenuItem>
                                     </TooltipTrigger>
                                     <TooltipContent
