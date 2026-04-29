@@ -40,7 +40,7 @@ export function SalesModule() {
         },
         {
             key: 'paymentMethod',
-            header: 'Método',
+            header: 'Metodo',
             render: (val: unknown) => translatePaymentMethod(String(val)),
         },
         {
@@ -93,20 +93,19 @@ export function SalesModule() {
             type: 'select' as const,
             options: [
                 { value: 'pending', label: 'Pendente' },
-                { value: 'completed', label: 'Concluído' },
+                { value: 'completed', label: 'Concluido' },
                 { value: 'cancelled', label: 'Cancelado' },
             ],
         },
         {
             key: 'paymentMethod',
-            label: 'Método de Pagamento',
+            label: 'Metodo de Pagamento',
             type: 'select' as const,
             options: [
                 { value: 'money', label: 'Dinheiro' },
-                { value: 'credit', label: 'Crédito' },
-                { value: 'debit', label: 'Débito' },
                 { value: 'pix', label: 'PIX' },
-                { value: 'installment', label: 'Parcelado' },
+                { value: 'card', label: 'Cartao' },
+                { value: 'other', label: 'Outros' },
             ],
         },
     ];
@@ -118,13 +117,9 @@ export function SalesModule() {
             ? (String(data.status) as Sale['status'])
             : 'pending';
 
-        const paymentMethod = [
-            'money',
-            'credit',
-            'debit',
-            'pix',
-            'installment',
-        ].includes(String(data.paymentMethod))
+        const paymentMethod = ['money', 'pix', 'card', 'other'].includes(
+            String(data.paymentMethod),
+        )
             ? (String(data.paymentMethod) as Sale['paymentMethod'])
             : 'pix';
 
@@ -132,7 +127,7 @@ export function SalesModule() {
             id: crypto.randomUUID(),
             clientId: data.clientId,
             clientName: String(data.clientName || ''),
-            total: Number(data.total || 0),
+            total: Number(data.finalTotal || data.total || 0),
             status,
             paymentMethod,
             items: Number(data.items || 1),
@@ -146,6 +141,10 @@ export function SalesModule() {
                 ...newSale,
                 notes: data.notes,
                 lineItems: data.lineItems,
+                discountType: data.discountType,
+                discountValue: data.discountValue,
+                discountAmountApplied: data.discountAmountApplied,
+                finalTotal: data.finalTotal,
             },
             ...previous,
         ]);
@@ -188,5 +187,3 @@ export function SalesModule() {
         </div>
     );
 }
-
-

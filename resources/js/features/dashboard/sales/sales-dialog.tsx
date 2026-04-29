@@ -1,21 +1,15 @@
 import * as React from 'react';
-import {
-    Barcode,
-    CircleDollarSign,
-    Package,
-    Plus,
-    Trash2,
-    UserPlus,
-    Wallet,
-} from 'lucide-react';
-import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
+import { Barcode, CalendarDays, PackagePlus, Search, Trash2, UserPlus } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import type { Client, Product } from '@/lib/mocks/mock-data';
 import { formatCurrencyBR } from '@/lib/format';
-import { cn } from '@/lib/utils';
-import type { SalesLineItem, SalesRecord } from '@/types/sales-dialog';
+import type { SaleDiscountType, SalesLineItem, SalesRecord } from '@/types/sales-dialog';
 import { useSalesDialog } from '@/hooks/use-sales-dialog';
-import { paymentMethodOptions, salesStatusOptions } from '@/utils/sales-dialog';
+import { filterProductsByQuery, paymentMethodOptions } from '@/utils/sales-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Combobox,
@@ -26,24 +20,13 @@ import {
     ComboboxItem,
     ComboboxList,
 } from '@/components/ui/combobox';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { QuickCreateDialog } from './quick-create-dialog';
 
 interface SalesDialogProps {
@@ -54,59 +37,6 @@ interface SalesDialogProps {
     products: Product[];
     onCreateClient: (client: Client) => Client;
     onCreateProduct: (product: Product) => Product;
-}
-
-interface SalesClientSectionProps {
-    clients: Client[];
-    clientId: string;
-    clientSearch: string;
-    selectedClientName?: string;
-    onSelectClient: (id: string) => void;
-    onClientSearchChange: (value: string) => void;
-    onCreateClientClick: () => void;
-}
-
-interface SalesProductSectionProps {
-    products: Product[];
-    productId: string;
-    productSearch: string;
-    quantity: string;
-    isScannerReady: boolean;
-    canAddProduct: boolean;
-    onSelectProduct: (id: string) => void;
-    onProductSearchChange: (value: string) => void;
-    onQuantityChange: (value: string) => void;
-    onToggleScanner: () => void;
-    onAddSelectedProduct: () => void;
-    onCreateProductClick: () => void;
-}
-
-interface SalesItemsSectionProps {
-    lineItems: SalesLineItem[];
-    onLineItemQuantityChange: (itemId: string, value: string) => void;
-    onRemoveLineItem: (itemId: string) => void;
-}
-
-interface SalesDetailsSectionProps {
-    status: Sale['status'];
-    paymentMethod: Sale['paymentMethod'];
-    saleDate: string;
-    notes: string;
-    onStatusChange: (value: Sale['status']) => void;
-    onPaymentMethodChange: (value: Sale['paymentMethod']) => void;
-    onSaleDateChange: (value: string) => void;
-    onNotesChange: (value: string) => void;
-}
-
-interface SalesSummaryPanelProps {
-    selectedClientName?: string;
-    itemsCount: number;
-    lineItemsCount: number;
-    estimatedProfit: number;
-    total: number;
-    canSubmit: boolean;
-    onCancel: () => void;
-    onSubmit: () => void;
 }
 
 export function SalesDialog({
@@ -120,14 +50,20 @@ export function SalesDialog({
 }: SalesDialogProps) {
     const {
         addSelectedProduct,
+        applyDiscount,
+        appliedDiscountType,
+        appliedDiscountValue,
         canSubmit,
         clientCreateOpen,
         clientId,
         clientQuickFields,
         clientSearch,
-        estimatedProfit,
-        itemsCount,
-        isScannerReady,
+        decreaseLineItemQuantity,
+        discountAmountApplied,
+        discountType,
+        discountValue,
+        finalTotal,
+        increaseLineItemQuantity,
         lineItems,
         notes,
         paymentMethod,
@@ -135,27 +71,38 @@ export function SalesDialog({
         productId,
         productQuickFields,
         productSearch,
-        quantity,
         saleDate,
         selectedClient,
         selectedProduct,
-        status,
         total,
         removeLineItem,
         selectClientById,
         selectProductById,
         setClientCreateOpen,
         setClientSearch,
+        setDiscountType,
+        setDiscountValue,
         setIsScannerReady,
+        isScannerReady,
         setNotes,
         setPaymentMethod,
         setProductCreateOpen,
         setProductSearch,
-        setQuantity,
         setSaleDate,
-        setStatus,
-        updateLineItemQuantity,
     } = useSalesDialog({ open, clients, products });
+
+    const [discountDialogOpen, setDiscountDialogOpen] = React.useState(false);
+    const [calendarOpen, setCalendarOpen] = React.useState(false);
+
+    const visibleProducts = React.useMemo(
+        () => filterProductsByQuery(products, productSearch),
+        [products, productSearch],
+    );
+
+    const handleAddFromCatalog = (product: Product) => {
+        selectProductById(product.id);
+        addSelectedProduct();
+    };
 
     const handleSubmit = () => {
         if (!selectedClient || lineItems.length === 0) {
@@ -166,13 +113,17 @@ export function SalesDialog({
             id: crypto.randomUUID(),
             clientId: selectedClient.id,
             clientName: selectedClient.name,
-            total,
-            status,
+            total: finalTotal,
+            status: 'pending',
             paymentMethod,
-            items: itemsCount,
+            items: lineItems.reduce((sum, item) => sum + item.quantity, 0),
             createdAt: saleDate,
             lineItems,
             notes,
+            discountType: appliedDiscountType,
+            discountValue: appliedDiscountValue,
+            discountAmountApplied,
+            finalTotal,
         });
 
         onOpenChange(false);
@@ -180,94 +131,285 @@ export function SalesDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[min(1440px,calc(100vw-1rem))] p-0 sm:max-w-[min(1440px,calc(100vw-1rem))]">
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        handleSubmit();
-                    }}
-                    className="grid max-h-[92vh] overflow-hidden lg:grid-cols-[1.18fr_0.82fr]"
-                >
-                    <div className="flex min-h-0 flex-col overflow-y-auto">
-                        <div className="border-b bg-linear-to-r from-primary/8 via-background to-background px-6 py-5">
+            <DialogContent className="max-w-[min(1700px,calc(100vw-1rem))] overflow-hidden p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]">
+                <div className="grid h-[90vh] grid-cols-1 lg:grid-cols-[1.35fr_0.65fr]">
+                    <section className="flex min-h-0 flex-col border-r">
+                        <div className="flex gap-3 border-b p-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={productSearch}
+                                    onChange={(event) => setProductSearch(event.currentTarget.value)}
+                                    placeholder="Buscar produto, codigo ou codigo de barras..."
+                                    className="pl-9"
+                                />
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant={isScannerReady ? 'default' : 'outline'}
+                                        className="border-primary/40"
+                                        onClick={() => setIsScannerReady((current) => !current)}
+                                    >
+                                        <Barcode className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Leitor de codigo de barras</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button type="button" variant="outline" onClick={() => setProductCreateOpen(true)}>
+                                        <PackagePlus className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Criar produto</TooltipContent>
+                            </Tooltip>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                            <div className="grid gap-3">
+                                {visibleProducts.map((product) => (
+                                    <button
+                                        key={product.id}
+                                        type="button"
+                                        onClick={() => handleAddFromCatalog(product)}
+                                        className="grid grid-cols-[56px_1fr_auto] items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+                                    >
+                                        <div className="flex h-14 w-14 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                                            <span className="text-xs font-semibold">{product.name.slice(0, 2).toUpperCase()}</span>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-medium">{product.name}</p>
+                                            <p className="truncate text-xs text-muted-foreground">{product.sku}</p>
+                                        </div>
+                                        <span className="text-sm font-semibold">{formatCurrencyBR(product.price)}</span>
+                                    </button>
+                                ))}
+                                {visibleProducts.length === 0 && (
+                                    <p className="py-12 text-center text-sm text-muted-foreground">Nenhum produto encontrado.</p>
+                                )}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="flex min-h-0 flex-col bg-card">
+                        <div className="border-b p-4">
                             <DialogHeader className="text-left">
-                                <DialogTitle className="flex flex-wrap items-center gap-3 text-2xl">
-                                    Nova venda
-                                    <Badge variant="secondary">
-                                        Fluxo rapido
-                                    </Badge>
-                                </DialogTitle>
-                                <DialogDescription>
-                                    Registre o pedido, adicione produtos e monte
-                                    o carrinho sem sair da tela.
-                                </DialogDescription>
+                                <DialogTitle className="text-lg">Finalizar venda</DialogTitle>
+                                <DialogDescription>Cliente, itens, pagamento e fechamento.</DialogDescription>
                             </DialogHeader>
                         </div>
 
-                        <div className="grid gap-5 p-6 xl:grid-cols-2">
-                            <SalesClientSection
-                                clients={clients}
-                                clientId={clientId}
-                                clientSearch={clientSearch}
-                                selectedClientName={selectedClient?.name}
-                                onSelectClient={selectClientById}
-                                onClientSearchChange={setClientSearch}
-                                onCreateClientClick={() =>
-                                    setClientCreateOpen(true)
-                                }
-                            />
+                        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                            <div className="space-y-4">
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm">Cliente</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3">
+                                        <Combobox
+                                            items={clients.map((client) => client.id)}
+                                            value={clientId}
+                                            itemToStringValue={(item) => item}
+                                            itemToStringLabel={(item) => clients.find((client) => client.id === item)?.name || item}
+                                            onValueChange={(value) => selectClientById(value || '')}
+                                            inputValue={clientSearch}
+                                            onInputValueChange={setClientSearch}
+                                        >
+                                            <ComboboxInput className="w-full" placeholder="Buscar cliente" showClear />
+                                            <ComboboxContent>
+                                                <ComboboxEmpty>Nenhum cliente encontrado.</ComboboxEmpty>
+                                                <ComboboxList>
+                                                    <ComboboxCollection>
+                                                        {(clientIdOption) => (
+                                                            <ComboboxItem key={clientIdOption} value={clientIdOption}>
+                                                                {clients.find((client) => client.id === clientIdOption)?.name || clientIdOption}
+                                                            </ComboboxItem>
+                                                        )}
+                                                    </ComboboxCollection>
+                                                </ComboboxList>
+                                            </ComboboxContent>
+                                        </Combobox>
+                                        <Button type="button" variant="outline" className="w-full justify-start border-primary/30 text-primary" onClick={() => setClientCreateOpen(true)}>
+                                            <UserPlus className="mr-2 h-4 w-4" />
+                                            Criar cliente
+                                        </Button>
+                                    </CardContent>
+                                </Card>
 
-                            <SalesProductSection
-                                products={products}
-                                productId={productId}
-                                productSearch={productSearch}
-                                quantity={quantity}
-                                isScannerReady={isScannerReady}
-                                canAddProduct={Boolean(selectedProduct)}
-                                onSelectProduct={selectProductById}
-                                onProductSearchChange={setProductSearch}
-                                onQuantityChange={setQuantity}
-                                onToggleScanner={() =>
-                                    setIsScannerReady((current) => !current)
-                                }
-                                onAddSelectedProduct={addSelectedProduct}
-                                onCreateProductClick={() =>
-                                    setProductCreateOpen(true)
-                                }
-                            />
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm">Carrinho</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        {lineItems.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground">Nenhum item no carrinho.</p>
+                                        ) : (
+                                            lineItems.map((item: SalesLineItem) => (
+                                                <div key={item.id} className="rounded-md border p-2">
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-sm font-medium">{item.productName}</p>
+                                                            <p className="text-xs text-muted-foreground">{formatCurrencyBR(item.unitPrice)}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button type="button" variant="outline" size="icon" onClick={() => decreaseLineItemQuantity(item.id)}>-</Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Diminuir quantidade</TooltipContent>
+                                                            </Tooltip>
+                                                            <span className="w-6 text-center text-sm">{item.quantity}</span>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button type="button" variant="outline" size="icon" onClick={() => increaseLineItemQuantity(item.id)}>+</Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Aumentar quantidade</TooltipContent>
+                                                            </Tooltip>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button type="button" variant="ghost" size="icon" onClick={() => removeLineItem(item.id)}>
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>Remover item</TooltipContent>
+                                                            </Tooltip>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </CardContent>
+                                </Card>
 
-                            <SalesItemsSection
-                                lineItems={lineItems}
-                                onLineItemQuantityChange={
-                                    updateLineItemQuantity
-                                }
-                                onRemoveLineItem={removeLineItem}
-                            />
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm">Forma de pagamento</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ToggleGroup
+                                            type="single"
+                                            value={paymentMethod}
+                                            onValueChange={(value) => {
+                                                if (value === 'money' || value === 'pix' || value === 'card' || value === 'other') {
+                                                    setPaymentMethod(value);
+                                                }
+                                            }}
+                                            className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                                        >
+                                            {paymentMethodOptions.map((option) => (
+                                                <ToggleGroupItem key={option.value} value={option.value} variant="outline" className="rounded-md border">
+                                                    {option.label}
+                                                </ToggleGroupItem>
+                                            ))}
+                                        </ToggleGroup>
+                                    </CardContent>
+                                </Card>
 
-                            <SalesDetailsSection
-                                status={status}
-                                paymentMethod={paymentMethod}
-                                saleDate={saleDate}
-                                notes={notes}
-                                onStatusChange={setStatus}
-                                onPaymentMethodChange={setPaymentMethod}
-                                onSaleDateChange={setSaleDate}
-                                onNotesChange={setNotes}
-                            />
+                                <div className="space-y-2 rounded-md border p-3">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Subtotal</span>
+                                        <span>{formatCurrencyBR(total)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Desconto</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-primary">- {formatCurrencyBR(discountAmountApplied)}</span>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button type="button" variant="ghost" size="sm" onClick={() => setDiscountDialogOpen(true)}>Aplicar</Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Aplicar desconto</TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                    </div>
+                                    <Separator />
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-2xl font-bold">Total</span>
+                                        <span className="text-3xl font-black text-primary">{formatCurrencyBR(finalTotal)}</span>
+                                    </div>
+                                </div>
+
+                                <Textarea
+                                    value={notes}
+                                    onChange={(event) => setNotes(event.currentTarget.value)}
+                                    placeholder="Observacoes (opcional)"
+                                    rows={3}
+                                    className="h-24 resize-none"
+                                />
+
+                                <div className="space-y-2">
+                                    <Label>Data</Label>
+                                    <Button type="button" variant="outline" className="w-full justify-start" onClick={() => setCalendarOpen((current) => !current)}>
+                                        <CalendarDays className="mr-2 h-4 w-4" />
+                                        {saleDate ? format(new Date(saleDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Selecionar data'}
+                                    </Button>
+                                    {calendarOpen && (
+                                        <div className="rounded-md border p-2">
+                                            <Calendar
+                                                mode="single"
+                                                selected={saleDate ? new Date(saleDate) : undefined}
+                                                onSelect={(date) => {
+                                                    if (date) {
+                                                        setSaleDate(date.toISOString().slice(0, 10));
+                                                    }
+                                                    setCalendarOpen(false);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <Button type="button" className="w-full" size="lg" disabled={!canSubmit} onClick={handleSubmit}>
+                                    Finalizar venda
+                                </Button>
+                            </div>
                         </div>
-                    </div>
+                    </section>
+                </div>
 
-                    <SalesSummaryPanel
-                        selectedClientName={selectedClient?.name}
-                        itemsCount={itemsCount}
-                        lineItemsCount={lineItems.length}
-                        estimatedProfit={estimatedProfit}
-                        total={total}
-                        onCancel={() => onOpenChange(false)}
-                        onSubmit={handleSubmit}
-                        canSubmit={canSubmit}
-                    />
-                </form>
+                <Dialog open={discountDialogOpen} onOpenChange={setDiscountDialogOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Aplicar desconto</DialogTitle>
+                            <DialogDescription>Defina desconto em valor ou porcentagem.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <ToggleGroup
+                                type="single"
+                                value={discountType}
+                                onValueChange={(value) => {
+                                    if (value === 'amount' || value === 'percent') {
+                                        setDiscountType(value);
+                                    }
+                                }}
+                                variant="outline"
+                                className="w-full"
+                            >
+                                <ToggleGroupItem value="amount" className="flex-1">Valor (R$)</ToggleGroupItem>
+                                <ToggleGroupItem value="percent" className="flex-1">%</ToggleGroupItem>
+                            </ToggleGroup>
+                            <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={discountValue}
+                                onChange={(event) => setDiscountValue(event.currentTarget.value)}
+                            />
+                            <Button
+                                type="button"
+                                className="w-full"
+                                onClick={() => {
+                                    applyDiscount();
+                                    setDiscountDialogOpen(false);
+                                }}
+                            >
+                                Aplicar desconto
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 <QuickCreateDialog<Client>
                     open={clientCreateOpen}
@@ -287,11 +429,8 @@ export function SalesDialog({
                             city: String(values.city || '').trim(),
                             state: String(values.state || '').trim(),
                             address: String(values.address || '').trim(),
-                            createdAt:
-                                values.createdAt ||
-                                new Date().toISOString().slice(0, 10),
+                            createdAt: values.createdAt || new Date().toISOString().slice(0, 10),
                         });
-
                         selectClientById(createdClient.id);
                         return createdClient;
                     }}
@@ -301,14 +440,9 @@ export function SalesDialog({
                     open={productCreateOpen}
                     onOpenChange={setProductCreateOpen}
                     title="Novo produto"
-                    description="Cadastre um produto e continue adicionando itens no carrinho."
+                    description="Cadastre um produto sem sair da venda."
                     fields={productQuickFields}
-                    initialValues={{
-                        cost: '0',
-                        price: '0',
-                        stock: '0',
-                        minStock: '0',
-                    }}
+                    initialValues={{ cost: '0', price: '0', stock: '0', minStock: '0' }}
                     submitLabel="Salvar produto"
                     keepOpenAfterSubmit
                     onSubmit={async (values) => {
@@ -322,420 +456,13 @@ export function SalesDialog({
                             category: String(values.category || '').trim(),
                             brand: String(values.brand || '').trim(),
                             minStock: Number(values.minStock || 0),
-                            createdAt:
-                                values.createdAt ||
-                                new Date().toISOString().slice(0, 10),
+                            createdAt: values.createdAt || new Date().toISOString().slice(0, 10),
                         });
-
                         selectProductById(createdProduct.id);
-                        setIsScannerReady(true);
                         return createdProduct;
                     }}
                 />
             </DialogContent>
         </Dialog>
-    );
-}
-
-function SalesClientSection({
-    clients,
-    clientId,
-    clientSearch,
-    selectedClientName,
-    onSelectClient,
-    onClientSearchChange,
-    onCreateClientClick,
-}: SalesClientSectionProps) {
-    const clientOptions = clients.map((client) => client.id);
-
-    return (
-        <Card>
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base">Cliente</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <Label>Selecione o cliente</Label>
-                <Combobox
-                    items={clientOptions}
-                    value={clientId}
-                    itemToStringValue={(item) => item}
-                    itemToStringLabel={(item) =>
-                        clients.find((client) => client.id === item)?.name || item
-                    }
-                    onValueChange={(value) => onSelectClient(value || '')}
-                    inputValue={clientSearch}
-                    onInputValueChange={onClientSearchChange}
-                >
-                    <ComboboxInput
-                        className="w-full"
-                        placeholder="Digite para buscar cliente"
-                        showClear
-                    />
-                    <ComboboxContent>
-                        <ComboboxEmpty>
-                            Nenhum cliente encontrado.
-                        </ComboboxEmpty>
-                        <ComboboxList>
-                            <ComboboxCollection>
-                                {(clientIdOption) => (
-                                    <ComboboxItem
-                                        key={clientIdOption}
-                                        value={clientIdOption}
-                                    >
-                                        {clients.find(
-                                            (client) =>
-                                                client.id === clientIdOption,
-                                        )?.name || clientIdOption}
-                                    </ComboboxItem>
-                                )}
-                            </ComboboxCollection>
-                        </ComboboxList>
-                    </ComboboxContent>
-                </Combobox>
-
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={onCreateClientClick}
-                >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Criar cliente agora
-                </Button>
-
-                {selectedClientName ? (
-                    <p className="text-xs text-muted-foreground">
-                        Cliente selecionado: <strong>{selectedClientName}</strong>
-                    </p>
-                ) : null}
-            </CardContent>
-        </Card>
-    );
-}
-
-function SalesProductSection({
-    products,
-    productId,
-    productSearch,
-    quantity,
-    isScannerReady,
-    canAddProduct,
-    onSelectProduct,
-    onProductSearchChange,
-    onQuantityChange,
-    onToggleScanner,
-    onAddSelectedProduct,
-    onCreateProductClick,
-}: SalesProductSectionProps) {
-    const productOptions = products.map((product) => product.id);
-
-    return (
-        <Card>
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base">Produto</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <Label>Buscar produto</Label>
-                <Combobox
-                    items={productOptions}
-                    value={productId}
-                    itemToStringValue={(item) => item}
-                    itemToStringLabel={(item) => {
-                        const product = products.find((entry) => entry.id === item);
-                        return product ? `${product.name} (${product.sku})` : item;
-                    }}
-                    onValueChange={(value) => onSelectProduct(value || '')}
-                    inputValue={productSearch}
-                    onInputValueChange={onProductSearchChange}
-                >
-                    <ComboboxInput
-                        className="w-full"
-                        placeholder="Nome, SKU ou codigo de barras"
-                        showClear
-                    />
-                    <ComboboxContent>
-                        <ComboboxEmpty>
-                            Nenhum produto encontrado.
-                        </ComboboxEmpty>
-                        <ComboboxList>
-                            <ComboboxCollection>
-                                {(productIdOption) => (
-                                    <ComboboxItem value={productIdOption}>
-                                        <div className="flex w-full items-center justify-between gap-4">
-                                            <span>
-                                                {products.find(
-                                                    (product) =>
-                                                        product.id ===
-                                                        productIdOption,
-                                                )?.name || productIdOption}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {products.find(
-                                                    (product) =>
-                                                        product.id ===
-                                                        productIdOption,
-                                                )?.sku || '-'}
-                                            </span>
-                                        </div>
-                                    </ComboboxItem>
-                                )}
-                            </ComboboxCollection>
-                        </ComboboxList>
-                    </ComboboxContent>
-                </Combobox>
-
-                <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-                    <Input
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(event) =>
-                            onQuantityChange(event.currentTarget.value)
-                        }
-                    />
-                    <Button
-                        type="button"
-                        variant={isScannerReady ? 'default' : 'outline'}
-                        onClick={onToggleScanner}
-                    >
-                        <Barcode className="mr-2 h-4 w-4" />
-                        Scanner
-                    </Button>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                    <Button
-                        type="button"
-                        disabled={!canAddProduct}
-                        onClick={onAddSelectedProduct}
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Adicionar
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onCreateProductClick}
-                    >
-                        <Package className="mr-2 h-4 w-4" />
-                        Criar produto
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function SalesItemsSection({
-    lineItems,
-    onLineItemQuantityChange,
-    onRemoveLineItem,
-}: SalesItemsSectionProps) {
-    return (
-        <Card className="xl:col-span-2">
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base">Produtos adicionados</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                {lineItems.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                        Nenhum produto adicionado ainda.
-                    </p>
-                ) : (
-                    lineItems.map((item) => (
-                        <div
-                            key={item.id}
-                            className="grid items-center gap-3 rounded-lg border p-3 md:grid-cols-[1fr_auto_auto_auto]"
-                        >
-                            <div>
-                                <p className="font-medium">{item.productName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    SKU: {item.sku}
-                                </p>
-                            </div>
-                            <Input
-                                type="number"
-                                min="1"
-                                className="w-24"
-                                value={String(item.quantity)}
-                                onChange={(event) =>
-                                    onLineItemQuantityChange(
-                                        item.id,
-                                        event.currentTarget.value,
-                                    )
-                                }
-                            />
-                            <Badge variant="outline">
-                                {formatCurrencyBR(item.subtotal)}
-                            </Badge>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => onRemoveLineItem(item.id)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))
-                )}
-            </CardContent>
-        </Card>
-    );
-}
-
-function SalesDetailsSection({
-    status,
-    paymentMethod,
-    saleDate,
-    notes,
-    onStatusChange,
-    onPaymentMethodChange,
-    onSaleDateChange,
-    onNotesChange,
-}: SalesDetailsSectionProps) {
-    return (
-        <Card>
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base">Detalhes da venda</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={status} onValueChange={onStatusChange}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {salesStatusOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2">
-                    <Label>Forma de pagamento</Label>
-                    <Select
-                        value={paymentMethod}
-                        onValueChange={onPaymentMethodChange}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione a forma" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {paymentMethodOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2">
-                    <Label>Data da venda</Label>
-                    <Input
-                        type="date"
-                        value={saleDate}
-                        onChange={(event) =>
-                            onSaleDateChange(event.currentTarget.value)
-                        }
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <Label>Observacoes</Label>
-                    <Textarea
-                        value={notes}
-                        rows={4}
-                        onChange={(event) =>
-                            onNotesChange(event.currentTarget.value)
-                        }
-                        placeholder="Anotacoes opcionais desta venda"
-                    />
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function SalesSummaryPanel({
-    selectedClientName,
-    itemsCount,
-    lineItemsCount,
-    estimatedProfit,
-    total,
-    canSubmit,
-    onCancel,
-    onSubmit,
-}: SalesSummaryPanelProps) {
-    return (
-        <aside className="border-l bg-muted/20 p-6">
-            <div className="space-y-4">
-                <div>
-                    <h3 className="text-lg font-semibold">Resumo da venda</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Confira os dados antes de finalizar.
-                    </p>
-                </div>
-
-                <Card>
-                    <CardContent className="space-y-4 p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">
-                                Cliente
-                            </span>
-                            <span className="text-sm font-medium">
-                                {selectedClientName || 'Nao selecionado'}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">
-                                Itens
-                            </span>
-                            <span className="text-sm font-medium">
-                                {itemsCount} un. ({lineItemsCount} produtos)
-                            </span>
-                        </div>
-                        <Separator />
-                        <div className="flex items-center justify-between">
-                            <span className="inline-flex items-center text-sm text-muted-foreground">
-                                <CircleDollarSign className="mr-1 h-4 w-4" />
-                                Lucro estimado
-                            </span>
-                            <span className="font-semibold">
-                                {formatCurrencyBR(estimatedProfit)}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2">
-                            <span className="inline-flex items-center font-medium text-primary">
-                                <Wallet className="mr-1 h-4 w-4" />
-                                Total
-                            </span>
-                            <span className="text-lg font-bold text-primary">
-                                {formatCurrencyBR(total)}
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <div className="grid gap-3">
-                    <Button
-                        type="submit"
-                        className={cn(!canSubmit && 'pointer-events-none')}
-                        disabled={!canSubmit}
-                        onClick={onSubmit}
-                    >
-                        Finalizar venda
-                    </Button>
-                    <Button type="button" variant="outline" onClick={onCancel}>
-                        Cancelar
-                    </Button>
-                </div>
-            </div>
-        </aside>
     );
 }

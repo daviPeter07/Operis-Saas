@@ -43,52 +43,36 @@ const metricCards = [
 
 export function SalesHeader({ metrics }: SalesHeaderProps) {
     return (
-        <div className="space-y-3">
-            <Card className="overflow-hidden border-border/70 bg-linear-to-r from-primary/10 via-background to-background">
-                <CardContent className="px-5 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                        Gestao de vendas
-                    </p>
-                    <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
-                        Painel comercial
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                        Acompanhe resultados e crie novas vendas sem sair desta tela.
-                    </p>
-                </CardContent>
-            </Card>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {metricCards.map((card) => {
+                const Icon = card.icon;
+                const value = metrics[card.key];
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {metricCards.map((card) => {
-                    const Icon = card.icon;
-                    const value = metrics[card.key];
+                return (
+                    <Card
+                        key={card.key}
+                        className={cn(
+                            'overflow-hidden border-border bg-card shadow-sm',
+                            'transition-shadow hover:shadow-md',
+                        )}
+                    >
+                        <CardContent className="flex min-h-[110px] items-center justify-between gap-4 px-5 py-4">
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    {card.label}
+                                </p>
+                                <p className="text-[2rem] leading-none font-black tracking-tight text-foreground">
+                                    {card.format(value)}
+                                </p>
+                            </div>
 
-                    return (
-                        <Card
-                            key={card.key}
-                            className={cn(
-                                'overflow-hidden border-border/70 bg-card/95 shadow-sm',
-                                'transition-shadow hover:shadow-md',
-                            )}
-                        >
-                            <CardContent className="flex min-h-28 items-center justify-between gap-4 px-5 py-4">
-                                <div className="space-y-2">
-                                    <p className="text-sm font-medium text-muted-foreground">
-                                        {card.label}
-                                    </p>
-                                    <p className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-                                        {card.format(value)}
-                                    </p>
-                                </div>
-
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/10 sm:h-16 sm:w-16">
-                                    <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/25">
+                                <Icon className="h-6 w-6" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
+            })}
         </div>
     );
 }

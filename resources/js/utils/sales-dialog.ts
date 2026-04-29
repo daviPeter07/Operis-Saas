@@ -1,13 +1,13 @@
 import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
 import type { QuickCreateField } from '@/types/quick-create';
-import type { SalesLineItem } from '@/types/sales-dialog';
+import type { SaleDiscountType, SalesLineItem } from '@/types/sales-dialog';
 
 export const salesStatusOptions: Array<{
     value: Sale['status'];
     label: string;
 }> = [
     { value: 'pending', label: 'Pendente' },
-    { value: 'completed', label: 'Concluído' },
+    { value: 'completed', label: 'Concluido' },
     { value: 'cancelled', label: 'Cancelado' },
 ];
 
@@ -16,10 +16,9 @@ export const paymentMethodOptions: Array<{
     label: string;
 }> = [
     { value: 'money', label: 'Dinheiro' },
-    { value: 'credit', label: 'Crédito' },
-    { value: 'debit', label: 'Débito' },
     { value: 'pix', label: 'PIX' },
-    { value: 'installment', label: 'Parcelado' },
+    { value: 'card', label: 'Cartao' },
+    { value: 'other', label: 'Outros' },
 ];
 
 export function todayString(): string {
@@ -48,6 +47,24 @@ export function makeSaleLineItem(
     };
 }
 
+export function filterProductsByQuery(
+    products: Product[],
+    query: string,
+): Product[] {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+        return products;
+    }
+
+    return products.filter((product) => {
+        return (
+            product.name.toLowerCase().includes(normalizedQuery) ||
+            product.sku.toLowerCase().includes(normalizedQuery)
+        );
+    });
+}
+
 export function calculateCartTotal(items: SalesLineItem[]): number {
     return Number(
         items.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2),
@@ -72,6 +89,30 @@ export function calculateProfit(items: SalesLineItem[], total: number): number {
             )
             .toFixed(2),
     );
+}
+
+export function calculateDiscountAmount(
+    subtotal: number,
+    discountType: SaleDiscountType,
+    discountValue: number,
+): number {
+    if (subtotal <= 0 || discountValue <= 0) {
+        return 0;
+    }
+
+    if (discountType === 'percent') {
+        const cappedPercent = Math.min(100, discountValue);
+        return Number(((subtotal * cappedPercent) / 100).toFixed(2));
+    }
+
+    return Number(Math.min(subtotal, discountValue).toFixed(2));
+}
+
+export function calculateFinalTotal(
+    subtotal: number,
+    discountAmountApplied: number,
+): number {
+    return Number(Math.max(0, subtotal - discountAmountApplied).toFixed(2));
 }
 
 export function buildClientFields(clients: Client[]): QuickCreateField[] {
@@ -122,9 +163,9 @@ export function buildClientFields(clients: Client[]): QuickCreateField[] {
         },
         {
             name: 'address',
-            label: 'Endereço',
+            label: 'Endereco',
             type: 'text',
-            placeholder: 'Rua, número e complemento',
+            placeholder: 'Rua, numero e complemento',
         },
         {
             name: 'createdAt',
@@ -158,16 +199,16 @@ export function buildProductFields(products: Product[]): QuickCreateField[] {
         },
         {
             name: 'sku',
-            label: 'Código interno',
+            label: 'Codigo interno',
             type: 'text',
             required: true,
-            placeholder: 'Código de identificação',
+            placeholder: 'Codigo de identificacao',
         },
         {
             name: 'barcode',
-            label: 'Código de barras',
+            label: 'Codigo de barras',
             type: 'text',
-            placeholder: 'Escaneie ou digite o código',
+            placeholder: 'Escaneie ou digite o codigo',
         },
         {
             name: 'brand',
@@ -188,14 +229,14 @@ export function buildProductFields(products: Product[]): QuickCreateField[] {
             label: 'Custo',
             type: 'number',
             required: true,
-            placeholder: 'Custo de aquisição',
+            placeholder: 'Custo de aquisicao',
         },
         {
             name: 'price',
-            label: 'Preço de venda',
+            label: 'Preco de venda',
             type: 'number',
             required: true,
-            placeholder: 'Preço final',
+            placeholder: 'Preco final',
         },
         {
             name: 'stock',
@@ -206,10 +247,10 @@ export function buildProductFields(products: Product[]): QuickCreateField[] {
         },
         {
             name: 'minStock',
-            label: 'Estoque mínimo',
+            label: 'Estoque minimo',
             type: 'number',
             required: true,
-            placeholder: 'Limite mínimo',
+            placeholder: 'Limite minimo',
         },
         {
             name: 'createdAt',

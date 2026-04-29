@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
-import type { SalesLineItem } from '@/types/sales-dialog';
+import type { SaleDiscountType, SalesLineItem } from '@/types/sales-dialog';
 import {
     buildClientFields,
     buildProductFields,
     calculateCartQuantity,
     calculateCartTotal,
+    calculateDiscountAmount,
+    calculateFinalTotal,
     calculateProfit,
     makeSaleLineItem,
     todayString,
@@ -33,6 +35,12 @@ export function useSalesDialog({
         useState<Sale['paymentMethod']>('pix');
     const [saleDate, setSaleDate] = useState(todayString());
     const [notes, setNotes] = useState('');
+    const [discountType, setDiscountType] = useState<SaleDiscountType>('amount');
+    const [discountValue, setDiscountValue] = useState('0');
+    const [appliedDiscountType, setAppliedDiscountType] =
+        useState<SaleDiscountType>('amount');
+    const [appliedDiscountValue, setAppliedDiscountValue] = useState(0);
+    const [discountAmountApplied, setDiscountAmountApplied] = useState(0);
     const [isScannerReady, setIsScannerReady] = useState(false);
     const [clientCreateOpen, setClientCreateOpen] = useState(false);
     const [productCreateOpen, setProductCreateOpen] = useState(false);
@@ -49,6 +57,11 @@ export function useSalesDialog({
             setPaymentMethod('pix');
             setSaleDate(todayString());
             setNotes('');
+            setDiscountType('amount');
+            setDiscountValue('0');
+            setAppliedDiscountType('amount');
+            setAppliedDiscountValue(0);
+            setDiscountAmountApplied(0);
             setIsScannerReady(false);
         }
     }, [open]);
@@ -64,13 +77,17 @@ export function useSalesDialog({
     );
 
     const total = useMemo(() => calculateCartTotal(lineItems), [lineItems]);
+    const finalTotal = useMemo(
+        () => calculateFinalTotal(total, discountAmountApplied),
+        [discountAmountApplied, total],
+    );
     const itemsCount = useMemo(
         () => calculateCartQuantity(lineItems),
         [lineItems],
     );
     const estimatedProfit = useMemo(
-        () => calculateProfit(lineItems, total),
-        [lineItems, total],
+        () => calculateProfit(lineItems, finalTotal),
+        [lineItems, finalTotal],
     );
     const clientQuickFields = useMemo(
         () => buildClientFields(clients),
@@ -153,22 +170,85 @@ export function useSalesDialog({
         );
     };
 
+    const increaseLineItemQuantity = (itemId: string) => {
+        setLineItems((currentItems) =>
+            currentItems.map((item) => {
+                if (item.id !== itemId) {
+                    return item;
+                }
+
+                const nextQuantity = item.quantity + 1;
+
+                return {
+                    ...item,
+                    quantity: nextQuantity,
+                    subtotal: Number((item.unitPrice * nextQuantity).toFixed(2)),
+                };
+            }),
+        );
+    };
+
+    const decreaseLineItemQuantity = (itemId: string) => {
+        setLineItems((currentItems) =>
+            currentItems.flatMap((item) => {
+                if (item.id !== itemId) {
+                    return [item];
+                }
+
+                const nextQuantity = item.quantity - 1;
+
+                if (nextQuantity <= 0) {
+                    return [];
+                }
+
+                return [
+                    {
+                        ...item,
+                        quantity: nextQuantity,
+                        subtotal: Number(
+                            (item.unitPrice * nextQuantity).toFixed(2),
+                        ),
+                    },
+                ];
+            }),
+        );
+    };
+
     const removeLineItem = (itemId: string) => {
         setLineItems((currentItems) =>
             currentItems.filter((item) => item.id !== itemId),
         );
     };
 
+    const applyDiscount = () => {
+        const parsed = Number(discountValue.replace(',', '.'));
+        const safeValue = Number.isFinite(parsed) ? parsed : 0;
+        const amount = calculateDiscountAmount(total, discountType, safeValue);
+
+        setAppliedDiscountType(discountType);
+        setAppliedDiscountValue(safeValue);
+        setDiscountAmountApplied(amount);
+    };
+
     const canSubmit = Boolean(selectedClient && lineItems.length > 0);
 
     return {
         addSelectedProduct,
+        applyDiscount,
+        appliedDiscountType,
+        appliedDiscountValue,
         canSubmit,
         clientCreateOpen,
         clientId,
         clientQuickFields,
         clientSearch,
+        discountAmountApplied,
+        discountType,
+        discountValue,
+        decreaseLineItemQuantity,
         estimatedProfit,
+        finalTotal,
+        increaseLineItemQuantity,
         itemsCount,
         isScannerReady,
         lineItems,
@@ -190,6 +270,8 @@ export function useSalesDialog({
         setClientCreateOpen,
         setClientId,
         setClientSearch,
+        setDiscountType,
+        setDiscountValue,
         setIsScannerReady,
         setLineItems,
         setNotes,

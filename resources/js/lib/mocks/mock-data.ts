@@ -56,7 +56,7 @@ export interface Sale {
     clientName: string;
     total: number;
     status: 'pending' | 'completed' | 'cancelled';
-    paymentMethod: 'money' | 'credit' | 'debit' | 'pix' | 'installment';
+    paymentMethod: 'money' | 'pix' | 'card' | 'other';
     items: number;
     createdAt: string;
 }
@@ -736,7 +736,7 @@ export const mockSales: Sale[] = [
         clientName: 'João Silva',
         total: 2999.99,
         status: 'completed',
-        paymentMethod: 'credit',
+        paymentMethod: 'card',
         items: 1,
         createdAt: '2024-06-01',
     },
@@ -756,7 +756,7 @@ export const mockSales: Sale[] = [
         clientName: 'Carlos Oliveira',
         total: 899.98,
         status: 'completed',
-        paymentMethod: 'debit',
+        paymentMethod: 'card',
         items: 3,
         createdAt: '2024-06-03',
     },
@@ -766,7 +766,7 @@ export const mockSales: Sale[] = [
         clientName: 'Ana Ferreira',
         total: 2399.97,
         status: 'pending',
-        paymentMethod: 'installment',
+        paymentMethod: 'other',
         items: 2,
         createdAt: '2024-06-04',
     },
@@ -786,7 +786,7 @@ export const mockSales: Sale[] = [
         clientName: 'João Silva',
         total: 1599.99,
         status: 'completed',
-        paymentMethod: 'credit',
+        paymentMethod: 'card',
         items: 1,
         createdAt: '2024-06-06',
     },
@@ -806,7 +806,7 @@ export const mockSales: Sale[] = [
         clientName: 'Roberto Almeida',
         total: 3299.99,
         status: 'cancelled',
-        paymentMethod: 'credit',
+        paymentMethod: 'card',
         items: 1,
         createdAt: '2024-06-08',
     },
@@ -816,7 +816,7 @@ export const mockSales: Sale[] = [
         clientName: 'Fernanda Lima',
         total: 2499.98,
         status: 'completed',
-        paymentMethod: 'debit',
+        paymentMethod: 'card',
         items: 2,
         createdAt: '2024-06-09',
     },
@@ -826,7 +826,7 @@ export const mockSales: Sale[] = [
         clientName: 'Marcelo Souza',
         total: 799.99,
         status: 'pending',
-        paymentMethod: 'installment',
+        paymentMethod: 'other',
         items: 1,
         createdAt: '2024-06-10',
     },
