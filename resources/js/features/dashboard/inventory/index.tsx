@@ -1,10 +1,10 @@
-import { mockProducts } from '@/lib/mocks/mock-data';
-import type { Product } from '@/lib/mocks/mock-data';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { formatCurrencyBR, formatQuantityWithUnit } from '@/lib/format';
+import { mockProducts } from '@/lib/mocks/mock-data';
+import type { Product } from '@/lib/mocks/mock-data';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { formatQuantityWithUnit } from '@/lib/format';
 
 export function InventoryModule() {
     const [products, setProducts] = useState(() => [...mockProducts]);
@@ -28,17 +28,27 @@ export function InventoryModule() {
     const columns: Column<Product>[] = [
         { key: 'name', header: 'Produto' },
         { key: 'sku', header: 'Código' },
-        { key: 'category', header: 'Categoria' },
+        {
+            key: 'barcode',
+            header: 'Código de barras',
+            render: (value: unknown) => String(value || 'Sem código'),
+        },
         { key: 'brand', header: 'Marca' },
+        { key: 'category', header: 'Categoria' },
+        {
+            key: 'price',
+            header: 'Preço de venda',
+            render: (value: unknown) => formatCurrencyBR(Number(value || 0)),
+        },
         {
             key: 'stock',
             header: 'Estoque',
-            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
+            render: (value: unknown) => formatQuantityWithUnit(Number(value)),
         },
         {
             key: 'minStock',
             header: 'Estoque Mínimo',
-            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
+            render: (value: unknown) => formatQuantityWithUnit(Number(value)),
         },
     ];
 
@@ -63,24 +73,26 @@ export function InventoryModule() {
             id: crypto.randomUUID(),
             name: String(data.name || '').trim(),
             sku: String(data.sku || '').trim(),
+            barcode: String(data.barcode || '').trim(),
+            description: String(data.description || '').trim(),
             price: Number(data.price || 0),
             cost: Number(data.cost || 0),
             stock: Number(data.stock || 0),
             category: String(data.category || '').trim(),
             brand: String(data.brand || '').trim(),
             minStock: Number(data.minStock || 0),
-            createdAt:
-                String(data.createdAt || '').trim() ||
-                new Date().toISOString().slice(0, 10),
+            createdAt: new Date().toISOString().slice(0, 10),
         };
 
         if (!newProduct.name) {
             toast.error('Informe o nome do produto');
+
             return;
         }
 
         if (!newProduct.sku) {
             toast.error('Informe ou gere um código para o produto');
+
             return;
         }
 
@@ -102,6 +114,7 @@ export function InventoryModule() {
                     type: 'text',
                     required: true,
                     placeholder: 'Digite o nome do produto',
+                    section: 'Identificação',
                 },
                 {
                     name: 'sku',
@@ -109,40 +122,32 @@ export function InventoryModule() {
                     type: 'text',
                     required: true,
                     placeholder: 'Clique em Gerar para preencher',
+                    section: 'Identificação',
                 },
                 {
                     name: 'barcode',
                     label: 'Código de barras',
                     type: 'text',
                     placeholder: 'Escaneie com leitor ou gere EAN-13',
-                },
-                {
-                    name: 'brand',
-                    label: 'Marca',
-                    type: 'select',
-                    required: true,
-                    options: brandOptions,
-                },
-                {
-                    name: 'category',
-                    label: 'Categoria',
-                    type: 'select',
-                    required: true,
-                    options: categoryOptions,
+                    section: 'Identificação',
                 },
                 {
                     name: 'cost',
-                    label: 'Custo',
-                    type: 'number',
+                    label: 'Preço de custo',
+                    type: 'text',
                     required: true,
-                    placeholder: 'Custo de aquisição',
+                    placeholder: 'R$ 0,00',
+                    section: 'Valores e estoque',
+                    mask: 'currency',
                 },
                 {
                     name: 'price',
                     label: 'Preço de venda',
-                    type: 'number',
+                    type: 'text',
                     required: true,
-                    placeholder: 'Preço final',
+                    placeholder: 'R$ 0,00',
+                    section: 'Valores e estoque',
+                    mask: 'currency',
                 },
                 {
                     name: 'stock',
@@ -150,6 +155,7 @@ export function InventoryModule() {
                     type: 'number',
                     required: true,
                     placeholder: 'Quantidade em estoque',
+                    section: 'Valores e estoque',
                 },
                 {
                     name: 'minStock',
@@ -157,12 +163,37 @@ export function InventoryModule() {
                     type: 'number',
                     required: true,
                     placeholder: 'Limite mínimo',
+                    section: 'Valores e estoque',
                 },
                 {
-                    name: 'createdAt',
-                    label: 'Data de cadastro',
-                    type: 'date',
+                    name: 'brand',
+                    label: 'Marca',
+                    type: 'select',
                     required: true,
+                    options: brandOptions,
+                    placeholder: 'Digite ou selecione marca',
+                    section: 'Classificação',
+                    searchable: true,
+                    allowCustomValue: true,
+                },
+                {
+                    name: 'category',
+                    label: 'Categoria',
+                    type: 'select',
+                    required: true,
+                    options: categoryOptions,
+                    placeholder: 'Digite ou selecione categoria',
+                    section: 'Classificação',
+                    searchable: true,
+                    allowCustomValue: true,
+                },
+                {
+                    name: 'description',
+                    label: 'Descrição',
+                    type: 'textarea',
+                    placeholder: 'Adicione uma descrição opcional do produto',
+                    section: 'Descrição',
+                    span: 'full',
                 },
             ]}
         />

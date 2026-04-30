@@ -110,6 +110,7 @@ export function calculateDiscountAmount(
 
     if (discountType === 'percent') {
         const cappedPercent = Math.min(100, discountValue);
+
         return Number(((subtotal * cappedPercent) / 100).toFixed(2));
     }
 
@@ -155,12 +156,14 @@ export function buildClientFields(clients: Client[]): QuickCreateField[] {
             label: 'Telefone',
             type: 'text',
             placeholder: '(00) 00000-0000',
+            mask: 'phone',
         },
         {
             name: 'document',
             label: 'Documento',
             type: 'text',
             placeholder: 'CPF/CNPJ',
+            mask: 'document',
         },
         { name: 'city', label: 'Cidade', type: 'select', options: cityOptions },
         {
@@ -224,6 +227,8 @@ export function buildProductFields(products: Product[]): QuickCreateField[] {
             type: 'select',
             required: true,
             options: brandOptions,
+            searchable: true,
+            allowCustomValue: true,
         },
         {
             name: 'category',
@@ -231,20 +236,24 @@ export function buildProductFields(products: Product[]): QuickCreateField[] {
             type: 'select',
             required: true,
             options: categoryOptions,
+            searchable: true,
+            allowCustomValue: true,
         },
         {
             name: 'cost',
             label: 'Custo',
-            type: 'number',
+            type: 'text',
             required: true,
-            placeholder: 'Custo de aquisicao',
+            placeholder: 'R$ 0,00',
+            mask: 'currency',
         },
         {
             name: 'price',
             label: 'Preco de venda',
-            type: 'number',
+            type: 'text',
             required: true,
-            placeholder: 'Preco final',
+            placeholder: 'R$ 0,00',
+            mask: 'currency',
         },
         {
             name: 'stock',
