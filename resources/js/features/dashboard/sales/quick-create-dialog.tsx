@@ -1,7 +1,8 @@
-import * as React from 'react';
-import { CalendarDays, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { CalendarDays, Plus } from 'lucide-react';
+import * as React from 'react';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -27,6 +28,7 @@ import type {
     QuickCreateField,
     QuickCreateFieldOption,
 } from '@/types/quick-create';
+import { applyFieldMask, parseMaskedFieldValue } from '@/utils/form-fields';
 
 interface QuickCreateDialogProps<TResult> {
     open: boolean;
@@ -52,15 +54,18 @@ function defaultValuesForFields(
     return fields.reduce<Record<string, string>>((values, field) => {
         if (initialValues[field.name]) {
             values[field.name] = initialValues[field.name];
+
             return values;
         }
 
         if (field.type === 'date') {
             values[field.name] = todayString();
+
             return values;
         }
 
         values[field.name] = '';
+
         return values;
     }, {});
 }
@@ -141,12 +146,19 @@ export function QuickCreateDialog<TResult>({
 
     React.useEffect(() => {
         if (open) {
-            setFormData(defaultValuesForFields(fields, initialValues));
+            queueMicrotask(() =>
+                setFormData(defaultValuesForFields(fields, initialValues)),
+            );
         }
     }, [fields, initialValues, open]);
 
     const handleChange = (name: string, value: string) => {
-        setFormData((current) => ({ ...current, [name]: value }));
+        const field = fields.find((item) => item.name === name);
+
+        setFormData((current) => ({
+            ...current,
+            [name]: applyFieldMask(value, field?.mask),
+        }));
     };
 
     const isValid = fields.every((field) => {
@@ -167,7 +179,19 @@ export function QuickCreateDialog<TResult>({
         setIsSubmitting(true);
 
         try {
-            const result = await onSubmit(formData);
+            const submitData = fields.reduce<Record<string, string>>(
+                (values, field) => ({
+                    ...values,
+                    [field.name]: String(
+                        parseMaskedFieldValue(
+                            formData[field.name] || '',
+                            field.mask,
+                        ),
+                    ),
+                }),
+                { ...formData },
+            );
+            const result = await onSubmit(submitData);
             onCreated?.(result);
 
             if (keepOpenAfterSubmit) {
@@ -208,7 +232,22 @@ export function QuickCreateDialog<TResult>({
                                     )}
                                 </Label>
 
-                                {field.type === 'select' ? (
+                                {field.type === 'select' && field.searchable ? (
+                                    <SearchableSelect
+                                        value={formData[field.name] || ''}
+                                        onChange={(value) =>
+                                            handleChange(field.name, value)
+                                        }
+                                        options={field.options || []}
+                                        placeholder={
+                                            field.placeholder ||
+                                            `Digite ou selecione ${field.label.toLowerCase()}`
+                                        }
+                                        allowCustomValue={
+                                            field.allowCustomValue
+                                        }
+                                    />
+                                ) : field.type === 'select' ? (
                                     <Select
                                         value={formData[field.name] || ''}
                                         onValueChange={(value) =>
@@ -253,7 +292,16 @@ export function QuickCreateDialog<TResult>({
                                 ) : (
                                     <Input
                                         id={field.name}
-                                        type={field.type}
+                                        type={
+                                            field.mask === 'currency'
+                                                ? 'text'
+                                                : field.type
+                                        }
+                                        inputMode={
+                                            field.mask === 'currency'
+                                                ? 'numeric'
+                                                : undefined
+                                        }
                                         value={formData[field.name] || ''}
                                         onChange={(event) =>
                                             handleChange(

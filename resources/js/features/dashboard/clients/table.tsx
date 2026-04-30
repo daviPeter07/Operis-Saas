@@ -11,9 +11,9 @@ import { Pagination, PaginationInfo } from '@/components/table/pagination';
 import { TableActions } from '@/components/table/table-actions';
 import { TableToolbar } from '@/components/table/table-toolbar';
 import { useTablePagination } from '@/hooks/use-table-pagination';
-import { useTableSearch } from '@/hooks/use-table-search';
 import type { Client } from '@/lib/mocks/mock-data';
 import { cn } from '@/lib/utils';
+import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 
 interface ClientsTableProps {
     data: Client[];
@@ -124,10 +124,12 @@ export function ClientsTable({ data, className }: ClientsTableProps) {
                                     {String(client.email)}
                                 </DataTableCell>
                                 <DataTableCell>
-                                    {String(client.phone)}
+                                    {formatPhoneInput(String(client.phone))}
                                 </DataTableCell>
                                 <DataTableCell>
-                                    {String(client.document)}
+                                    {formatDocumentInput(
+                                        String(client.document),
+                                    )}
                                 </DataTableCell>
                                 <DataTableCell>
                                     {String(client.city)}

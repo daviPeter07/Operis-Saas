@@ -1,7 +1,8 @@
-import { mockClients } from '@/lib/mocks/mock-data';
-import type { Client } from '@/lib/mocks/mock-data';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { mockClients } from '@/lib/mocks/mock-data';
+import type { Client } from '@/lib/mocks/mock-data';
+import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -11,8 +12,17 @@ export function ClientsModule() {
     const columns: Column<Client>[] = [
         { key: 'name', header: 'Nome' },
         { key: 'email', header: 'Email' },
-        { key: 'phone', header: 'Telefone' },
-        { key: 'document', header: 'Documento' },
+        {
+            key: 'phone',
+            header: 'Telefone',
+            render: (value: unknown) => formatPhoneInput(String(value || '')),
+        },
+        {
+            key: 'document',
+            header: 'Documento',
+            render: (value: unknown) =>
+                formatDocumentInput(String(value || '')),
+        },
         { key: 'city', header: 'Cidade' },
         { key: 'state', header: 'Estado' },
     ];
@@ -65,6 +75,7 @@ export function ClientsModule() {
 
         if (!newClient.name) {
             toast.error('Informe o nome do cliente');
+
             return;
         }
 
@@ -98,12 +109,14 @@ export function ClientsModule() {
                     label: 'Telefone',
                     type: 'text',
                     placeholder: '(00) 00000-0000',
+                    mask: 'phone',
                 },
                 {
                     name: 'document',
                     label: 'Documento',
                     type: 'text',
                     placeholder: 'CPF/CNPJ',
+                    mask: 'document',
                 },
                 {
                     name: 'city',

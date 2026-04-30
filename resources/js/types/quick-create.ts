@@ -1,3 +1,5 @@
+import type { FieldMask } from '@/utils/form-fields';
+
 export type QuickCreateFieldType = 'text' | 'number' | 'select' | 'date';
 
 export type QuickCreateFieldOption = {
@@ -12,4 +14,7 @@ export type QuickCreateField = {
     placeholder?: string;
     required?: boolean;
     options?: QuickCreateFieldOption[];
+    searchable?: boolean;
+    allowCustomValue?: boolean;
+    mask?: FieldMask;
 };

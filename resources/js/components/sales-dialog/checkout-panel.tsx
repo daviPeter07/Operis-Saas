@@ -1,10 +1,8 @@
-import * as React from 'react';
-import { CalendarDays, Trash2, UserPlus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Client } from '@/lib/mocks/mock-data';
-import type { SalesLineItem } from '@/types/sales-dialog';
-import { formatCurrencyBR } from '@/lib/format';
+import { CalendarDays, Trash2, UserPlus } from 'lucide-react';
+import * as React from 'react';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +11,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,10 +20,14 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatCurrencyBR } from '@/lib/format';
+import type { Client } from '@/lib/mocks/mock-data';
+import type { SalesLineItem } from '@/types/sales-dialog';
 import { paymentMethodOptions } from '@/utils/sales-dialog';
 
 function parseLocalDate(dateString: string): Date {
     const [year, month, day] = dateString.split('-').map(Number);
+
     return new Date(year, (month || 1) - 1, day || 1);
 }
 
@@ -83,26 +84,6 @@ export function CheckoutPanel({
     canSubmit,
     onSubmit,
 }: CheckoutPanelProps) {
-    const [isClientListOpen, setIsClientListOpen] = React.useState(false);
-    const clientPickerRef = React.useRef<HTMLDivElement | null>(null);
-
-    React.useEffect(() => {
-        const handleMouseDown = (event: MouseEvent) => {
-            if (!clientPickerRef.current) {
-                return;
-            }
-
-            if (!clientPickerRef.current.contains(event.target as Node)) {
-                setIsClientListOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleMouseDown);
-        return () => {
-            document.removeEventListener('mousedown', handleMouseDown);
-        };
-    }, []);
-
     return (
         <section className="flex min-h-0 flex-col bg-card">
             <div className="border-b p-4">
@@ -143,70 +124,27 @@ export function CheckoutPanel({
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <div className="space-y-3" ref={clientPickerRef}>
-                                <div className="relative">
-                                    <Input
-                                        value={clientSearch}
-                                        onChange={(event) => {
-                                            setClientSearch(
-                                                event.currentTarget.value,
-                                            );
-                                            setIsClientListOpen(true);
-                                        }}
-                                        onFocus={() =>
-                                            setIsClientListOpen(true)
-                                        }
-                                        onClick={() =>
-                                            setIsClientListOpen(true)
-                                        }
-                                        placeholder="Buscar cliente"
-                                        className="pr-10"
-                                    />
-                                    {selectedClient &&
-                                    clientSearch === selectedClient.name ? (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                            onClick={() => {
-                                                selectClientById('');
-                                                setClientSearch('');
-                                                setIsClientListOpen(false);
-                                            }}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    ) : null}
-                                </div>
-                                {isClientListOpen ? (
-                                    <div className="max-h-44 overflow-y-auto rounded-md border">
-                                        {filteredClients.length === 0 ? (
-                                            <p className="px-3 py-2 text-sm text-muted-foreground">
-                                                Nenhum cliente encontrado.
-                                            </p>
-                                        ) : (
-                                            filteredClients.map((client) => (
-                                                <button
-                                                    key={client.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        selectClientById(
-                                                            client.id,
-                                                        );
-                                                        setIsClientListOpen(
-                                                            false,
-                                                        );
-                                                    }}
-                                                    className="w-full border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-muted"
-                                                >
-                                                    {client.name}
-                                                </button>
-                                            ))
-                                        )}
-                                    </div>
-                                ) : null}
-                            </div>
+                            <SearchableSelect
+                                value={selectedClient?.id || ''}
+                                searchValue={clientSearch}
+                                onSearchChange={(value) => {
+                                    if (
+                                        selectedClient &&
+                                        value !== selectedClient.name
+                                    ) {
+                                        selectClientById('');
+                                    }
+
+                                    setClientSearch(value);
+                                }}
+                                onChange={(value) => selectClientById(value)}
+                                options={filteredClients.map((client) => ({
+                                    value: client.id,
+                                    label: client.name,
+                                }))}
+                                placeholder="Buscar cliente"
+                                emptyMessage="Nenhum cliente encontrado."
+                            />
                         </CardContent>
                     </Card>
 
@@ -426,6 +364,7 @@ export function CheckoutPanel({
                                                 format(date, 'yyyy-MM-dd'),
                                             );
                                         }
+
                                         setCalendarOpen(false);
                                     }}
                                 />
