@@ -44,6 +44,10 @@ export interface FormField {
     searchable?: boolean;
     allowCustomValue?: boolean;
     mask?: FieldMask;
+    actionButton?: {
+        label: string;
+        onClick: () => void;
+    };
 }
 
 export interface CreateModalProps<T extends Record<string, unknown>> {
@@ -85,14 +89,14 @@ export function CreateModal<T extends Record<string, unknown>>({
 
     const dialogWidthClass = React.useMemo(() => {
         if (fields.length >= 9) {
-            return 'sm:max-w-[920px]';
+            return '!w-[calc(100vw-2rem)] sm:!max-w-[1240px]';
         }
 
         if (fields.length >= 4) {
-            return 'sm:max-w-[760px]';
+            return '!w-[calc(100vw-2rem)] sm:!max-w-[860px]';
         }
 
-        return 'sm:max-w-[500px]';
+        return '!w-[calc(100vw-2rem)] sm:!max-w-[520px]';
     }, [fields.length]);
 
     const getFieldSpanClass = (field: FormField) => {
@@ -269,26 +273,42 @@ export function CreateModal<T extends Record<string, unknown>>({
 
     const renderFieldControl = (field: FormField) => {
         const value = String(formData[field.name] ?? '');
+        const barcodeField = isBarcodeField(field.name, field.label);
+        const codeField = !barcodeField && isCodeField(field.name, field.label);
 
         if (field.searchable) {
             return (
-                <SearchableSelect
-                    value={value}
-                    onChange={(nextValue) => handleChange(field, nextValue)}
-                    options={field.options || []}
-                    placeholder={
-                        field.placeholder ||
-                        `Digite ou selecione ${field.label.toLowerCase()}`
-                    }
-                    emptyMessage="Nenhum resultado encontrado."
-                    allowCustomValue={field.allowCustomValue}
-                />
+                <div className="flex min-w-0 items-center gap-2">
+                    <SearchableSelect
+                        value={value}
+                        onChange={(nextValue) => handleChange(field, nextValue)}
+                        options={field.options || []}
+                        placeholder={
+                            field.placeholder ||
+                            `Digite ou selecione ${field.label.toLowerCase()}`
+                        }
+                        emptyMessage="Nenhum resultado encontrado."
+                        allowCustomValue={field.allowCustomValue}
+                        className="min-w-0 flex-1"
+                    />
+                    {field.actionButton ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={field.actionButton.onClick}
+                        >
+                            {field.actionButton.label}
+                        </Button>
+                    ) : null}
+                </div>
             );
         }
 
         if (field.type === 'select') {
             return (
-                <>
+                <div className="flex min-w-0 items-center gap-2">
                     <Input
                         id={field.name}
                         ref={(node) => {
@@ -305,7 +325,19 @@ export function CreateModal<T extends Record<string, unknown>>({
                             handleChange(field, event.target.value)
                         }
                         required={field.required}
+                        className="min-w-0 flex-1"
                     />
+                    {field.actionButton ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={field.actionButton.onClick}
+                        >
+                            {field.actionButton.label}
+                        </Button>
+                    ) : null}
                     {field.options && field.options.length > 0 ? (
                         <datalist id={`${field.name}-options`}>
                             {field.options.map((option) => (
@@ -315,7 +347,7 @@ export function CreateModal<T extends Record<string, unknown>>({
                             ))}
                         </datalist>
                     ) : null}
-                </>
+                </div>
             );
         }
 
@@ -334,8 +366,58 @@ export function CreateModal<T extends Record<string, unknown>>({
             );
         }
 
+        if (barcodeField) {
+            return (
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
+                    <Input
+                        id={field.name}
+                        ref={(node) => {
+                            inputRefs.current[field.name] = node;
+                        }}
+                        type={field.mask === 'currency' ? 'text' : field.type}
+                        inputMode={
+                            field.mask === 'currency' ? 'numeric' : undefined
+                        }
+                        placeholder={field.placeholder}
+                        value={value}
+                        onChange={(event) =>
+                            handleChange(field, event.target.value)
+                        }
+                        required={field.required}
+                        className="min-w-0"
+                    />
+                    {renderInputActions(field)}
+                </div>
+            );
+        }
+
+        if (codeField) {
+            return (
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                    <Input
+                        id={field.name}
+                        ref={(node) => {
+                            inputRefs.current[field.name] = node;
+                        }}
+                        type={field.mask === 'currency' ? 'text' : field.type}
+                        inputMode={
+                            field.mask === 'currency' ? 'numeric' : undefined
+                        }
+                        placeholder={field.placeholder}
+                        value={value}
+                        onChange={(event) =>
+                            handleChange(field, event.target.value)
+                        }
+                        required={field.required}
+                        className="min-w-0"
+                    />
+                    {renderInputActions(field)}
+                </div>
+            );
+        }
+
         return (
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
                 <Input
                     id={field.name}
                     ref={(node) => {
@@ -351,6 +433,7 @@ export function CreateModal<T extends Record<string, unknown>>({
                         handleChange(field, event.target.value)
                     }
                     required={field.required}
+                    className="min-w-0 flex-1"
                 />
                 {renderInputActions(field)}
             </div>
@@ -368,10 +451,6 @@ export function CreateModal<T extends Record<string, unknown>>({
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className={cn('grid gap-4 py-4', gridColumnsClass)}>
                         {fields.map((field, index) => {
-                            const barcodeField = isBarcodeField(
-                                field.name,
-                                field.label,
-                            );
                             const showSection =
                                 field.section &&
                                 field.section !== fields[index - 1]?.section;
@@ -402,12 +481,6 @@ export function CreateModal<T extends Record<string, unknown>>({
                                             )}
                                         </Label>
                                         {renderFieldControl(field)}
-                                        {barcodeField ? (
-                                            <p className="text-xs text-muted-foreground">
-                                                Suporta leitura por scanner USB
-                                                com foco neste campo.
-                                            </p>
-                                        ) : null}
                                     </div>
                                 </React.Fragment>
                             );
