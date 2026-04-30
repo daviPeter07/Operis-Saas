@@ -67,7 +67,7 @@ export function SearchableSelect({
     }, []);
 
     return (
-        <div ref={containerRef} className={cn('space-y-2', className)}>
+        <div ref={containerRef} className={cn('relative', className)}>
             <div className="relative">
                 <Input
                     value={displayValue}
@@ -106,7 +106,7 @@ export function SearchableSelect({
             </div>
 
             {isOpen ? (
-                <div className="max-h-44 overflow-y-auto rounded-md border bg-background shadow-sm">
+                <div className="absolute top-full z-50 mt-2 max-h-44 w-full overflow-y-auto rounded-md border bg-background shadow-sm">
                     {filteredOptions.length === 0 ? (
                         <p className="px-3 py-2 text-sm text-muted-foreground">
                             {allowCustomValue && displayValue.trim()
