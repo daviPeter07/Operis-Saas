@@ -1,37 +1,68 @@
-import { mockClients, mockSuppliers } from '@/lib/mocks/mock-data';
+export const BRAZIL_STATES = [
+    { value: 'AC', label: 'Acre' },
+    { value: 'AL', label: 'Alagoas' },
+    { value: 'AP', label: 'Amapá' },
+    { value: 'AM', label: 'Amazonas' },
+    { value: 'BA', label: 'Bahia' },
+    { value: 'CE', label: 'Ceará' },
+    { value: 'DF', label: 'Distrito Federal' },
+    { value: 'ES', label: 'Espírito Santo' },
+    { value: 'GO', label: 'Goiás' },
+    { value: 'MA', label: 'Maranhão' },
+    { value: 'MT', label: 'Mato Grosso' },
+    { value: 'MS', label: 'Mato Grosso do Sul' },
+    { value: 'MG', label: 'Minas Gerais' },
+    { value: 'PA', label: 'Pará' },
+    { value: 'PB', label: 'Paraíba' },
+    { value: 'PR', label: 'Paraná' },
+    { value: 'PE', label: 'Pernambuco' },
+    { value: 'PI', label: 'Piauí' },
+    { value: 'RJ', label: 'Rio de Janeiro' },
+    { value: 'RN', label: 'Rio Grande do Norte' },
+    { value: 'RS', label: 'Rio Grande do Sul' },
+    { value: 'RO', label: 'Rondônia' },
+    { value: 'RR', label: 'Roraima' },
+    { value: 'SC', label: 'Santa Catarina' },
+    { value: 'SP', label: 'São Paulo' },
+    { value: 'SE', label: 'Sergipe' },
+    { value: 'TO', label: 'Tocantins' },
+] as const;
 
-const locationSet = new Set(
-    [...mockClients, ...mockSuppliers].map(
-        (entry) => `${entry.state}::${entry.city}`,
-    ),
-);
+export const STATE_OPTIONS = BRAZIL_STATES;
 
-export const LOCATION_SOURCE = Array.from(locationSet)
-    .map((entry) => {
-        const [state, city] = entry.split('::');
+export const CITIES_BY_STATE: Record<string, string[]> = {
+    AC: ['Rio Branco', 'Cruzeiro do Sul', 'Feijó', 'Tarauacá', ' Sena Madureira'],
+    AL: ['Maceió', 'Arapiraca', 'Rio Largo', 'Palmeira dos Índios', 'Santana do Ipanema'],
+    AP: ['Macapá', 'Santana', 'Laranjal do Jari', 'Oiapoque', 'Pedra Branca do Amapari'],
+    AM: ['Manaus', 'Parintins', 'Itacoatiara', 'Manacapuru', 'Coari'],
+    BA: ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Juazeiro', 'Itabuna', 'Lauro de Freitas'],
+    CE: ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral', 'Crato'],
+    DF: ['Brasília', 'Taguatinga', 'Ceilândia', 'Samambaia', 'Santa Maria'],
+    ES: ['Vitória', 'Vila Velha', 'Serra', 'Cariacica', 'Linhares', 'São José do Calçado'],
+    GO: ['Goiânia', 'Anápolis', 'Aparecida de Goiânia', 'Rio Verde', 'Formosa', 'Itumbiara'],
+    MA: ['São Luís', 'Imperatriz', 'São José de Ribamar', 'Caxias', 'Codó', 'Paço do Lumiar'],
+    MT: ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop', 'Tangará da Serra', 'Cáceres'],
+    MS: ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá', 'Ponta Porã', 'Aquidauana'],
+    MG: ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim', 'Montes Claros', 'Caratinga'],
+    PA: ['Belém', 'Ananindeua', 'Santarém', 'Marabá', 'Castanhal', 'Paragominas'],
+    PB: ['João Pessoa', 'Campina Grande', 'Santa Rita', 'Patos', 'Sousa', 'Cajazeiras'],
+    PR: ['Curitiba', 'Londrina', 'Maringá', 'Foz do Iguaçu', 'Cascavel', 'São José dos Pinhais'],
+    PE: ['Recife', 'Jaboatão dos Guararapes', 'Caruaru', 'Petrolina', 'Olinda', 'Cabo de Santo Agostinho'],
+    PI: ['Teresina', 'Parnaíba', 'Picos', 'Floriano', 'Barras', 'Campo Maior'],
+    RJ: ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Niterói', 'Campos dos Goytacazes', 'Volta Redonda'],
+    RN: ['Natal', 'Mossoró', 'Parnamirim', 'São Gonçalo do Amarante', 'Macaíba', 'Caicó'],
+    RS: ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Novo Hamburgo'],
+    RO: ['Porto Velho', 'Ji-Paraná', 'Ariquemes', 'Cacoal', 'Vilhena', 'Guajará-Mirim'],
+    RR: ['Boa Vista', 'Rorainopolis', 'Caracaraí', 'Alto Alegre', 'Mucajai'],
+    SC: ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Criciúma', 'Chapecó'],
+    SP: ['São Paulo', 'Guarulhos', 'Campinas', 'Santos', 'São Bernardo do Campo', 'Osasco', 'Ribeirão Preto'],
+    SE: ['Aracaju', 'Nossa Senhora da Glória', 'Lagarto', 'Itabaiana', 'Estância'],
+    TO: ['Palmas', 'Araguaína', 'Guiratinga', 'Pedro Afonso', 'Paraiso do Tocantins'],
+};
 
-        return { state, city };
-    })
-    .sort((a, b) => {
-        if (a.state === b.state) {
-            return a.city.localeCompare(b.city, 'pt-BR');
-        }
+export function getCityOptionsByState(state: string): { value: string; label: string }[] {
+    if (!state) return [];
 
-        return a.state.localeCompare(b.state, 'pt-BR');
-    });
-
-export const STATE_OPTIONS = Array.from(
-    new Set(LOCATION_SOURCE.map((item) => item.state)),
-)
-    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-    .map((value) => ({ value, label: value }));
-
-export function getCityOptionsByState(state: string) {
-    if (!state) {
-        return [];
-    }
-
-    return LOCATION_SOURCE.filter((item) => item.state === state).map(
-        (item) => ({ value: item.city, label: item.city }),
-    );
+    const cities = CITIES_BY_STATE[state] || [];
+    return cities.map((value) => ({ value, label: value })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 }

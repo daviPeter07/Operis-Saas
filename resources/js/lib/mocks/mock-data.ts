@@ -35,6 +35,7 @@ export interface Supplier {
     state: string;
     address: string;
     createdAt: string;
+    personType?: 'pf' | 'pj';
 }
 
 export interface Brand {

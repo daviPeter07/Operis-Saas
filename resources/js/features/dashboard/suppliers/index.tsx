@@ -4,9 +4,11 @@ import { STATE_OPTIONS } from '@/constants/location-source';
 import type { Supplier } from '@/lib/mocks/mock-data';
 import { useMemo, useState } from 'react';
 import { createSupplierRecord } from '@/utils/suppliers';
+import { inferPersonType } from '@/utils/clients';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SupplierCreateDialog } from './supplier-create-dialog';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
 
 export function SuppliersModule() {
     const [suppliers, setSuppliers] = useState(() => [...mockSuppliers]);
@@ -15,6 +17,13 @@ export function SuppliersModule() {
 
     const columns: Column<Supplier>[] = [
         { key: 'name', header: 'Nome' },
+        {
+            key: 'personType',
+            header: 'Tipo',
+            render: (_value: unknown, row: Supplier) => (
+                <PersonTypeBadge personType={inferPersonType(row.document)} />
+            ),
+        },
         { key: 'email', header: 'Email' },
         { key: 'phone', header: 'Telefone' },
         { key: 'document', header: 'Documento' },
@@ -43,7 +52,7 @@ export function SuppliersModule() {
             key: 'state',
             label: 'Estado',
             type: 'select' as const,
-            options: STATE_OPTIONS,
+            options: [...STATE_OPTIONS],
         },
     ];
 

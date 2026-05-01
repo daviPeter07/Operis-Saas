@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
-import { Badge } from '@/components/ui/badge';
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
@@ -9,6 +8,7 @@ import type { ClientCreateDialogPayload } from '@/types/dashboard-forms';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { ClientCreateDialog } from './client-create-dialog';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
 
 type ClientRow = Client & {
     personType: 'pf' | 'pj';
@@ -34,42 +34,13 @@ export function ClientsModule() {
     }, []);
 
     const columns: Column<ClientRow>[] = [
-        {
-            key: 'name',
-            header: 'Nome',
-            render: (_value: unknown, row: ClientRow) => {
-                return (
-                    <div className="flex items-center gap-2">
-                        <span>{row.name}</span>
-                        <Badge
-                            variant={
-                                row.personType === 'pj'
-                                    ? 'default'
-                                    : 'secondary'
-                            }
-                        >
-                            {row.personType === 'pj' ? 'PJ' : 'PF'}
-                        </Badge>
-                    </div>
-                );
-            },
-        },
+        { key: 'name', header: 'Nome' },
         {
             key: 'personType',
             header: 'Tipo',
-            render: (value: unknown) => {
-                const personType = String(value) === 'pj' ? 'pj' : 'pf';
-
-                return (
-                    <Badge
-                        variant={personType === 'pj' ? 'default' : 'secondary'}
-                    >
-                        {personType === 'pj'
-                            ? 'Pessoa Juridica'
-                            : 'Pessoa Fisica'}
-                    </Badge>
-                );
-            },
+            render: (_value: unknown, row: ClientRow) => (
+                <PersonTypeBadge personType={row.personType} />
+            ),
         },
         { key: 'email', header: 'Email' },
         {
