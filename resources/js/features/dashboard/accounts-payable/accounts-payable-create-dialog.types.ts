@@ -12,6 +12,5 @@ export type AccountsPayableForm = {
     total: string;
     paymentMethod: string;
     status: string;
-    dueDate: string;
     createdAt: string;
 };

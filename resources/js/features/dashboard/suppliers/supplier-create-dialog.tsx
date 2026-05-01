@@ -4,48 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useFormState } from '@/hooks/use-form-state';
 import { Supplier } from '@/lib/mocks/mock-data';
-
-type SupplierCreateDialogProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSubmit: (data: Supplier) => void;
-};
-
-type SupplierForm = {
-    name: string;
-    email: string;
-    phone: string;
-    document: string;
-    state: string;
-    city: string;
-    street: string;
-    neighborhood: string;
-    number: string;
-    zipCode: string;
-};
-
-const initialForm: SupplierForm = {
-    name: '',
-    email: '',
-    phone: '',
-    document: '',
-    state: '',
-    city: '',
-    street: '',
-    neighborhood: '',
-    number: '',
-    zipCode: '',
-};
+import { initialSupplierForm } from './supplier-create-dialog.constants';
+import type { SupplierCreateDialogProps } from './supplier-create-dialog.types';
 
 export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierCreateDialogProps) {
-    const [form, setForm] = React.useState<SupplierForm>(initialForm);
-
-    React.useEffect(() => {
-        if (open) {
-            setForm(initialForm);
-        }
-    }, [open]);
+    const { form, setField } = useFormState(initialSupplierForm, open);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,7 +55,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             <Input
                                 id="supplier-name"
                                 value={form.name}
-                                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('name', event.target.value)
+                                }
                                 placeholder="Razao social ou nome fantasia"
                                 required
                             />
@@ -101,7 +68,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                                 id="supplier-email"
                                 type="email"
                                 value={form.email}
-                                onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('email', event.target.value)
+                                }
                                 placeholder="contato@fornecedor.com"
                             />
                         </div>
@@ -110,7 +79,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             <Input
                                 id="supplier-phone"
                                 value={form.phone}
-                                onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('phone', event.target.value)
+                                }
                                 placeholder="(00) 00000-0000"
                             />
                         </div>
@@ -119,7 +90,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             <Input
                                 id="supplier-document"
                                 value={form.document}
-                                onChange={(event) => setForm((prev) => ({ ...prev, document: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('document', event.target.value)
+                                }
                                 placeholder="CNPJ ou CPF"
                             />
                         </div>
@@ -131,10 +104,10 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             stateValue={form.state}
                             cityValue={form.city}
                             onStateChange={(state) =>
-                                setForm((prev) => ({ ...prev, state }))
+                                setField('state', state)
                             }
                             onCityChange={(city) =>
-                                setForm((prev) => ({ ...prev, city }))
+                                setField('city', city)
                             }
                         />
                     </div>
@@ -145,7 +118,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             <Input
                                 id="supplier-street"
                                 value={form.street}
-                                onChange={(event) => setForm((prev) => ({ ...prev, street: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('street', event.target.value)
+                                }
                                 placeholder="Ex.: Rua das Flores"
                             />
                         </div>
@@ -154,7 +129,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             <Input
                                 id="supplier-neighborhood"
                                 value={form.neighborhood}
-                                onChange={(event) => setForm((prev) => ({ ...prev, neighborhood: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('neighborhood', event.target.value)
+                                }
                                 placeholder="Ex.: Centro"
                             />
                         </div>
@@ -163,7 +140,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             <Input
                                 id="supplier-number"
                                 value={form.number}
-                                onChange={(event) => setForm((prev) => ({ ...prev, number: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('number', event.target.value)
+                                }
                                 placeholder="Ex.: 120"
                             />
                         </div>
@@ -172,7 +151,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             <Input
                                 id="supplier-zip"
                                 value={form.zipCode}
-                                onChange={(event) => setForm((prev) => ({ ...prev, zipCode: event.target.value }))}
+                                onChange={(event) =>
+                                    setField('zipCode', event.target.value)
+                                }
                                 placeholder="00000-000"
                             />
                         </div>

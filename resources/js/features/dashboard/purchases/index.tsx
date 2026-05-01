@@ -1,5 +1,5 @@
-import { mockPurchases } from '@/lib/mocks/mock-data';
-import type { Purchase } from '@/lib/mocks/mock-data';
+import { mockProducts, mockPurchases } from '@/lib/mocks/mock-data';
+import type { Product, Purchase } from '@/lib/mocks/mock-data';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
@@ -15,9 +15,11 @@ import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PurchaseCreateDialog } from './purchase-create-dialog';
+import type { PurchaseLineItem } from './purchase-create-dialog.types';
 
 export function PurchasesModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
+    const [products, setProducts] = useState<Product[]>(() => [...mockProducts]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     useEffect(() => {
@@ -110,6 +112,26 @@ export function PurchasesModule() {
         toast.success('Compra cadastrada com sucesso');
     };
 
+    const handleApplyStock = (lineItems: PurchaseLineItem[]) => {
+        if (lineItems.length === 0) {
+            return;
+        }
+
+        setProducts((previous) =>
+            previous.map((product) => {
+                const line = lineItems.find(
+                    (item) => item.productId === product.id,
+                );
+
+                if (!line) {
+                    return product;
+                }
+
+                return { ...product, stock: product.stock + line.quantity };
+            }),
+        );
+    };
+
     return (
         <GenericTable
             data={purchases}
@@ -124,6 +146,8 @@ export function PurchasesModule() {
                     open={open}
                     onOpenChange={onOpenChange}
                     onSubmit={onSubmit}
+                    products={products}
+                    onApplyStock={handleApplyStock}
                 />
             )}
         />
