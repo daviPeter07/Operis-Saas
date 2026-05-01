@@ -12,6 +12,7 @@ import {
 } from '@/lib/format';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import { PURCHASE_STATUS_VALUES, PURCHASE_PAYMENT_METHOD_VALUES } from '@/types/api';
 import { StatusBadge } from '@/components/common/status-badge';
 import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
 import { toast } from 'sonner';
@@ -139,15 +140,8 @@ export function AccountsPayableModule() {
     ];
 
     const handleCreate = (data: Purchase) => {
-        const status = STATUS_VALUES.includes(String(data.status))
-            ? (String(data.status) as Purchase['status'])
-            : 'pending';
-
-        const paymentMethod = ['money', 'credit', 'debit', 'pix'].includes(
-            String(data.paymentMethod),
-        )
-            ? (String(data.paymentMethod) as Purchase['paymentMethod'])
-            : 'pix';
+        const status = PURCHASE_STATUS_VALUES.includes(data.status) ? data.status : 'pending';
+        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(data.paymentMethod) ? data.paymentMethod : 'pix';
 
         const newPurchase: Purchase = {
             id: crypto.randomUUID(),

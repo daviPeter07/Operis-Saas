@@ -19,6 +19,18 @@ export interface Purchase {
     createdAt: string;
 }
 
+export const PURCHASE_STATUS_VALUES: Purchase['status'][] = [
+    'pending',
+    'completed',
+    'cancelled',
+];
+export const PURCHASE_PAYMENT_METHOD_VALUES: Purchase['paymentMethod'][] = [
+    'money',
+    'credit',
+    'debit',
+    'pix',
+];
+
 export interface Client {
     id: string;
     name: string;

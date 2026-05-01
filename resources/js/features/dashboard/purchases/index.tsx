@@ -17,6 +17,10 @@ import {
 } from '@/lib/format';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import {
+    PURCHASE_STATUS_VALUES,
+    PURCHASE_PAYMENT_METHOD_VALUES,
+} from '@/types/api';
 import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PurchaseCreateDialog } from './purchase-create-dialog';
@@ -85,14 +89,13 @@ export function PurchasesModule() {
     ];
 
     const handleCreate = (data: Purchase) => {
-        const status = STATUS_VALUES.includes(String(data.status))
-            ? (String(data.status) as Purchase['status'])
+        const status = PURCHASE_STATUS_VALUES.includes(data.status)
+            ? data.status
             : 'pending';
-
-        const paymentMethod = ['money', 'credit', 'debit', 'pix'].includes(
-            String(data.paymentMethod),
+        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(
+            data.paymentMethod,
         )
-            ? (String(data.paymentMethod) as Purchase['paymentMethod'])
+            ? data.paymentMethod
             : 'pix';
 
         const newPurchase: Purchase = {
