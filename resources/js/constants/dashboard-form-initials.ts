@@ -1,4 +1,8 @@
-import type { FinancialEntryForm, SupplierForm } from '@/types/dashboard-forms';
+import type {
+    ClientForm,
+    FinancialEntryForm,
+    SupplierForm,
+} from '@/types/dashboard-forms';
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -22,6 +26,20 @@ export const initialAccountsPayableForm: FinancialEntryForm = {
 
 export const initialSupplierForm: SupplierForm = {
     name: '',
+    email: '',
+    phone: '',
+    document: '',
+    state: '',
+    city: '',
+    street: '',
+    neighborhood: '',
+    number: '',
+    zipCode: '',
+};
+
+export const initialClientForm: ClientForm = {
+    name: '',
+    personType: 'pf',
     email: '',
     phone: '',
     document: '',

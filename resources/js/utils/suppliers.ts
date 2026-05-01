@@ -1,7 +1,16 @@
 import type { Supplier } from '@/lib/mocks/mock-data';
 import type { SupplierForm } from '@/types/dashboard-forms';
 
-export function composeSupplierAddress(form: SupplierForm): string {
+type AddressFormShape = {
+    street: string;
+    number: string;
+    neighborhood: string;
+    zipCode: string;
+};
+
+export function composeSupplierAddress(
+    form: SupplierForm | AddressFormShape,
+): string {
     return [form.street, form.number, form.neighborhood, form.zipCode]
         .filter(Boolean)
         .join(', ');

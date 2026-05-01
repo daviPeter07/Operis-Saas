@@ -2,16 +2,30 @@ import { useEffect, useMemo, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { Badge } from '@/components/ui/badge';
-import { STATE_OPTIONS } from '@/constants/location-source';
 import { toast } from 'sonner';
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
+import {
+    createClientRecord,
+    inferClientPersonType,
+} from '@/utils/clients';
+import type { ClientCreateDialogPayload } from '@/types/dashboard-forms';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { ClientCreateDialog } from './client-create-dialog';
+
+type ClientRow = Client & {
+    personType: 'pf' | 'pj';
+};
 
 export function ClientsModule() {
-    const [clients, setClients] = useState(() => [...mockClients]);
+    const [clients, setClients] = useState<ClientRow[]>(() =>
+        mockClients.map((client) => ({
+            ...client,
+            personType: inferClientPersonType(client.document),
+        })),
+    );
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [stateFilter, setStateFilter] = useState('');
     const [cityFilter, setCityFilter] = useState('');
@@ -24,19 +38,35 @@ export function ClientsModule() {
         }
     }, []);
 
-    const columns: Column<Client>[] = [
+    const columns: Column<ClientRow>[] = [
         {
             key: 'name',
             header: 'Nome',
-            render: (_value: unknown, row: Client) => {
-                const numeric = row.document.replace(/\D/g, '');
-                const personType = numeric.length <= 11 ? 'PF' : 'PJ';
-
+            render: (_value: unknown, row: ClientRow) => {
                 return (
                     <div className="flex items-center gap-2">
                         <span>{row.name}</span>
-                        <Badge variant="secondary">{personType}</Badge>
+                        <Badge
+                            variant={
+                                row.personType === 'pj' ? 'default' : 'secondary'
+                            }
+                        >
+                            {row.personType === 'pj' ? 'PJ' : 'PF'}
+                        </Badge>
                     </div>
+                );
+            },
+        },
+        {
+            key: 'personType',
+            header: 'Tipo',
+            render: (value: unknown) => {
+                const personType = String(value) === 'pj' ? 'pj' : 'pf';
+
+                return (
+                    <Badge variant={personType === 'pj' ? 'default' : 'secondary'}>
+                        {personType === 'pj' ? 'Pessoa Juridica' : 'Pessoa Fisica'}
+                    </Badge>
                 );
             },
         },
@@ -61,14 +91,6 @@ export function ClientsModule() {
         { key: 'email', label: 'Email', type: 'text' as const },
     ];
 
-    const cityOptions = useMemo(
-        () =>
-            Array.from(new Set(clients.map((client) => client.city)))
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-                .map((value) => ({ value, label: value })),
-        [clients],
-    );
-
     const filteredClients = useMemo(() => {
         return clients.filter((client) => {
             if (stateFilter && client.state !== stateFilter) {
@@ -83,18 +105,8 @@ export function ClientsModule() {
         });
     }, [cityFilter, clients, stateFilter]);
 
-    const handleCreate = (data: Client) => {
-        const newClient: Client = {
-            id: crypto.randomUUID(),
-            name: String(data.name || '').trim(),
-            email: String(data.email || '').trim(),
-            phone: String(data.phone || '').trim(),
-            document: String(data.document || '').trim(),
-            city: String(data.city || '').trim(),
-            state: String(data.state || '').trim(),
-            address: String(data.address || '').trim(),
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
+    const handleCreate = (data: ClientCreateDialogPayload) => {
+        const newClient = createClientRecord(data);
 
         if (!newClient.name) {
             toast.error('Informe o nome do cliente');
@@ -102,7 +114,13 @@ export function ClientsModule() {
             return;
         }
 
-        setClients((previous) => [newClient, ...previous]);
+        setClients((previous) => [
+            {
+                ...newClient,
+                personType: data.personType,
+            },
+            ...previous,
+        ]);
         toast.success('Cliente cadastrado com sucesso');
     };
 
@@ -123,54 +141,13 @@ export function ClientsModule() {
                 onCreate={handleCreate}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
-                createFields={[
-                {
-                    name: 'name',
-                    label: 'Nome',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Nome completo',
-                },
-                {
-                    name: 'email',
-                    label: 'Email',
-                    type: 'email',
-                    placeholder: 'cliente@empresa.com',
-                },
-                {
-                    name: 'phone',
-                    label: 'Telefone',
-                    type: 'text',
-                    placeholder: '(00) 00000-0000',
-                    mask: 'phone',
-                },
-                {
-                    name: 'document',
-                    label: 'Documento',
-                    type: 'text',
-                    placeholder: 'CPF/CNPJ',
-                    mask: 'document',
-                },
-                {
-                    name: 'city',
-                    label: 'Cidade',
-                    type: 'select',
-                    searchable: true,
-                    options: cityOptions,
-                },
-                {
-                    name: 'state',
-                    label: 'Estado',
-                    type: 'select',
-                    options: STATE_OPTIONS,
-                },
-                {
-                    name: 'address',
-                    label: 'Endereço',
-                    type: 'text',
-                    placeholder: 'Rua, número e complemento',
-                },
-                ]}
+                createDialog={({ open, onOpenChange, onSubmit }) => (
+                    <ClientCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        onSubmit={onSubmit}
+                    />
+                )}
             />
         </div>
     );

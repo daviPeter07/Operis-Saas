@@ -1,4 +1,30 @@
-import type { Product, Purchase, Supplier } from '@/lib/mocks/mock-data';
+import type { Client, Product, Purchase, Supplier } from '@/lib/mocks/mock-data';
+
+export type ClientPersonType = 'pf' | 'pj';
+
+export type ClientForm = {
+    name: string;
+    personType: ClientPersonType;
+    email: string;
+    phone: string;
+    document: string;
+    state: string;
+    city: string;
+    street: string;
+    neighborhood: string;
+    number: string;
+    zipCode: string;
+};
+
+export type ClientCreateDialogPayload = Client & {
+    personType: ClientPersonType;
+};
+
+export type ClientCreateDialogProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSubmit: (data: ClientCreateDialogPayload) => void;
+};
 
 export type FinancialEntryForm = {
     supplierName: string;
