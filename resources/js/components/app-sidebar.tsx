@@ -1,5 +1,4 @@
 import { Link, router } from '@inertiajs/react';
-import * as React from 'react';
 import {
     LayoutGrid,
     Users,
@@ -15,10 +14,11 @@ import {
     BarChart3,
     Settings,
 } from 'lucide-react';
+import * as React from 'react';
 import AppLogo from '@/components/app-logo';
-import { useWorkspace } from '@/features/dashboard/workspace-context';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
+import { Badge } from '@/components/ui/badge';
 import {
     Sidebar,
     SidebarContent,
@@ -28,13 +28,13 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Badge } from '@/components/ui/badge';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 import {
     getAltShortcutLabel,
     isEditableElement,
