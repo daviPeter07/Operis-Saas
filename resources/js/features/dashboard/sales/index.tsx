@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     formatCurrencyBR,
     formatDateBR,
@@ -25,6 +26,15 @@ export function SalesModule() {
     const [products, setProducts] = useState<Product[]>(() => [
         ...mockProducts,
     ]);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('action') === 'create-sale') {
+            setIsCreateOpen(true);
+            window.history.replaceState({}, '', '/dashboard/sales');
+        }
+    }, []);
 
     const columns: Column<Sale>[] = [
         { key: 'clientName', header: 'Cliente' },
@@ -172,6 +182,8 @@ export function SalesModule() {
                 title="Vendas"
                 filterFields={filterFields}
                 onCreate={handleCreate}
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
                 createDialog={({ open, onOpenChange, onSubmit }) => (
                     <SalesDialog
                         open={open}
@@ -181,6 +193,7 @@ export function SalesModule() {
                         products={products}
                         onCreateClient={handleCreateClient}
                         onCreateProduct={handleCreateProduct}
+                        defaultTab="checkout"
                     />
                 )}
             />

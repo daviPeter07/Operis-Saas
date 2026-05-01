@@ -1,12 +1,22 @@
 import { mockCategories } from '@/lib/mocks/mock-data';
 import type { Category } from '@/lib/mocks/mock-data';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
 export function CategoriesModule() {
     const [categories, setCategories] = useState(() => [...mockCategories]);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('action') === 'create-category') {
+            setIsCreateOpen(true);
+            window.history.replaceState({}, '', '/dashboard/categories');
+        }
+    }, []);
 
     const columns: Column<Category>[] = [
         { key: 'name', header: 'Nome' },
@@ -37,6 +47,8 @@ export function CategoriesModule() {
             columns={columns}
             title="Categorias"
             onCreate={handleCreate}
+            isCreateOpen={isCreateOpen}
+            onCreateOpenChange={setIsCreateOpen}
             createFields={[
                 {
                     name: 'name',

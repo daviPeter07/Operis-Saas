@@ -1,6 +1,7 @@
 import { mockPurchases } from '@/lib/mocks/mock-data';
 import type { Purchase } from '@/lib/mocks/mock-data';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
@@ -14,6 +15,15 @@ import {
 
 export function PurchasesModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('action') === 'create-purchase') {
+            setIsCreateOpen(true);
+            window.history.replaceState({}, '', '/dashboard/purchases');
+        }
+    }, []);
 
     const columns: Column<Purchase>[] = [
         { key: 'supplierName', header: 'Fornecedor' },
@@ -128,6 +138,8 @@ export function PurchasesModule() {
             title="Compras"
             filterFields={filterFields}
             onCreate={handleCreate}
+            isCreateOpen={isCreateOpen}
+            onCreateOpenChange={setIsCreateOpen}
             createFields={[
                 {
                     name: 'supplierName',

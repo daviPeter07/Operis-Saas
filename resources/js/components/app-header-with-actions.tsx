@@ -9,6 +9,7 @@ import {
     Sun,
     Moon,
 } from 'lucide-react';
+import { router } from '@inertiajs/react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,7 +41,18 @@ export function AppHeaderWithActions({
 }: QuickActionsButtonProps) {
     const { appearance, updateAppearance } = useAppearance();
     const handleAction = (actionKey: string) => {
-        console.log('Quick action:', actionKey);
+        const routes: Record<string, string> = {
+            'create-client': '/dashboard/clients?action=create-client',
+            'create-sale': '/dashboard/sales?action=create-sale',
+            'create-purchase': '/dashboard/purchases?action=create-purchase',
+            'create-expense': '/dashboard/accounts-payable?action=create-expense',
+            'create-brand': '/dashboard/brands?action=create-brand',
+            'create-category': '/dashboard/categories?action=create-category',
+        };
+
+        if (routes[actionKey]) {
+            router.visit(routes[actionKey]);
+        }
     };
 
     const toggleTheme = () => {
