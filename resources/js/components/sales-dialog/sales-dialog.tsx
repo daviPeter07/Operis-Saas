@@ -1,14 +1,14 @@
 import * as React from 'react';
-import type { Client, Product } from '@/lib/mocks/mock-data';
-import { useSalesDialog } from '@/hooks/use-sales-dialog';
-import { filterProductsByQuery } from '@/utils/sales-dialog';
-import type { SalesRecord } from '@/types/sales-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
+import { useSalesDialog } from '@/hooks/use-sales-dialog';
+import type { Client, Product } from '@/lib/mocks/mock-data';
+import type { SalesRecord } from '@/types/sales-dialog';
+import type { SalesDialogProps } from '@/types/sales-dialog-component';
+import { filterProductsByQuery } from '@/utils/sales-dialog';
 import { CatalogPanel } from './catalog-panel';
 import { CheckoutPanel } from './checkout-panel';
 import { AddProductDialog, DiscountDialog } from './dialogs';
-import type { SalesDialogProps } from '@/types/sales-dialog-component';
-import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
 
 export function SalesDialog({
     open,
@@ -84,6 +84,7 @@ export function SalesDialog({
     );
     const filteredClients = React.useMemo(() => {
         const normalizedQuery = clientSearch.trim().toLowerCase();
+
         if (!normalizedQuery) {
             return clients;
         }
@@ -234,6 +235,7 @@ export function SalesDialog({
                                 new Date().toISOString().slice(0, 10),
                         });
                         selectClientById(createdClient.id);
+
                         return createdClient;
                     }}
                 />
@@ -245,8 +247,8 @@ export function SalesDialog({
                     description="Cadastre um produto sem sair da venda."
                     fields={productQuickFields}
                     initialValues={{
-                        cost: '0',
-                        price: '0',
+                        cost: 'R$ 0,00',
+                        price: 'R$ 0,00',
                         stock: '0',
                         minStock: '0',
                     }}
@@ -268,6 +270,7 @@ export function SalesDialog({
                                 new Date().toISOString().slice(0, 10),
                         });
                         selectProductById(createdProduct.id);
+
                         return createdProduct;
                     }}
                 />

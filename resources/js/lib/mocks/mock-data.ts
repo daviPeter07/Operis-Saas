@@ -2,6 +2,8 @@ export interface Product {
     id: string;
     name: string;
     sku: string;
+    barcode?: string;
+    description?: string;
     price: number;
     cost: number;
     stock: number;
@@ -889,6 +891,15 @@ export const mockPurchases: Purchase[] = [
         createdAt: '2024-06-20',
     },
 ];
+
+function buildMockBarcode(index: number): string {
+    return `789000000${String(index + 1).padStart(4, '0')}`;
+}
+
+for (const [index, product] of mockProducts.entries()) {
+    product.barcode ??= buildMockBarcode(index);
+    product.description ??= `${product.name} cadastrado no estoque.`;
+}
 
 export type TableType =
     | 'products'
