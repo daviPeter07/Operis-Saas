@@ -3,7 +3,7 @@ export type FieldOption = {
     label: string;
 };
 
-export type FieldMask = 'currency' | 'phone' | 'document';
+export type FieldMask = 'currency' | 'percent' | 'phone' | 'document';
 
 export function onlyDigits(value: string): string {
     return value.replace(/\D/g, '');
@@ -32,6 +32,31 @@ export function parseCurrencyInput(value: string): number {
     }
 
     return Number((Number(digits) / 100).toFixed(2));
+}
+
+export function formatPercentInput(value: string): string {
+    const digits = onlyDigits(value);
+
+    if (!digits) {
+        return '';
+    }
+
+    const normalized = Math.min(100, Number(digits) / 100);
+
+    return `${normalized.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}%`;
+}
+
+export function parsePercentInput(value: string): number {
+    const digits = onlyDigits(value);
+
+    if (!digits) {
+        return 0;
+    }
+
+    return Math.min(100, Number((Number(digits) / 100).toFixed(2)));
 }
 
 export function formatPhoneInput(value: string): string {
@@ -74,6 +99,10 @@ export function applyFieldMask(value: string, mask?: FieldMask): string {
         return formatCurrencyInput(value);
     }
 
+    if (mask === 'percent') {
+        return formatPercentInput(value);
+    }
+
     if (mask === 'phone') {
         return formatPhoneInput(value);
     }
@@ -88,6 +117,10 @@ export function applyFieldMask(value: string, mask?: FieldMask): string {
 export function parseMaskedFieldValue(value: string, mask?: FieldMask) {
     if (mask === 'currency') {
         return parseCurrencyInput(value);
+    }
+
+    if (mask === 'percent') {
+        return parsePercentInput(value);
     }
 
     return value;

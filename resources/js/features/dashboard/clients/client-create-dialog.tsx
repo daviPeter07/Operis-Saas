@@ -121,7 +121,9 @@ export function ClientCreateDialog({
                         </div>
 
                         <div className="grid gap-2 sm:col-span-2">
-                            <Label htmlFor="client-document">{documentLabel}</Label>
+                            <Label htmlFor="client-document">
+                                {documentLabel}
+                            </Label>
                             <Input
                                 id="client-document"
                                 value={form.document}

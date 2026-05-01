@@ -1,4 +1,8 @@
-import { mockProducts, mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
+import {
+    mockProducts,
+    mockPurchases,
+    mockSuppliers,
+} from '@/lib/mocks/mock-data';
 import type { Product, Purchase, Supplier } from '@/lib/mocks/mock-data';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
@@ -20,7 +24,9 @@ import { createSupplierRecord } from '@/utils/suppliers';
 
 export function PurchasesModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
-    const [products, setProducts] = useState<Product[]>(() => [...mockProducts]);
+    const [products, setProducts] = useState<Product[]>(() => [
+        ...mockProducts,
+    ]);
     const [suppliers, setSuppliers] = useState<Supplier[]>(() => [
         ...mockSuppliers,
     ]);
@@ -79,9 +85,7 @@ export function PurchasesModule() {
     ];
 
     const handleCreate = (data: Purchase) => {
-        const status = STATUS_VALUES.includes(
-            String(data.status),
-        )
+        const status = STATUS_VALUES.includes(String(data.status))
             ? (String(data.status) as Purchase['status'])
             : 'pending';
 

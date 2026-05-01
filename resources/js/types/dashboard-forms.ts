@@ -1,4 +1,9 @@
-import type { Client, Product, Purchase, Supplier } from '@/lib/mocks/mock-data';
+import type {
+    Client,
+    Product,
+    Purchase,
+    Supplier,
+} from '@/lib/mocks/mock-data';
 
 export type ClientPersonType = 'pf' | 'pj';
 
@@ -31,6 +36,9 @@ export type FinancialEntryForm = {
     items: string;
     total: string;
     paymentMethod: string;
+    cardType: 'debit' | 'credit';
+    installments: string;
+    firstInstallmentDate: string;
     status: string;
     createdAt: string;
 };

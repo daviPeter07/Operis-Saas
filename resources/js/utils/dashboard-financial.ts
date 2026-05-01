@@ -1,5 +1,35 @@
 import type { Product, Purchase } from '@/lib/mocks/mock-data';
-import type { FinancialEntryForm, PurchaseLineItem } from '@/types/dashboard-forms';
+import type {
+    FinancialEntryForm,
+    PurchaseLineItem,
+} from '@/types/dashboard-forms';
+
+function resolvePurchasePaymentMethod(
+    form: FinancialEntryForm,
+): Purchase['paymentMethod'] {
+    if (form.paymentMethod === 'card') {
+        return form.cardType;
+    }
+
+    if (
+        form.paymentMethod === 'money' ||
+        form.paymentMethod === 'pix' ||
+        form.paymentMethod === 'credit' ||
+        form.paymentMethod === 'debit'
+    ) {
+        return form.paymentMethod;
+    }
+
+    return 'pix';
+}
+
+function resolveDueDate(form: FinancialEntryForm): string {
+    if (form.paymentMethod === 'card' && form.cardType === 'credit') {
+        return form.firstInstallmentDate || form.createdAt;
+    }
+
+    return form.createdAt;
+}
 
 export function computePurchaseTotals(
     items: PurchaseLineItem[],
@@ -7,7 +37,9 @@ export function computePurchaseTotals(
 ): { items: number; total: number } {
     return items.reduce(
         (acc, item) => {
-            const product = products.find((entry) => entry.id === item.productId);
+            const product = products.find(
+                (entry) => entry.id === item.productId,
+            );
             if (!product) {
                 return acc;
             }
@@ -30,9 +62,9 @@ export function mapFinancialFormToPurchase(
         supplierName: form.supplierName,
         total: Number(form.total || 0) || fallback.total,
         status: form.status as Purchase['status'],
-        paymentMethod: form.paymentMethod as Purchase['paymentMethod'],
+        paymentMethod: resolvePurchasePaymentMethod(form),
         items: Number(form.items || 0) || fallback.items,
-        dueDate: form.createdAt,
+        dueDate: resolveDueDate(form),
         createdAt: form.createdAt,
     };
 }
@@ -46,9 +78,9 @@ export function mapFinancialFormToAccountsPayable(
         supplierName: form.supplierName,
         total: Number(form.total || 0),
         status: form.status as Purchase['status'],
-        paymentMethod: form.paymentMethod as Purchase['paymentMethod'],
+        paymentMethod: resolvePurchasePaymentMethod(form),
         items: Number(form.items || 1),
-        dueDate: form.createdAt,
+        dueDate: resolveDueDate(form),
         createdAt: form.createdAt,
     };
 }

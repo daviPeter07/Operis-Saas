@@ -1,7 +1,16 @@
 import * as React from 'react';
 import { SearchableSelect } from '@/components/searchable-select';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getCityOptionsByState, STATE_OPTIONS } from '@/constants/location-source';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    getCityOptionsByState,
+    STATE_OPTIONS,
+} from '@/constants/location-source';
 
 type StateCityFilterProps = {
     stateValue: string;

@@ -217,10 +217,9 @@ export function CreateModal<T extends Record<string, unknown>>({
 
         try {
             await onSubmit(prepareSubmitData());
-            toast.success('Registro criado com sucesso');
             onOpenChange(false);
         } catch {
-            toast.error('Erro ao criar registro');
+            throw new Error('create_failed');
         } finally {
             setIsSubmitting(false);
         }

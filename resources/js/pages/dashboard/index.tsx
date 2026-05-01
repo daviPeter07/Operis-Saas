@@ -101,7 +101,9 @@ export default function DashboardPage() {
                                             <button
                                                 type="button"
                                                 key={alert.id}
-                                                onClick={() => navigateByAlert(alert.id)}
+                                                onClick={() =>
+                                                    navigateByAlert(alert.id)
+                                                }
                                                 className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                                             >
                                                 <span className="text-sm font-medium text-foreground">
@@ -140,7 +142,9 @@ export default function DashboardPage() {
                                             <button
                                                 type="button"
                                                 key={alert.id}
-                                                onClick={() => navigateByAlert(alert.id)}
+                                                onClick={() =>
+                                                    navigateByAlert(alert.id)
+                                                }
                                                 className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                                             >
                                                 <span className="text-sm font-medium text-foreground">

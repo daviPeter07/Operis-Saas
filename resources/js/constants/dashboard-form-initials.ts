@@ -11,6 +11,9 @@ export const initialPurchaseForm: FinancialEntryForm = {
     items: '1',
     total: '',
     paymentMethod: 'pix',
+    cardType: 'debit',
+    installments: '1',
+    firstInstallmentDate: today,
     status: 'pending',
     createdAt: today,
 };
@@ -20,6 +23,9 @@ export const initialAccountsPayableForm: FinancialEntryForm = {
     items: '1',
     total: '',
     paymentMethod: 'pix',
+    cardType: 'debit',
+    installments: '1',
+    firstInstallmentDate: today,
     status: 'pending',
     createdAt: today,
 };

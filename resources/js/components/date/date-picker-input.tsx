@@ -48,7 +48,11 @@ export function DatePickerInput({
                 onClick={() => setOpen((current) => !current)}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-                <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
+                <span
+                    className={
+                        value ? 'text-foreground' : 'text-muted-foreground'
+                    }
+                >
                     {value
                         ? format(selectedDate as Date, 'dd/MM/yyyy', {
                               locale: ptBR,
@@ -58,12 +62,7 @@ export function DatePickerInput({
                 <CalendarDays className="h-4 w-4 text-muted-foreground" />
             </button>
 
-            <Input
-                type="hidden"
-                value={value}
-                onChange={() => {}}
-                readOnly
-            />
+            <Input type="hidden" value={value} onChange={() => {}} readOnly />
 
             {open ? (
                 <div className="absolute z-50 mt-2 rounded-md border bg-background p-2 shadow-lg">

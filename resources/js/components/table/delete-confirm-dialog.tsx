@@ -1,6 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
 import * as React from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -42,10 +41,9 @@ export function DeleteConfirmDialog({
 
         try {
             await onConfirm();
-            toast.success('Registro excluído com sucesso');
             onOpenChange(false);
-        } catch (error) {
-            toast.error('Erro ao excluir registro');
+        } catch {
+            throw new Error('delete_failed');
         } finally {
             setIsDeleting(false);
         }

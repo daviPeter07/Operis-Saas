@@ -139,9 +139,7 @@ export function AccountsPayableModule() {
     ];
 
     const handleCreate = (data: Purchase) => {
-        const status = STATUS_VALUES.includes(
-            String(data.status),
-        )
+        const status = STATUS_VALUES.includes(String(data.status))
             ? (String(data.status) as Purchase['status'])
             : 'pending';
 

@@ -23,6 +23,7 @@ import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
 import { cn } from '@/lib/utils';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
+import { toast } from 'sonner';
 
 export interface Column<T> {
     key: string;
@@ -85,7 +86,8 @@ export function GenericTable<T extends { id: string }>({
     isCreateOpen: externalIsCreateOpen,
     onCreateOpenChange: externalOnCreateOpenChange,
 }: GenericTableProps<T>) {
-    const [internalIsCreateOpen, setInternalIsCreateOpen] = React.useState(false);
+    const [internalIsCreateOpen, setInternalIsCreateOpen] =
+        React.useState(false);
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [filterOperators, setFilterOperators] = React.useState<
         Record<string, FilterOperator>
@@ -673,8 +675,20 @@ export function GenericTable<T extends { id: string }>({
                         selectedRow as unknown as Record<string, unknown>
                     }
                     onSubmit={(data) => {
-                        onEdit?.(data as T);
-                        setIsEditOpen(false);
+                        try {
+                            onEdit?.(data as T);
+                            toast.success(
+                                `${title}: registro atualizado com sucesso.`,
+                            );
+                            setIsEditOpen(false);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error && error.message
+                                    ? error.message
+                                    : `${title}: erro ao atualizar o registro.`;
+
+                            toast.error(message);
+                        }
                     }}
                 />
             )}
@@ -697,11 +711,23 @@ export function GenericTable<T extends { id: string }>({
                         : undefined
                 }
                 onConfirm={() => {
-                    if (selectedRow) {
-                        onDelete?.(selectedRow);
-                    }
+                    try {
+                        if (selectedRow) {
+                            onDelete?.(selectedRow);
+                        }
 
-                    setSelectedRow(null);
+                        toast.success(
+                            `${title}: registro excluido com sucesso.`,
+                        );
+                        setSelectedRow(null);
+                    } catch (error) {
+                        const message =
+                            error instanceof Error && error.message
+                                ? error.message
+                                : `${title}: erro ao excluir o registro.`;
+
+                        toast.error(message);
+                    }
                 }}
             />
 
@@ -711,8 +737,20 @@ export function GenericTable<T extends { id: string }>({
                     onOpenChange: handleCreateOpenChange,
                     title: `Criar Novo ${title}`,
                     onSubmit: (data) => {
-                        onCreate?.(data);
-                        handleCreateOpenChange(false);
+                        try {
+                            onCreate?.(data);
+                            toast.success(
+                                `${title}: registro criado com sucesso.`,
+                            );
+                            handleCreateOpenChange(false);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error && error.message
+                                    ? error.message
+                                    : `${title}: erro ao criar o registro.`;
+
+                            toast.error(message);
+                        }
                     },
                 })
             ) : (
@@ -723,8 +761,20 @@ export function GenericTable<T extends { id: string }>({
                     description="Preencha os dados abaixo para criar um novo registro."
                     fields={resolvedCreateFields}
                     onSubmit={(data) => {
-                        onCreate?.(data as T);
-                        handleCreateOpenChange(false);
+                        try {
+                            onCreate?.(data as T);
+                            toast.success(
+                                `${title}: registro criado com sucesso.`,
+                            );
+                            handleCreateOpenChange(false);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error && error.message
+                                    ? error.message
+                                    : `${title}: erro ao criar o registro.`;
+
+                            toast.error(message);
+                        }
                     }}
                 />
             )}

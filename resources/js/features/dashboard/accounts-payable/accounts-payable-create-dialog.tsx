@@ -15,7 +15,8 @@ export function AccountsPayableCreateDialog({
     const { form, setField } = useFormState(initialAccountsPayableForm, open);
     const handleQuickCreateSupplier = useQuickCreateSupplier({
         onCreateSupplier,
-        onSupplierCreated: (supplier) => setField('supplierName', supplier.name),
+        onSupplierCreated: (supplier) =>
+            setField('supplierName', supplier.name),
     });
 
     return (

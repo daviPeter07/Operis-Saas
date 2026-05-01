@@ -6,10 +6,7 @@ import { toast } from 'sonner';
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
-import {
-    createClientRecord,
-    inferClientPersonType,
-} from '@/utils/clients';
+import { createClientRecord, inferClientPersonType } from '@/utils/clients';
 import type { ClientCreateDialogPayload } from '@/types/dashboard-forms';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
@@ -48,7 +45,9 @@ export function ClientsModule() {
                         <span>{row.name}</span>
                         <Badge
                             variant={
-                                row.personType === 'pj' ? 'default' : 'secondary'
+                                row.personType === 'pj'
+                                    ? 'default'
+                                    : 'secondary'
                             }
                         >
                             {row.personType === 'pj' ? 'PJ' : 'PF'}
@@ -64,8 +63,12 @@ export function ClientsModule() {
                 const personType = String(value) === 'pj' ? 'pj' : 'pf';
 
                 return (
-                    <Badge variant={personType === 'pj' ? 'default' : 'secondary'}>
-                        {personType === 'pj' ? 'Pessoa Juridica' : 'Pessoa Fisica'}
+                    <Badge
+                        variant={personType === 'pj' ? 'default' : 'secondary'}
+                    >
+                        {personType === 'pj'
+                            ? 'Pessoa Juridica'
+                            : 'Pessoa Fisica'}
                     </Badge>
                 );
             },

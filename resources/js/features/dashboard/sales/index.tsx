@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { router } from '@inertiajs/react';
 import {
     formatCurrencyBR,
     formatDateBR,
@@ -16,6 +15,7 @@ import type { Column } from '../generic-table';
 import { SalesHeader } from './sales-header';
 import type { SalesRecord } from '@/types/sales-dialog';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
+import { toast } from 'sonner';
 
 export function SalesModule() {
     const [sales, setSales] = useState<SalesRecord[]>(() =>
@@ -114,16 +114,18 @@ export function SalesModule() {
     ];
 
     const handleCreate = (data: SalesRecord) => {
-        const status = STATUS_VALUES.includes(
-            String(data.status),
-        )
-            ? (String(data.status) as Sale['status'])
+        const status = STATUS_VALUES.includes(data.status)
+            ? data.status
             : 'pending';
 
-        const paymentMethod = ['money', 'pix', 'card', 'other'].includes(
-            String(data.paymentMethod),
-        )
-            ? (String(data.paymentMethod) as Sale['paymentMethod'])
+        const paymentMethodOptions: Sale['paymentMethod'][] = [
+            'money',
+            'pix',
+            'card',
+            'other',
+        ];
+        const paymentMethod = paymentMethodOptions.includes(data.paymentMethod)
+            ? data.paymentMethod
             : 'pix';
 
         const newSale: Sale = {
@@ -151,6 +153,7 @@ export function SalesModule() {
             },
             ...previous,
         ]);
+        toast.success('Venda cadastrada com sucesso');
     };
 
     const handleCreateClient = (client: Client): Client => {

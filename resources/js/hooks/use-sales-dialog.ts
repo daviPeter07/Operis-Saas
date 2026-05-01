@@ -12,6 +12,7 @@ import {
     makeSaleLineItem,
     todayString,
 } from '../utils/sales-dialog';
+import { parseCurrencyInput, parsePercentInput } from '@/utils/form-fields';
 
 interface UseSalesDialogArgs {
     open: boolean;
@@ -33,6 +34,10 @@ export function useSalesDialog({
     const [status, setStatus] = useState<Sale['status']>('pending');
     const [paymentMethod, setPaymentMethod] =
         useState<Sale['paymentMethod']>('pix');
+    const [cardType, setCardType] = useState<'debit' | 'credit'>('debit');
+    const [installments, setInstallments] = useState('1');
+    const [firstInstallmentDate, setFirstInstallmentDate] =
+        useState(todayString());
     const [saleDate, setSaleDate] = useState(todayString());
     const [notes, setNotes] = useState('');
     const [discountType, setDiscountType] =
@@ -56,10 +61,13 @@ export function useSalesDialog({
             setLineItems([]);
             setStatus('pending');
             setPaymentMethod('pix');
+            setCardType('debit');
+            setInstallments('1');
+            setFirstInstallmentDate(todayString());
             setSaleDate(todayString());
             setNotes('');
             setDiscountType('amount');
-            setDiscountValue('0');
+            setDiscountValue('');
             setAppliedDiscountType('amount');
             setAppliedDiscountValue(0);
             setDiscountAmountApplied(0);
@@ -269,8 +277,10 @@ export function useSalesDialog({
     };
 
     const applyDiscount = () => {
-        const parsed = Number(discountValue.replace(',', '.'));
-        const safeValue = Number.isFinite(parsed) ? parsed : 0;
+        const safeValue =
+            discountType === 'amount'
+                ? parseCurrencyInput(discountValue)
+                : parsePercentInput(discountValue);
         const amount = calculateDiscountAmount(total, discountType, safeValue);
 
         setAppliedDiscountType(discountType);
@@ -303,6 +313,9 @@ export function useSalesDialog({
         lineItems,
         notes,
         paymentMethod,
+        cardType,
+        installments,
+        firstInstallmentDate,
         productCreateOpen,
         productId,
         productQuickFields,
@@ -325,6 +338,9 @@ export function useSalesDialog({
         setLineItems,
         setNotes,
         setPaymentMethod,
+        setCardType,
+        setInstallments,
+        setFirstInstallmentDate,
         setProductCreateOpen,
         setProductId,
         setProductSearch,

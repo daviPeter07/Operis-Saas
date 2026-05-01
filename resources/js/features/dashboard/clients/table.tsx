@@ -102,7 +102,9 @@ export function ClientsTable({ data, className }: ClientsTableProps) {
         return locationFilteredData.slice(start, start + pagination.perPage);
     }, [locationFilteredData, pagination.page, pagination.perPage]);
 
-    const totalPages = Math.ceil(locationFilteredData.length / pagination.perPage);
+    const totalPages = Math.ceil(
+        locationFilteredData.length / pagination.perPage,
+    );
 
     return (
         <div className={cn('space-y-4', className)}>

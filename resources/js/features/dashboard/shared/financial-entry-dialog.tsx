@@ -32,6 +32,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatCurrencyBR } from '@/lib/format';
+import { CardPaymentFields } from '@/components/payment/card-payment-fields';
 
 type FinancialEntryDialogProps = {
     open: boolean;
@@ -46,7 +47,7 @@ type FinancialEntryDialogProps = {
         value: FinancialEntryForm[K],
     ) => void;
     onSubmit: () => void;
-    catalogSection?: JSX.Element;
+    catalogSection?: React.ReactNode;
     summaryLabel?: string;
     suppliers?: Supplier[];
     onCreateSupplier?: (supplierName: string) => void;
@@ -91,9 +92,9 @@ export function FinancialEntryDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[min(1700px,calc(100vw-1rem))] overflow-hidden p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]">
+            <DialogContent className="max-w-[min(1700px,calc(100vw-1rem))] overflow-y-auto p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]">
                 <form
-                    className="grid h-[90vh] grid-cols-1 lg:grid-cols-[1.35fr_0.65fr]"
+                    className="grid max-h-[calc(100dvh-1rem)] min-h-[calc(100dvh-1rem)] grid-cols-1 lg:h-[min(90dvh,calc(100dvh-1rem))] lg:grid-cols-[1.35fr_0.65fr]"
                     onSubmit={(event) => {
                         event.preventDefault();
                         onSubmit();
@@ -103,7 +104,9 @@ export function FinancialEntryDialog({
                         <div className="border-b p-4">
                             <DialogHeader className="text-left">
                                 <DialogTitle>{title}</DialogTitle>
-                                <DialogDescription>{description}</DialogDescription>
+                                <DialogDescription>
+                                    {description}
+                                </DialogDescription>
                             </DialogHeader>
                         </div>
                         <div className="min-h-0 flex-1 overflow-y-auto p-4">
@@ -144,9 +147,9 @@ export function FinancialEntryDialog({
                                                             size="icon"
                                                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                                             disabled={
-                                                                supplierSearch
-                                                                    .trim()
-                                                                    .length === 0
+                                                                supplierSearch.trim()
+                                                                    .length ===
+                                                                0
                                                             }
                                                             onClick={() =>
                                                                 onCreateSupplier(
@@ -171,9 +174,13 @@ export function FinancialEntryDialog({
                                             onSearchChange={(value) => {
                                                 if (
                                                     selectedSupplier &&
-                                                    value !== selectedSupplier.name
+                                                    value !==
+                                                        selectedSupplier.name
                                                 ) {
-                                                    onChange('supplierName', '');
+                                                    onChange(
+                                                        'supplierName',
+                                                        '',
+                                                    );
                                                 }
 
                                                 setSupplierSearch(value);
@@ -264,8 +271,7 @@ export function FinancialEntryDialog({
                                                 if (
                                                     value === 'money' ||
                                                     value === 'pix' ||
-                                                    value === 'credit' ||
-                                                    value === 'debit'
+                                                    value === 'card'
                                                 ) {
                                                     onChange(
                                                         'paymentMethod',
@@ -279,8 +285,7 @@ export function FinancialEntryDialog({
                                                 (option) =>
                                                     option.value === 'money' ||
                                                     option.value === 'pix' ||
-                                                    option.value === 'credit' ||
-                                                    option.value === 'debit',
+                                                    option.value === 'card',
                                             ).map((option) => (
                                                 <ToggleGroupItem
                                                     key={option.value}
@@ -294,6 +299,45 @@ export function FinancialEntryDialog({
                                         </ToggleGroup>
                                     </CardContent>
                                 </Card>
+
+                                {form.paymentMethod === 'card' ? (
+                                    <Card>
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm">
+                                                Detalhes do cartão
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <CardPaymentFields
+                                                cardType={form.cardType}
+                                                onCardTypeChange={(value) =>
+                                                    onChange('cardType', value)
+                                                }
+                                                installments={form.installments}
+                                                onInstallmentsChange={(value) =>
+                                                    onChange(
+                                                        'installments',
+                                                        value,
+                                                    )
+                                                }
+                                                firstInstallmentDate={
+                                                    form.firstInstallmentDate
+                                                }
+                                                onFirstInstallmentDateChange={(
+                                                    value,
+                                                ) =>
+                                                    onChange(
+                                                        'firstInstallmentDate',
+                                                        value,
+                                                    )
+                                                }
+                                                totalAmount={Number(
+                                                    form.total || 0,
+                                                )}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                ) : null}
 
                                 <Card>
                                     <CardHeader className="pb-2">
@@ -316,14 +360,20 @@ export function FinancialEntryDialog({
                                                     <SelectValue placeholder="Status" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {STATUS_OPTIONS.map((option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {STATUS_OPTIONS.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -362,7 +412,10 @@ export function FinancialEntryDialog({
                                         >
                                             Cancelar
                                         </Button>
-                                        <Button type="submit" className="flex-1">
+                                        <Button
+                                            type="submit"
+                                            className="flex-1"
+                                        >
                                             {submitLabel}
                                         </Button>
                                     </div>

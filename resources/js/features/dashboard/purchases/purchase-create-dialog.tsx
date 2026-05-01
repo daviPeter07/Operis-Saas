@@ -28,7 +28,8 @@ export function PurchaseCreateDialog({
     const { form, setField } = useFormState(initialPurchaseForm, open);
     const handleQuickCreateSupplier = useQuickCreateSupplier({
         onCreateSupplier,
-        onSupplierCreated: (supplier) => setField('supplierName', supplier.name),
+        onSupplierCreated: (supplier) =>
+            setField('supplierName', supplier.name),
     });
     const [productSearch, setProductSearch] = React.useState('');
     const [items, setItems] = React.useState<
@@ -62,7 +63,9 @@ export function PurchaseCreateDialog({
 
     const addProductToCart = (productId: string) => {
         setItems((prev) => {
-            const lineIndex = prev.findIndex((item) => item.productId === productId);
+            const lineIndex = prev.findIndex(
+                (item) => item.productId === productId,
+            );
 
             if (lineIndex === -1) {
                 return [...prev, { productId, quantity: '1' }];
@@ -110,7 +113,9 @@ export function PurchaseCreateDialog({
 
     const cartItems = parsedItems
         .map((item) => {
-            const product = products.find((entry) => entry.id === item.productId);
+            const product = products.find(
+                (entry) => entry.id === item.productId,
+            );
 
             if (!product) {
                 return null;
@@ -186,7 +191,9 @@ export function PurchaseCreateDialog({
 
                     <div className="space-y-3 rounded-lg border p-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold">Carrinho da compra</h3>
+                            <h3 className="text-sm font-semibold">
+                                Carrinho da compra
+                            </h3>
                         </div>
 
                         {cartItems.length === 0 ? (
@@ -196,7 +203,8 @@ export function PurchaseCreateDialog({
                         ) : (
                             cartItems.map((item) => {
                                 const lineIndex = items.findIndex(
-                                    (line) => line.productId === item.product.id,
+                                    (line) =>
+                                        line.productId === item.product.id,
                                 );
 
                                 return (
@@ -210,7 +218,9 @@ export function PurchaseCreateDialog({
                                                     {item.product.name}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {formatCurrencyBR(item.product.cost)}
+                                                    {formatCurrencyBR(
+                                                        item.product.cost,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -229,7 +239,9 @@ export function PurchaseCreateDialog({
                                                         );
 
                                                         if (current <= 1) {
-                                                            removeLine(lineIndex);
+                                                            removeLine(
+                                                                lineIndex,
+                                                            );
                                                             return;
                                                         }
 
@@ -272,7 +284,9 @@ export function PurchaseCreateDialog({
                                                     variant="ghost"
                                                     onClick={() => {
                                                         if (lineIndex !== -1) {
-                                                            removeLine(lineIndex);
+                                                            removeLine(
+                                                                lineIndex,
+                                                            );
                                                         }
                                                     }}
                                                 >
@@ -281,7 +295,8 @@ export function PurchaseCreateDialog({
                                             </div>
                                         </div>
                                         <p className="mt-2 text-xs text-muted-foreground">
-                                            Subtotal: {formatCurrencyBR(item.subtotal)}
+                                            Subtotal:{' '}
+                                            {formatCurrencyBR(item.subtotal)}
                                         </p>
                                     </div>
                                 );
@@ -291,7 +306,8 @@ export function PurchaseCreateDialog({
                         <div className="grid gap-2 text-sm text-muted-foreground">
                             <p>Itens calculados: {computedTotals.items}</p>
                             <p>
-                                Total calculado: {formatCurrencyBR(computedTotals.total)}
+                                Total calculado:{' '}
+                                {formatCurrencyBR(computedTotals.total)}
                             </p>
                         </div>
                     </div>

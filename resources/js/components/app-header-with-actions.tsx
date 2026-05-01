@@ -45,7 +45,8 @@ export function AppHeaderWithActions({
             'create-client': '/dashboard/clients?action=create-client',
             'create-sale': '/dashboard/sales?action=create-sale',
             'create-purchase': '/dashboard/purchases?action=create-purchase',
-            'create-expense': '/dashboard/accounts-payable?action=create-expense',
+            'create-expense':
+                '/dashboard/accounts-payable?action=create-expense',
             'create-brand': '/dashboard/brands?action=create-brand',
             'create-category': '/dashboard/categories?action=create-category',
         };

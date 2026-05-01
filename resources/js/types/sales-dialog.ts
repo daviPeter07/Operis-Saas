@@ -20,4 +20,8 @@ export type SalesRecord = Sale & {
     discountValue?: number;
     discountAmountApplied?: number;
     finalTotal?: number;
+    cardType?: 'debit' | 'credit';
+    installments?: number;
+    firstInstallmentDate?: string;
+    installmentValue?: number;
 };

@@ -145,7 +145,15 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
 
             router.get(url, {}, { replace: true, preserveState: true });
         },
-        [currentPage, filters, perPage, routeUrl, search, sortBy, sortDirection],
+        [
+            currentPage,
+            filters,
+            perPage,
+            routeUrl,
+            search,
+            sortBy,
+            sortDirection,
+        ],
     );
 
     return {

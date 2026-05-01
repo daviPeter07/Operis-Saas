@@ -1,7 +1,14 @@
 import * as React from 'react';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { initialSupplierForm } from '@/constants/dashboard-form-initials';
@@ -10,7 +17,11 @@ import { Supplier } from '@/lib/mocks/mock-data';
 import type { SupplierCreateDialogProps } from '@/types/dashboard-forms';
 import { composeSupplierAddress } from '@/utils/suppliers';
 
-export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierCreateDialogProps) {
+export function SupplierCreateDialog({
+    open,
+    onOpenChange,
+    onSubmit,
+}: SupplierCreateDialogProps) {
     const { form, setField } = useFormState(initialSupplierForm, open);
 
     return (
@@ -97,12 +108,8 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                         <StateCityFilter
                             stateValue={form.state}
                             cityValue={form.city}
-                            onStateChange={(state) =>
-                                setField('state', state)
-                            }
-                            onCityChange={(city) =>
-                                setField('city', city)
-                            }
+                            onStateChange={(state) => setField('state', state)}
+                            onCityChange={(city) => setField('city', city)}
                         />
                     </div>
 
@@ -119,7 +126,9 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="supplier-neighborhood">Bairro</Label>
+                            <Label htmlFor="supplier-neighborhood">
+                                Bairro
+                            </Label>
                             <Input
                                 id="supplier-neighborhood"
                                 value={form.neighborhood}
@@ -154,7 +163,11 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                        >
                             Cancelar
                         </Button>
                         <Button type="submit">Salvar fornecedor</Button>

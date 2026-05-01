@@ -13,7 +13,9 @@ const statusClassMap: Record<string, string> = {
 
 export function StatusBadge({ status }: StatusBadgeProps) {
     return (
-        <Badge className={statusClassMap[status] ?? 'bg-gray-100 text-gray-800'}>
+        <Badge
+            className={statusClassMap[status] ?? 'bg-gray-100 text-gray-800'}
+        >
             {translateStatus(status)}
         </Badge>
     );

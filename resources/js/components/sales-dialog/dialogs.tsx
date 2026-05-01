@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { applyFieldMask } from '@/utils/form-fields';
 
 interface DiscountDialogProps {
     open: boolean;
@@ -49,6 +50,7 @@ export function DiscountDialog({
                         onValueChange={(value) => {
                             if (value === 'amount' || value === 'percent') {
                                 setDiscountType(value);
+                                setDiscountValue('');
                             }
                         }}
                         variant="outline"
@@ -62,12 +64,20 @@ export function DiscountDialog({
                         </ToggleGroupItem>
                     </ToggleGroup>
                     <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        type="text"
                         value={discountValue}
                         onChange={(event) =>
-                            setDiscountValue(event.currentTarget.value)
+                            setDiscountValue(
+                                applyFieldMask(
+                                    event.currentTarget.value,
+                                    discountType === 'amount'
+                                        ? 'currency'
+                                        : 'percent',
+                                ),
+                            )
+                        }
+                        placeholder={
+                            discountType === 'amount' ? 'R$ 0,00' : '0,00%'
                         }
                     />
                     <Button type="button" className="w-full" onClick={onApply}>
