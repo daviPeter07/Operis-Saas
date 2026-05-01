@@ -15,7 +15,6 @@ import type { Column } from '../generic-table';
 import { SalesHeader } from './sales-header';
 import type { SalesRecord } from '@/types/sales-dialog';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
-import { toast } from 'sonner';
 
 export function SalesModule() {
     const [sales, setSales] = useState<SalesRecord[]>(() =>
@@ -153,7 +152,6 @@ export function SalesModule() {
             },
             ...previous,
         ]);
-        toast.success('Venda cadastrada com sucesso');
     };
 
     const handleCreateClient = (client: Client): Client => {

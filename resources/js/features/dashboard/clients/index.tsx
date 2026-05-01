@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { router } from '@inertiajs/react';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
@@ -112,9 +110,7 @@ export function ClientsModule() {
         const newClient = createClientRecord(data);
 
         if (!newClient.name) {
-            toast.error('Informe o nome do cliente');
-
-            return;
+            throw new Error('Informe o nome do cliente');
         }
 
         setClients((previous) => [
@@ -124,7 +120,6 @@ export function ClientsModule() {
             },
             ...previous,
         ]);
-        toast.success('Cliente cadastrado com sucesso');
     };
 
     return (

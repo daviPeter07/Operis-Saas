@@ -3,7 +3,6 @@ import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { STATE_OPTIONS } from '@/constants/location-source';
 import type { Supplier } from '@/lib/mocks/mock-data';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { createSupplierRecord } from '@/utils/suppliers';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
@@ -66,12 +65,10 @@ export function SuppliersModule() {
         const newSupplier = createSupplierRecord(data);
 
         if (!newSupplier.name) {
-            toast.error('Informe o nome do fornecedor');
-            return;
+            throw new Error('Informe o nome do fornecedor');
         }
 
         setSuppliers((previous) => [newSupplier, ...previous]);
-        toast.success('Fornecedor cadastrado com sucesso');
     };
 
     return (

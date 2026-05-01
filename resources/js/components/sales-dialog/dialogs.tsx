@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { applyFieldMask } from '@/utils/form-fields';
+import { applyFieldMask, onlyDigits } from '@/utils/form-fields';
 
 interface DiscountDialogProps {
     open: boolean;
@@ -66,6 +66,45 @@ export function DiscountDialog({
                     <Input
                         type="text"
                         value={discountValue}
+                        onKeyDown={(event) => {
+                            if (discountType !== 'percent') {
+                                return;
+                            }
+
+                            const input = event.currentTarget;
+                            const currentValue = input.value;
+                            const selectionStart =
+                                input.selectionStart ?? currentValue.length;
+                            const selectionEnd =
+                                input.selectionEnd ?? currentValue.length;
+                            const hasSelection =
+                                selectionStart !== selectionEnd;
+                            const endsWithPercent = currentValue.endsWith('%');
+
+                            const shouldHandleBackspace =
+                                event.key === 'Backspace' &&
+                                !hasSelection &&
+                                endsWithPercent &&
+                                selectionStart === currentValue.length;
+
+                            const shouldHandleDelete =
+                                event.key === 'Delete' &&
+                                !hasSelection &&
+                                endsWithPercent &&
+                                selectionStart === currentValue.length - 1;
+
+                            if (!shouldHandleBackspace && !shouldHandleDelete) {
+                                return;
+                            }
+
+                            event.preventDefault();
+
+                            const digits = onlyDigits(currentValue);
+                            const nextDigits = digits.slice(0, -1);
+                            setDiscountValue(
+                                applyFieldMask(nextDigits, 'percent'),
+                            );
+                        }}
                         onChange={(event) =>
                             setDiscountValue(
                                 applyFieldMask(

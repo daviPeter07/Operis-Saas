@@ -166,12 +166,10 @@ export function AccountsPayableModule() {
         };
 
         if (!newPurchase.supplierName) {
-            toast.error('Informe o fornecedor');
-            return;
+            throw new Error('Informe o fornecedor');
         }
 
         setPurchases((previous) => [newPurchase, ...previous]);
-        toast.success('Despesa cadastrada com sucesso');
     };
 
     const handleCreateSupplier = (data: Supplier): Supplier => {

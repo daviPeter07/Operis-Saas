@@ -202,19 +202,14 @@ export function InventoryModule() {
         };
 
         if (!newProduct.name) {
-            toast.error('Informe o nome do produto');
-
-            return;
+            throw new Error('Informe o nome do produto');
         }
 
         if (!newProduct.sku) {
-            toast.error('Informe ou gere um código para o produto');
-
-            return;
+            throw new Error('Informe ou gere um código para o produto');
         }
 
         setProducts((previous) => [newProduct, ...previous]);
-        toast.success('Produto cadastrado com sucesso');
     };
 
     return (

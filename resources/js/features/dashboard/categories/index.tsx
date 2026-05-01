@@ -2,7 +2,6 @@ import { mockCategories } from '@/lib/mocks/mock-data';
 import type { Category } from '@/lib/mocks/mock-data';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { toast } from 'sonner';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -33,12 +32,10 @@ export function CategoriesModule() {
         };
 
         if (!newCategory.name) {
-            toast.error('Informe o nome da categoria');
-            return;
+            throw new Error('Informe o nome da categoria');
         }
 
         setCategories((previous) => [newCategory, ...previous]);
-        toast.success('Categoria cadastrada com sucesso');
     };
 
     return (

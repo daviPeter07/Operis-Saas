@@ -27,7 +27,7 @@ const INSTALLMENT_OPTIONS = Array.from({ length: 24 }, (_, index) => {
 
     return {
         value,
-        label: `${value}x`,
+        installments: index + 1,
     };
 });
 
@@ -47,6 +47,16 @@ export function CardPaymentFields({
     const installmentValue = Number(
         (Math.max(0, totalAmount) / safeInstallments).toFixed(2),
     );
+    const installmentOptionsWithAmount = INSTALLMENT_OPTIONS.map((option) => {
+        const valuePerInstallment = Number(
+            (Math.max(0, totalAmount) / option.installments).toFixed(2),
+        );
+
+        return {
+            value: option.value,
+            label: `${option.installments}x (${formatCurrencyBR(valuePerInstallment)})`,
+        };
+    });
 
     return (
         <div className="grid gap-3 rounded-md border p-3">
@@ -91,7 +101,7 @@ export function CardPaymentFields({
                                 <SelectValue placeholder="Selecione as parcelas" />
                             </SelectTrigger>
                             <SelectContent>
-                                {INSTALLMENT_OPTIONS.map((option) => (
+                                {installmentOptionsWithAmount.map((option) => (
                                     <SelectItem
                                         key={option.value}
                                         value={option.value}
@@ -101,10 +111,6 @@ export function CardPaymentFields({
                                 ))}
                             </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground">
-                            Valor por parcela:{' '}
-                            {formatCurrencyBR(installmentValue)}
-                        </p>
                     </div>
 
                     <div className="grid gap-2">
