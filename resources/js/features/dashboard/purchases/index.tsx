@@ -13,9 +13,9 @@ import {
 } from '@/lib/format';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PurchaseCreateDialog } from './purchase-create-dialog';
-import type { PurchaseLineItem } from './purchase-create-dialog.types';
 
 export function PurchasesModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);

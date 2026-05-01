@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { initialSupplierForm } from '@/constants/dashboard-form-initials';
 import { useFormState } from '@/hooks/use-form-state';
 import { Supplier } from '@/lib/mocks/mock-data';
-import { initialSupplierForm } from './supplier-create-dialog.constants';
-import type { SupplierCreateDialogProps } from './supplier-create-dialog.types';
+import type { SupplierCreateDialogProps } from '@/types/dashboard-forms';
+import { composeSupplierAddress } from '@/utils/suppliers';
 
 export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierCreateDialogProps) {
     const { form, setField } = useFormState(initialSupplierForm, open);
@@ -36,14 +37,7 @@ export function SupplierCreateDialog({ open, onOpenChange, onSubmit }: SupplierC
                             document: form.document,
                             state: form.state,
                             city: form.city,
-                            address: [
-                                form.street,
-                                form.number,
-                                form.neighborhood,
-                                form.zipCode,
-                            ]
-                                .filter(Boolean)
-                                .join(', '),
+                            address: composeSupplierAddress(form),
                         } as Supplier;
 
                         onSubmit(payload);

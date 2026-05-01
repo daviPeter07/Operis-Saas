@@ -19,15 +19,7 @@ import {
 } from '@/components/ui/select';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
-
-export type FinancialEntryForm = {
-    supplierName: string;
-    items: string;
-    total: string;
-    paymentMethod: string;
-    status: string;
-    createdAt: string;
-};
+import type { FinancialEntryForm } from '@/types/dashboard-forms';
 
 type FinancialEntryDialogProps = {
     open: boolean;

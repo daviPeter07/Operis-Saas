@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useFormState } from '@/hooks/use-form-state';
-import type { Purchase } from '@/lib/mocks/mock-data';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -10,12 +9,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { initialPurchaseForm } from '@/constants/dashboard-form-initials';
 import { FinancialEntryDialog } from '../shared/financial-entry-dialog';
-import { initialPurchaseForm } from './purchase-create-dialog.constants';
 import type {
     PurchaseCreateDialogProps,
     PurchaseLineItem,
-} from './purchase-create-dialog.types';
+} from '@/types/dashboard-forms';
+import {
+    computePurchaseTotals,
+    mapFinancialFormToPurchase,
+} from '@/utils/dashboard-financial';
 
 export function PurchaseCreateDialog({
     open,
@@ -66,19 +69,7 @@ export function PurchaseCreateDialog({
         }))
         .filter((item) => item.productId && item.quantity > 0);
 
-    const computedTotals = parsedItems.reduce(
-        (acc, item) => {
-            const product = products.find((entry) => entry.id === item.productId);
-            if (!product) {
-                return acc;
-            }
-
-            acc.items += item.quantity;
-            acc.total += product.cost * item.quantity;
-            return acc;
-        },
-        { items: 0, total: 0 },
-    );
+    const computedTotals = computePurchaseTotals(parsedItems, products);
 
     return (
         <FinancialEntryDialog
@@ -161,17 +152,7 @@ export function PurchaseCreateDialog({
             }
             onSubmit={() => {
                 onApplyStock(parsedItems);
-                onSubmit({
-                    id: '',
-                    supplierId: '',
-                    supplierName: form.supplierName,
-                    total: Number(form.total || 0) || computedTotals.total,
-                    status: form.status as Purchase['status'],
-                    paymentMethod: form.paymentMethod as Purchase['paymentMethod'],
-                    items: Number(form.items || 0) || computedTotals.items,
-                    dueDate: form.createdAt,
-                    createdAt: form.createdAt,
-                });
+                onSubmit(mapFinancialFormToPurchase(form, computedTotals));
             }}
         />
     );
