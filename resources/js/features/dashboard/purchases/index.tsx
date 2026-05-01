@@ -1,5 +1,5 @@
-import { mockProducts, mockPurchases } from '@/lib/mocks/mock-data';
-import type { Product, Purchase } from '@/lib/mocks/mock-data';
+import { mockProducts, mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
+import type { Product, Purchase, Supplier } from '@/lib/mocks/mock-data';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
@@ -16,10 +16,14 @@ import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
 import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PurchaseCreateDialog } from './purchase-create-dialog';
+import { createSupplierRecord } from '@/utils/suppliers';
 
 export function PurchasesModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
     const [products, setProducts] = useState<Product[]>(() => [...mockProducts]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>(() => [
+        ...mockSuppliers,
+    ]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     useEffect(() => {
@@ -132,6 +136,15 @@ export function PurchasesModule() {
         );
     };
 
+    const handleCreateSupplier = (data: Supplier): Supplier => {
+        const supplier = createSupplierRecord(data);
+
+        setSuppliers((previous) => [supplier, ...previous]);
+        toast.success('Fornecedor cadastrado com sucesso');
+
+        return supplier;
+    };
+
     return (
         <GenericTable
             data={purchases}
@@ -147,6 +160,8 @@ export function PurchasesModule() {
                     onOpenChange={onOpenChange}
                     onSubmit={onSubmit}
                     products={products}
+                    suppliers={suppliers}
+                    onCreateSupplier={handleCreateSupplier}
                     onApplyStock={handleApplyStock}
                 />
             )}

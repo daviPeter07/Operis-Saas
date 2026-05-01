@@ -19,6 +19,8 @@ export type PurchaseCreateDialogProps = {
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: Purchase) => void;
     products: Product[];
+    suppliers: Supplier[];
+    onCreateSupplier: (data: Supplier) => Supplier;
     onApplyStock: (items: PurchaseLineItem[]) => void;
 };
 
@@ -26,6 +28,8 @@ export type AccountsPayableCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: Purchase) => void;
+    suppliers: Supplier[];
+    onCreateSupplier: (data: Supplier) => Supplier;
 };
 
 export type SupplierForm = {

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useFormState } from '@/hooks/use-form-state';
+import { useQuickCreateSupplier } from '@/hooks/use-quick-create-supplier';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -25,9 +26,15 @@ export function PurchaseCreateDialog({
     onOpenChange,
     onSubmit,
     products,
+    suppliers,
+    onCreateSupplier,
     onApplyStock,
 }: PurchaseCreateDialogProps) {
     const { form, setField } = useFormState(initialPurchaseForm, open);
+    const handleQuickCreateSupplier = useQuickCreateSupplier({
+        onCreateSupplier,
+        onSupplierCreated: (supplier) => setField('supplierName', supplier.name),
+    });
     const [items, setItems] = React.useState<
         { productId: string; quantity: string }[]
     >([{ productId: '', quantity: '1' }]);
@@ -81,6 +88,8 @@ export function PurchaseCreateDialog({
             submitLabel="Salvar compra"
             form={form}
             onChange={setField}
+            suppliers={suppliers}
+            onCreateSupplier={handleQuickCreateSupplier}
             extraSection={
                 <div className="space-y-3 rounded-lg border p-4">
                     <div className="flex items-center justify-between">

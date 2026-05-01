@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { mockPurchases } from '@/lib/mocks/mock-data';
-import type { Purchase } from '@/lib/mocks/mock-data';
+import { mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
+import type { Purchase, Supplier } from '@/lib/mocks/mock-data';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import {
@@ -15,9 +15,13 @@ import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
 import { StatusBadge } from '@/components/common/status-badge';
 import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
 import { toast } from 'sonner';
+import { createSupplierRecord } from '@/utils/suppliers';
 
 export function AccountsPayableModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>(() => [
+        ...mockSuppliers,
+    ]);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -172,6 +176,15 @@ export function AccountsPayableModule() {
         toast.success('Despesa cadastrada com sucesso');
     };
 
+    const handleCreateSupplier = (data: Supplier): Supplier => {
+        const supplier = createSupplierRecord(data);
+
+        setSuppliers((previous) => [supplier, ...previous]);
+        toast.success('Fornecedor cadastrado com sucesso');
+
+        return supplier;
+    };
+
     return (
         <div className="space-y-4">
             {totalSelected > 0 && (
@@ -216,6 +229,8 @@ export function AccountsPayableModule() {
                         open={open}
                         onOpenChange={onOpenChange}
                         onSubmit={onSubmit}
+                        suppliers={suppliers}
+                        onCreateSupplier={handleCreateSupplier}
                     />
                 )}
             />

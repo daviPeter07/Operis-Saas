@@ -4,6 +4,7 @@ import { STATE_OPTIONS } from '@/constants/location-source';
 import type { Supplier } from '@/lib/mocks/mock-data';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { createSupplierRecord } from '@/utils/suppliers';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SupplierCreateDialog } from './supplier-create-dialog';
@@ -62,24 +63,7 @@ export function SuppliersModule() {
     }, [cityFilter, stateFilter, suppliers]);
 
     const handleCreate = (data: Supplier) => {
-        const newSupplier: Supplier = {
-            id: crypto.randomUUID(),
-            name: String(data.name || '').trim(),
-            email: String(data.email || '').trim(),
-            phone: String(data.phone || '').trim(),
-            document: String(data.document || '').trim(),
-            city: String(data.city || '').trim(),
-            state: String(data.state || '').trim(),
-            address: [
-                String(data.street || '').trim(),
-                String(data.number || '').trim(),
-                String(data.neighborhood || '').trim(),
-                String(data.zipCode || '').trim(),
-            ]
-                .filter(Boolean)
-                .join(', '),
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
+        const newSupplier = createSupplierRecord(data);
 
         if (!newSupplier.name) {
             toast.error('Informe o nome do fornecedor');

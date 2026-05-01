@@ -1,4 +1,6 @@
+import * as React from 'react';
 import { DatePickerInput } from '@/components/date/date-picker-input';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -20,6 +22,13 @@ import {
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import type { FinancialEntryForm } from '@/types/dashboard-forms';
+import type { Supplier } from '@/lib/mocks/mock-data';
+import { UserPlus } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type FinancialEntryDialogProps = {
     open: boolean;
@@ -35,6 +44,8 @@ type FinancialEntryDialogProps = {
     ) => void;
     onSubmit: () => void;
     extraSection?: JSX.Element;
+    suppliers?: Supplier[];
+    onCreateSupplier?: (supplierName: string) => void;
 };
 
 export function FinancialEntryDialog({
@@ -48,7 +59,31 @@ export function FinancialEntryDialog({
     onChange,
     onSubmit,
     extraSection,
+    suppliers = [],
+    onCreateSupplier,
 }: FinancialEntryDialogProps) {
+    const [supplierSearch, setSupplierSearch] = React.useState('');
+    const selectedSupplier = suppliers.find(
+        (supplier) => supplier.name === form.supplierName,
+    );
+    const filteredSuppliers = React.useMemo(() => {
+        const normalizedQuery = supplierSearch.trim().toLowerCase();
+
+        if (!normalizedQuery) {
+            return suppliers;
+        }
+
+        return suppliers.filter((supplier) =>
+            supplier.name.toLowerCase().includes(normalizedQuery),
+        );
+    }, [supplierSearch, suppliers]);
+
+    React.useEffect(() => {
+        if (!open) {
+            setSupplierSearch('');
+        }
+    }, [open]);
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="!w-[calc(100vw-2rem)] sm:!max-w-[980px]">
@@ -72,15 +107,61 @@ export function FinancialEntryDialog({
                         </div>
 
                         <div className="grid gap-2 sm:col-span-2">
-                            <Label htmlFor="financial-supplier">Fornecedor *</Label>
-                            <Input
-                                id="financial-supplier"
-                                value={form.supplierName}
-                                onChange={(event) =>
-                                    onChange('supplierName', event.target.value)
-                                }
-                                placeholder="Nome do fornecedor"
-                                required
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="financial-supplier">Fornecedor *</Label>
+                                {onCreateSupplier ? (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                disabled={
+                                                    supplierSearch.trim().length ===
+                                                    0
+                                                }
+                                                onClick={() =>
+                                                    onCreateSupplier(
+                                                        supplierSearch.trim(),
+                                                    )
+                                                }
+                                            >
+                                                <UserPlus className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            Criar fornecedor
+                                        </TooltipContent>
+                                    </Tooltip>
+                                ) : null}
+                            </div>
+                            <SearchableSelect
+                                value={selectedSupplier?.id || ''}
+                                searchValue={supplierSearch}
+                                onSearchChange={(value) => {
+                                    if (
+                                        selectedSupplier &&
+                                        value !== selectedSupplier.name
+                                    ) {
+                                        onChange('supplierName', '');
+                                    }
+
+                                    setSupplierSearch(value);
+                                }}
+                                onChange={(value) => {
+                                    const supplier = suppliers.find(
+                                        (item) => item.id === value,
+                                    );
+                                    onChange('supplierName', supplier?.name || '');
+                                    setSupplierSearch(supplier?.name || '');
+                                }}
+                                options={filteredSuppliers.map((supplier) => ({
+                                    value: supplier.id,
+                                    label: supplier.name,
+                                }))}
+                                placeholder="Buscar fornecedor"
+                                emptyMessage="Nenhum fornecedor encontrado."
                             />
                         </div>
 
