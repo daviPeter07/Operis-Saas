@@ -11,7 +11,7 @@ import type {
 import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
 import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
 import { PageContent } from '@/features/dashboard/page-content';
-import { PageHeader } from '@/features/dashboard/page-header';
+import { DashboardHeader } from '@/components/dashboard-header';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
 import AppLayout from '@/layouts/app-layout';
 import {
@@ -56,7 +56,7 @@ export default function DashboardPage() {
     return (
         <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>
             <PageContent>
-                <PageHeader
+                <DashboardHeader
                     title={`Bem-vindo, ${userName}`}
                     description="Aqui está uma visão geral do seu negócio."
                 >
@@ -82,7 +82,7 @@ export default function DashboardPage() {
                             />
                         </div>
                     </div>
-                </PageHeader>
+                </DashboardHeader>
 
                 {view === 'kpi' ? (
                     <div className="grid gap-6">
