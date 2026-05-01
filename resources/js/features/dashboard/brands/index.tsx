@@ -1,12 +1,22 @@
 import { mockBrands } from '@/lib/mocks/mock-data';
 import type { Brand } from '@/lib/mocks/mock-data';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
 export function BrandsModule() {
     const [brands, setBrands] = useState(() => [...mockBrands]);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('action') === 'create-brand') {
+            setIsCreateOpen(true);
+            window.history.replaceState({}, '', '/dashboard/brands');
+        }
+    }, []);
 
     const columns: Column<Brand>[] = [
         { key: 'name', header: 'Nome' },
@@ -36,6 +46,8 @@ export function BrandsModule() {
             columns={columns}
             title="Marcas"
             onCreate={handleCreate}
+            isCreateOpen={isCreateOpen}
+            onCreateOpenChange={setIsCreateOpen}
             createFields={[
                 {
                     name: 'name',

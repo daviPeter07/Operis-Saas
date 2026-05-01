@@ -18,6 +18,7 @@ export function SalesDialog({
     products,
     onCreateClient,
     onCreateProduct,
+    defaultTab = 'catalog',
 }: SalesDialogProps) {
     const {
         addProductToCart,
@@ -69,6 +70,13 @@ export function SalesDialog({
     const [catalogSalePrice, setCatalogSalePrice] = React.useState('0');
     const [catalogQuantity, setCatalogQuantity] = React.useState('1');
     const [showCostPrice, setShowCostPrice] = React.useState(false);
+    const checkoutRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (open && defaultTab === 'checkout' && checkoutRef.current) {
+            checkoutRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [open, defaultTab]);
 
     const visibleProducts = React.useMemo(
         () => filterProductsByQuery(products, productSearch),
@@ -148,8 +156,9 @@ export function SalesDialog({
                         onAddFromCatalog={handleAddFromCatalog}
                     />
 
-                    <CheckoutPanel
-                        clientSearch={clientSearch}
+                    <div ref={checkoutRef}>
+                        <CheckoutPanel
+                            clientSearch={clientSearch}
                         setClientSearch={setClientSearch}
                         filteredClients={filteredClients}
                         selectedClient={selectedClient}
@@ -173,7 +182,8 @@ export function SalesDialog({
                         setSaleDate={setSaleDate}
                         canSubmit={canSubmit}
                         onSubmit={handleSubmit}
-                    />
+                        />
+                    </div>
                 </div>
 
                 <DiscountDialog

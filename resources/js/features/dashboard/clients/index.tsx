@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
@@ -8,6 +9,15 @@ import type { Column } from '../generic-table';
 
 export function ClientsModule() {
     const [clients, setClients] = useState(() => [...mockClients]);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('action') === 'create-client') {
+            setIsCreateOpen(true);
+            window.history.replaceState({}, '', '/dashboard/clients');
+        }
+    }, []);
 
     const columns: Column<Client>[] = [
         { key: 'name', header: 'Nome' },
@@ -90,6 +100,8 @@ export function ClientsModule() {
             title="Clientes"
             filterFields={filterFields}
             onCreate={handleCreate}
+            isCreateOpen={isCreateOpen}
+            onCreateOpenChange={setIsCreateOpen}
             createFields={[
                 {
                     name: 'name',

@@ -59,6 +59,8 @@ export interface GenericTableProps<T extends { id: string }> {
         onSubmit: (data: T) => void;
         title: string;
     }) => React.ReactNode;
+    isCreateOpen?: boolean;
+    onCreateOpenChange?: (open: boolean) => void;
 }
 
 function parseQueryParams(search: string) {
@@ -145,7 +147,10 @@ export function GenericTable<T extends { id: string }>({
     showMobileList = false,
     createFields,
     createDialog,
+    isCreateOpen: externalIsCreateOpen,
+    onCreateOpenChange: externalOnCreateOpenChange,
 }: GenericTableProps<T>) {
+    const [internalIsCreateOpen, setInternalIsCreateOpen] = React.useState(false);
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -159,7 +164,6 @@ export function GenericTable<T extends { id: string }>({
         'asc',
     );
     const [isImportOpen, setIsImportOpen] = React.useState(false);
-    const [isCreateOpen, setIsCreateOpen] = React.useState(false);
     const [selectedRow, setSelectedRow] = React.useState<T | null>(null);
     const [isViewOpen, setIsViewOpen] = React.useState(false);
     const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -531,13 +535,22 @@ export function GenericTable<T extends { id: string }>({
         [columns, selectedRow],
     );
 
+    const isCreateOpenValue = externalIsCreateOpen ?? internalIsCreateOpen;
+    const handleCreateOpenChange = (open: boolean) => {
+        if (externalOnCreateOpenChange) {
+            externalOnCreateOpenChange(open);
+        } else {
+            setInternalIsCreateOpen(open);
+        }
+    };
+
     return (
         <div className={cn('space-y-4', className)}>
             <TableToolbar
                 searchValue={search}
                 onSearchChange={handleSearchChange}
                 showCreate={!!onCreate}
-                onCreate={() => setIsCreateOpen(true)}
+                onCreate={() => handleCreateOpenChange(true)}
                 showImport
                 onImport={() => setIsImportOpen(true)}
                 onExportExcel={handleExportExcel}
@@ -806,24 +819,24 @@ export function GenericTable<T extends { id: string }>({
 
             {createDialog ? (
                 createDialog({
-                    open: isCreateOpen,
-                    onOpenChange: setIsCreateOpen,
+                    open: isCreateOpenValue,
+                    onOpenChange: handleCreateOpenChange,
                     title: `Criar Novo ${title}`,
                     onSubmit: (data) => {
                         onCreate?.(data);
-                        setIsCreateOpen(false);
+                        handleCreateOpenChange(false);
                     },
                 })
             ) : (
                 <CreateModal
-                    open={isCreateOpen}
-                    onOpenChange={setIsCreateOpen}
+                    open={isCreateOpenValue}
+                    onOpenChange={handleCreateOpenChange}
                     title={`Criar Novo ${title}`}
                     description="Preencha os dados abaixo para criar um novo registro."
                     fields={resolvedCreateFields}
                     onSubmit={(data) => {
                         onCreate?.(data as T);
-                        setIsCreateOpen(false);
+                        handleCreateOpenChange(false);
                     }}
                 />
             )}

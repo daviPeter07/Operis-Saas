@@ -9,4 +9,5 @@ export interface SalesDialogProps {
     products: Product[];
     onCreateClient: (client: Client) => Client;
     onCreateProduct: (product: Product) => Product;
+    defaultTab?: 'catalog' | 'checkout';
 }
