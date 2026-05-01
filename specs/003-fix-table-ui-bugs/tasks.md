@@ -18,9 +18,9 @@
 **Purpose**: Preparar estrutura de organizacao limpa e base de testes/lint para a feature.
 
 - [ ] T001 Criar estrutura base da feature em `resources/js/features/table-ui-bugs/README.md`
-- [ ] T002 [P] Criar constantes canonicas de pagamento em `resources/js/constants/payment-methods.ts`
-- [ ] T003 [P] Criar tipos compartilhados da feature em `resources/js/types/table-ui-bugs.ts`
-- [ ] T004 [P] Criar hook compartilhado para mapeamento de redirecionamento em `resources/js/hooks/useAlertNavigationMap.ts`
+- [X] T002 [P] Criar constantes canonicas de pagamento em `resources/js/constants/payment-methods.ts`
+- [X] T003 [P] Criar tipos compartilhados da feature em `resources/js/types/table-ui-bugs.ts`
+- [X] T004 [P] Criar hook compartilhado para mapeamento de redirecionamento em `resources/js/hooks/useAlertNavigationMap.ts`
 
 ---
 
@@ -30,10 +30,10 @@
 
 **⚠️ CRITICAL**: Nenhuma user story inicia antes deste bloco.
 
-- [ ] T005 Criar componente global de localidade em `resources/js/components/filters/state-city-select.tsx`
-- [ ] T006 [P] Criar constantes da fonte canonica de localidade em `resources/js/constants/location-source.ts`
+- [X] T005 Criar componente global de localidade em `resources/js/components/filters/state-city-select.tsx`
+- [X] T006 [P] Criar constantes da fonte canonica de localidade em `resources/js/constants/location-source.ts`
 - [ ] T007 [P] Criar tipos do componente de localidade em `resources/js/types/location.ts`
-- [ ] T008 Definir adaptador unico de calendario em `resources/js/components/date/date-picker.tsx`
+- [X] T008 Definir adaptador unico de calendario em `resources/js/components/date/date-picker.tsx`
 - [ ] T009 [P] Criar helper de fallback/normalizacao de filtros em `resources/js/features/table-ui-bugs/utils/filter-fallback.ts`
 - [ ] T010 Criar teste de componente de localidade (estado/cidade) em `tests/Feature/Frontend/StateCitySelectTest.php`
 
@@ -54,8 +54,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T013 [P] [US1] Implementar mapa fixo de item->destino/filtros em `resources/js/features/dashboard/constants/alert-reminder-map.ts`
-- [ ] T014 [US1] Integrar clique dos itens de alerta/lembrete em `resources/js/features/dashboard/components/alerts-reminders-tab.tsx`
+- [X] T013 [P] [US1] Implementar mapa fixo de item->destino/filtros em `resources/js/features/dashboard/constants/alert-reminder-map.ts`
+- [X] T014 [US1] Integrar clique dos itens de alerta/lembrete em `resources/js/features/dashboard/components/alerts-reminders-tab.tsx`
 - [ ] T015 [US1] Aplicar fallback seguro de filtros no redirecionamento em `resources/js/features/dashboard/utils/apply-alert-filters.ts`
 - [ ] T016 [US1] Implementar tratamento de acesso negado no fluxo em `resources/js/features/dashboard/components/alerts-reminders-tab.tsx`
 - [ ] T017 [US1] Ajustar leitura de filtros na tabela de destino em `resources/js/features/shared/table-filters/use-table-filters.ts`
@@ -78,11 +78,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T021 [P] [US2] Criar badge de tipo de pessoa em `resources/js/features/customers/components/person-type-badge.tsx`
-- [ ] T022 [US2] Integrar badge na tabela de clientes em `resources/js/features/customers/components/customers-table.tsx`
+- [X] T021 [P] [US2] Criar badge de tipo de pessoa em `resources/js/features/customers/components/person-type-badge.tsx`
+- [X] T022 [US2] Integrar badge na tabela de clientes em `resources/js/features/customers/components/customers-table.tsx`
 - [ ] T023 [P] [US2] Substituir filtro/form localidade em clientes por componente global em `resources/js/features/customers/components/customer-location-fields.tsx`
 - [ ] T024 [P] [US2] Substituir filtro/form localidade em fornecedores por componente global em `resources/js/features/suppliers/components/supplier-location-fields.tsx`
-- [ ] T025 [US2] Desacoplar endereco de fornecedores (rua/bairro/numero/cep) em `resources/js/features/suppliers/components/supplier-address-fields.tsx`
+- [X] T025 [US2] Desacoplar endereco de fornecedores (rua/bairro/numero/cep) em `resources/js/features/suppliers/components/supplier-address-fields.tsx`
 - [ ] T026 [US2] Ajustar types de cliente/fornecedor para novas props em `resources/js/types/customers-suppliers.ts`
 
 **Checkpoint**: US2 funcional e testavel sem dependencia de US3/US4.
@@ -103,10 +103,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T030 [P] [US3] Reutilizar componente de badge financeiro em vendas em `resources/js/features/sales/components/sales-status-badge.tsx`
-- [ ] T031 [US3] Aplicar badge de status na tabela de vendas em `resources/js/features/sales/components/sales-table.tsx`
-- [ ] T032 [P] [US3] Aplicar rotulos canonicos de pagamento em compras em `resources/js/features/purchases/utils/payment-method-label.ts`
-- [ ] T033 [P] [US3] Aplicar rotulos canonicos de pagamento em contas a pagar em `resources/js/features/accounts-payable/utils/payment-method-label.ts`
+- [X] T030 [P] [US3] Reutilizar componente de badge financeiro em vendas em `resources/js/features/sales/components/sales-status-badge.tsx`
+- [X] T031 [US3] Aplicar badge de status na tabela de vendas em `resources/js/features/sales/components/sales-table.tsx`
+- [X] T032 [P] [US3] Aplicar rotulos canonicos de pagamento em compras em `resources/js/features/purchases/utils/payment-method-label.ts`
+- [X] T033 [P] [US3] Aplicar rotulos canonicos de pagamento em contas a pagar em `resources/js/features/accounts-payable/utils/payment-method-label.ts`
 - [ ] T034 [US3] Ajustar estrutura base do dialogo de compras para espelhar vendas em `resources/js/features/purchases/components/create-purchase-dialog.tsx`
 
 **Checkpoint**: US3 agrega consistencia financeira sem quebrar US1/US2.
@@ -144,7 +144,7 @@
 - [ ] T043 Revisar organizacao clean code nos arquivos alterados em `resources/js/features/table-ui-bugs/README.md`
 - [ ] T044 Executar formatacao de PHP alterado com `vendor/bin/pint --dirty --format agent`
 - [ ] T045 Executar testes afetados com `php artisan test --compact`
-- [ ] T046 Executar validacao frontend com `npm run build`
+- [X] T046 Executar validacao frontend com `npm run build`
 - [ ] T047 Executar checklist funcional final em `specs/003-fix-table-ui-bugs/quickstart.md`
 
 ---

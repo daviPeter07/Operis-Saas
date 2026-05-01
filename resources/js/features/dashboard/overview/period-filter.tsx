@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { DatePickerInput } from '@/components/date/date-picker-input';
 import { Button } from '@/components/ui/button';
 
 export type Period = '7d' | '30d' | '90d' | '12m' | 'all' | 'custom';
@@ -101,27 +102,25 @@ export function PeriodFilter({
                             Personalizado
                         </p>
                         <div className="space-y-2">
-                            <input
-                                type="date"
+                            <DatePickerInput
                                 value={draftRange.from}
-                                onChange={(event) =>
+                                onChange={(from) =>
                                     setDraftRange((current) => ({
                                         ...current,
-                                        from: event.target.value,
+                                        from,
                                     }))
                                 }
-                                className="h-9 w-full rounded-md border bg-background px-3 text-xs ring-0 outline-none"
+                                placeholder="Data inicial"
                             />
-                            <input
-                                type="date"
+                            <DatePickerInput
                                 value={draftRange.to}
-                                onChange={(event) =>
+                                onChange={(to) =>
                                     setDraftRange((current) => ({
                                         ...current,
-                                        to: event.target.value,
+                                        to,
                                     }))
                                 }
-                                className="h-9 w-full rounded-md border bg-background px-3 text-xs ring-0 outline-none"
+                                placeholder="Data final"
                             />
                             <Button
                                 size="sm"

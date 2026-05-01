@@ -2,6 +2,7 @@ import { Barcode, Sparkles } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { SearchableSelect } from '@/components/searchable-select';
+import { DatePickerInput } from '@/components/date/date-picker-input';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -362,6 +363,16 @@ export function CreateModal<T extends Record<string, unknown>>({
                     }
                     required={field.required}
                     className="min-h-24 resize-none"
+                />
+            );
+        }
+
+        if (field.type === 'date') {
+            return (
+                <DatePickerInput
+                    value={value}
+                    onChange={(nextValue) => handleChange(field, nextValue)}
+                    placeholder={field.placeholder}
                 />
             );
         }

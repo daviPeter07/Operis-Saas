@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { router } from '@inertiajs/react';
+import { StateCityFilter } from '@/components/filters/state-city-filter';
+import { Badge } from '@/components/ui/badge';
+import { STATE_OPTIONS } from '@/constants/location-source';
 import { toast } from 'sonner';
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
@@ -10,6 +13,8 @@ import type { Column } from '../generic-table';
 export function ClientsModule() {
     const [clients, setClients] = useState(() => [...mockClients]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [stateFilter, setStateFilter] = useState('');
+    const [cityFilter, setCityFilter] = useState('');
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -20,7 +25,21 @@ export function ClientsModule() {
     }, []);
 
     const columns: Column<Client>[] = [
-        { key: 'name', header: 'Nome' },
+        {
+            key: 'name',
+            header: 'Nome',
+            render: (_value: unknown, row: Client) => {
+                const numeric = row.document.replace(/\D/g, '');
+                const personType = numeric.length <= 11 ? 'PF' : 'PJ';
+
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{row.name}</span>
+                        <Badge variant="secondary">{personType}</Badge>
+                    </div>
+                );
+            },
+        },
         { key: 'email', header: 'Email' },
         {
             key: 'phone',
@@ -37,6 +56,11 @@ export function ClientsModule() {
         { key: 'state', header: 'Estado' },
     ];
 
+    const filterFields = [
+        { key: 'name', label: 'Nome', type: 'text' as const },
+        { key: 'email', label: 'Email', type: 'text' as const },
+    ];
+
     const cityOptions = useMemo(
         () =>
             Array.from(new Set(clients.map((client) => client.city)))
@@ -45,30 +69,19 @@ export function ClientsModule() {
         [clients],
     );
 
-    const stateOptions = useMemo(
-        () =>
-            Array.from(new Set(clients.map((client) => client.state)))
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-                .map((value) => ({ value, label: value })),
-        [clients],
-    );
+    const filteredClients = useMemo(() => {
+        return clients.filter((client) => {
+            if (stateFilter && client.state !== stateFilter) {
+                return false;
+            }
 
-    const filterFields = [
-        { key: 'name', label: 'Nome', type: 'text' as const },
-        { key: 'email', label: 'Email', type: 'text' as const },
-        {
-            key: 'city',
-            label: 'Cidade',
-            type: 'select' as const,
-            options: cityOptions,
-        },
-        {
-            key: 'state',
-            label: 'Estado',
-            type: 'select' as const,
-            options: stateOptions,
-        },
-    ];
+            if (cityFilter && client.city !== cityFilter) {
+                return false;
+            }
+
+            return true;
+        });
+    }, [cityFilter, clients, stateFilter]);
 
     const handleCreate = (data: Client) => {
         const newClient: Client = {
@@ -94,15 +107,23 @@ export function ClientsModule() {
     };
 
     return (
-        <GenericTable
-            data={clients}
-            columns={columns}
-            title="Clientes"
-            filterFields={filterFields}
-            onCreate={handleCreate}
-            isCreateOpen={isCreateOpen}
-            onCreateOpenChange={setIsCreateOpen}
-            createFields={[
+        <div className="space-y-4">
+            <StateCityFilter
+                stateValue={stateFilter}
+                cityValue={cityFilter}
+                onStateChange={setStateFilter}
+                onCityChange={setCityFilter}
+            />
+
+            <GenericTable
+                data={filteredClients}
+                columns={columns}
+                title="Clientes"
+                filterFields={filterFields}
+                onCreate={handleCreate}
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
+                createFields={[
                 {
                     name: 'name',
                     label: 'Nome',
@@ -134,13 +155,14 @@ export function ClientsModule() {
                     name: 'city',
                     label: 'Cidade',
                     type: 'select',
+                    searchable: true,
                     options: cityOptions,
                 },
                 {
                     name: 'state',
                     label: 'Estado',
                     type: 'select',
-                    options: stateOptions,
+                    options: STATE_OPTIONS,
                 },
                 {
                     name: 'address',
@@ -148,7 +170,8 @@ export function ClientsModule() {
                     type: 'text',
                     placeholder: 'Rua, número e complemento',
                 },
-            ]}
-        />
+                ]}
+            />
+        </div>
     );
 }
