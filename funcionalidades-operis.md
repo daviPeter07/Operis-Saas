@@ -43,7 +43,7 @@ No estado atual, a aplicacao esta estruturada como um MVP visual: a autenticacao
 
 - Admin.
 - Supervisor.
-- User.
+- User. 
 - Admin com acesso visual completo.
 - Supervisor sem acesso visual a configuracoes.
 - User sem acesso visual a configuracoes.
@@ -104,6 +104,7 @@ No estado atual, a aplicacao esta estruturada como um MVP visual: a autenticacao
 - Criar compra.
 - Criar despesa.
 - Criar marca.
+- Criar categoria.
 
 No estado atual, essas acoes sao principalmente pontos de entrada visuais.
 
