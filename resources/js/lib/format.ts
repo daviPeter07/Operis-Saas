@@ -1,3 +1,5 @@
+import { PAYMENT_METHOD_LABELS } from '@/constants/payment-methods';
+import { STATUS_LABELS } from '@/constants/status';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,24 +15,11 @@ export function formatCurrencyBR(value: number): string {
 }
 
 export function translateStatus(status: string): string {
-    const statusMap: Record<string, string> = {
-        pending: 'Pendente',
-        completed: 'Concluido',
-        cancelled: 'Cancelado',
-    };
-
-    return statusMap[status] || status;
+    return STATUS_LABELS[status] || status;
 }
 
 export function translatePaymentMethod(method: string): string {
-    const methodMap: Record<string, string> = {
-        money: 'Dinheiro',
-        pix: 'PIX',
-        card: 'Cartao',
-        other: 'Outros',
-    };
-
-    return methodMap[method] || method;
+    return PAYMENT_METHOD_LABELS[method] || method;
 }
 
 export function formatQuantityWithUnit(quantity: number): string {

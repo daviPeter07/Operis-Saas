@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -105,10 +104,9 @@ export function EditDialog<T extends Record<string, unknown>>({
 
         try {
             await onSubmit(formData as T);
-            toast.success('Registro atualizado com sucesso');
             onOpenChange(false);
-        } catch (error) {
-            toast.error('Erro ao atualizar registro');
+        } catch {
+            throw new Error('edit_failed');
         } finally {
             setIsSubmitting(false);
         }

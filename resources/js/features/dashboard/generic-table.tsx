@@ -1,4 +1,3 @@
-import { router } from '@inertiajs/react';
 import * as React from 'react';
 import { CreateModal } from '@/components/table/create-modal';
 import type { FormField } from '@/components/table/create-modal';
@@ -23,6 +22,8 @@ import type { FilterOperator } from '@/hooks/use-table-filters';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
 import { cn } from '@/lib/utils';
+import { useTableQueryState } from '@/hooks/use-table-query-state';
+import { toast } from 'sonner';
 
 export interface Column<T> {
     key: string;
@@ -63,71 +64,6 @@ export interface GenericTableProps<T extends { id: string }> {
     onCreateOpenChange?: (open: boolean) => void;
 }
 
-function parseQueryParams(search: string) {
-    const params = new URLSearchParams(search);
-
-    return {
-        page: parseInt(params.get('page') || '1'),
-        perPage: parseInt(params.get('per_page') || '25'),
-        search: params.get('search') || '',
-        sortBy: params.get('sort_by') || '',
-        sortDirection: (params.get('sort_direction') || 'asc') as
-            | 'asc'
-            | 'desc',
-        filters: Object.fromEntries(
-            Array.from(params.entries()).filter(
-                ([key]) =>
-                    ![
-                        'page',
-                        'per_page',
-                        'search',
-                        'sort_by',
-                        'sort_direction',
-                    ].includes(key),
-            ),
-        ),
-    };
-}
-
-function buildQueryString(params: {
-    page?: number;
-    perPage?: number;
-    search?: string;
-    sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
-    filters?: Record<string, string>;
-}) {
-    const paramsObj = new URLSearchParams();
-
-    if (params.page && params.page > 1) {
-        paramsObj.set('page', String(params.page));
-    }
-
-    if (params.perPage && params.perPage !== 25) {
-        paramsObj.set('per_page', String(params.perPage));
-    }
-
-    if (params.search) {
-        paramsObj.set('search', params.search);
-    }
-
-    if (params.sortBy) {
-        paramsObj.set('sort_by', params.sortBy);
-    }
-
-    if (params.sortBy && params.sortDirection !== 'asc') {
-        paramsObj.set('sort_direction', params.sortDirection || 'asc');
-    }
-
-    Object.entries(params.filters || {}).forEach(([key, value]) => {
-        if (value) {
-            paramsObj.set(key, value);
-        }
-    });
-
-    return paramsObj.toString();
-}
-
 export function GenericTable<T extends { id: string }>({
     data,
     columns,
@@ -150,24 +86,33 @@ export function GenericTable<T extends { id: string }>({
     isCreateOpen: externalIsCreateOpen,
     onCreateOpenChange: externalOnCreateOpenChange,
 }: GenericTableProps<T>) {
-    const [internalIsCreateOpen, setInternalIsCreateOpen] = React.useState(false);
+    const [internalIsCreateOpen, setInternalIsCreateOpen] =
+        React.useState(false);
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
-    const [search, setSearch] = React.useState('');
-    const [currentPage, setCurrentPage] = React.useState(1);
-    const [perPage, setPerPage] = React.useState(25);
-    const [filters, setFilters] = React.useState<Record<string, string>>({});
     const [filterOperators, setFilterOperators] = React.useState<
         Record<string, FilterOperator>
     >({});
-    const [sortBy, setSortBy] = React.useState('');
-    const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>(
-        'asc',
-    );
     const [isImportOpen, setIsImportOpen] = React.useState(false);
     const [selectedRow, setSelectedRow] = React.useState<T | null>(null);
     const [isViewOpen, setIsViewOpen] = React.useState(false);
     const [isEditOpen, setIsEditOpen] = React.useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+
+    const {
+        search,
+        currentPage,
+        perPage,
+        filters,
+        sortBy,
+        sortDirection,
+        setSearch,
+        setCurrentPage,
+        setPerPage,
+        setFilters,
+        setSortBy,
+        setSortDirection,
+        updateUrl,
+    } = useTableQueryState(routeUrl);
 
     const allFilterFields = React.useMemo(() => {
         const configuredFields = new Map(
@@ -277,61 +222,6 @@ export function GenericTable<T extends { id: string }>({
                 };
             });
     }, [activeFilterFields, createFields]);
-
-    React.useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const params = parseQueryParams(window.location.search);
-            setSearch(params.search);
-            setCurrentPage(params.page);
-            setPerPage(params.perPage);
-            setFilters(params.filters);
-            setSortBy(params.sortBy);
-            setSortDirection(params.sortDirection === 'desc' ? 'desc' : 'asc');
-        }
-    }, []);
-
-    const updateUrl = React.useCallback(
-        (opts: {
-            page?: number;
-            perPage?: number;
-            search?: string;
-            sortBy?: string;
-            sortDirection?: 'asc' | 'desc';
-            filters?: Record<string, string>;
-        }) => {
-            const newPage = opts.page ?? currentPage;
-            const newPerPage = opts.perPage ?? perPage;
-            const newSearch = opts.search ?? search;
-            const newSortBy = opts.sortBy ?? sortBy;
-            const newSortDirection = opts.sortDirection ?? sortDirection;
-            const newFilters = opts.filters ?? filters;
-
-            const queryString = buildQueryString({
-                page: newPage,
-                perPage: newPerPage,
-                search: newSearch,
-                sortBy: newSortBy,
-                sortDirection: newSortDirection,
-                filters: newFilters,
-            });
-
-            const currentPath =
-                typeof window !== 'undefined' ? window.location.pathname : '';
-            const baseUrl = routeUrl || currentPath || '/dashboard';
-            const url = `${baseUrl}${queryString ? `?${queryString}` : ''}`;
-
-            router.get(url, {}, { replace: true, preserveState: true });
-        },
-        [
-            currentPage,
-            perPage,
-            search,
-            sortBy,
-            sortDirection,
-            filters,
-            routeUrl,
-        ],
-    );
 
     const handleSearchChange = (value: string) => {
         setSearch(value);
@@ -785,8 +675,20 @@ export function GenericTable<T extends { id: string }>({
                         selectedRow as unknown as Record<string, unknown>
                     }
                     onSubmit={(data) => {
-                        onEdit?.(data as T);
-                        setIsEditOpen(false);
+                        try {
+                            onEdit?.(data as T);
+                            toast.success(
+                                `${title}: registro atualizado com sucesso.`,
+                            );
+                            setIsEditOpen(false);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error && error.message
+                                    ? error.message
+                                    : `${title}: erro ao atualizar o registro.`;
+
+                            toast.error(message);
+                        }
                     }}
                 />
             )}
@@ -809,11 +711,23 @@ export function GenericTable<T extends { id: string }>({
                         : undefined
                 }
                 onConfirm={() => {
-                    if (selectedRow) {
-                        onDelete?.(selectedRow);
-                    }
+                    try {
+                        if (selectedRow) {
+                            onDelete?.(selectedRow);
+                        }
 
-                    setSelectedRow(null);
+                        toast.success(
+                            `${title}: registro excluido com sucesso.`,
+                        );
+                        setSelectedRow(null);
+                    } catch (error) {
+                        const message =
+                            error instanceof Error && error.message
+                                ? error.message
+                                : `${title}: erro ao excluir o registro.`;
+
+                        toast.error(message);
+                    }
                 }}
             />
 
@@ -823,8 +737,20 @@ export function GenericTable<T extends { id: string }>({
                     onOpenChange: handleCreateOpenChange,
                     title: `Criar Novo ${title}`,
                     onSubmit: (data) => {
-                        onCreate?.(data);
-                        handleCreateOpenChange(false);
+                        try {
+                            onCreate?.(data);
+                            toast.success(
+                                `${title}: registro criado com sucesso.`,
+                            );
+                            handleCreateOpenChange(false);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error && error.message
+                                    ? error.message
+                                    : `${title}: erro ao criar o registro.`;
+
+                            toast.error(message);
+                        }
                     },
                 })
             ) : (
@@ -835,8 +761,20 @@ export function GenericTable<T extends { id: string }>({
                     description="Preencha os dados abaixo para criar um novo registro."
                     fields={resolvedCreateFields}
                     onSubmit={(data) => {
-                        onCreate?.(data as T);
-                        handleCreateOpenChange(false);
+                        try {
+                            onCreate?.(data as T);
+                            toast.success(
+                                `${title}: registro criado com sucesso.`,
+                            );
+                            handleCreateOpenChange(false);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error && error.message
+                                    ? error.message
+                                    : `${title}: erro ao criar o registro.`;
+
+                            toast.error(message);
+                        }
                     }}
                 />
             )}

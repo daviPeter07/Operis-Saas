@@ -56,7 +56,7 @@ export function SalesHeader({ metrics }: SalesHeaderProps) {
                             'transition-shadow hover:shadow-md',
                         )}
                     >
-                        <CardContent className="flex min-h-[110px] items-center justify-between gap-4 px-5 py-4">
+                        <CardContent className="flex items-center justify-between gap-4 px-5 py-4">
                             <div className="space-y-2">
                                 <p className="text-sm font-medium text-muted-foreground">
                                     {card.label}

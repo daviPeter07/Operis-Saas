@@ -1,15 +1,29 @@
 import { mockSuppliers } from '@/lib/mocks/mock-data';
+import { StateCityFilter } from '@/components/filters/state-city-filter';
+import { STATE_OPTIONS } from '@/constants/location-source';
 import type { Supplier } from '@/lib/mocks/mock-data';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { createSupplierRecord } from '@/utils/suppliers';
+import { inferPersonType } from '@/utils/clients';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { SupplierCreateDialog } from './supplier-create-dialog';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
 
 export function SuppliersModule() {
     const [suppliers, setSuppliers] = useState(() => [...mockSuppliers]);
+    const [stateFilter, setStateFilter] = useState('');
+    const [cityFilter, setCityFilter] = useState('');
 
     const columns: Column<Supplier>[] = [
         { key: 'name', header: 'Nome' },
+        {
+            key: 'personType',
+            header: 'Tipo',
+            render: (_value: unknown, row: Supplier) => (
+                <PersonTypeBadge personType={inferPersonType(row.document)} />
+            ),
+        },
         { key: 'email', header: 'Email' },
         { key: 'phone', header: 'Telefone' },
         { key: 'document', header: 'Documento' },
@@ -19,17 +33,9 @@ export function SuppliersModule() {
 
     const cityOptions = useMemo(
         () =>
-            Array.from(new Set(suppliers.map((supplier) => supplier.city)))
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-                .map((value) => ({ value, label: value })),
-        [suppliers],
-    );
-
-    const stateOptions = useMemo(
-        () =>
-            Array.from(new Set(suppliers.map((supplier) => supplier.state)))
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-                .map((value) => ({ value, label: value })),
+            Array.from(new Set(suppliers.map((supplier) => supplier.city))).map(
+                (value) => ({ value, label: value }),
+            ),
         [suppliers],
     );
 
@@ -46,84 +52,57 @@ export function SuppliersModule() {
             key: 'state',
             label: 'Estado',
             type: 'select' as const,
-            options: stateOptions,
+            options: [...STATE_OPTIONS],
         },
     ];
 
+    const filteredSuppliers = useMemo(() => {
+        return suppliers.filter((supplier) => {
+            if (stateFilter && supplier.state !== stateFilter) {
+                return false;
+            }
+
+            if (cityFilter && supplier.city !== cityFilter) {
+                return false;
+            }
+
+            return true;
+        });
+    }, [cityFilter, stateFilter, suppliers]);
+
     const handleCreate = (data: Supplier) => {
-        const newSupplier: Supplier = {
-            id: crypto.randomUUID(),
-            name: String(data.name || '').trim(),
-            email: String(data.email || '').trim(),
-            phone: String(data.phone || '').trim(),
-            document: String(data.document || '').trim(),
-            city: String(data.city || '').trim(),
-            state: String(data.state || '').trim(),
-            address: String(data.address || '').trim(),
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
+        const newSupplier = createSupplierRecord(data);
 
         if (!newSupplier.name) {
-            toast.error('Informe o nome do fornecedor');
-            return;
+            throw new Error('Informe o nome do fornecedor');
         }
 
         setSuppliers((previous) => [newSupplier, ...previous]);
-        toast.success('Fornecedor cadastrado com sucesso');
     };
 
     return (
-        <GenericTable
-            data={suppliers}
-            columns={columns}
-            title="Fornecedores"
-            filterFields={filterFields}
-            onCreate={handleCreate}
-            createFields={[
-                {
-                    name: 'name',
-                    label: 'Nome',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Razão social ou nome fantasia',
-                },
-                {
-                    name: 'email',
-                    label: 'Email',
-                    type: 'email',
-                    placeholder: 'contato@fornecedor.com',
-                },
-                {
-                    name: 'phone',
-                    label: 'Telefone',
-                    type: 'text',
-                    placeholder: '(00) 00000-0000',
-                },
-                {
-                    name: 'document',
-                    label: 'Documento',
-                    type: 'text',
-                    placeholder: 'CNPJ/CPF',
-                },
-                {
-                    name: 'city',
-                    label: 'Cidade',
-                    type: 'select',
-                    options: cityOptions,
-                },
-                {
-                    name: 'state',
-                    label: 'Estado',
-                    type: 'select',
-                    options: stateOptions,
-                },
-                {
-                    name: 'address',
-                    label: 'Endereço',
-                    type: 'text',
-                    placeholder: 'Rua, número e complemento',
-                },
-            ]}
-        />
+        <div className="space-y-4">
+            <StateCityFilter
+                stateValue={stateFilter}
+                cityValue={cityFilter}
+                onStateChange={setStateFilter}
+                onCityChange={setCityFilter}
+            />
+
+            <GenericTable
+                data={filteredSuppliers}
+                columns={columns}
+                title="Fornecedores"
+                filterFields={filterFields}
+                onCreate={handleCreate}
+                createDialog={({ open, onOpenChange, onSubmit }) => (
+                    <SupplierCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        onSubmit={onSubmit}
+                    />
+                )}
+            />
+        </div>
     );
 }

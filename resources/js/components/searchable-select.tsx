@@ -16,6 +16,7 @@ type SearchableSelectProps = {
     allowCustomValue?: boolean;
     className?: string;
     inputClassName?: string;
+    disabled?: boolean;
 };
 
 export function SearchableSelect({
@@ -29,6 +30,7 @@ export function SearchableSelect({
     allowCustomValue = false,
     className,
     inputClassName,
+    disabled = false,
 }: SearchableSelectProps) {
     const [isOpen, setIsOpen] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -87,6 +89,7 @@ export function SearchableSelect({
                     placeholder={placeholder}
                     className={cn('pr-10', inputClassName)}
                     readOnly={!allowCustomValue && !onSearchChange}
+                    disabled={disabled}
                 />
                 {value ? (
                     <Button
@@ -105,7 +108,7 @@ export function SearchableSelect({
                 ) : null}
             </div>
 
-            {isOpen ? (
+            {isOpen && !disabled ? (
                 <div className="absolute top-full z-50 mt-2 max-h-44 w-full overflow-y-auto rounded-md border bg-background shadow-sm">
                     {filteredOptions.length === 0 ? (
                         <p className="px-3 py-2 text-sm text-muted-foreground">

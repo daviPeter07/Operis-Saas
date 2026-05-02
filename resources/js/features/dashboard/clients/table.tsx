@@ -6,10 +6,12 @@ import {
 } from '@/components/table/data-table';
 import { DataTableRowZebra } from '@/components/table/data-table-row';
 import { TableEmptyState } from '@/components/table/empty-state';
+import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { FilterSidebar } from '@/components/table/filter-sidebar';
 import { Pagination, PaginationInfo } from '@/components/table/pagination';
 import { TableActions } from '@/components/table/table-actions';
 import { TableToolbar } from '@/components/table/table-toolbar';
+import { Badge } from '@/components/ui/badge';
 import { useTablePagination } from '@/hooks/use-table-pagination';
 import type { Client } from '@/lib/mocks/mock-data';
 import { cn } from '@/lib/utils';
@@ -23,8 +25,16 @@ interface ClientsTableProps {
 export function ClientsTable({ data, className }: ClientsTableProps) {
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
+    const [stateFilter, setStateFilter] = React.useState('');
+    const [cityFilter, setCityFilter] = React.useState('');
 
     const { pagination, goToPage } = useTablePagination({ total: data.length });
+
+    const detectPersonType = (document: string) => {
+        const numeric = document.replace(/\D/g, '');
+
+        return numeric.length <= 11 ? 'PF' : 'PJ';
+    };
 
     const columns = [
         { key: 'name', header: 'Nome' },
@@ -70,16 +80,41 @@ export function ClientsTable({ data, className }: ClientsTableProps) {
         );
     }, [data, search]);
 
+    const locationFilteredData = React.useMemo(
+        () =>
+            filteredData.filter((item) => {
+                if (stateFilter && item.state !== stateFilter) {
+                    return false;
+                }
+
+                if (cityFilter && item.city !== cityFilter) {
+                    return false;
+                }
+
+                return true;
+            }),
+        [cityFilter, filteredData, stateFilter],
+    );
+
     const paginatedData = React.useMemo(() => {
         const start = (pagination.page - 1) * pagination.perPage;
 
-        return filteredData.slice(start, start + pagination.perPage);
-    }, [filteredData, pagination.page, pagination.perPage]);
+        return locationFilteredData.slice(start, start + pagination.perPage);
+    }, [locationFilteredData, pagination.page, pagination.perPage]);
 
-    const totalPages = Math.ceil(filteredData.length / pagination.perPage);
+    const totalPages = Math.ceil(
+        locationFilteredData.length / pagination.perPage,
+    );
 
     return (
         <div className={cn('space-y-4', className)}>
+            <StateCityFilter
+                stateValue={stateFilter}
+                cityValue={cityFilter}
+                onStateChange={setStateFilter}
+                onCityChange={setCityFilter}
+            />
+
             <TableToolbar
                 searchValue={search}
                 onSearchChange={setSearch}
@@ -118,7 +153,14 @@ export function ClientsTable({ data, className }: ClientsTableProps) {
                         paginatedData.map((client, index) => (
                             <DataTableRowZebra key={client.id} index={index}>
                                 <DataTableCell>
-                                    {String(client.name)}
+                                    <div className="flex items-center gap-2">
+                                        <span>{String(client.name)}</span>
+                                        <Badge variant="secondary">
+                                            {detectPersonType(
+                                                String(client.document),
+                                            )}
+                                        </Badge>
+                                    </div>
                                 </DataTableCell>
                                 <DataTableCell>
                                     {String(client.email)}
@@ -154,7 +196,7 @@ export function ClientsTable({ data, className }: ClientsTableProps) {
                 <PaginationInfo
                     currentPage={pagination.page}
                     totalPages={totalPages}
-                    totalItems={filteredData.length}
+                    totalItems={locationFilteredData.length}
                     itemsPerPage={pagination.perPage}
                 />
                 <Pagination

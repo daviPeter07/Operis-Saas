@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { router } from '@inertiajs/react';
 import {
     formatCurrencyBR,
     formatDateBR,
     formatQuantityWithUnit,
     translatePaymentMethod,
-    translateStatus,
 } from '@/lib/format';
+import { StatusBadge } from '@/components/common/status-badge';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
 import { mockClients, mockProducts, mockSales } from '@/lib/mocks/mock-data';
 import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
 import { GenericTable } from '../generic-table';
@@ -46,7 +47,7 @@ export function SalesModule() {
         {
             key: 'status',
             header: 'Status',
-            render: (val: unknown) => translateStatus(String(val)),
+            render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
             key: 'paymentMethod',
@@ -101,36 +102,29 @@ export function SalesModule() {
             key: 'status',
             label: 'Status',
             type: 'select' as const,
-            options: [
-                { value: 'pending', label: 'Pendente' },
-                { value: 'completed', label: 'Concluido' },
-                { value: 'cancelled', label: 'Cancelado' },
-            ],
+            options: [...STATUS_OPTIONS],
         },
         {
             key: 'paymentMethod',
             label: 'Metodo de Pagamento',
             type: 'select' as const,
-            options: [
-                { value: 'money', label: 'Dinheiro' },
-                { value: 'pix', label: 'PIX' },
-                { value: 'card', label: 'Cartao' },
-                { value: 'other', label: 'Outros' },
-            ],
+            options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
 
     const handleCreate = (data: SalesRecord) => {
-        const status = ['pending', 'completed', 'cancelled'].includes(
-            String(data.status),
-        )
-            ? (String(data.status) as Sale['status'])
+        const status = STATUS_VALUES.includes(data.status)
+            ? data.status
             : 'pending';
 
-        const paymentMethod = ['money', 'pix', 'card', 'other'].includes(
-            String(data.paymentMethod),
-        )
-            ? (String(data.paymentMethod) as Sale['paymentMethod'])
+        const paymentMethodOptions: Sale['paymentMethod'][] = [
+            'money',
+            'pix',
+            'card',
+            'other',
+        ];
+        const paymentMethod = paymentMethodOptions.includes(data.paymentMethod)
+            ? data.paymentMethod
             : 'pix';
 
         const newSale: Sale = {

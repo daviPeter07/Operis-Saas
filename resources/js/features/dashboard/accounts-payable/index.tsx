@@ -1,20 +1,28 @@
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { mockPurchases } from '@/lib/mocks/mock-data';
-import type { Purchase } from '@/lib/mocks/mock-data';
+import { mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
+import type { Purchase, Supplier } from '@/lib/mocks/mock-data';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import {
     formatDateBR,
     formatCurrencyBR,
-    translateStatus,
     translatePaymentMethod,
     formatQuantityWithUnit,
 } from '@/lib/format';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import { PURCHASE_STATUS_VALUES, PURCHASE_PAYMENT_METHOD_VALUES } from '@/types/api';
+import { StatusBadge } from '@/components/common/status-badge';
+import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
 import { toast } from 'sonner';
+import { createSupplierRecord } from '@/utils/suppliers';
 
 export function AccountsPayableModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>(() => [
+        ...mockSuppliers,
+    ]);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -96,21 +104,7 @@ export function AccountsPayableModule() {
         {
             key: 'status',
             header: 'Status',
-            render: (val: unknown) => {
-                const statusText = translateStatus(String(val));
-                let bgColor = 'bg-gray-100 text-gray-800';
-                if (val === 'pending') bgColor = 'bg-amber-100 text-amber-800';
-                if (val === 'completed')
-                    bgColor = 'bg-emerald-100 text-emerald-800';
-                if (val === 'cancelled') bgColor = 'bg-red-100 text-red-800';
-                return (
-                    <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bgColor}`}
-                    >
-                        {statusText}
-                    </span>
-                );
-            },
+            render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
             key: 'paymentMethod',
@@ -135,37 +129,19 @@ export function AccountsPayableModule() {
             key: 'status',
             label: 'Status',
             type: 'select' as const,
-            options: [
-                { value: 'pending', label: 'Pendente' },
-                { value: 'completed', label: 'Concluído' },
-                { value: 'cancelled', label: 'Cancelado' },
-            ],
+            options: [...STATUS_OPTIONS],
         },
         {
             key: 'paymentMethod',
             label: 'Método de Pagamento',
             type: 'select' as const,
-            options: [
-                { value: 'money', label: 'Dinheiro' },
-                { value: 'credit', label: 'Crédito' },
-                { value: 'debit', label: 'Débito' },
-                { value: 'pix', label: 'PIX' },
-            ],
+            options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
 
     const handleCreate = (data: Purchase) => {
-        const status = ['pending', 'completed', 'cancelled'].includes(
-            String(data.status),
-        )
-            ? (String(data.status) as Purchase['status'])
-            : 'pending';
-
-        const paymentMethod = ['money', 'credit', 'debit', 'pix'].includes(
-            String(data.paymentMethod),
-        )
-            ? (String(data.paymentMethod) as Purchase['paymentMethod'])
-            : 'pix';
+        const status = PURCHASE_STATUS_VALUES.includes(data.status) ? data.status : 'pending';
+        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(data.paymentMethod) ? data.paymentMethod : 'pix';
 
         const newPurchase: Purchase = {
             id: crypto.randomUUID(),
@@ -184,12 +160,19 @@ export function AccountsPayableModule() {
         };
 
         if (!newPurchase.supplierName) {
-            toast.error('Informe o fornecedor');
-            return;
+            throw new Error('Informe o fornecedor');
         }
 
         setPurchases((previous) => [newPurchase, ...previous]);
-        toast.success('Despesa cadastrada com sucesso');
+    };
+
+    const handleCreateSupplier = (data: Supplier): Supplier => {
+        const supplier = createSupplierRecord(data);
+
+        setSuppliers((previous) => [supplier, ...previous]);
+        toast.success('Fornecedor cadastrado com sucesso');
+
+        return supplier;
     };
 
     return (
@@ -231,64 +214,15 @@ export function AccountsPayableModule() {
                 onCreate={handleCreate}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
-                createFields={[
-                    {
-                        name: 'supplierName',
-                        label: 'Fornecedor',
-                        type: 'text',
-                        required: true,
-                        placeholder: 'Nome do fornecedor',
-                    },
-                    {
-                        name: 'items',
-                        label: 'Itens',
-                        type: 'number',
-                        required: true,
-                        placeholder: 'Quantidade de itens',
-                    },
-                    {
-                        name: 'total',
-                        label: 'Total',
-                        type: 'number',
-                        required: true,
-                        placeholder: 'Valor total',
-                    },
-                    {
-                        name: 'paymentMethod',
-                        label: 'Método de Pagamento',
-                        type: 'select',
-                        required: true,
-                        options: [
-                            { value: 'money', label: 'Dinheiro' },
-                            { value: 'credit', label: 'Crédito' },
-                            { value: 'debit', label: 'Débito' },
-                            { value: 'pix', label: 'PIX' },
-                        ],
-                    },
-                    {
-                        name: 'status',
-                        label: 'Status',
-                        type: 'select',
-                        required: true,
-                        options: [
-                            { value: 'pending', label: 'Pendente' },
-                            { value: 'completed', label: 'Concluído' },
-                            { value: 'cancelled', label: 'Cancelado' },
-                        ],
-                    },
-                    {
-                        name: 'dueDate',
-                        label: 'Vencimento',
-                        type: 'date',
-                        required: true,
-                    },
-                    {
-                        name: 'createdAt',
-                        label: 'Data',
-                        type: 'date',
-                        required: true,
-                    },
-                ]}
+                createDialog={({ open, onOpenChange, onSubmit }) => (
+                    <AccountsPayableCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        onSubmit={onSubmit}
+                        suppliers={suppliers}
+                        onCreateSupplier={handleCreateSupplier}
+                    />
+                )}
             />
         </div>
     );

@@ -2,6 +2,7 @@ import { Barcode, Sparkles } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { SearchableSelect } from '@/components/searchable-select';
+import { DatePickerInput } from '@/components/date/date-picker-input';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -216,10 +217,9 @@ export function CreateModal<T extends Record<string, unknown>>({
 
         try {
             await onSubmit(prepareSubmitData());
-            toast.success('Registro criado com sucesso');
             onOpenChange(false);
         } catch {
-            toast.error('Erro ao criar registro');
+            throw new Error('create_failed');
         } finally {
             setIsSubmitting(false);
         }
@@ -362,6 +362,16 @@ export function CreateModal<T extends Record<string, unknown>>({
                     }
                     required={field.required}
                     className="min-h-24 resize-none"
+                />
+            );
+        }
+
+        if (field.type === 'date') {
+            return (
+                <DatePickerInput
+                    value={value}
+                    onChange={(nextValue) => handleChange(field, nextValue)}
+                    placeholder={field.placeholder}
                 />
             );
         }

@@ -3,11 +3,12 @@ import { mockSales } from '@/lib/mocks/mock-data';
 import type { Sale } from '@/lib/mocks/mock-data';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { StatusBadge } from '@/components/common/status-badge';
+import { STATUS_OPTIONS } from '@/constants/status';
 import {
     formatDateBR,
     formatCurrencyBR,
     translatePaymentMethod,
-    translateStatus,
 } from '@/lib/format';
 import { toast } from 'sonner';
 
@@ -86,21 +87,7 @@ export function AccountsReceivableModule() {
         {
             key: 'status',
             header: 'Status',
-            render: (val: unknown) => {
-                const statusText = translateStatus(String(val));
-                let bgColor = 'bg-gray-100 text-gray-800';
-                if (val === 'pending') bgColor = 'bg-amber-100 text-amber-800';
-                if (val === 'completed')
-                    bgColor = 'bg-emerald-100 text-emerald-800';
-                if (val === 'cancelled') bgColor = 'bg-red-100 text-red-800';
-                return (
-                    <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bgColor}`}
-                    >
-                        {statusText}
-                    </span>
-                );
-            },
+            render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
             key: 'paymentMethod',
@@ -120,11 +107,7 @@ export function AccountsReceivableModule() {
             key: 'status',
             label: 'Status',
             type: 'select' as const,
-            options: [
-                { value: 'pending', label: 'Pendente' },
-                { value: 'completed', label: 'Concluído' },
-                { value: 'cancelled', label: 'Cancelado' },
-            ],
+            options: [...STATUS_OPTIONS],
         },
         {
             key: 'paymentMethod',

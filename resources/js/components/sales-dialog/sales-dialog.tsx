@@ -39,6 +39,9 @@ export function SalesDialog({
         lineItems,
         notes,
         paymentMethod,
+        cardType,
+        installments,
+        firstInstallmentDate,
         productCreateOpen,
         productQuickFields,
         productSearch,
@@ -54,6 +57,9 @@ export function SalesDialog({
         setIsScannerReady,
         setNotes,
         setPaymentMethod,
+        setCardType,
+        setInstallments,
+        setFirstInstallmentDate,
         setProductCreateOpen,
         setProductSearch,
         setSaleDate,
@@ -135,6 +141,27 @@ export function SalesDialog({
             discountValue: appliedDiscountValue,
             discountAmountApplied,
             finalTotal,
+            cardType: paymentMethod === 'card' ? cardType : undefined,
+            installments:
+                paymentMethod === 'card' && cardType === 'credit'
+                    ? Math.max(1, Math.min(24, Number(installments) || 1))
+                    : undefined,
+            firstInstallmentDate:
+                paymentMethod === 'card' && cardType === 'credit'
+                    ? firstInstallmentDate
+                    : undefined,
+            installmentValue:
+                paymentMethod === 'card' && cardType === 'credit'
+                    ? Number(
+                          (
+                              finalTotal /
+                              Math.max(
+                                  1,
+                                  Math.min(24, Number(installments) || 1),
+                              )
+                          ).toFixed(2),
+                      )
+                    : undefined,
         };
         onSubmit(payload);
         onOpenChange(false);
@@ -142,8 +169,8 @@ export function SalesDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[min(1700px,calc(100vw-1rem))] overflow-hidden p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]">
-                <div className="grid h-[90vh] grid-cols-1 lg:grid-cols-[1.35fr_0.65fr]">
+            <DialogContent className="max-w-[min(1700px,calc(100vw-1rem))] overflow-y-auto p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]">
+                <div className="grid max-h-[calc(100dvh-1rem)] min-h-[calc(100dvh-1rem)] grid-cols-1 lg:h-[min(90dvh,calc(100dvh-1rem))] lg:grid-cols-[1.35fr_0.65fr]">
                     <CatalogPanel
                         productSearch={productSearch}
                         setProductSearch={setProductSearch}
@@ -159,29 +186,37 @@ export function SalesDialog({
                     <div ref={checkoutRef}>
                         <CheckoutPanel
                             clientSearch={clientSearch}
-                        setClientSearch={setClientSearch}
-                        filteredClients={filteredClients}
-                        selectedClient={selectedClient}
-                        selectClientById={selectClientById}
-                        openCreateClient={() => setClientCreateOpen(true)}
-                        lineItems={lineItems}
-                        increaseLineItemQuantity={increaseLineItemQuantity}
-                        decreaseLineItemQuantity={decreaseLineItemQuantity}
-                        removeLineItem={removeLineItem}
-                        paymentMethod={paymentMethod}
-                        setPaymentMethod={setPaymentMethod}
-                        total={total}
-                        discountAmountApplied={discountAmountApplied}
-                        finalTotal={finalTotal}
-                        openDiscountDialog={() => setDiscountDialogOpen(true)}
-                        notes={notes}
-                        setNotes={setNotes}
-                        saleDate={saleDate}
-                        calendarOpen={calendarOpen}
-                        setCalendarOpen={setCalendarOpen}
-                        setSaleDate={setSaleDate}
-                        canSubmit={canSubmit}
-                        onSubmit={handleSubmit}
+                            setClientSearch={setClientSearch}
+                            filteredClients={filteredClients}
+                            selectedClient={selectedClient}
+                            selectClientById={selectClientById}
+                            openCreateClient={() => setClientCreateOpen(true)}
+                            lineItems={lineItems}
+                            increaseLineItemQuantity={increaseLineItemQuantity}
+                            decreaseLineItemQuantity={decreaseLineItemQuantity}
+                            removeLineItem={removeLineItem}
+                            paymentMethod={paymentMethod}
+                            setPaymentMethod={setPaymentMethod}
+                            cardType={cardType}
+                            setCardType={setCardType}
+                            installments={installments}
+                            setInstallments={setInstallments}
+                            firstInstallmentDate={firstInstallmentDate}
+                            setFirstInstallmentDate={setFirstInstallmentDate}
+                            total={total}
+                            discountAmountApplied={discountAmountApplied}
+                            finalTotal={finalTotal}
+                            openDiscountDialog={() =>
+                                setDiscountDialogOpen(true)
+                            }
+                            notes={notes}
+                            setNotes={setNotes}
+                            saleDate={saleDate}
+                            calendarOpen={calendarOpen}
+                            setCalendarOpen={setCalendarOpen}
+                            setSaleDate={setSaleDate}
+                            canSubmit={canSubmit}
+                            onSubmit={handleSubmit}
                         />
                     </div>
                 </div>

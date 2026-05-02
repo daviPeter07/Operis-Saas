@@ -1,5 +1,6 @@
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { ChartsPanel } from '@/features/dashboard/overview/charts-panel';
 import { MetricsGrid } from '@/features/dashboard/overview/metrics-grid';
 import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
@@ -10,7 +11,8 @@ import type {
 import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
 import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
 import { PageContent } from '@/features/dashboard/page-content';
-import { PageHeader } from '@/features/dashboard/page-header';
+import { DashboardHeader } from '@/components/dashboard-header';
+import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
 import AppLayout from '@/layouts/app-layout';
 import {
     alerts,
@@ -35,11 +37,26 @@ export default function DashboardPage() {
     });
     const userName = auth.user?.name ?? 'usuário';
     const charts = getOverviewCharts(period, customRange);
+    const alertNavigationMap = useAlertNavigationMap();
+
+    const navigateByAlert = (alertId: string) => {
+        const target = alertNavigationMap[alertId];
+
+        if (!target) {
+            toast.warning('Este alerta ainda nao possui destino configurado.');
+            return;
+        }
+
+        router.get(target.path, target.filters, {
+            preserveState: true,
+            replace: false,
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>
             <PageContent>
-                <PageHeader
+                <DashboardHeader
                     title={`Bem-vindo, ${userName}`}
                     description="Aqui está uma visão geral do seu negócio."
                 >
@@ -65,7 +82,7 @@ export default function DashboardPage() {
                             />
                         </div>
                     </div>
-                </PageHeader>
+                </DashboardHeader>
 
                 {view === 'kpi' ? (
                     <div className="grid gap-6">
@@ -81,9 +98,13 @@ export default function DashboardPage() {
                                 <div className="space-y-4">
                                     {alerts.map((alert) => {
                                         return (
-                                            <div
+                                            <button
+                                                type="button"
                                                 key={alert.id}
-                                                className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3"
+                                                onClick={() =>
+                                                    navigateByAlert(alert.id)
+                                                }
+                                                className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                                             >
                                                 <span className="text-sm font-medium text-foreground">
                                                     {alert.label}
@@ -97,7 +118,7 @@ export default function DashboardPage() {
                                                 >
                                                     {alert.value}
                                                 </span>
-                                            </div>
+                                            </button>
                                         );
                                     })}
                                 </div>
@@ -118,9 +139,13 @@ export default function DashboardPage() {
                                 <div className="space-y-4">
                                     {alerts.map((alert) => {
                                         return (
-                                            <div
+                                            <button
+                                                type="button"
                                                 key={alert.id}
-                                                className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3"
+                                                onClick={() =>
+                                                    navigateByAlert(alert.id)
+                                                }
+                                                className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                                             >
                                                 <span className="text-sm font-medium text-foreground">
                                                     {alert.label}
@@ -134,7 +159,7 @@ export default function DashboardPage() {
                                                 >
                                                     {alert.value}
                                                 </span>
-                                            </div>
+                                            </button>
                                         );
                                     })}
                                 </div>

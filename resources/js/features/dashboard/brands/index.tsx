@@ -2,7 +2,6 @@ import { mockBrands } from '@/lib/mocks/mock-data';
 import type { Brand } from '@/lib/mocks/mock-data';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { toast } from 'sonner';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -32,12 +31,10 @@ export function BrandsModule() {
         };
 
         if (!newBrand.name) {
-            toast.error('Informe o nome da marca');
-            return;
+            throw new Error('Informe o nome da marca');
         }
 
         setBrands((previous) => [newBrand, ...previous]);
-        toast.success('Marca cadastrada com sucesso');
     };
 
     return (

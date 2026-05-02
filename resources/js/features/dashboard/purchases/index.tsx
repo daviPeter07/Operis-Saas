@@ -1,5 +1,9 @@
-import { mockPurchases } from '@/lib/mocks/mock-data';
-import type { Purchase } from '@/lib/mocks/mock-data';
+import {
+    mockProducts,
+    mockPurchases,
+    mockSuppliers,
+} from '@/lib/mocks/mock-data';
+import type { Product, Purchase, Supplier } from '@/lib/mocks/mock-data';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
@@ -8,13 +12,28 @@ import type { Column } from '../generic-table';
 import {
     formatDateBR,
     formatCurrencyBR,
-    translateStatus,
     translatePaymentMethod,
     formatQuantityWithUnit,
 } from '@/lib/format';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import {
+    PURCHASE_STATUS_VALUES,
+    PURCHASE_PAYMENT_METHOD_VALUES,
+} from '@/types/api';
+import type { PurchaseLineItem } from '@/types/dashboard-forms';
+import { StatusBadge } from '@/components/common/status-badge';
+import { PurchaseCreateDialog } from './purchase-create-dialog';
+import { createSupplierRecord } from '@/utils/suppliers';
 
 export function PurchasesModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
+    const [products, setProducts] = useState<Product[]>(() => [
+        ...mockProducts,
+    ]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>(() => [
+        ...mockSuppliers,
+    ]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     useEffect(() => {
@@ -35,22 +54,7 @@ export function PurchasesModule() {
         {
             key: 'status',
             header: 'Status',
-            render: (val: unknown) => {
-                const statusText = translateStatus(String(val));
-                let bgColor = 'bg-gray-100 text-gray-800';
-                if (val === 'pending')
-                    bgColor = 'bg-yellow-100 text-yellow-800';
-                if (val === 'completed')
-                    bgColor = 'bg-green-100 text-green-800';
-                if (val === 'cancelled') bgColor = 'bg-red-100 text-red-800';
-                return (
-                    <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bgColor}`}
-                    >
-                        {statusText}
-                    </span>
-                );
-            },
+            render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
             key: 'paymentMethod',
@@ -74,36 +78,24 @@ export function PurchasesModule() {
             key: 'status',
             label: 'Status',
             type: 'select' as const,
-            options: [
-                { value: 'pending', label: 'Pendente' },
-                { value: 'completed', label: 'Concluído' },
-                { value: 'cancelled', label: 'Cancelado' },
-            ],
+            options: [...STATUS_OPTIONS],
         },
         {
             key: 'paymentMethod',
             label: 'Método de Pagamento',
             type: 'select' as const,
-            options: [
-                { value: 'money', label: 'Dinheiro' },
-                { value: 'credit', label: 'Crédito' },
-                { value: 'debit', label: 'Débito' },
-                { value: 'pix', label: 'PIX' },
-            ],
+            options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
 
     const handleCreate = (data: Purchase) => {
-        const status = ['pending', 'completed', 'cancelled'].includes(
-            String(data.status),
-        )
-            ? (String(data.status) as Purchase['status'])
+        const status = PURCHASE_STATUS_VALUES.includes(data.status)
+            ? data.status
             : 'pending';
-
-        const paymentMethod = ['money', 'credit', 'debit', 'pix'].includes(
-            String(data.paymentMethod),
+        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(
+            data.paymentMethod,
         )
-            ? (String(data.paymentMethod) as Purchase['paymentMethod'])
+            ? data.paymentMethod
             : 'pix';
 
         const newPurchase: Purchase = {
@@ -123,12 +115,39 @@ export function PurchasesModule() {
         };
 
         if (!newPurchase.supplierName) {
-            toast.error('Informe o fornecedor');
-            return;
+            throw new Error('Informe o fornecedor');
         }
 
         setPurchases((previous) => [newPurchase, ...previous]);
-        toast.success('Compra cadastrada com sucesso');
+    };
+
+    const handleApplyStock = (lineItems: PurchaseLineItem[]) => {
+        if (lineItems.length === 0) {
+            return;
+        }
+
+        setProducts((previous) =>
+            previous.map((product) => {
+                const line = lineItems.find(
+                    (item) => item.productId === product.id,
+                );
+
+                if (!line) {
+                    return product;
+                }
+
+                return { ...product, stock: product.stock + line.quantity };
+            }),
+        );
+    };
+
+    const handleCreateSupplier = (data: Supplier): Supplier => {
+        const supplier = createSupplierRecord(data);
+
+        setSuppliers((previous) => [supplier, ...previous]);
+        toast.success('Fornecedor cadastrado com sucesso');
+
+        return supplier;
     };
 
     return (
@@ -140,64 +159,17 @@ export function PurchasesModule() {
             onCreate={handleCreate}
             isCreateOpen={isCreateOpen}
             onCreateOpenChange={setIsCreateOpen}
-            createFields={[
-                {
-                    name: 'supplierName',
-                    label: 'Fornecedor',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Nome do fornecedor',
-                },
-                {
-                    name: 'items',
-                    label: 'Itens',
-                    type: 'number',
-                    required: true,
-                    placeholder: 'Quantidade de itens',
-                },
-                {
-                    name: 'total',
-                    label: 'Total',
-                    type: 'number',
-                    required: true,
-                    placeholder: 'Valor total da compra',
-                },
-                {
-                    name: 'paymentMethod',
-                    label: 'Método de Pagamento',
-                    type: 'select',
-                    required: true,
-                    options: [
-                        { value: 'money', label: 'Dinheiro' },
-                        { value: 'credit', label: 'Crédito' },
-                        { value: 'debit', label: 'Débito' },
-                        { value: 'pix', label: 'PIX' },
-                    ],
-                },
-                {
-                    name: 'status',
-                    label: 'Status',
-                    type: 'select',
-                    required: true,
-                    options: [
-                        { value: 'pending', label: 'Pendente' },
-                        { value: 'completed', label: 'Concluído' },
-                        { value: 'cancelled', label: 'Cancelado' },
-                    ],
-                },
-                {
-                    name: 'dueDate',
-                    label: 'Vencimento',
-                    type: 'date',
-                    required: true,
-                },
-                {
-                    name: 'createdAt',
-                    label: 'Data',
-                    type: 'date',
-                    required: true,
-                },
-            ]}
+            createDialog={({ open, onOpenChange, onSubmit }) => (
+                <PurchaseCreateDialog
+                    open={open}
+                    onOpenChange={onOpenChange}
+                    onSubmit={onSubmit}
+                    products={products}
+                    suppliers={suppliers}
+                    onCreateSupplier={handleCreateSupplier}
+                    onApplyStock={handleApplyStock}
+                />
+            )}
         />
     );
 }

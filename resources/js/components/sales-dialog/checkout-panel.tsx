@@ -3,6 +3,7 @@ import { ptBR } from 'date-fns/locale';
 import { CalendarDays, Trash2, UserPlus } from 'lucide-react';
 import * as React from 'react';
 import { SearchableSelect } from '@/components/searchable-select';
+import { CardPaymentFields } from '@/components/payment/card-payment-fields';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +45,12 @@ interface CheckoutPanelProps {
     removeLineItem: (id: string) => void;
     paymentMethod: 'money' | 'pix' | 'card' | 'other';
     setPaymentMethod: (value: 'money' | 'pix' | 'card' | 'other') => void;
+    cardType: 'debit' | 'credit';
+    setCardType: (value: 'debit' | 'credit') => void;
+    installments: string;
+    setInstallments: (value: string) => void;
+    firstInstallmentDate: string;
+    setFirstInstallmentDate: (value: string) => void;
     total: number;
     discountAmountApplied: number;
     finalTotal: number;
@@ -71,6 +78,12 @@ export function CheckoutPanel({
     removeLineItem,
     paymentMethod,
     setPaymentMethod,
+    cardType,
+    setCardType,
+    installments,
+    setInstallments,
+    firstInstallmentDate,
+    setFirstInstallmentDate,
     total,
     discountAmountApplied,
     finalTotal,
@@ -278,6 +291,29 @@ export function CheckoutPanel({
                             </ToggleGroup>
                         </CardContent>
                     </Card>
+
+                    {paymentMethod === 'card' ? (
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">
+                                    Detalhes do cartão
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <CardPaymentFields
+                                    cardType={cardType}
+                                    onCardTypeChange={setCardType}
+                                    installments={installments}
+                                    onInstallmentsChange={setInstallments}
+                                    firstInstallmentDate={firstInstallmentDate}
+                                    onFirstInstallmentDateChange={
+                                        setFirstInstallmentDate
+                                    }
+                                    totalAmount={finalTotal}
+                                />
+                            </CardContent>
+                        </Card>
+                    ) : null}
 
                     <div className="space-y-2 rounded-md border p-3">
                         <div className="flex items-center justify-between text-sm">
