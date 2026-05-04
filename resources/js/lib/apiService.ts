@@ -1,5 +1,4 @@
 import { apiClient } from '@/lib/apiClient';
-import type { ApiResponse, PaginatedResponse } from '@/lib/schemas/base';
 
 export interface ListParams {
     page?: number;
@@ -14,6 +13,16 @@ export interface BaseServiceOptions {
     basePath: string;
 }
 
+export interface PaginatedData<T> {
+    data: T[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+}
+
 export abstract class ApiService<T extends { id: number }> {
     protected basePath: string;
 
@@ -21,23 +30,35 @@ export abstract class ApiService<T extends { id: number }> {
         this.basePath = options.basePath;
     }
 
-    async list(params?: ListParams): Promise<PaginatedResponse<T>> {
-        return apiClient.get<PaginatedResponse<T>>(this.basePath, params);
+    async list(params?: ListParams): Promise<PaginatedData<T>> {
+        const response = await apiClient.get<PaginatedData<T>>(this.basePath, params);
+
+        return response.data;
     }
 
-    async get(id: number): Promise<ApiResponse<T>> {
-        return apiClient.get<ApiResponse<T>>(`${this.basePath}/${id}`);
+    async get(id: number): Promise<T> {
+        const response = await apiClient.get<T>(`${this.basePath}/${id}`);
+
+        return response.data;
     }
 
-    async create(data: Partial<T>): Promise<ApiResponse<T>> {
-        return apiClient.post<ApiResponse<T>>(this.basePath, data);
+    async create(data: Partial<T>): Promise<T> {
+        const response = await apiClient.post<T>(this.basePath, data);
+
+        return response.data;
     }
 
-    async update(id: number, data: Partial<T>): Promise<ApiResponse<T>> {
-        return apiClient.put<ApiResponse<T>>(`${this.basePath}/${id}`, data);
+    async update(id: number, data: Partial<T>): Promise<T> {
+        const response = await apiClient.put<T>(`${this.basePath}/${id}`, data);
+
+        return response.data;
     }
 
-    async delete(id: number): Promise<ApiResponse<{ success: boolean }>> {
-        return apiClient.delete<ApiResponse<{ success: boolean }>>(`${this.basePath}/${id}`);
+    async delete(id: number): Promise<{ success: boolean }> {
+        const response = await apiClient.delete<{ success: boolean }>(
+            `${this.basePath}/${id}`,
+        );
+
+        return response.data;
     }
 }

@@ -40,7 +40,7 @@ export function PurchaseCreateDialog({
         if (open) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setProductSearch('');
-             
+
             setItems([{ productId: '', quantity: '1' }]);
         }
     }, [open]);

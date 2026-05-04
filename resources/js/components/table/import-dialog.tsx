@@ -117,7 +117,7 @@ export function ImportDialog({
                         fileName: file.name,
                         fileType: fileExtension(file.name),
                     });
-} catch (_err) {
+                } catch (_err) {
                     reject(_err);
                 }
             };

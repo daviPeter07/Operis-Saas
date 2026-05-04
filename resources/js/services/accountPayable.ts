@@ -1,7 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
-import { ApiService } from '@/lib/apiService';
-import type { ListParams } from '@/lib/apiService';
-import type { ApiResponse, PaginatedResponse } from '@/lib/schemas/base';
+import { ApiService   } from '@/lib/apiService';
+import type {ListParams, PaginatedData} from '@/lib/apiService';
 import type { AccountPayable } from '@/schemas/accountPayable';
 
 class AccountPayableService extends ApiService<AccountPayable> {
@@ -9,24 +8,24 @@ class AccountPayableService extends ApiService<AccountPayable> {
         super({ basePath: '/account-payables' });
     }
 
-    async list(
-        params?: ListParams,
-    ): Promise<PaginatedResponse<AccountPayable>> {
+    async list(params?: ListParams): Promise<PaginatedData<AccountPayable>> {
         return super.list(params);
     }
 
-    async get(id: number): Promise<ApiResponse<AccountPayable>> {
+    async get(id: number): Promise<AccountPayable> {
         return super.get(id);
     }
 
     async settle(
         id: number,
         data: { paid_method: string; payment_notes?: string },
-    ): Promise<ApiResponse<{ success: boolean }>> {
-        return apiClient.post<ApiResponse<{ success: boolean }>>(
+    ): Promise<{ success: boolean }> {
+        const response = await apiClient.post<{ data: { success: boolean } }>(
             `/account-payables/${id}/settle`,
             data,
         );
+
+        return response.data;
     }
 }
 

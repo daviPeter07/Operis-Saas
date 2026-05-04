@@ -3,9 +3,13 @@ import { apiClient } from '@/lib/apiClient';
 import type { User } from '@/schemas/user';
 
 export function useCurrentUser() {
-    return useQuery<User>({
+    return useQuery({
         queryKey: ['currentUser'],
-        queryFn: () => apiClient.get<User>('/auth/me'),
+        queryFn: async (): Promise<User> => {
+            const response = await apiClient.get<{ data: User }>('/auth/me');
+
+            return response.data;
+        },
         staleTime: 1000 * 60 * 5,
     });
 }

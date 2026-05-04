@@ -11,7 +11,10 @@ import {
 } from '@/lib/format';
 import { mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
 import type { Purchase, Supplier } from '@/lib/mocks/mock-data';
-import { PURCHASE_STATUS_VALUES, PURCHASE_PAYMENT_METHOD_VALUES } from '@/types/api';
+import {
+    PURCHASE_STATUS_VALUES,
+    PURCHASE_PAYMENT_METHOD_VALUES,
+} from '@/types/api';
 import { createSupplierRecord } from '@/utils/suppliers';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
@@ -143,8 +146,14 @@ export function AccountsPayableModule() {
     ];
 
     const handleCreate = (data: Purchase) => {
-        const status = PURCHASE_STATUS_VALUES.includes(data.status) ? data.status : 'pending';
-        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(data.paymentMethod) ? data.paymentMethod : 'pix';
+        const status = PURCHASE_STATUS_VALUES.includes(data.status)
+            ? data.status
+            : 'pending';
+        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(
+            data.paymentMethod,
+        )
+            ? data.paymentMethod
+            : 'pix';
 
         const newPurchase: Purchase = {
             id: crypto.randomUUID(),

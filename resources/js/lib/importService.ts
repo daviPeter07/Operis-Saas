@@ -22,10 +22,18 @@ export interface ImportResult {
     failed_count?: number;
 }
 
-export type ImportEndpoint = 'customers' | 'suppliers' | 'products' | 'brands' | 'categories';
+export type ImportEndpoint =
+    | 'customers'
+    | 'suppliers'
+    | 'products'
+    | 'brands'
+    | 'categories';
 
 class ImportService {
-    async preview(file: File, endpoint: ImportEndpoint): Promise<ApiResponse<ImportPreview>> {
+    async preview(
+        file: File,
+        endpoint: ImportEndpoint,
+    ): Promise<ApiResponse<ImportPreview>> {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('preview', 'true');
@@ -39,7 +47,10 @@ class ImportService {
         return response.json();
     }
 
-    async execute(file: File, endpoint: ImportEndpoint): Promise<ApiResponse<ImportResult>> {
+    async execute(
+        file: File,
+        endpoint: ImportEndpoint,
+    ): Promise<ApiResponse<ImportResult>> {
         const formData = new FormData();
         formData.append('file', file);
 
@@ -55,7 +66,7 @@ class ImportService {
     async checkStatus(jobId: string): Promise<ApiResponse<ImportResult>> {
         return fetch(`/api/imports/${jobId}/status`, {
             credentials: 'include',
-        }).then(res => res.json());
+        }).then((res) => res.json());
     }
 
     isValidFile(file: File): boolean {

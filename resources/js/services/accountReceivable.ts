@@ -1,6 +1,9 @@
-import { ApiService } from '@/lib/apiService';
-import type { ListParams } from '@/lib/apiService';
-import type { ApiResponse, PaginatedResponse } from '@/lib/schemas/base';
+import {
+    ApiService
+    
+    
+} from '@/lib/apiService';
+import type {ListParams, PaginatedData} from '@/lib/apiService';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
 
 class AccountReceivableService extends ApiService<AccountReceivable> {
@@ -8,13 +11,11 @@ class AccountReceivableService extends ApiService<AccountReceivable> {
         super({ basePath: '/account-receivables' });
     }
 
-    async list(
-        params?: ListParams,
-    ): Promise<PaginatedResponse<AccountReceivable>> {
+    async list(params?: ListParams): Promise<PaginatedData<AccountReceivable>> {
         return super.list(params);
     }
 
-    async get(id: number): Promise<ApiResponse<AccountReceivable>> {
+    async get(id: number): Promise<AccountReceivable> {
         return super.get(id);
     }
 }

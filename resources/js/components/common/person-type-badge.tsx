@@ -1,5 +1,8 @@
 import { Badge } from '@/components/ui/badge';
-import { PERSON_TYPE_COLORS, PERSON_TYPE_LABELS } from '@/constants/person-type';
+import {
+    PERSON_TYPE_COLORS,
+    PERSON_TYPE_LABELS,
+} from '@/constants/person-type';
 import type { ClientPersonType } from '@/types/dashboard-forms';
 
 type PersonTypeBadgeProps = {

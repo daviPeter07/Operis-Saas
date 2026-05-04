@@ -1,80 +1,79 @@
-import router from '@inertiajs/core';
-
-interface ApiError {
-    message: string;
-    errors?: Record<string, string[]>;
+interface ApiResponse<T> {
+    data: T;
+    [key: string]: unknown;
 }
 
 class ApiClient {
     private baseUrl = '/api';
 
-    async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
-        return this.request<T>('get', url, { params });
-    }
-
-    async post<T>(url: string, data?: unknown): Promise<T> {
-        return this.request<T>('post', url, { data });
-    }
-
-    async put<T>(url: string, data?: unknown): Promise<T> {
-        return this.request<T>('put', url, { data });
-    }
-
-    async patch<T>(url: string, data?: unknown): Promise<T> {
-        return this.request<T>('patch', url, { data });
-    }
-
-    async delete<T>(url: string): Promise<T> {
-        return this.request<T>('delete', url);
-    }
-
     private async request<T>(
-        method: 'get' | 'post' | 'put' | 'patch' | 'delete',
+        method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
         url: string,
         options: { params?: Record<string, unknown>; data?: unknown } = {},
     ): Promise<T> {
         const { params, data } = options;
 
+        const queryString = params
+            ? '?' +
+              new URLSearchParams(params as Record<string, string>).toString()
+            : '';
+
         try {
-            const response = await router.visit(`${this.baseUrl}${url}`, {
-                method,
-                data,
-                params,
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
+            const response = await fetch(
+                `${this.baseUrl}${url}${queryString}`,
+                {
+                    method,
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: data ? JSON.stringify(data) : undefined,
+                    credentials: 'include',
                 },
-                preserveScroll: true,
-            });
+            );
 
-            if (response.props.errors) {
-                throw this.handleValidationErrors(response.props.errors);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+
+                throw {
+                    message: errorData.message || `Erro ${response.status}`,
+                    errors: errorData.errors,
+                };
             }
 
-            return response.props as unknown as T;
+            const responseData = await response.json();
+
+            return responseData as T;
         } catch (error) {
-            if (error instanceof Error) {
-                throw this.normalizeError(error);
+            if (error && typeof error === 'object' && 'message' in error) {
+                throw error;
             }
 
-            throw new Error('Erro desconhecido na requisição');
+            throw { message: 'Erro desconhecido na requisição' };
         }
     }
 
-    private handleValidationErrors(errors: unknown): ApiError {
-        const errorObj = errors as Record<string, string[]>;
-        const firstKey = Object.keys(errorObj)[0];
-
-        return {
-            message: firstKey ? errorObj[firstKey][0] : 'Erro de validação',
-            errors: errorObj,
-        };
+    async get<T>(
+        url: string,
+        params?: Record<string, unknown>,
+    ): Promise<ApiResponse<T>> {
+        return this.request<ApiResponse<T>>('GET', url, { params });
     }
 
-    private normalizeError(error: Error): ApiError {
-        return {
-            message: error.message || 'Erro na requisição',
-        };
+    async post<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
+        return this.request<ApiResponse<T>>('POST', url, { data });
+    }
+
+    async put<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
+        return this.request<ApiResponse<T>>('PUT', url, { data });
+    }
+
+    async patch<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
+        return this.request<ApiResponse<T>>('PATCH', url, { data });
+    }
+
+    async delete<T>(url: string): Promise<ApiResponse<T>> {
+        return this.request<ApiResponse<T>>('DELETE', url);
     }
 }
 

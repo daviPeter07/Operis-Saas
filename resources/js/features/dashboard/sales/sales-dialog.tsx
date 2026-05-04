@@ -12,19 +12,9 @@ import {
     X,
 } from 'lucide-react';
 import * as React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Combobox,
-    ComboboxCollection,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
-} from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -46,7 +36,6 @@ import { useSalesDialog } from '@/hooks/use-sales-dialog';
 import { formatCurrencyBR } from '@/lib/format';
 import type { Client, Product } from '@/lib/mocks/mock-data';
 import type {
-    SaleDiscountType,
     SalesLineItem,
     SalesRecord,
 } from '@/types/sales-dialog';
@@ -76,14 +65,12 @@ export function SalesDialog({
     onCreateProduct,
 }: SalesDialogProps) {
     const {
-        addSelectedProduct,
         addProductToCart,
         applyDiscount,
         appliedDiscountType,
         appliedDiscountValue,
         canSubmit,
         clientCreateOpen,
-        clientId,
         clientQuickFields,
         clientSearch,
         decreaseLineItemQuantity,
@@ -96,12 +83,10 @@ export function SalesDialog({
         notes,
         paymentMethod,
         productCreateOpen,
-        productId,
         productQuickFields,
         productSearch,
         saleDate,
         selectedClient,
-        selectedProduct,
         total,
         removeLineItem,
         selectClientById,

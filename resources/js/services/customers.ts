@@ -1,6 +1,9 @@
-import { ApiService } from '@/lib/apiService';
-import type { ListParams } from '@/lib/apiService';
-import type { ApiResponse, PaginatedResponse } from '@/lib/schemas/base';
+import {
+    ApiService
+    
+    
+} from '@/lib/apiService';
+import type {ListParams, PaginatedData} from '@/lib/apiService';
 import type { Customer } from '@/schemas/customer';
 
 class CustomerService extends ApiService<Customer> {
@@ -8,38 +11,37 @@ class CustomerService extends ApiService<Customer> {
         super({ basePath: '/customers' });
     }
 
-    async list(params?: ListParams): Promise<PaginatedResponse<Customer>> {
+    async list(params?: ListParams): Promise<PaginatedData<Customer>> {
         return super.list(params);
     }
 
-    async get(id: number): Promise<ApiResponse<Customer>> {
+    async get(id: number): Promise<Customer> {
         return super.get(id);
     }
 
-    async create(data: Partial<Customer>): Promise<ApiResponse<Customer>> {
+    async create(data: Partial<Customer>): Promise<Customer> {
         return super.create(data);
     }
 
-    async update(
-        id: number,
-        data: Partial<Customer>,
-    ): Promise<ApiResponse<Customer>> {
+    async update(id: number, data: Partial<Customer>): Promise<Customer> {
         return super.update(id, data);
     }
 
-    async delete(id: number): Promise<ApiResponse<{ success: boolean }>> {
+    async delete(id: number): Promise<{ success: boolean }> {
         return super.delete(id);
     }
 
-    async import(file: File): Promise<ApiResponse<{ job_id: string }>> {
+    async import(file: File): Promise<{ job_id: string }> {
         const formData = new FormData();
         formData.append('file', file);
 
-        return fetch('/api/customers/import', {
+        const response = await fetch('/api/customers/import', {
             method: 'POST',
             body: formData,
             credentials: 'include',
-        }).then((res) => res.json());
+        });
+
+        return response.json();
     }
 }
 
