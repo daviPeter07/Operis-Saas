@@ -30,18 +30,20 @@ export function InventoryModule() {
     const createProduct = useCreateProduct();
     const deleteProduct = useDeleteProduct();
 
-    const rows: ProductRow[] = products.map((product) => ({
-        id: String(product.id),
-        name: product.name,
-        sku: product.sku,
-        barcode: product.barcode,
-        sale_price: product.sale_price,
-        stock: product.stock,
-        min_stock: product.min_stock,
-        category_id: product.category_id,
-        brand_id: product.brand_id,
-        status: product.status,
-    }));
+    const rows: ProductRow[] = products
+        .filter((product) => product.status === 'active')
+        .map((product) => ({
+            id: String(product.id),
+            name: product.name,
+            sku: product.sku,
+            barcode: product.barcode,
+            sale_price: product.sale_price,
+            stock: product.stock,
+            min_stock: product.min_stock,
+            category_id: product.category_id,
+            brand_id: product.brand_id,
+            status: product.status,
+        }));
 
     const categoryNameById = useMemo(
         () =>

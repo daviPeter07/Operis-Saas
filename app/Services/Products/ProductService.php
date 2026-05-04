@@ -27,6 +27,6 @@ class ProductService
 
     public function delete(Product $product): void
     {
-        $this->products->update($product, ['status' => 'inactive']);
+        $this->products->delete($product);
     }
 }

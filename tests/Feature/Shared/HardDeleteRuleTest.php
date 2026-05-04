@@ -7,7 +7,7 @@ use App\Models\CompanyUser;
 use App\Models\Product;
 use App\Models\User;
 
-test('brand and category are inactivated when they have linked products', function () {
+test('brand and category are hard deleted', function () {
     $user = User::factory()->create();
     $company = Company::query()->create([
         'name' => 'Empresa E',
@@ -31,26 +31,14 @@ test('brand and category are inactivated when they have linked products', functi
     $brand = Brand::query()->create(['company_id' => $company->id, 'name' => 'Marca Y', 'status' => 'active']);
     $category = Category::query()->create(['company_id' => $company->id, 'name' => 'Cat Y', 'status' => 'active']);
 
-    Product::query()->create([
-        'company_id' => $company->id,
-        'category_id' => $category->id,
-        'brand_id' => $brand->id,
-        'name' => 'Produto Link',
-        'sku' => 'SKU-LINK',
-        'sale_price' => 20,
-        'cost' => 10,
-        'stock' => 1,
-        'status' => 'active',
-    ]);
-
     $this->actingAs($user)->deleteJson("/api/brands/{$brand->id}")->assertNoContent();
     $this->actingAs($user)->deleteJson("/api/categories/{$category->id}")->assertNoContent();
 
-    expect($brand->fresh()->status)->toBe('inactive');
-    expect($category->fresh()->status)->toBe('inactive');
+    expect(Brand::query()->find($brand->id))->toBeNull();
+    expect(Category::query()->find($category->id))->toBeNull();
 });
 
-test('product is inactivated instead of hard delete', function () {
+test('product is hard deleted', function () {
     $user = User::factory()->create();
     $company = Company::query()->create([
         'name' => 'Empresa F',
@@ -86,5 +74,6 @@ test('product is inactivated instead of hard delete', function () {
     ]);
 
     $this->actingAs($user)->deleteJson("/api/products/{$product->id}")->assertNoContent();
-    expect($product->fresh()->status)->toBe('inactive');
+
+    expect(Product::query()->find($product->id))->toBeNull();
 });

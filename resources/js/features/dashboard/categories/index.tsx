@@ -46,11 +46,13 @@ export function CategoriesModule() {
         await createCategory.mutateAsync({ name });
     };
 
-    const rows: CategoryRow[] = categories.map((category) => ({
-        id: String(category.id),
-        name: category.name,
-        status: category.status,
-    }));
+    const rows: CategoryRow[] = categories
+        .filter((category) => category.status === 'active')
+        .map((category) => ({
+            id: String(category.id),
+            name: category.name,
+            status: category.status,
+        }));
 
     return (
         <GenericTable

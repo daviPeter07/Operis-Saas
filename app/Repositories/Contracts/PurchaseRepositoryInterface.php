@@ -12,4 +12,6 @@ interface PurchaseRepositoryInterface
     public function createForCompany(int $companyId, array $data): Purchase;
 
     public function update(Purchase $purchase, array $data): Purchase;
+
+    public function delete(Purchase $purchase): void;
 }

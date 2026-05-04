@@ -27,12 +27,6 @@ class CategoryService
 
     public function delete(Category $category): void
     {
-        if ($category->products()->exists()) {
-            $this->categories->update($category, ['status' => 'inactive']);
-
-            return;
-        }
-
         $this->categories->delete($category);
     }
 }

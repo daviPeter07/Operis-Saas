@@ -114,6 +114,31 @@ class PurchaseService
         });
     }
 
+    public function delete(Purchase $purchase, int $userId): void
+    {
+        DB::transaction(function () use ($purchase, $userId): void {
+            if ($purchase->status === PurchaseStatus::Completed->value) {
+                foreach ($purchase->items as $item) {
+                    $product = Product::query()->findOrFail($item->product_id);
+                    $this->stockMovementService->register(
+                        $product,
+                        -(float) $item->quantity,
+                        StockMovementType::PurchaseCancel,
+                        $purchase->id,
+                        $userId,
+                        'purchase'
+                    );
+                }
+            }
+
+            $purchase->payables()->delete();
+            $purchase->items()->delete();
+            $purchase->payments()->delete();
+
+            $this->purchases->delete($purchase);
+        });
+    }
+
     private function calculateTotal(array $items): float
     {
         return collect($items)->sum(fn (array $item): float => (float) $item['quantity'] * (float) $item['unit_cost']);

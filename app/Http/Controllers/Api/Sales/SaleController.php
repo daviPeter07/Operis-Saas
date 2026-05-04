@@ -66,7 +66,7 @@ class SaleController extends Controller
     public function destroy(Sale $sale): JsonResponse
     {
         $this->authorize('delete', $sale);
-        $this->saleService->cancel($sale, auth()->id());
+        $this->saleService->delete($sale, auth()->id());
 
         return response()->json(status: 204);
     }

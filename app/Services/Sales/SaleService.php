@@ -101,6 +101,21 @@ class SaleService
         });
     }
 
+    public function delete(Sale $sale, int $userId): void
+    {
+        DB::transaction(function () use ($sale, $userId): void {
+            if ($sale->status === SaleStatus::Completed->value) {
+                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleCancel, $userId, true);
+            }
+
+            $sale->receivables()->delete();
+            $sale->items()->delete();
+            $sale->payments()->delete();
+
+            $this->sales->delete($sale);
+        });
+    }
+
     private function calculateTotals(array $items): float
     {
         return collect($items)->sum(fn (array $item): float => (float) $item['quantity'] * (float) $item['unit_price']);

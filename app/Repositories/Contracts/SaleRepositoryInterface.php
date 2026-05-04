@@ -12,4 +12,6 @@ interface SaleRepositoryInterface
     public function createForCompany(int $companyId, array $data): Sale;
 
     public function update(Sale $sale, array $data): Sale;
+
+    public function delete(Sale $sale): void;
 }

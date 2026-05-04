@@ -39,18 +39,20 @@ export function PurchasesModule() {
         suppliers.map((supplier) => [supplier.id, supplier.name]),
     );
 
-    const rows: PurchaseRow[] = purchases.map((purchase) => ({
-        id: String(purchase.id),
-        supplier_id: purchase.supplier_id,
-        supplierName:
-            suppliersById.get(purchase.supplier_id) ||
-            `#${purchase.supplier_id}`,
-        total: purchase.total,
-        status: purchase.status,
-        payment_method: purchase.payment_method,
-        due_date: purchase.due_date,
-        date: purchase.date,
-    }));
+    const rows: PurchaseRow[] = purchases
+        .filter((purchase) => purchase.status !== 'cancelled')
+        .map((purchase) => ({
+            id: String(purchase.id),
+            supplier_id: purchase.supplier_id,
+            supplierName:
+                suppliersById.get(purchase.supplier_id) ||
+                `#${purchase.supplier_id}`,
+            total: purchase.total,
+            status: purchase.status,
+            payment_method: purchase.payment_method,
+            due_date: purchase.due_date,
+            date: purchase.date,
+        }));
 
     const columns: Column<PurchaseRow>[] = [
         { key: 'supplierName', header: 'Fornecedor' },

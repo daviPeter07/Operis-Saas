@@ -70,9 +70,21 @@ export default function DashboardPage() {
         });
     };
 
+    const activeSales = useMemo(
+        () => sales.filter((sale) => sale.status !== 'cancelled'),
+        [sales],
+    );
+    const activePurchases = useMemo(
+        () => purchases.filter((purchase) => purchase.status !== 'cancelled'),
+        [purchases],
+    );
+
     const metrics = useMemo(() => {
-        const salesTotal = sales.reduce((sum, sale) => sum + toNumber(sale.total), 0);
-        const purchasesTotal = purchases.reduce(
+        const salesTotal = activeSales.reduce(
+            (sum, sale) => sum + toNumber(sale.total),
+            0,
+        );
+        const purchasesTotal = activePurchases.reduce(
             (sum, purchase) => sum + toNumber(purchase.total),
             0,
         );
@@ -129,10 +141,10 @@ export default function DashboardPage() {
                 iconRing: 'ring-red-600/20',
             },
         ];
-    }, [sales, purchases, receivables, payables]);
+    }, [activeSales, activePurchases, receivables, payables]);
 
     const activities = useMemo(() => {
-        const salesItems = sales.slice(0, 4).map((sale) => ({
+        const salesItems = activeSales.slice(0, 4).map((sale) => ({
             id: `sale-${sale.id}`,
             type: 'sale' as const,
             responsible: 'Sistema',
@@ -140,7 +152,7 @@ export default function DashboardPage() {
             amount: formatCurrencyBR(sale.total),
             time: sale.date,
         }));
-        const purchaseItems = purchases.slice(0, 4).map((purchase) => ({
+        const purchaseItems = activePurchases.slice(0, 4).map((purchase) => ({
             id: `purchase-${purchase.id}`,
             type: 'purchase' as const,
             responsible: 'Sistema',
@@ -152,7 +164,7 @@ export default function DashboardPage() {
         return [...salesItems, ...purchaseItems]
             .sort((a, b) => b.time.localeCompare(a.time))
             .slice(0, 6);
-    }, [sales, purchases]);
+    }, [activeSales, activePurchases]);
 
     const alerts = useMemo(
         () => [
@@ -164,12 +176,12 @@ export default function DashboardPage() {
             {
                 id: 'undelivered-orders',
                 label: 'Pedidos não entregues',
-                value: purchases.filter((p) => p.status === 'pending').length,
+                value: activePurchases.filter((p) => p.status === 'pending').length,
             },
             {
                 id: 'orders-to-confirm',
                 label: 'Pedidos a confirmar',
-                value: sales.filter((s) => s.status === 'pending').length,
+                value: activeSales.filter((s) => s.status === 'pending').length,
             },
             {
                 id: 'out-of-stock-products',
@@ -177,14 +189,14 @@ export default function DashboardPage() {
                 value: products.filter((p) => p.stock <= 0).length,
             },
         ],
-        [payables, purchases, sales, products],
+        [payables, activePurchases, activeSales, products],
     );
 
     const charts = useMemo(() => {
-        const salesSeries = sales
+        const salesSeries = activeSales
             .slice(-12)
             .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
-        const profitSeries = sales
+        const profitSeries = activeSales
             .slice(-12)
             .map((sale) => ({ date: sale.date, value: toNumber(sale.total) * 0.3 }));
 
@@ -218,7 +230,7 @@ export default function DashboardPage() {
                 })),
             },
         ];
-    }, [sales]);
+    }, [activeSales]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>

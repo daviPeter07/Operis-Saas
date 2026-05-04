@@ -37,15 +37,18 @@ export function SalesModule() {
         [customers],
     );
 
-    const rows: SaleRow[] = sales.map((sale) => ({
-        id: String(sale.id),
-        customer_id: sale.customer_id,
-        clientName: customerNameById.get(sale.customer_id) || `#${sale.customer_id}`,
-        total: sale.total,
-        status: sale.status,
-        payment_method: sale.payment_method,
-        date: sale.date,
-    }));
+    const rows: SaleRow[] = sales
+        .filter((sale) => sale.status !== 'cancelled')
+        .map((sale) => ({
+            id: String(sale.id),
+            customer_id: sale.customer_id,
+            clientName:
+                customerNameById.get(sale.customer_id) || `#${sale.customer_id}`,
+            total: sale.total,
+            status: sale.status,
+            payment_method: sale.payment_method,
+            date: sale.date,
+        }));
 
     const columns: Column<SaleRow>[] = [
         { key: 'clientName', header: 'Cliente' },

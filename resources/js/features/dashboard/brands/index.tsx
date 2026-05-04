@@ -42,11 +42,13 @@ export function BrandsModule() {
         await createBrand.mutateAsync({ name });
     };
 
-    const rows: BrandRow[] = brands.map((brand) => ({
-        id: String(brand.id),
-        name: brand.name,
-        status: brand.status,
-    }));
+    const rows: BrandRow[] = brands
+        .filter((brand) => brand.status === 'active')
+        .map((brand) => ({
+            id: String(brand.id),
+            name: brand.name,
+            status: brand.status,
+        }));
 
     return (
         <GenericTable
