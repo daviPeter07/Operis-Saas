@@ -7,6 +7,12 @@
 
 **Organization**: Tasks agrupadas por user story para permitir implementacao e validacao incremental.
 
+## Adendo de Execucao por Fase
+
+- Ao concluir uma fase, o agente deve reportar exatamente o que foi feito.
+- O agente nao deve iniciar a fase seguinte sem autorizacao explicita do usuario.
+- Este adendo tem precedencia operacional sobre a execucao continua automatica.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Pode rodar em paralelo (arquivos diferentes, sem dependencia direta)
@@ -17,13 +23,13 @@
 
 **Purpose**: Preparar base de API, estrutura de dominio e configuracoes compartilhadas.
 
-- [ ] T001 Criar arquivo de rotas API em `routes/api.php` e registrar grupos/middlewares base.
-- [ ] T002 Atualizar bootstrap para carregar `routes/api.php` em `bootstrap/app.php`.
-- [ ] T003 [P] Criar estrutura de diretorios de dominio em `app/Enums/`, `app/Repositories/Contracts/`, `app/Repositories/Eloquent/`, `app/Services/`.
-- [ ] T004 [P] Criar trait de escopo por empresa em `app/Traits/BelongsToCompany.php`.
-- [ ] T005 [P] Criar base de filtro por empresa atual em `app/Support/Company/CurrentCompanyResolver.php`.
-- [ ] T006 [P] Criar classes Resource base de API em `app/Http/Resources/`.
-- [ ] T007 [P] Criar testes de smoke para endpoints API autenticados em `tests/Feature/Api/ApiAuthSmokeTest.php`.
+- [x] T001 Criar arquivo de rotas API em `routes/api.php` e registrar grupos/middlewares base.
+- [x] T002 Atualizar bootstrap para carregar `routes/api.php` em `bootstrap/app.php`.
+- [x] T003 [P] Criar estrutura de diretorios de dominio em `app/Enums/`, `app/Repositories/Contracts/`, `app/Repositories/Eloquent/`, `app/Services/`.
+- [x] T004 [P] Criar trait de escopo por empresa em `app/Traits/BelongsToCompany.php`.
+- [x] T005 [P] Criar base de filtro por empresa atual em `app/Support/Company/CurrentCompanyResolver.php`.
+- [x] T006 [P] Criar classes Resource base de API em `app/Http/Resources/`.
+- [x] T007 [P] Criar testes de smoke para endpoints API autenticados em `tests/Feature/Api/ApiAuthSmokeTest.php`.
 
 ---
 
@@ -33,17 +39,17 @@
 
 **⚠️ CRITICAL**: Nao iniciar user stories antes de concluir esta fase.
 
-- [ ] T008 Criar migration de empresas em `database/migrations/*_create_companies_table.php`.
-- [ ] T009 Criar migration de vinculo usuario-empresa em `database/migrations/*_create_company_users_table.php`.
-- [ ] T010 Criar migration de empresa atual no usuario em `database/migrations/*_add_current_company_id_to_users_table.php`.
-- [ ] T011 Criar migration de codigos de verificacao em `database/migrations/*_create_company_verification_codes_table.php`.
-- [ ] T012 [P] Criar models `Company`, `CompanyUser`, `CompanyVerificationCode` em `app/Models/`.
-- [ ] T013 [P] Criar enums base (`CompanyUserRole`, `CompanyUserStatus`, `RecordStatus`) em `app/Enums/`.
-- [ ] T014 Criar middlewares `EnsureUserHasCompany`, `EnsureCompanyIsVerified`, `SetCurrentCompany`, `EnsureCurrentCompanyMember` em `app/Http/Middleware/`.
-- [ ] T015 Registrar middlewares e aliases em `bootstrap/app.php`.
-- [ ] T016 [P] Criar request/resource de contexto autenticado em `app/Http/Resources/Auth/AuthenticatedUserResource.php`.
-- [ ] T017 Criar endpoint `GET /api/auth/me` em `app/Http/Controllers/Api/Auth/AuthenticatedUserController.php`.
-- [ ] T018 Criar teste de acesso sem empresa e sem verificacao em `tests/Feature/Onboarding/AccessGuardTest.php`.
+- [x] T008 Criar migration de empresas em `database/migrations/*_create_companies_table.php`.
+- [x] T009 Criar migration de vinculo usuario-empresa em `database/migrations/*_create_company_users_table.php`.
+- [x] T010 Criar migration de empresa atual no usuario em `database/migrations/*_add_current_company_id_to_users_table.php`.
+- [x] T011 Criar migration de codigos de verificacao em `database/migrations/*_create_company_verification_codes_table.php`.
+- [x] T012 [P] Criar models `Company`, `CompanyUser`, `CompanyVerificationCode` em `app/Models/`.
+- [x] T013 [P] Criar enums base (`CompanyUserRole`, `CompanyUserStatus`, `RecordStatus`) em `app/Enums/`.
+- [x] T014 Criar middlewares `EnsureUserHasCompany`, `EnsureCompanyIsVerified`, `SetCurrentCompany`, `EnsureCurrentCompanyMember` em `app/Http/Middleware/`.
+- [x] T015 Registrar middlewares e aliases em `bootstrap/app.php`.
+- [x] T016 [P] Criar request/resource de contexto autenticado em `app/Http/Resources/Auth/AuthenticatedUserResource.php`.
+- [x] T017 Criar endpoint `GET /api/auth/me` em `app/Http/Controllers/Api/Auth/AuthenticatedUserController.php`.
+- [x] T018 Criar teste de acesso sem empresa e sem verificacao em `tests/Feature/Onboarding/AccessGuardTest.php`.
 
 **Checkpoint**: Base multiempresa, contexto atual e guards prontos.
 
@@ -305,4 +311,3 @@ Task: "T042 requests suppliers"
 - Todas as tasks de user story possuem label `[USx]`.
 - Paths estao alinhados com a estrutura Laravel do projeto.
 - Nao inclui tarefas fora do escopo aprovado.
-
