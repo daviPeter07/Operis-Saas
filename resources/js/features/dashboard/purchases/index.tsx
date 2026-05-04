@@ -1,9 +1,8 @@
-import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import { STATUS_OPTIONS } from '@/constants/status';
 import {
     formatDateBR,
     formatCurrencyBR,
@@ -40,6 +39,7 @@ export function PurchasesModule() {
         const params = new URLSearchParams(window.location.search);
 
         if (params.get('action') === 'create-purchase') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/purchases');
         }

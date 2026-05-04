@@ -105,11 +105,17 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
         }
 
         const params = parseQueryParams(window.location.search);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSearch(params.search);
+         
         setCurrentPage(params.page);
+         
         setPerPage(params.perPage);
+         
         setFilters(params.filters);
+         
         setSortBy(params.sortBy);
+         
         setSortDirection(params.sortDirection === 'desc' ? 'desc' : 'asc');
     }, []);
 

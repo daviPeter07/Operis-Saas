@@ -80,7 +80,6 @@ export function FilterSidebar({
     sortBy = '',
     sortDirection = 'asc',
     onSortChange,
-    className,
 }: FilterSidebarProps) {
     const [selectedField, setSelectedField] = React.useState<string>('');
     const [selectedOperator, setSelectedOperator] =

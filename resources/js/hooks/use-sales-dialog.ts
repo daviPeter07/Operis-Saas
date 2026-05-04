@@ -53,24 +53,43 @@ export function useSalesDialog({
 
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setClientId('');
+             
             setClientSearch('');
+             
             setProductId('');
+             
             setProductSearch('');
+             
             setQuantity('1');
+             
             setLineItems([]);
+             
             setStatus('pending');
+             
             setPaymentMethod('pix');
+             
             setCardType('debit');
+             
             setInstallments('1');
+             
             setFirstInstallmentDate(todayString());
+             
             setSaleDate(todayString());
+             
             setNotes('');
+             
             setDiscountType('amount');
+             
             setDiscountValue('');
+             
             setAppliedDiscountType('amount');
+             
             setAppliedDiscountValue(0);
+             
             setDiscountAmountApplied(0);
+             
             setIsScannerReady(false);
         }
     }, [open]);

@@ -1,4 +1,3 @@
-import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { mockCategories } from '@/lib/mocks/mock-data';
 import type { Category } from '@/lib/mocks/mock-data';
@@ -13,6 +12,7 @@ export function CategoriesModule() {
         const params = new URLSearchParams(window.location.search);
 
         if (params.get('action') === 'create-category') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/categories');
         }

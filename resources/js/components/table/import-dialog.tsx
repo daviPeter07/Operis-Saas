@@ -78,7 +78,7 @@ export function ImportDialog({
             setIsProcessing(true);
             const data = await readFile(selectedFile);
             setParsedData(data);
-        } catch (err) {
+        } catch {
             setError(
                 'Erro ao processar arquivo. Verifique se o formato está correto.',
             );
@@ -118,7 +118,7 @@ export function ImportDialog({
                         fileType: fileExtension(file.name),
                     });
 } catch (_err) {
-                    reject(err);
+                    reject(_err);
                 }
             };
 

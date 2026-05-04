@@ -29,6 +29,7 @@ export function ClientsModule() {
         const params = new URLSearchParams(window.location.search);
 
         if (params.get('action') === 'create-client') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/clients');
         }

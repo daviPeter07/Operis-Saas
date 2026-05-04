@@ -39,13 +39,11 @@ export interface ReportTableProps<T extends Record<string, unknown>> {
 export function ReportTable<T extends Record<string, unknown>>({
     data,
     columns,
-    title,
     searchPlaceholder = 'Buscar...',
     onSearchChange,
     onExportExcel,
     onExportPDF,
     currentPage = 1,
-    totalPages = 1,
     totalItems,
     perPage = 25,
     onPageChange,

@@ -90,6 +90,7 @@ export function EditDialog<T extends Record<string, unknown>>({
 
     React.useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData(initialData);
         }
     }, [open, initialData]);

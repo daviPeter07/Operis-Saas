@@ -107,7 +107,6 @@ export function GenericTable<T extends { id: string }>({
         sortDirection,
         setSearch,
         setCurrentPage,
-        setPerPage,
         setFilters,
         setSortBy,
         setSortDirection,
@@ -231,11 +230,6 @@ export function GenericTable<T extends { id: string }>({
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         updateUrl({ page });
-    };
-
-    const handleFilterChange = (newFilters: Record<string, string>) => {
-        setFilters(newFilters);
-        updateUrl({ filters: newFilters, page: 1 });
     };
 
     const handleClearFilters = () => {
