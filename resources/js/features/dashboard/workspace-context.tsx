@@ -6,7 +6,12 @@ import {
     useState,
 } from 'react';
 import type { ReactNode } from 'react';
-import { mockWorkspaceState } from '@/lib/mocks/workspace-mocks';
+import {
+    defaultWorkspaceNavigation,
+    defaultWorkspaceQuickActions,
+    defaultWorkspaceRole,
+} from '@/constants/workspace';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import type {
     WorkspaceModule,
     WorkspaceModuleKey,
@@ -33,7 +38,33 @@ const restrictedModulesByRole: Partial<
 };
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-    const [state, setState] = useState<WorkspaceState>(mockWorkspaceState);
+    const { data: currentUser } = useCurrentUser();
+    const [state, setState] = useState<WorkspaceState>(() => ({
+        companies: [
+            {
+                id: String(currentUser?.current_company?.id || 1),
+                name: currentUser?.current_company?.name || 'Minha empresa',
+                slug: 'minha-empresa',
+                role: defaultWorkspaceRole,
+                initials: 'ME',
+                description: 'Empresa ativa no ambiente atual',
+                primaryColor: '#f97316',
+                secondaryColor: '#fb923c',
+            },
+        ],
+        currentCompany: {
+            id: String(currentUser?.current_company?.id || 1),
+            name: currentUser?.current_company?.name || 'Minha empresa',
+            slug: 'minha-empresa',
+            role: defaultWorkspaceRole,
+            initials: 'ME',
+            description: 'Empresa ativa no ambiente atual',
+            primaryColor: '#f97316',
+            secondaryColor: '#fb923c',
+        },
+        navigation: defaultWorkspaceNavigation,
+        quickActions: defaultWorkspaceQuickActions,
+    }));
 
     const switchCompany = useCallback(
         (companyId: string) => {

@@ -1,25 +1,32 @@
 import { router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { ChartsPanel } from '@/features/dashboard/overview/charts-panel';
 import { MetricsGrid } from '@/features/dashboard/overview/metrics-grid';
-import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
 import type {
-    Period,
     CustomRange,
+    Period,
 } from '@/features/dashboard/overview/period-filter';
+import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
 import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
 import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
 import { PageContent } from '@/features/dashboard/page-content';
+import { useAccountPayables } from '@/hooks/use-account-payables';
+import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
+import { useCustomers } from '@/hooks/use-customers';
+import { useProducts } from '@/hooks/use-products';
+import { usePurchases } from '@/hooks/use-purchases';
+import { useSales } from '@/hooks/use-sales';
 import AppLayout from '@/layouts/app-layout';
-import {
-    alerts,
-    getOverviewCharts,
-    metrics,
-    recentActivity,
-} from '@/lib/mocks/dashboard-mocks';
+import { formatCurrencyBR } from '@/lib/format';
+
+function dateToLabel(date: string): string {
+    const [year, month, day] = date.split('-');
+
+    return `${day}/${month}/${year.slice(2)}`;
+}
 
 export default function DashboardPage() {
     const { auth } = usePage().props as {
@@ -29,21 +36,29 @@ export default function DashboardPage() {
             };
         };
     };
+
+    const { data: sales = [] } = useSales();
+    const { data: purchases = [] } = usePurchases();
+    const { data: receivables = [] } = useAccountReceivables();
+    const { data: payables = [] } = useAccountPayables();
+    const { data: customers = [] } = useCustomers();
+    const { data: products = [] } = useProducts();
+
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
     const [period, setPeriod] = useState<Period>('30d');
     const [customRange, setCustomRange] = useState<CustomRange>({
         from: '2026-04-01',
         to: '2026-04-23',
     });
+
     const userName = auth.user?.name ?? 'usuário';
-    const charts = getOverviewCharts(period, customRange);
     const alertNavigationMap = useAlertNavigationMap();
 
     const navigateByAlert = (alertId: string) => {
         const target = alertNavigationMap[alertId];
 
         if (!target) {
-            toast.warning('Este alerta ainda nao possui destino configurado.');
+            toast.warning('Este alerta ainda não possui destino configurado.');
 
             return;
         }
@@ -54,12 +69,162 @@ export default function DashboardPage() {
         });
     };
 
+    const metrics = useMemo(() => {
+        const salesTotal = sales.reduce((sum, sale) => sum + sale.total, 0);
+        const purchasesTotal = purchases.reduce(
+            (sum, purchase) => sum + purchase.total,
+            0,
+        );
+        const receivableTotal = receivables
+            .filter((r) => r.status !== 'received')
+            .reduce((sum, r) => sum + r.amount, 0);
+        const payableTotal = payables
+            .filter((p) => p.status !== 'paid')
+            .reduce((sum, p) => sum + p.amount, 0);
+
+        return [
+            {
+                id: 'vendas',
+                label: 'Vendas',
+                value: formatCurrencyBR(salesTotal),
+                change: 0,
+                trend: 'up' as const,
+                icon: 'ShoppingCart',
+                color: 'text-orange-500',
+                iconBackground: 'bg-orange-500/12',
+                iconRing: 'ring-orange-500/20',
+            },
+            {
+                id: 'lucro',
+                label: 'Lucro',
+                value: formatCurrencyBR(salesTotal - purchasesTotal),
+                change: 0,
+                trend: 'up' as const,
+                icon: 'TrendingUp',
+                color: 'text-green-600',
+                iconBackground: 'bg-green-600/12',
+                iconRing: 'ring-green-600/20',
+            },
+            {
+                id: 'contas_a_receber',
+                label: 'Contas a Receber',
+                value: formatCurrencyBR(receivableTotal),
+                change: 0,
+                trend: 'down' as const,
+                icon: 'Receipt',
+                color: 'text-blue-500',
+                iconBackground: 'bg-blue-500/12',
+                iconRing: 'ring-blue-500/20',
+            },
+            {
+                id: 'contas_a_pagar',
+                label: 'Contas a Pagar',
+                value: formatCurrencyBR(payableTotal),
+                change: 0,
+                trend: 'up' as const,
+                icon: 'CreditCard',
+                color: 'text-red-600',
+                iconBackground: 'bg-red-600/12',
+                iconRing: 'ring-red-600/20',
+            },
+        ];
+    }, [sales, purchases, receivables, payables]);
+
+    const activities = useMemo(() => {
+        const salesItems = sales.slice(0, 4).map((sale) => ({
+            id: `sale-${sale.id}`,
+            type: 'sale' as const,
+            responsible: 'Sistema',
+            description: `Venda #${sale.id}`,
+            amount: formatCurrencyBR(sale.total),
+            time: sale.date,
+        }));
+        const purchaseItems = purchases.slice(0, 4).map((purchase) => ({
+            id: `purchase-${purchase.id}`,
+            type: 'purchase' as const,
+            responsible: 'Sistema',
+            description: `Compra #${purchase.id}`,
+            amount: formatCurrencyBR(purchase.total),
+            time: purchase.date,
+        }));
+
+        return [...salesItems, ...purchaseItems]
+            .sort((a, b) => b.time.localeCompare(a.time))
+            .slice(0, 6);
+    }, [sales, purchases]);
+
+    const alerts = useMemo(
+        () => [
+            {
+                id: 'late-payments',
+                label: 'Pagamentos atrasados',
+                value: payables.filter((p) => p.status === 'overdue').length,
+            },
+            {
+                id: 'undelivered-orders',
+                label: 'Pedidos não entregues',
+                value: purchases.filter((p) => p.status === 'pending').length,
+            },
+            {
+                id: 'orders-to-confirm',
+                label: 'Pedidos a confirmar',
+                value: sales.filter((s) => s.status === 'pending').length,
+            },
+            {
+                id: 'out-of-stock-products',
+                label: 'Produtos sem estoque',
+                value: products.filter((p) => p.stock <= 0).length,
+            },
+        ],
+        [payables, purchases, sales, products],
+    );
+
+    const charts = useMemo(() => {
+        const salesSeries = sales
+            .slice(-12)
+            .map((sale) => ({ date: sale.date, value: sale.total }));
+        const profitSeries = sales
+            .slice(-12)
+            .map((sale) => ({ date: sale.date, value: sale.total * 0.3 }));
+
+        return [
+            {
+                id: 'vendas' as const,
+                title: 'Vendas no período',
+                summary: formatCurrencyBR(
+                    salesSeries.reduce((sum, point) => sum + point.value, 0),
+                ),
+                description: 'Volume de vendas conforme o filtro aplicado.',
+                color: '#f97316',
+                series: salesSeries.map((point) => ({
+                    date: point.date,
+                    label: dateToLabel(point.date),
+                    value: point.value,
+                })),
+            },
+            {
+                id: 'lucro' as const,
+                title: 'Lucro no período',
+                summary: formatCurrencyBR(
+                    profitSeries.reduce((sum, point) => sum + point.value, 0),
+                ),
+                description: 'Estimativa de lucro com base nas vendas.',
+                color: '#22c55e',
+                series: profitSeries.map((point) => ({
+                    date: point.date,
+                    label: dateToLabel(point.date),
+                    value: point.value,
+                })),
+            },
+        ];
+    }, [sales]);
+
     return (
         <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>
             <PageContent>
                 <DashboardHeader
                     title={`Bem-vindo, ${userName}`}
-                    description="Aqui está uma visão geral do seu negócio."
+                    description={`Resumo do negócio (${customers.length} clientes).`}
                 >
                     <div className="flex flex-col gap-3 pt-4 md:flex-row md:items-center md:justify-between">
                         <ViewSwitcher view={view} onViewChange={setView} />
@@ -67,16 +232,10 @@ export default function DashboardPage() {
                             <PeriodFilter
                                 period={period}
                                 customRange={customRange}
-                                onPeriodChange={(
-                                    nextPeriod,
-                                    nextCustomRange,
-                                ) => {
+                                onPeriodChange={(nextPeriod, nextCustomRange) => {
                                     setPeriod(nextPeriod);
 
-                                    if (
-                                        nextPeriod === 'custom' &&
-                                        nextCustomRange
-                                    ) {
+                                    if (nextPeriod === 'custom' && nextCustomRange) {
                                         setCustomRange(nextCustomRange);
                                     }
                                 }}
@@ -90,38 +249,32 @@ export default function DashboardPage() {
                         <MetricsGrid metrics={metrics} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
-                                <RecentActivity activities={recentActivity} />
+                                <RecentActivity activities={activities} />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
-                                <h3 className="mb-4 font-semibold">
-                                    Alertas e lembretes
-                                </h3>
+                                <h3 className="mb-4 font-semibold">Alertas e lembretes</h3>
                                 <div className="space-y-4">
-                                    {alerts.map((alert) => {
-                                        return (
-                                            <button
-                                                type="button"
-                                                key={alert.id}
-                                                onClick={() =>
-                                                    navigateByAlert(alert.id)
-                                                }
-                                                className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                                    {alerts.map((alert) => (
+                                        <button
+                                            type="button"
+                                            key={alert.id}
+                                            onClick={() => navigateByAlert(alert.id)}
+                                            className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                                        >
+                                            <span className="text-sm font-medium text-foreground">
+                                                {alert.label}
+                                            </span>
+                                            <span
+                                                className={`inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
+                                                    alert.value > 0
+                                                        ? 'bg-orange-500 text-white'
+                                                        : 'bg-muted text-foreground'
+                                                }`}
                                             >
-                                                <span className="text-sm font-medium text-foreground">
-                                                    {alert.label}
-                                                </span>
-                                                <span
-                                                    className={`inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
-                                                        alert.value > 0
-                                                            ? 'bg-orange-500 text-white'
-                                                            : 'bg-muted text-foreground'
-                                                    }`}
-                                                >
-                                                    {alert.value}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
+                                                {alert.value}
+                                            </span>
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -131,38 +284,32 @@ export default function DashboardPage() {
                         <ChartsPanel charts={charts} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
-                                <RecentActivity activities={recentActivity} />
+                                <RecentActivity activities={activities} />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
-                                <h3 className="mb-4 font-semibold">
-                                    Alertas e lembretes
-                                </h3>
+                                <h3 className="mb-4 font-semibold">Alertas e lembretes</h3>
                                 <div className="space-y-4">
-                                    {alerts.map((alert) => {
-                                        return (
-                                            <button
-                                                type="button"
-                                                key={alert.id}
-                                                onClick={() =>
-                                                    navigateByAlert(alert.id)
-                                                }
-                                                className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                                    {alerts.map((alert) => (
+                                        <button
+                                            type="button"
+                                            key={alert.id}
+                                            onClick={() => navigateByAlert(alert.id)}
+                                            className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                                        >
+                                            <span className="text-sm font-medium text-foreground">
+                                                {alert.label}
+                                            </span>
+                                            <span
+                                                className={`inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
+                                                    alert.value > 0
+                                                        ? 'bg-orange-500 text-white'
+                                                        : 'bg-muted text-foreground'
+                                                }`}
                                             >
-                                                <span className="text-sm font-medium text-foreground">
-                                                    {alert.label}
-                                                </span>
-                                                <span
-                                                    className={`inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
-                                                        alert.value > 0
-                                                            ? 'bg-orange-500 text-white'
-                                                            : 'bg-muted text-foreground'
-                                                    }`}
-                                                >
-                                                    {alert.value}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
+                                                {alert.value}
+                                            </span>
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
