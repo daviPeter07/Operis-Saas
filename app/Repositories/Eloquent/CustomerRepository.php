@@ -10,7 +10,7 @@ class CustomerRepository implements CustomerRepositoryInterface
 {
     public function paginateByCompany(int $companyId): LengthAwarePaginator
     {
-        return Customer::query()->forCompany($companyId)->latest()->paginate();
+        return Customer::query()->forCompany($companyId)->latest()->paginate(15);
     }
 
     public function createForCompany(int $companyId, array $data): Customer
