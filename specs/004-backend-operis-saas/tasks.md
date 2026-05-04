@@ -63,21 +63,21 @@
 
 ### Tests for User Story 1
 
-- [ ] T019 [P] [US1] Criar teste de criacao de empresa no onboarding em `tests/Feature/Onboarding/CreateCompanyTest.php`.
-- [ ] T020 [P] [US1] Criar teste de confirmacao de codigo valido/expirado em `tests/Feature/Onboarding/VerifyCompanyCodeTest.php`.
-- [ ] T021 [P] [US1] Criar teste de limite de reenvio (5/h + 1 min cooldown) em `tests/Feature/Onboarding/ResendCompanyCodeLimitTest.php`.
+- [x] T019 [P] [US1] Criar teste de criacao de empresa no onboarding em `tests/Feature/Onboarding/CreateCompanyTest.php`.
+- [x] T020 [P] [US1] Criar teste de confirmacao de codigo valido/expirado em `tests/Feature/Onboarding/VerifyCompanyCodeTest.php`.
+- [x] T021 [P] [US1] Criar teste de limite de reenvio (5/h + 1 min cooldown) em `tests/Feature/Onboarding/ResendCompanyCodeLimitTest.php`.
 
 ### Implementation for User Story 1
 
-- [ ] T022 [US1] Criar `CompanyOnboardingRequest` em `app/Http/Requests/Onboarding/CompanyOnboardingRequest.php`.
-- [ ] T023 [US1] Criar `CompanyVerificationRequest` em `app/Http/Requests/Onboarding/CompanyVerificationRequest.php`.
-- [ ] T024 [US1] Criar `CompanyOnboardingService` em `app/Services/Onboarding/CompanyOnboardingService.php`.
-- [ ] T025 [US1] Criar `CompanyVerificationService` em `app/Services/Onboarding/CompanyVerificationService.php`.
-- [ ] T026 [US1] Implementar controller de criacao de empresa em `app/Http/Controllers/Api/Onboarding/CompanyOnboardingController.php`.
-- [ ] T027 [US1] Implementar controller de confirmacao de codigo em `app/Http/Controllers/Api/Onboarding/CompanyVerificationCodeController.php`.
-- [ ] T028 [US1] Implementar controller de reenvio em `app/Http/Controllers/Api/Onboarding/CompanyVerificationResendController.php`.
-- [ ] T029 [US1] Adicionar resources de onboarding em `app/Http/Resources/Companies/`.
-- [ ] T030 [US1] Registrar rotas de onboarding em `routes/api.php`.
+- [x] T022 [US1] Criar `CompanyOnboardingRequest` em `app/Http/Requests/Onboarding/CompanyOnboardingRequest.php`.
+- [x] T023 [US1] Criar `CompanyVerificationRequest` em `app/Http/Requests/Onboarding/CompanyVerificationRequest.php`.
+- [x] T024 [US1] Criar `CompanyOnboardingService` em `app/Services/Onboarding/CompanyOnboardingService.php`.
+- [x] T025 [US1] Criar `CompanyVerificationService` em `app/Services/Onboarding/CompanyVerificationService.php`.
+- [x] T026 [US1] Implementar controller de criacao de empresa em `app/Http/Controllers/Api/Onboarding/CompanyOnboardingController.php`.
+- [x] T027 [US1] Implementar controller de confirmacao de codigo em `app/Http/Controllers/Api/Onboarding/CompanyVerificationCodeController.php`.
+- [x] T028 [US1] Implementar controller de reenvio em `app/Http/Controllers/Api/Onboarding/CompanyVerificationResendController.php`.
+- [x] T029 [US1] Adicionar resources de onboarding em `app/Http/Resources/Companies/`.
+- [x] T030 [US1] Registrar rotas de onboarding em `routes/api.php`.
 
 **Checkpoint**: Onboarding funcional e bloqueios de acesso aplicados.
 
