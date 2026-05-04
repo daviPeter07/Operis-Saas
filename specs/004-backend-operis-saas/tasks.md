@@ -162,28 +162,28 @@
 
 ### Tests for User Story 4
 
-- [ ] T070 [P] [US4] Criar teste de conclusao de compra e entrada de estoque em `tests/Feature/Purchases/PurchaseCompletionStockTest.php`.
-- [ ] T071 [P] [US4] Criar teste de atualizacao opcional de custo de produto em `tests/Feature/Purchases/PurchaseOptionalCostUpdateTest.php`.
-- [ ] T072 [P] [US4] Criar teste de cancelamento de compra e estorno em `tests/Feature/Purchases/PurchaseCancelRollbackTest.php`.
-- [ ] T073 [P] [US4] Criar teste de geracao/recalculo de contas a pagar em `tests/Feature/Finance/PayableFromPurchaseTest.php`.
-- [ ] T074 [P] [US4] Criar teste de baixa manual de conta a pagar em `tests/Feature/Finance/AccountPayableManualSettleTest.php`.
+- [x] T070 [P] [US4] Criar teste de conclusao de compra e entrada de estoque em `tests/Feature/Purchases/PurchaseCompletionStockTest.php`.
+- [x] T071 [P] [US4] Criar teste de atualizacao opcional de custo de produto em `tests/Feature/Purchases/PurchaseOptionalCostUpdateTest.php`.
+- [x] T072 [P] [US4] Criar teste de cancelamento de compra e estorno em `tests/Feature/Purchases/PurchaseCancelRollbackTest.php`.
+- [x] T073 [P] [US4] Criar teste de geracao/recalculo de contas a pagar em `tests/Feature/Finance/PayableFromPurchaseTest.php`.
+- [x] T074 [P] [US4] Criar teste de baixa manual de conta a pagar em `tests/Feature/Finance/AccountPayableManualSettleTest.php`.
 
 ### Implementation for User Story 4
 
-- [ ] T075 [P] [US4] Criar migrations de compras e pagaveis em `database/migrations/*_create_purchases_table.php`, `*_create_purchase_items_table.php`, `*_create_purchase_payments_table.php`, `*_create_account_payables_table.php`.
-- [ ] T076 [P] [US4] Criar models `Purchase`, `PurchaseItem`, `PurchasePayment`, `AccountPayable` em `app/Models/`.
-- [ ] T077 [P] [US4] Criar enum `PurchaseStatus` em `app/Enums/PurchaseStatus.php`.
-- [ ] T078 [P] [US4] Criar requests de compra em `app/Http/Requests/Purchases/`.
-- [ ] T079 [P] [US4] Criar requests de baixa manual em `app/Http/Requests/Finance/AccountPayableSettleRequest.php`.
-- [ ] T080 [P] [US4] Criar resources de compra/pagavel em `app/Http/Resources/Purchases/` e `app/Http/Resources/Finance/`.
-- [ ] T081 [P] [US4] Criar policies de compra/pagavel em `app/Policies/PurchasePolicy.php` e `app/Policies/AccountPayablePolicy.php`.
-- [ ] T082 [P] [US4] Criar repositories de compra/pagavel em `app/Repositories/Contracts/` e `app/Repositories/Eloquent/`.
-- [ ] T083 [US4] Implementar `PurchaseService` em `app/Services/Purchases/PurchaseService.php`.
-- [ ] T084 [US4] Implementar `PayableService` em `app/Services/Finance/PayableService.php`.
-- [ ] T085 [US4] Implementar controllers de compra em `app/Http/Controllers/Api/Purchases/PurchaseController.php` e `.../PurchaseCancelController.php`.
-- [ ] T086 [US4] Implementar controller de contas a pagar em `app/Http/Controllers/Api/Finance/AccountPayableController.php`.
-- [ ] T087 [US4] Implementar controller de baixa manual em `app/Http/Controllers/Api/Finance/AccountPayablePaymentController.php`.
-- [ ] T088 [US4] Registrar rotas de compras/pagaveis em `routes/api.php`.
+- [x] T075 [P] [US4] Criar migrations de compras e pagaveis em `database/migrations/*_create_purchases_table.php`, `*_create_purchase_items_table.php`, `*_create_purchase_payments_table.php`, `*_create_account_payables_table.php`.
+- [x] T076 [P] [US4] Criar models `Purchase`, `PurchaseItem`, `PurchasePayment`, `AccountPayable` em `app/Models/`.
+- [x] T077 [P] [US4] Criar enum `PurchaseStatus` em `app/Enums/PurchaseStatus.php`.
+- [x] T078 [P] [US4] Criar requests de compra em `app/Http/Requests/Purchases/`.
+- [x] T079 [P] [US4] Criar requests de baixa manual em `app/Http/Requests/Finance/AccountPayableSettleRequest.php`.
+- [x] T080 [P] [US4] Criar resources de compra/pagavel em `app/Http/Resources/Purchases/` e `app/Http/Resources/Finance/`.
+- [x] T081 [P] [US4] Criar policies de compra/pagavel em `app/Policies/PurchasePolicy.php` e `app/Policies/AccountPayablePolicy.php`.
+- [x] T082 [P] [US4] Criar repositories de compra/pagavel em `app/Repositories/Contracts/` e `app/Repositories/Eloquent/`.
+- [x] T083 [US4] Implementar `PurchaseService` em `app/Services/Purchases/PurchaseService.php`.
+- [x] T084 [US4] Implementar `PayableService` em `app/Services/Finance/PayableService.php`.
+- [x] T085 [US4] Implementar controllers de compra em `app/Http/Controllers/Api/Purchases/PurchaseController.php` e `.../PurchaseCancelController.php`.
+- [x] T086 [US4] Implementar controller de contas a pagar em `app/Http/Controllers/Api/Finance/AccountPayableController.php`.
+- [x] T087 [US4] Implementar controller de baixa manual em `app/Http/Controllers/Api/Finance/AccountPayablePaymentController.php`.
+- [x] T088 [US4] Registrar rotas de compras/pagaveis em `routes/api.php`.
 
 **Checkpoint**: Compras e contas a pagar funcionais com baixa manual.
 

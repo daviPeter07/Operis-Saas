@@ -10,7 +10,7 @@ class StockMovementService
 {
     public function __construct(private readonly StockMovementRepositoryInterface $stockMovements) {}
 
-    public function register(Product $product, float $delta, StockMovementType $type, int $referenceId, ?int $userId = null): void
+    public function register(Product $product, float $delta, StockMovementType $type, int $referenceId, ?int $userId = null, string $referenceType = 'sale'): void
     {
         $product->update([
             'stock' => (float) $product->stock + $delta,
@@ -21,7 +21,7 @@ class StockMovementService
             'product_id' => $product->id,
             'type' => $type->value,
             'quantity_delta' => $delta,
-            'reference_type' => 'sale',
+            'reference_type' => $referenceType,
             'reference_id' => $referenceId,
             'created_by' => $userId,
         ]);
