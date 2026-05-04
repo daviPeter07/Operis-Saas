@@ -40,12 +40,14 @@ export function computePurchaseTotals(
             const product = products.find(
                 (entry) => entry.id === item.productId,
             );
+
             if (!product) {
                 return acc;
             }
 
             acc.items += item.quantity;
             acc.total += product.cost * item.quantity;
+
             return acc;
         },
         { items: 0, total: 0 },

@@ -1,22 +1,22 @@
-import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
-import type { Purchase, Supplier } from '@/lib/mocks/mock-data';
-import { GenericTable } from '../generic-table';
-import type { Column } from '../generic-table';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { StatusBadge } from '@/components/common/status-badge';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
 import {
     formatDateBR,
     formatCurrencyBR,
     translatePaymentMethod,
     formatQuantityWithUnit,
 } from '@/lib/format';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import { mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
+import type { Purchase, Supplier } from '@/lib/mocks/mock-data';
 import { PURCHASE_STATUS_VALUES, PURCHASE_PAYMENT_METHOD_VALUES } from '@/types/api';
-import { StatusBadge } from '@/components/common/status-badge';
-import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
-import { toast } from 'sonner';
 import { createSupplierRecord } from '@/utils/suppliers';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
+import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
 
 export function AccountsPayableModule() {
     const [purchases, setPurchases] = useState(() => [...mockPurchases]);
@@ -28,6 +28,7 @@ export function AccountsPayableModule() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (params.get('action') === 'create-expense') {
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/accounts-payable');
@@ -36,11 +37,13 @@ export function AccountsPayableModule() {
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const newSelected = new Set(selectedIds);
+
         if (checked) {
             newSelected.add(id);
         } else {
             newSelected.delete(id);
         }
+
         setSelectedIds(newSelected);
     };
 

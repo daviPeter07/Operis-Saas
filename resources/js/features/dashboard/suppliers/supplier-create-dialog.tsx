@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { initialSupplierForm } from '@/constants/dashboard-form-initials';
 import { useFormState } from '@/hooks/use-form-state';
-import { Supplier } from '@/lib/mocks/mock-data';
+import type { Supplier } from '@/lib/mocks/mock-data';
 import type { SupplierCreateDialogProps } from '@/types/dashboard-forms';
 import { composeSupplierAddress } from '@/utils/suppliers';
 

@@ -15,7 +15,7 @@ import {
     ChevronDown,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useWorkspace } from '@/features/dashboard/workspace-context';
+import { toast } from 'sonner';
 import {
     Button,
     Checkbox,
@@ -27,7 +27,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui';
-import { toast } from 'sonner';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 
 export function SettingsModule() {
     const { canAccessSettings, currentCompany } = useWorkspace();

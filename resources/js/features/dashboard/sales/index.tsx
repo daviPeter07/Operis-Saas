@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
+import { StatusBadge } from '@/components/common/status-badge';
+import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
 import {
     formatCurrencyBR,
     formatDateBR,
     formatQuantityWithUnit,
     translatePaymentMethod,
 } from '@/lib/format';
-import { StatusBadge } from '@/components/common/status-badge';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
 import { mockClients, mockProducts, mockSales } from '@/lib/mocks/mock-data';
 import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
+import type { SalesRecord } from '@/types/sales-dialog';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SalesHeader } from './sales-header';
-import type { SalesRecord } from '@/types/sales-dialog';
-import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 
 export function SalesModule() {
     const [sales, setSales] = useState<SalesRecord[]>(() =>
@@ -31,6 +31,7 @@ export function SalesModule() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (params.get('action') === 'create-sale') {
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/sales');

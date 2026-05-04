@@ -1,14 +1,14 @@
-import { mockSuppliers } from '@/lib/mocks/mock-data';
+import { useMemo, useState } from 'react';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { STATE_OPTIONS } from '@/constants/location-source';
+import { mockSuppliers } from '@/lib/mocks/mock-data';
 import type { Supplier } from '@/lib/mocks/mock-data';
-import { useMemo, useState } from 'react';
-import { createSupplierRecord } from '@/utils/suppliers';
 import { inferPersonType } from '@/utils/clients';
+import { createSupplierRecord } from '@/utils/suppliers';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SupplierCreateDialog } from './supplier-create-dialog';
-import { PersonTypeBadge } from '@/components/common/person-type-badge';
 
 export function SuppliersModule() {
     const [suppliers, setSuppliers] = useState(() => [...mockSuppliers]);

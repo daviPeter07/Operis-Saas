@@ -1,4 +1,5 @@
-import * as React from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
     Barcode,
     CalendarDays,
@@ -10,20 +11,7 @@ import {
     UserPlus,
     X,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import type { Client, Product } from '@/lib/mocks/mock-data';
-import { formatCurrencyBR } from '@/lib/format';
-import type {
-    SaleDiscountType,
-    SalesLineItem,
-    SalesRecord,
-} from '@/types/sales-dialog';
-import { useSalesDialog } from '@/hooks/use-sales-dialog';
-import {
-    filterProductsByQuery,
-    paymentMethodOptions,
-} from '@/utils/sales-dialog';
+import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -54,6 +42,18 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useSalesDialog } from '@/hooks/use-sales-dialog';
+import { formatCurrencyBR } from '@/lib/format';
+import type { Client, Product } from '@/lib/mocks/mock-data';
+import type {
+    SaleDiscountType,
+    SalesLineItem,
+    SalesRecord,
+} from '@/types/sales-dialog';
+import {
+    filterProductsByQuery,
+    paymentMethodOptions,
+} from '@/utils/sales-dialog';
 import { QuickCreateDialog } from './quick-create-dialog';
 
 interface SalesDialogProps {
@@ -636,6 +636,7 @@ export function SalesDialog({
                                                                 .slice(0, 10),
                                                         );
                                                     }
+
                                                     setCalendarOpen(false);
                                                 }}
                                             />
@@ -888,6 +889,7 @@ export function SalesDialog({
                                 new Date().toISOString().slice(0, 10),
                         });
                         selectClientById(createdClient.id);
+
                         return createdClient;
                     }}
                 />
@@ -922,6 +924,7 @@ export function SalesDialog({
                                 new Date().toISOString().slice(0, 10),
                         });
                         selectProductById(createdProduct.id);
+
                         return createdProduct;
                     }}
                 />

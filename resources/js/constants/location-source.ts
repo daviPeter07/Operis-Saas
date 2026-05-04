@@ -61,8 +61,11 @@ export const CITIES_BY_STATE: Record<string, string[]> = {
 };
 
 export function getCityOptionsByState(state: string): { value: string; label: string }[] {
-    if (!state) return [];
+    if (!state) {
+return [];
+}
 
     const cities = CITIES_BY_STATE[state] || [];
+
     return cities.map((value) => ({ value, label: value })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 }

@@ -1,7 +1,4 @@
 import { Eye, EyeOff } from 'lucide-react';
-import type { Product } from '@/lib/mocks/mock-data';
-import type { SaleDiscountType } from '@/types/sales-dialog';
-import { formatCurrencyBR } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -13,6 +10,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { formatCurrencyBR } from '@/lib/format';
+import type { Product } from '@/lib/mocks/mock-data';
+import type { SaleDiscountType } from '@/types/sales-dialog';
 import { applyFieldMask, onlyDigits } from '@/utils/form-fields';
 
 interface DiscountDialogProps {

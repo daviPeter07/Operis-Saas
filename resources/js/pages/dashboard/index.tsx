@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { DashboardHeader } from '@/components/dashboard-header';
 import { ChartsPanel } from '@/features/dashboard/overview/charts-panel';
 import { MetricsGrid } from '@/features/dashboard/overview/metrics-grid';
 import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
@@ -11,7 +12,6 @@ import type {
 import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
 import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
 import { PageContent } from '@/features/dashboard/page-content';
-import { DashboardHeader } from '@/components/dashboard-header';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
 import AppLayout from '@/layouts/app-layout';
 import {
@@ -44,6 +44,7 @@ export default function DashboardPage() {
 
         if (!target) {
             toast.warning('Este alerta ainda nao possui destino configurado.');
+
             return;
         }
 

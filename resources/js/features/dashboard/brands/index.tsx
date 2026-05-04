@@ -1,7 +1,7 @@
+import { router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import { mockBrands } from '@/lib/mocks/mock-data';
 import type { Brand } from '@/lib/mocks/mock-data';
-import { useEffect, useState } from 'react';
-import { router } from '@inertiajs/react';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -11,6 +11,7 @@ export function BrandsModule() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (params.get('action') === 'create-brand') {
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/brands');

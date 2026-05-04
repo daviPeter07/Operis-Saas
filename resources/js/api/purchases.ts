@@ -14,6 +14,7 @@ export function usePurchasesQuery(options: UsePurchasesOptions = {}) {
         queryKey: purchasesQueryKey(options),
         queryFn: async () => {
             const { mockPurchases } = await import('@/lib/mocks/mock-data');
+
             return {
                 data: mockPurchases,
                 meta: { total: mockPurchases.length, page: 1, perPage: 25 },

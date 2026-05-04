@@ -21,8 +21,8 @@ import { initialClientForm } from '@/constants/dashboard-form-initials';
 import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
 import { useFormState } from '@/hooks/use-form-state';
 import type { ClientCreateDialogProps } from '@/types/dashboard-forms';
-import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 import { mapClientFormToPayload } from '@/utils/clients';
+import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 
 export function ClientCreateDialog({
     open,

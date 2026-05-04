@@ -1,8 +1,5 @@
 import { useState } from 'react';
-import { mockSales } from '@/lib/mocks/mock-data';
-import type { Sale } from '@/lib/mocks/mock-data';
-import { GenericTable } from '../generic-table';
-import type { Column } from '../generic-table';
+import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { STATUS_OPTIONS } from '@/constants/status';
 import {
@@ -10,7 +7,10 @@ import {
     formatCurrencyBR,
     translatePaymentMethod,
 } from '@/lib/format';
-import { toast } from 'sonner';
+import { mockSales } from '@/lib/mocks/mock-data';
+import type { Sale } from '@/lib/mocks/mock-data';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
 
 export function AccountsReceivableModule() {
     const [sales, setSales] = useState(() => [...mockSales]);
@@ -18,11 +18,13 @@ export function AccountsReceivableModule() {
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const newSelected = new Set(selectedIds);
+
         if (checked) {
             newSelected.add(id);
         } else {
             newSelected.delete(id);
         }
+
         setSelectedIds(newSelected);
     };
 

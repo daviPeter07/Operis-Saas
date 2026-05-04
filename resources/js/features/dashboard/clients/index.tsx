@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { mockClients } from '@/lib/mocks/mock-data';
 import type { Client } from '@/lib/mocks/mock-data';
-import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
-import { createClientRecord, inferClientPersonType } from '@/utils/clients';
 import type { ClientCreateDialogPayload } from '@/types/dashboard-forms';
+import { createClientRecord, inferClientPersonType } from '@/utils/clients';
+import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { ClientCreateDialog } from './client-create-dialog';
-import { PersonTypeBadge } from '@/components/common/person-type-badge';
 
 type ClientRow = Client & {
     personType: 'pf' | 'pj';
@@ -27,6 +27,7 @@ export function ClientsModule() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (params.get('action') === 'create-client') {
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/clients');

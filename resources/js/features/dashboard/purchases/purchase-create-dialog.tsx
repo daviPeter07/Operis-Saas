@@ -1,12 +1,11 @@
-import * as React from 'react';
 import { Search } from 'lucide-react';
-import { useFormState } from '@/hooks/use-form-state';
-import { useQuickCreateSupplier } from '@/hooks/use-quick-create-supplier';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatCurrencyBR } from '@/lib/format';
 import { initialPurchaseForm } from '@/constants/dashboard-form-initials';
-import { FinancialEntryDialog } from '../shared/financial-entry-dialog';
+import { useFormState } from '@/hooks/use-form-state';
+import { useQuickCreateSupplier } from '@/hooks/use-quick-create-supplier';
+import { formatCurrencyBR } from '@/lib/format';
 import type {
     PurchaseCreateDialogProps,
     PurchaseLineItem,
@@ -15,6 +14,7 @@ import {
     computePurchaseTotals,
     mapFinancialFormToPurchase,
 } from '@/utils/dashboard-financial';
+import { FinancialEntryDialog } from '../shared/financial-entry-dialog';
 
 export function PurchaseCreateDialog({
     open,
@@ -90,6 +90,7 @@ export function PurchaseCreateDialog({
         setItems((prev) => {
             const next = [...prev];
             next[index] = { ...next[index], [key]: value };
+
             return next;
         });
     };
@@ -98,6 +99,7 @@ export function PurchaseCreateDialog({
         setItems((prev) => {
             const next = [...prev];
             next.splice(index, 1);
+
             return next.length > 0 ? next : [{ productId: '', quantity: '1' }];
         });
     };
@@ -242,6 +244,7 @@ export function PurchaseCreateDialog({
                                                             removeLine(
                                                                 lineIndex,
                                                             );
+
                                                             return;
                                                         }
 

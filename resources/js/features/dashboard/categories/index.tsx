@@ -1,7 +1,7 @@
+import { router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import { mockCategories } from '@/lib/mocks/mock-data';
 import type { Category } from '@/lib/mocks/mock-data';
-import { useEffect, useState } from 'react';
-import { router } from '@inertiajs/react';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -11,6 +11,7 @@ export function CategoriesModule() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (params.get('action') === 'create-category') {
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/categories');

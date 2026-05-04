@@ -19,6 +19,7 @@ export function useSalesQuery(options: UseSalesOptions = {}) {
             // return response.json() as Promise<{ data: Sale[]; meta: PaginationMeta }>;
 
             const { mockSales } = await import('@/lib/mocks/mock-data');
+
             return {
                 data: mockSales,
                 meta: { total: mockSales.length, page: 1, perPage: 25 },

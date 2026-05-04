@@ -1,5 +1,4 @@
 import { Barcode, PackagePlus, Search } from 'lucide-react';
-import type { Product } from '@/lib/mocks/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -8,6 +7,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatCurrencyBR } from '@/lib/format';
+import type { Product } from '@/lib/mocks/mock-data';
 import { cn } from '@/lib/utils';
 
 interface CatalogPanelProps {

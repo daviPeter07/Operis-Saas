@@ -1,7 +1,10 @@
+import { UserPlus } from 'lucide-react';
 import * as React from 'react';
 import { DatePickerInput } from '@/components/date/date-picker-input';
+import { CardPaymentFields } from '@/components/payment/card-payment-fields';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -18,21 +21,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Separator } from '@/components/ui/separator';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS } from '@/constants/status';
-import type { FinancialEntryForm } from '@/types/dashboard-forms';
-import type { Supplier } from '@/lib/mocks/mock-data';
-import { UserPlus } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { STATUS_OPTIONS } from '@/constants/status';
 import { formatCurrencyBR } from '@/lib/format';
-import { CardPaymentFields } from '@/components/payment/card-payment-fields';
+import type { Supplier } from '@/lib/mocks/mock-data';
+import type { FinancialEntryForm } from '@/types/dashboard-forms';
 
 type FinancialEntryDialogProps = {
     open: boolean;
