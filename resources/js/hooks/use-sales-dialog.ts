@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
 import type { SaleDiscountType, SalesLineItem } from '@/types/sales-dialog';
+import { parseCurrencyInput, parsePercentInput } from '@/utils/form-fields';
 import {
     buildClientFields,
     buildProductFields,
@@ -12,7 +13,6 @@ import {
     makeSaleLineItem,
     todayString,
 } from '../utils/sales-dialog';
-import { parseCurrencyInput, parsePercentInput } from '@/utils/form-fields';
 
 interface UseSalesDialogArgs {
     open: boolean;
