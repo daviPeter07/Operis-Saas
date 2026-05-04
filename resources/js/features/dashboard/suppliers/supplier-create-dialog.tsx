@@ -13,9 +13,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { initialSupplierForm } from '@/constants/dashboard-form-initials';
 import { useFormState } from '@/hooks/use-form-state';
-import type { Supplier } from '@/lib/mocks/mock-data';
-import type { SupplierCreateDialogProps } from '@/types/dashboard-forms';
-import { composeSupplierAddress } from '@/utils/suppliers';
+
+type SupplierCreatePayload = {
+    name: string;
+    email: string;
+    phone: string;
+    document: string;
+};
+
+type SupplierCreateDialogProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSubmit: (data: SupplierCreatePayload) => void;
+};
 
 export function SupplierCreateDialog({
     open,
@@ -39,19 +49,12 @@ export function SupplierCreateDialog({
                     onSubmit={(event) => {
                         event.preventDefault();
 
-                        const payload = {
-                            id: '',
-                            createdAt: '',
+                        onSubmit({
                             name: form.name,
                             email: form.email,
                             phone: form.phone,
                             document: form.document,
-                            state: form.state,
-                            city: form.city,
-                            address: composeSupplierAddress(form),
-                        } as Supplier;
-
-                        onSubmit(payload);
+                        });
                     }}
                 >
                     <div className="grid gap-4 sm:grid-cols-2">

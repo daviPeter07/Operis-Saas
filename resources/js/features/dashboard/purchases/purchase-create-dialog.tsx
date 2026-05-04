@@ -131,7 +131,15 @@ export function PurchaseCreateDialog({
                 subtotal: product.cost * item.quantity,
             };
         })
-        .filter(Boolean);
+        .filter(
+            (
+                item,
+            ): item is {
+                product: (typeof products)[number];
+                quantity: number;
+                subtotal: number;
+            } => item !== null,
+        );
 
     return (
         <FinancialEntryDialog

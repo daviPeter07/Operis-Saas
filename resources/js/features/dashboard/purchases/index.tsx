@@ -1,51 +1,49 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
+import { usePurchases } from '@/hooks/use-purchases';
+import { useSuppliers } from '@/hooks/use-suppliers';
 import {
     formatDateBR,
     formatCurrencyBR,
     translatePaymentMethod,
-    formatQuantityWithUnit,
 } from '@/lib/format';
-import {
-    mockProducts,
-    mockPurchases,
-    mockSuppliers,
-} from '@/lib/mocks/mock-data';
-import type { Product, Purchase, Supplier } from '@/lib/mocks/mock-data';
-import {
-    PURCHASE_STATUS_VALUES,
-    PURCHASE_PAYMENT_METHOD_VALUES,
-} from '@/types/api';
-import type { PurchaseLineItem } from '@/types/dashboard-forms';
-import { createSupplierRecord } from '@/utils/suppliers';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { PurchaseCreateDialog } from './purchase-create-dialog';
+
+type PurchaseRow = {
+    id: string;
+    supplier_id: number;
+    supplierName: string;
+    total: number;
+    status: string;
+    payment_method: string;
+    due_date: string;
+    date: string;
+};
 
 export function PurchasesModule() {
-    const [purchases, setPurchases] = useState(() => [...mockPurchases]);
-    const [products, setProducts] = useState<Product[]>(() => [
-        ...mockProducts,
-    ]);
-    const [suppliers, setSuppliers] = useState<Supplier[]>(() => [
-        ...mockSuppliers,
-    ]);
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const { data: purchases = [] } = usePurchases();
+    const { data: suppliers = [] } = useSuppliers();
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
+    const suppliersById = new Map(
+        suppliers.map((supplier) => [supplier.id, supplier.name]),
+    );
 
-        if (params.get('action') === 'create-purchase') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setIsCreateOpen(true);
-            window.history.replaceState({}, '', '/dashboard/purchases');
-        }
-    }, []);
+    const rows: PurchaseRow[] = purchases.map((purchase) => ({
+        id: String(purchase.id),
+        supplier_id: purchase.supplier_id,
+        supplierName:
+            suppliersById.get(purchase.supplier_id) ||
+            `#${purchase.supplier_id}`,
+        total: purchase.total,
+        status: purchase.status,
+        payment_method: purchase.payment_method,
+        due_date: purchase.due_date,
+        date: purchase.date,
+    }));
 
-    const columns: Column<Purchase>[] = [
+    const columns: Column<PurchaseRow>[] = [
         { key: 'supplierName', header: 'Fornecedor' },
         {
             key: 'total',
@@ -58,18 +56,18 @@ export function PurchasesModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'paymentMethod',
+            key: 'payment_method',
             header: 'Método',
             render: (val: unknown) => translatePaymentMethod(String(val)),
         },
         {
-            key: 'items',
-            header: 'Itens',
-            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
+            key: 'date',
+            header: 'Data',
+            render: (val: unknown) => formatDateBR(String(val)),
         },
         {
-            key: 'createdAt',
-            header: 'Data',
+            key: 'due_date',
+            header: 'Vencimento',
             render: (val: unknown) => formatDateBR(String(val)),
         },
     ];
@@ -82,95 +80,19 @@ export function PurchasesModule() {
             options: [...STATUS_OPTIONS],
         },
         {
-            key: 'paymentMethod',
+            key: 'payment_method',
             label: 'Método de Pagamento',
             type: 'select' as const,
             options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
 
-    const handleCreate = (data: Purchase) => {
-        const status = PURCHASE_STATUS_VALUES.includes(data.status)
-            ? data.status
-            : 'pending';
-        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(
-            data.paymentMethod,
-        )
-            ? data.paymentMethod
-            : 'pix';
-
-        const newPurchase: Purchase = {
-            id: crypto.randomUUID(),
-            supplierId: crypto.randomUUID(),
-            supplierName: String(data.supplierName || '').trim(),
-            total: Number(data.total || 0),
-            status,
-            paymentMethod,
-            items: Number(data.items || 1),
-            dueDate:
-                String(data.dueDate || '').trim() ||
-                new Date().toISOString().slice(0, 10),
-            createdAt:
-                String(data.createdAt || '').trim() ||
-                new Date().toISOString().slice(0, 10),
-        };
-
-        if (!newPurchase.supplierName) {
-            throw new Error('Informe o fornecedor');
-        }
-
-        setPurchases((previous) => [newPurchase, ...previous]);
-    };
-
-    const handleApplyStock = (lineItems: PurchaseLineItem[]) => {
-        if (lineItems.length === 0) {
-            return;
-        }
-
-        setProducts((previous) =>
-            previous.map((product) => {
-                const line = lineItems.find(
-                    (item) => item.productId === product.id,
-                );
-
-                if (!line) {
-                    return product;
-                }
-
-                return { ...product, stock: product.stock + line.quantity };
-            }),
-        );
-    };
-
-    const handleCreateSupplier = (data: Supplier): Supplier => {
-        const supplier = createSupplierRecord(data);
-
-        setSuppliers((previous) => [supplier, ...previous]);
-        toast.success('Fornecedor cadastrado com sucesso');
-
-        return supplier;
-    };
-
     return (
         <GenericTable
-            data={purchases}
+            data={rows}
             columns={columns}
             title="Compras"
             filterFields={filterFields}
-            onCreate={handleCreate}
-            isCreateOpen={isCreateOpen}
-            onCreateOpenChange={setIsCreateOpen}
-            createDialog={({ open, onOpenChange, onSubmit }) => (
-                <PurchaseCreateDialog
-                    open={open}
-                    onOpenChange={onOpenChange}
-                    onSubmit={onSubmit}
-                    products={products}
-                    suppliers={suppliers}
-                    onCreateSupplier={handleCreateSupplier}
-                    onApplyStock={handleApplyStock}
-                />
-            )}
         />
     );
 }

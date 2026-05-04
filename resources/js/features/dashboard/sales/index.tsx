@@ -1,45 +1,48 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { StatusBadge } from '@/components/common/status-badge';
-import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
+import { STATUS_OPTIONS } from '@/constants/status';
+import { useCustomers } from '@/hooks/use-customers';
+import { useSales } from '@/hooks/use-sales';
 import {
     formatCurrencyBR,
     formatDateBR,
-    formatQuantityWithUnit,
     translatePaymentMethod,
 } from '@/lib/format';
-import { mockClients, mockProducts, mockSales } from '@/lib/mocks/mock-data';
-import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
-import type { SalesRecord } from '@/types/sales-dialog';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SalesHeader } from './sales-header';
 
+type SaleRow = {
+    id: string;
+    customer_id: number;
+    clientName: string;
+    total: number;
+    status: string;
+    payment_method: string;
+    date: string;
+};
+
 export function SalesModule() {
-    const [sales, setSales] = useState<SalesRecord[]>(() =>
-        mockSales.map((sale) => ({
-            ...sale,
-            lineItems: [],
-        })),
+    const { data: sales = [] } = useSales();
+    const { data: customers = [] } = useCustomers();
+
+    const customerNameById = useMemo(
+        () => new Map(customers.map((customer) => [customer.id, customer.name])),
+        [customers],
     );
-    const [clients, setClients] = useState<Client[]>(() => [...mockClients]);
-    const [products, setProducts] = useState<Product[]>(() => [
-        ...mockProducts,
-    ]);
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
+    const rows: SaleRow[] = sales.map((sale) => ({
+        id: String(sale.id),
+        customer_id: sale.customer_id,
+        clientName: customerNameById.get(sale.customer_id) || `#${sale.customer_id}`,
+        total: sale.total,
+        status: sale.status,
+        payment_method: sale.payment_method,
+        date: sale.date,
+    }));
 
-        if (params.get('action') === 'create-sale') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setIsCreateOpen(true);
-            window.history.replaceState({}, '', '/dashboard/sales');
-        }
-    }, []);
-
-    const columns: Column<Sale>[] = [
+    const columns: Column<SaleRow>[] = [
         { key: 'clientName', header: 'Cliente' },
         {
             key: 'total',
@@ -52,51 +55,31 @@ export function SalesModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'paymentMethod',
-            header: 'Metodo',
+            key: 'payment_method',
+            header: 'Método',
             render: (val: unknown) => translatePaymentMethod(String(val)),
         },
         {
-            key: 'items',
-            header: 'Itens',
-            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
-        },
-        {
-            key: 'createdAt',
+            key: 'date',
             header: 'Data',
             render: (val: unknown) => formatDateBR(String(val)),
         },
     ];
 
     const metrics = useMemo(() => {
-        const salesCount = sales.length;
-        const salesTotal = sales.reduce((sum, sale) => sum + sale.total, 0);
-        const receivable = sales
+        const salesCount = rows.length;
+        const salesTotal = rows.reduce((sum, sale) => sum + sale.total, 0);
+        const receivable = rows
             .filter((sale) => sale.status === 'pending')
             .reduce((sum, sale) => sum + sale.total, 0);
-        const profit = sales.reduce<number>((sum, sale) => {
-            if (sale.lineItems.length > 0) {
-                return (
-                    sum +
-                    sale.lineItems.reduce<number>(
-                        (itemSum, item) =>
-                            itemSum +
-                            (item.unitPrice - item.unitCost) * item.quantity,
-                        0,
-                    )
-                );
-            }
-
-            return sum + sale.total * 0.32;
-        }, 0);
 
         return {
             salesCount,
             salesTotal,
-            profit,
+            profit: 0,
             receivable,
         };
-    }, [sales]);
+    }, [rows]);
 
     const filterFields = [
         { key: 'clientName', label: 'Cliente', type: 'text' as const },
@@ -107,91 +90,22 @@ export function SalesModule() {
             options: [...STATUS_OPTIONS],
         },
         {
-            key: 'paymentMethod',
-            label: 'Metodo de Pagamento',
+            key: 'payment_method',
+            label: 'Método de Pagamento',
             type: 'select' as const,
             options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
-
-    const handleCreate = (data: SalesRecord) => {
-        const status = STATUS_VALUES.includes(data.status)
-            ? data.status
-            : 'pending';
-
-        const paymentMethodOptions: Sale['paymentMethod'][] = [
-            'money',
-            'pix',
-            'card',
-            'other',
-        ];
-        const paymentMethod = paymentMethodOptions.includes(data.paymentMethod)
-            ? data.paymentMethod
-            : 'pix';
-
-        const newSale: Sale = {
-            id: crypto.randomUUID(),
-            clientId: data.clientId,
-            clientName: String(data.clientName || ''),
-            total: Number(data.finalTotal || data.total || 0),
-            status,
-            paymentMethod,
-            items: Number(data.items || 1),
-            createdAt:
-                String(data.createdAt || '') ||
-                new Date().toISOString().slice(0, 10),
-        };
-
-        setSales((previous) => [
-            {
-                ...newSale,
-                notes: data.notes,
-                lineItems: data.lineItems,
-                discountType: data.discountType,
-                discountValue: data.discountValue,
-                discountAmountApplied: data.discountAmountApplied,
-                finalTotal: data.finalTotal,
-            },
-            ...previous,
-        ]);
-    };
-
-    const handleCreateClient = (client: Client): Client => {
-        setClients((previous) => [client, ...previous]);
-
-        return client;
-    };
-
-    const handleCreateProduct = (product: Product): Product => {
-        setProducts((previous) => [product, ...previous]);
-
-        return product;
-    };
 
     return (
         <div className="space-y-5">
             <SalesHeader metrics={metrics} />
 
             <GenericTable
-                data={sales}
+                data={rows}
                 columns={columns}
                 title="Vendas"
                 filterFields={filterFields}
-                onCreate={handleCreate}
-                isCreateOpen={isCreateOpen}
-                onCreateOpenChange={setIsCreateOpen}
-                createDialog={({ open, onOpenChange, onSubmit }) => (
-                    <SalesDialog
-                        open={open}
-                        onOpenChange={onOpenChange}
-                        onSubmit={onSubmit}
-                        clients={clients}
-                        products={products}
-                        onCreateClient={handleCreateClient}
-                        onCreateProduct={handleCreateProduct}
-                        defaultTab="checkout"
-                    />
-                )}
             />
         </div>
     );

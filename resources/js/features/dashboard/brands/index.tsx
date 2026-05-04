@@ -1,46 +1,55 @@
 import { useEffect, useState } from 'react';
-import { mockBrands } from '@/lib/mocks/mock-data';
-import type { Brand } from '@/lib/mocks/mock-data';
+import { useBrands, useCreateBrand } from '@/hooks/use-brands';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
+type BrandRow = {
+    id: string;
+    name: string;
+    status: 'active' | 'inactive';
+};
+
 export function BrandsModule() {
-    const [brands, setBrands] = useState(() => [...mockBrands]);
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const { data: brands = [] } = useBrands();
+    const createBrand = useCreateBrand();
+    const [isCreateOpen, setIsCreateOpen] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        return params.get('action') === 'create-brand';
+    });
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
         if (params.get('action') === 'create-brand') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/brands');
         }
     }, []);
 
-    const columns: Column<Brand>[] = [
+    const columns: Column<BrandRow>[] = [
         { key: 'name', header: 'Nome' },
-        { key: 'description', header: 'Descrição' },
+        { key: 'status', header: 'Status' },
     ];
 
-    const handleCreate = (data: Brand) => {
-        const newBrand: Brand = {
-            id: crypto.randomUUID(),
-            name: String(data.name || '').trim(),
-            description: String(data.description || '').trim(),
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
+    const handleCreate = async (data: BrandRow) => {
+        const name = String(data.name || '').trim();
 
-        if (!newBrand.name) {
+        if (!name) {
             throw new Error('Informe o nome da marca');
         }
 
-        setBrands((previous) => [newBrand, ...previous]);
+        await createBrand.mutateAsync({ name });
     };
+
+    const rows: BrandRow[] = brands.map((brand) => ({
+        id: String(brand.id),
+        name: brand.name,
+        status: brand.status,
+    }));
 
     return (
         <GenericTable
-            data={brands}
+            data={rows}
             columns={columns}
             title="Marcas"
             onCreate={handleCreate}
@@ -53,12 +62,6 @@ export function BrandsModule() {
                     type: 'text',
                     required: true,
                     placeholder: 'Digite o nome da marca',
-                },
-                {
-                    name: 'description',
-                    label: 'Descrição',
-                    type: 'text',
-                    placeholder: 'Descrição opcional',
                 },
             ]}
         />

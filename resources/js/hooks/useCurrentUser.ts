@@ -8,7 +8,7 @@ export function useCurrentUser() {
         queryFn: async (): Promise<User> => {
             const response = await apiClient.get<{ data: User }>('/auth/me');
 
-            return response.data;
+            return response.data.data;
         },
         staleTime: 1000 * 60 * 5,
     });

@@ -45,7 +45,7 @@ export interface GenericTableProps<T extends { id: string }> {
     onView?: (row: T) => void;
     onEdit?: (row: T) => void;
     onDelete?: (row: T) => void;
-    onCreate?: (data: T) => void;
+    onCreate?: (data: T) => void | Promise<void>;
     onImport?: (data: T[]) => void;
     className?: string;
     routeUrl?: string;
@@ -728,9 +728,9 @@ export function GenericTable<T extends { id: string }>({
                     open: isCreateOpenValue,
                     onOpenChange: handleCreateOpenChange,
                     title: `Criar Novo ${title}`,
-                    onSubmit: (data) => {
+                    onSubmit: async (data) => {
                         try {
-                            onCreate?.(data);
+                            await onCreate?.(data);
                             toast.success(
                                 `${title}: registro criado com sucesso.`,
                             );
@@ -752,9 +752,9 @@ export function GenericTable<T extends { id: string }>({
                     title={`Criar Novo ${title}`}
                     description="Preencha os dados abaixo para criar um novo registro."
                     fields={resolvedCreateFields}
-                    onSubmit={(data) => {
+                    onSubmit={async (data) => {
                         try {
-                            onCreate?.(data as T);
+                            await onCreate?.(data as T);
                             toast.success(
                                 `${title}: registro criado com sucesso.`,
                             );

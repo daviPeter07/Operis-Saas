@@ -1,9 +1,5 @@
-import {
-    ApiService
-    
-    
-} from '@/lib/apiService';
-import type {ListParams, PaginatedData} from '@/lib/apiService';
+import { ApiService } from '@/lib/apiService';
+import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { Product } from '@/schemas/product';
 
 class ProductService extends ApiService<Product> {

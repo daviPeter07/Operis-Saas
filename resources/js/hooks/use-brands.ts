@@ -1,0 +1,34 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { brandService } from '@/services/brands';
+
+export const brandsQueryKey = ['brands'] as const;
+
+type CreateBrandInput = {
+    name: string;
+};
+
+export function useBrands() {
+    return useQuery({
+        queryKey: brandsQueryKey,
+        queryFn: async () => {
+            const response = await brandService.list();
+
+            return response.data;
+        },
+    });
+}
+
+export function useCreateBrand() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: CreateBrandInput) =>
+            brandService.create({
+                name: payload.name,
+                status: 'active',
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: brandsQueryKey });
+        },
+    });
+}

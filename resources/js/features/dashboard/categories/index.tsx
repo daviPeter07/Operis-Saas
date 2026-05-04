@@ -1,47 +1,55 @@
 import { useEffect, useState } from 'react';
-import { mockCategories } from '@/lib/mocks/mock-data';
-import type { Category } from '@/lib/mocks/mock-data';
+import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
+type CategoryRow = {
+    id: string;
+    name: string;
+    status: 'active' | 'inactive';
+};
+
 export function CategoriesModule() {
-    const [categories, setCategories] = useState(() => [...mockCategories]);
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const { data: categories = [] } = useCategories();
+    const createCategory = useCreateCategory();
+    const [isCreateOpen, setIsCreateOpen] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        return params.get('action') === 'create-category';
+    });
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
         if (params.get('action') === 'create-category') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/categories');
         }
     }, []);
 
-    const columns: Column<Category>[] = [
+    const columns: Column<CategoryRow>[] = [
         { key: 'name', header: 'Nome' },
-        { key: 'description', header: 'Descrição' },
+        { key: 'status', header: 'Status' },
     ];
 
-    const handleCreate = (data: Category) => {
-        const newCategory: Category = {
-            id: crypto.randomUUID(),
-            name: String(data.name || '').trim(),
-            description: String(data.description || '').trim(),
-            parentId: null,
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
+    const handleCreate = async (data: CategoryRow) => {
+        const name = String(data.name || '').trim();
 
-        if (!newCategory.name) {
+        if (!name) {
             throw new Error('Informe o nome da categoria');
         }
 
-        setCategories((previous) => [newCategory, ...previous]);
+        await createCategory.mutateAsync({ name });
     };
+
+    const rows: CategoryRow[] = categories.map((category) => ({
+        id: String(category.id),
+        name: category.name,
+        status: category.status,
+    }));
 
     return (
         <GenericTable
-            data={categories}
+            data={rows}
             columns={columns}
             title="Categorias"
             onCreate={handleCreate}
@@ -54,12 +62,6 @@ export function CategoriesModule() {
                     type: 'text',
                     required: true,
                     placeholder: 'Digite o nome da categoria',
-                },
-                {
-                    name: 'description',
-                    label: 'Descrição',
-                    type: 'text',
-                    placeholder: 'Descrição opcional',
                 },
             ]}
         />

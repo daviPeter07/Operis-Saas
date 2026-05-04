@@ -1,90 +1,91 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
+import { usePurchases } from '@/hooks/use-purchases';
+import { useSuppliers } from '@/hooks/use-suppliers';
 import {
     formatDateBR,
     formatCurrencyBR,
     translatePaymentMethod,
-    formatQuantityWithUnit,
 } from '@/lib/format';
-import { mockPurchases, mockSuppliers } from '@/lib/mocks/mock-data';
-import type { Purchase, Supplier } from '@/lib/mocks/mock-data';
-import {
-    PURCHASE_STATUS_VALUES,
-    PURCHASE_PAYMENT_METHOD_VALUES,
-} from '@/types/api';
-import { createSupplierRecord } from '@/utils/suppliers';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
+
+type PayableRow = {
+    id: string;
+    supplier_id: number;
+    supplierName: string;
+    total: number;
+    status: string;
+    payment_method: string;
+    due_date: string;
+    date: string;
+};
 
 export function AccountsPayableModule() {
-    const [purchases, setPurchases] = useState(() => [...mockPurchases]);
-    const [suppliers, setSuppliers] = useState<Supplier[]>(() => [
-        ...mockSuppliers,
-    ]);
+    const { data: purchases = [] } = usePurchases();
+    const { data: suppliers = [] } = useSuppliers();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
+    const suppliersById = new Map(
+        suppliers.map((supplier) => [supplier.id, supplier.name]),
+    );
 
-        if (params.get('action') === 'create-expense') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setIsCreateOpen(true);
-            window.history.replaceState({}, '', '/dashboard/accounts-payable');
-        }
-    }, []);
+    const rows: PayableRow[] = purchases.map((purchase) => ({
+        id: String(purchase.id),
+        supplier_id: purchase.supplier_id,
+        supplierName:
+            suppliersById.get(purchase.supplier_id) || `#${purchase.supplier_id}`,
+        total: purchase.total,
+        status: purchase.status,
+        payment_method: purchase.payment_method,
+        due_date: purchase.due_date,
+        date: purchase.date,
+    }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
-        const newSelected = new Set(selectedIds);
+        const next = new Set(selectedIds);
 
         if (checked) {
-            newSelected.add(id);
+            next.add(id);
         } else {
-            newSelected.delete(id);
+            next.delete(id);
         }
 
-        setSelectedIds(newSelected);
+        setSelectedIds(next);
     };
 
     const handleConfirmPayment = () => {
-        setPurchases((prev) =>
-            prev.map((p) =>
-                selectedIds.has(p.id) ? { ...p, status: 'completed' } : p,
-            ),
+        toast.info(
+            `${selectedIds.size} conta(s) selecionada(s). A confirmação financeira será ligada no endpoint de baixa.`,
         );
-        toast.success(`${selectedIds.size} conta(s) marcada(s) como paga(s)`);
         setSelectedIds(new Set());
     };
 
     const totalSelected = selectedIds.size;
-    const totalValue = purchases
-        .filter((p) => selectedIds.has(p.id))
-        .reduce((sum, p) => sum + p.total, 0);
+    const totalValue = rows
+        .filter((row) => selectedIds.has(row.id))
+        .reduce((sum, row) => sum + row.total, 0);
 
-    const columns: Column<Purchase>[] = [
+    const columns: Column<PayableRow>[] = [
         {
             key: 'select',
             header: (
                 <input
                     type="checkbox"
-                    checked={
-                        selectedIds.size === purchases.length &&
-                        purchases.length > 0
-                    }
+                    checked={selectedIds.size === rows.length && rows.length > 0}
                     ref={(el) => {
                         if (el) {
                             el.indeterminate =
                                 selectedIds.size > 0 &&
-                                selectedIds.size < purchases.length;
+                                selectedIds.size < rows.length;
                         }
                     }}
                     onChange={(e) => {
                         if (e.target.checked) {
-                            setSelectedIds(new Set(purchases.map((p) => p.id)));
+                            setSelectedIds(new Set(rows.map((row) => row.id)));
                         } else {
                             setSelectedIds(new Set());
                         }
@@ -92,7 +93,7 @@ export function AccountsPayableModule() {
                     className="h-4 w-4 cursor-pointer rounded border border-gray-400 accent-gray-600"
                 />
             ),
-            render: (_, row: Purchase) => (
+            render: (_, row: PayableRow) => (
                 <input
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
@@ -113,18 +114,18 @@ export function AccountsPayableModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'paymentMethod',
+            key: 'payment_method',
             header: 'Método',
             render: (val: unknown) => translatePaymentMethod(String(val)),
         },
         {
-            key: 'items',
-            header: 'Itens',
-            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
+            key: 'date',
+            header: 'Data',
+            render: (val: unknown) => formatDateBR(String(val)),
         },
         {
-            key: 'createdAt',
-            header: 'Data',
+            key: 'due_date',
+            header: 'Vencimento',
             render: (val: unknown) => formatDateBR(String(val)),
         },
     ];
@@ -138,103 +139,38 @@ export function AccountsPayableModule() {
             options: [...STATUS_OPTIONS],
         },
         {
-            key: 'paymentMethod',
+            key: 'payment_method',
             label: 'Método de Pagamento',
             type: 'select' as const,
             options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
 
-    const handleCreate = (data: Purchase) => {
-        const status = PURCHASE_STATUS_VALUES.includes(data.status)
-            ? data.status
-            : 'pending';
-        const paymentMethod = PURCHASE_PAYMENT_METHOD_VALUES.includes(
-            data.paymentMethod,
-        )
-            ? data.paymentMethod
-            : 'pix';
-
-        const newPurchase: Purchase = {
-            id: crypto.randomUUID(),
-            supplierId: crypto.randomUUID(),
-            supplierName: String(data.supplierName || '').trim(),
-            total: Number(data.total || 0),
-            status,
-            paymentMethod,
-            items: Number(data.items || 1),
-            dueDate:
-                String(data.dueDate || '').trim() ||
-                new Date().toISOString().slice(0, 10),
-            createdAt:
-                String(data.createdAt || '').trim() ||
-                new Date().toISOString().slice(0, 10),
-        };
-
-        if (!newPurchase.supplierName) {
-            throw new Error('Informe o fornecedor');
-        }
-
-        setPurchases((previous) => [newPurchase, ...previous]);
-    };
-
-    const handleCreateSupplier = (data: Supplier): Supplier => {
-        const supplier = createSupplierRecord(data);
-
-        setSuppliers((previous) => [supplier, ...previous]);
-        toast.success('Fornecedor cadastrado com sucesso');
-
-        return supplier;
-    };
-
     return (
         <div className="space-y-4">
             {totalSelected > 0 && (
                 <div className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                            <span className="text-lg font-medium text-gray-600">
-                                {totalSelected}
-                            </span>
-                        </div>
-                        <div>
-                            <p className="font-medium">
-                                {totalSelected} conta(s) selecionada(s)
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Total: {formatCurrencyBR(totalValue)}
-                            </p>
-                        </div>
+                    <div>
+                        <p className="font-medium">{totalSelected} selecionada(s)</p>
+                        <p className="text-sm text-muted-foreground">
+                            Total: {formatCurrencyBR(totalValue)}
+                        </p>
                     </div>
                     <button
                         onClick={handleConfirmPayment}
-                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-gray-600 px-4 text-sm font-medium whitespace-nowrap text-white transition-colors hover:bg-gray-700"
+                        className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
                     >
                         Marcar como Paga
                     </button>
                 </div>
             )}
             <GenericTable
-                data={purchases}
+                data={rows}
                 columns={columns}
                 filterFields={filterFields}
                 title="Contas a Pagar"
                 clickableRow
-                onRowClick={(row) =>
-                    handleSelectOne(row.id, !selectedIds.has(row.id))
-                }
-                onCreate={handleCreate}
-                isCreateOpen={isCreateOpen}
-                onCreateOpenChange={setIsCreateOpen}
-                createDialog={({ open, onOpenChange, onSubmit }) => (
-                    <AccountsPayableCreateDialog
-                        open={open}
-                        onOpenChange={onOpenChange}
-                        onSubmit={onSubmit}
-                        suppliers={suppliers}
-                        onCreateSupplier={handleCreateSupplier}
-                    />
-                )}
+                onRowClick={(row) => handleSelectOne(row.id, !selectedIds.has(row.id))}
             />
         </div>
     );
