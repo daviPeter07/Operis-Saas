@@ -75,12 +75,6 @@ const reportCategories = [
                 icon: BarChart3,
             },
             {
-                slug: 'proximos-vencer',
-                title: 'Próximos de Vencer',
-                description: 'Produtos próximos do vencimento',
-                icon: AlertTriangle,
-            },
-            {
                 slug: 'perdas',
                 title: 'Perdas',
                 description: 'Baixas por motivo',
