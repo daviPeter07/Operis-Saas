@@ -4,6 +4,7 @@ namespace App\Http\Requests\Categories;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCategoryRequest extends FormRequest
 {
@@ -22,9 +23,11 @@ class StoreCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
+        $companyId = $this->user()->current_company_id;
+
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('categories', 'name')->where('company_id', $companyId)],
+            'parent_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('company_id', $companyId)],
         ];
     }
 }

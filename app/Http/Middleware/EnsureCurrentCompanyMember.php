@@ -27,6 +27,7 @@ class EnsureCurrentCompanyMember
         $isMember = CompanyUser::query()
             ->where('company_id', $user->current_company_id)
             ->where('user_id', $user->id)
+            ->where('status', 'active')
             ->exists();
 
         if (! $isMember) {

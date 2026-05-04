@@ -72,18 +72,60 @@ class ImportPreviewService
     private function isDuplicate(string $module, int $companyId, array $row): bool
     {
         return match ($module) {
-            'customers' => Customer::query()->where('company_id', $companyId)
-                ->where(fn ($q) => $q->where('document', $row['document'] ?? null)->orWhere('email', $row['email'] ?? null))
-                ->exists(),
-            'suppliers' => Supplier::query()->where('company_id', $companyId)
-                ->where(fn ($q) => $q->where('document', $row['document'] ?? null)->orWhere('email', $row['email'] ?? null))
-                ->exists(),
+            'customers' => $this->existsByDocumentOrEmail(Customer::class, $companyId, $row),
+            'suppliers' => $this->existsByDocumentOrEmail(Supplier::class, $companyId, $row),
             'brands' => Brand::query()->where('company_id', $companyId)->where('name', $row['name'])->exists(),
             'categories' => Category::query()->where('company_id', $companyId)->where('name', $row['name'])->exists(),
-            'products' => Product::query()->where('company_id', $companyId)
-                ->where(fn ($q) => $q->where('sku', $row['sku'])->orWhere('barcode', $row['barcode'] ?? null))
-                ->exists(),
+            'products' => $this->existsBySkuOrBarcode(Product::class, $companyId, $row),
             default => false,
         };
+    }
+
+    /**
+     * @param  class-string  $model
+     */
+    private function existsByDocumentOrEmail(string $model, int $companyId, array $row): bool
+    {
+        $document = $row['document'] ?? null;
+        $email = $row['email'] ?? null;
+
+        if ($document === null && $email === null) {
+            return false;
+        }
+
+        return $model::query()->where('company_id', $companyId)
+            ->where(function ($q) use ($document, $email): void {
+                if ($document !== null) {
+                    $q->orWhere('document', $document);
+                }
+                if ($email !== null) {
+                    $q->orWhere('email', $email);
+                }
+            })
+            ->exists();
+    }
+
+    /**
+     * @param  class-string  $model
+     */
+    private function existsBySkuOrBarcode(string $model, int $companyId, array $row): bool
+    {
+        $sku = $row['sku'] ?? null;
+        $barcode = $row['barcode'] ?? null;
+
+        if ($sku === null && $barcode === null) {
+            return false;
+        }
+
+        return $model::query()->where('company_id', $companyId)
+            ->where(function ($q) use ($sku, $barcode): void {
+                if ($sku !== null) {
+                    $q->where('sku', $sku);
+                }
+                if ($barcode !== null) {
+                    $q->orWhere('barcode', $barcode);
+                }
+            })
+            ->exists();
     }
 }

@@ -45,19 +45,63 @@ class ImportConfirmService
     private function persistRow(string $module, int $companyId, string $strategy, array $row): array
     {
         return match ($module) {
-            'customers' => $this->upsert(Customer::query()->where('company_id', $companyId)
-                ->where(fn ($q) => $q->where('document', $row['document'] ?? null)->orWhere('email', $row['email'] ?? null))
-                ->first(), Customer::class, $companyId, $strategy, $row),
-            'suppliers' => $this->upsert(Supplier::query()->where('company_id', $companyId)
-                ->where(fn ($q) => $q->where('document', $row['document'] ?? null)->orWhere('email', $row['email'] ?? null))
-                ->first(), Supplier::class, $companyId, $strategy, $row),
+            'customers' => $this->upsert($this->findByDocumentOrEmail(Customer::class, $companyId, $row), Customer::class, $companyId, $strategy, $row),
+            'suppliers' => $this->upsert($this->findByDocumentOrEmail(Supplier::class, $companyId, $row), Supplier::class, $companyId, $strategy, $row),
             'brands' => $this->upsert(Brand::query()->where('company_id', $companyId)->where('name', $row['name'])->first(), Brand::class, $companyId, $strategy, $row),
             'categories' => $this->upsert(Category::query()->where('company_id', $companyId)->where('name', $row['name'])->first(), Category::class, $companyId, $strategy, $row),
-            'products' => $this->upsert(Product::query()->where('company_id', $companyId)
-                ->where(fn ($q) => $q->where('sku', $row['sku'])->orWhere('barcode', $row['barcode'] ?? null))
-                ->first(), Product::class, $companyId, $strategy, $row),
+            'products' => $this->upsert($this->findBySkuOrBarcode(Product::class, $companyId, $row), Product::class, $companyId, $strategy, $row),
             default => ['created' => 0, 'updated' => 0],
         };
+    }
+
+    /**
+     * @param  class-string  $model
+     * @return object|null
+     */
+    private function findByDocumentOrEmail(string $model, int $companyId, array $row)
+    {
+        $document = $row['document'] ?? null;
+        $email = $row['email'] ?? null;
+
+        if ($document === null && $email === null) {
+            return null;
+        }
+
+        return $model::query()->where('company_id', $companyId)
+            ->where(function ($q) use ($document, $email): void {
+                if ($document !== null) {
+                    $q->orWhere('document', $document);
+                }
+                if ($email !== null) {
+                    $q->orWhere('email', $email);
+                }
+            })
+            ->first();
+    }
+
+    /**
+     * @param  class-string  $model
+     * @return object|null
+     */
+    private function findBySkuOrBarcode(string $model, int $companyId, array $row)
+    {
+        $sku = $row['sku'] ?? null;
+        $barcode = $row['barcode'] ?? null;
+
+        if ($sku === null && $barcode === null) {
+            return null;
+        }
+
+        return $model::query()->where('company_id', $companyId)
+            ->where(function ($q) use ($sku, $barcode): void {
+                if ($sku !== null) {
+                    $q->where('sku', $sku);
+                }
+                if ($barcode !== null) {
+                    $q->orWhere('barcode', $barcode);
+                }
+            })
+            ->first();
     }
 
     /**

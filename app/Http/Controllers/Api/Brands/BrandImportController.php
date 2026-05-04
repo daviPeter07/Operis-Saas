@@ -17,7 +17,7 @@ class BrandImportController extends Controller
         ImportConfirmService $confirmService
     ): JsonResponse {
         if ($request->hasFile('file')) {
-            $validated = $request->validate(['file' => ['required', 'file', 'mimes:csv,txt,xls,xlsx']]);
+            $validated = $request->validate(['file' => ['required', 'file', 'mimes:csv,txt']]);
             $preview = $previewService->preview('brands', auth()->user()->current_company_id, $validated['file']);
 
             return response()->json(['data' => ImportPreviewResource::make($preview)]);

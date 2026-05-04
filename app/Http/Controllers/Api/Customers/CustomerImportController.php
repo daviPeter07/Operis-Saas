@@ -18,7 +18,7 @@ class CustomerImportController extends Controller
     ): JsonResponse {
         if ($request->hasFile('file')) {
             $validated = $request->validate([
-                'file' => ['required', 'file', 'mimes:csv,txt,xls,xlsx'],
+                'file' => ['required', 'file', 'mimes:csv,txt'],
             ]);
 
             $preview = $previewService->preview('customers', auth()->user()->current_company_id, $validated['file']);

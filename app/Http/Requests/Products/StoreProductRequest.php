@@ -4,6 +4,7 @@ namespace App\Http\Requests\Products;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreProductRequest extends FormRequest
 {
@@ -22,17 +23,19 @@ class StoreProductRequest extends FormRequest
      */
     public function rules(): array
     {
+        $companyId = $this->user()->current_company_id;
+
         return [
             'name' => ['required', 'string', 'max:255'],
-            'sku' => ['required', 'string', 'max:80'],
-            'barcode' => ['nullable', 'string', 'max:80'],
+            'sku' => ['required', 'string', 'max:80', Rule::unique('products', 'sku')->where('company_id', $companyId)],
+            'barcode' => ['nullable', 'string', 'max:80', Rule::unique('products', 'barcode')->where('company_id', $companyId)->whereNotNull('barcode')],
             'description' => ['nullable', 'string'],
             'sale_price' => ['required', 'numeric', 'min:0'],
             'cost' => ['required', 'numeric', 'min:0'],
             'stock' => ['required', 'numeric'],
             'min_stock' => ['nullable', 'numeric'],
-            'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'brand_id' => ['required', 'integer', 'exists:brands,id'],
+            'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('company_id', $companyId)],
+            'brand_id' => ['required', 'integer', Rule::exists('brands', 'id')->where('company_id', $companyId)],
         ];
     }
 }

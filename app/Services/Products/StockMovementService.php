@@ -12,9 +12,7 @@ class StockMovementService
 
     public function register(Product $product, float $delta, StockMovementType $type, int $referenceId, ?int $userId = null, string $referenceType = 'sale'): void
     {
-        $product->update([
-            'stock' => (float) $product->stock + $delta,
-        ]);
+        $product->increment('stock', $delta);
 
         $this->stockMovements->create([
             'company_id' => $product->company_id,

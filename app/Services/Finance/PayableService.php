@@ -46,6 +46,12 @@ class PayableService
 
     public function settle(AccountPayable $payable, array $data): AccountPayable
     {
+        if (in_array($payable->status, ['paid', 'cancelled'], true)) {
+            throw ValidationException::withMessages([
+                'payable' => 'Conta a pagar já foi liquidada ou cancelada.',
+            ]);
+        }
+
         $payable->update([
             'status' => 'paid',
             'paid_at' => $data['paid_at'],

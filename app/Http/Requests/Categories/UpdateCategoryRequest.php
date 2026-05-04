@@ -4,6 +4,7 @@ namespace App\Http\Requests\Categories;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCategoryRequest extends FormRequest
 {
@@ -22,9 +23,12 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
+        $companyId = $this->user()->current_company_id;
+        $categoryId = $this->route('category')?->id;
+
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('categories', 'name')->where('company_id', $companyId)->ignore($categoryId)],
+            'parent_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('company_id', $companyId)],
             'status' => ['sometimes', 'in:active,inactive'],
         ];
     }

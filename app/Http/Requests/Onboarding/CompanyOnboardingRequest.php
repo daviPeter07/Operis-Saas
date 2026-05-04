@@ -12,6 +12,15 @@ class CompanyOnboardingRequest extends FormRequest
         return auth()->check();
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('document')) {
+            $this->merge([
+                'document' => preg_replace('/\D+/', '', (string) $this->document) ?? '',
+            ]);
+        }
+    }
+
     /**
      * @return array<string, array<int, mixed>>
      */
@@ -20,7 +29,7 @@ class CompanyOnboardingRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'logo' => ['nullable', 'string', 'max:2048'],
-            'document' => ['required', 'string', 'max:18', Rule::unique('companies', 'document')],
+            'document' => ['required', 'string', 'max:14', Rule::unique('companies', 'document')],
             'address' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
             'email' => ['required', 'email', 'max:255'],

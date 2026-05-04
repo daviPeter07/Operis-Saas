@@ -4,6 +4,7 @@ namespace App\Http\Requests\Brands;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreBrandRequest extends FormRequest
 {
@@ -22,8 +23,10 @@ class StoreBrandRequest extends FormRequest
      */
     public function rules(): array
     {
+        $companyId = $this->user()->current_company_id;
+
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('brands', 'name')->where('company_id', $companyId)],
         ];
     }
 }

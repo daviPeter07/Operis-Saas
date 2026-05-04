@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Purchases;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePurchaseRequest extends FormRequest
 {
@@ -16,15 +17,17 @@ class StorePurchaseRequest extends FormRequest
      */
     public function rules(): array
     {
+        $companyId = $this->user()->current_company_id;
+
         return [
-            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
+            'supplier_id' => ['nullable', 'integer', Rule::exists('suppliers', 'id')->where('company_id', $companyId)],
             'date' => ['required', 'date'],
             'due_date' => ['nullable', 'date'],
             'status' => ['sometimes', 'in:pending,completed'],
             'payment_method' => ['required', 'in:cash,pix,card,installment'],
             'update_product_cost' => ['sometimes', 'boolean'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('company_id', $companyId)],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
         ];

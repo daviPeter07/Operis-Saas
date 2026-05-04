@@ -22,13 +22,13 @@ class SaleResource extends ApiResource
             'total' => $this->total,
             'status' => $this->status,
             'payment_method' => $this->payment_method,
-            'items' => $this->items->map(fn ($item): array => [
+            'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item): array => [
                 'id' => $item->id,
                 'product_id' => $item->product_id,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'subtotal' => $item->subtotal,
-            ])->all(),
+            ])->all()),
         ];
     }
 }
