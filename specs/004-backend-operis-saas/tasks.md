@@ -197,23 +197,23 @@
 
 ### Tests for User Story 5
 
-- [ ] T089 [P] [US5] Criar teste de preview de importacao por modulo em `tests/Feature/Imports/ImportPreviewTest.php`.
-- [ ] T090 [P] [US5] Criar teste de confirmacao de importacao no mesmo fluxo em `tests/Feature/Imports/ImportConfirmInlineFlowTest.php`.
-- [ ] T091 [P] [US5] Criar teste de estrategias de duplicidade (`ignore`/`update`) em `tests/Feature/Imports/ImportDuplicateStrategyTest.php`.
-- [ ] T092 [P] [US5] Criar teste de bloqueio de linhas invalidas em `tests/Feature/Imports/ImportInvalidRowsNotPersistedTest.php`.
+- [x] T089 [P] [US5] Criar teste de preview de importacao por modulo em `tests/Feature/Imports/ImportPreviewTest.php`.
+- [x] T090 [P] [US5] Criar teste de confirmacao de importacao no mesmo fluxo em `tests/Feature/Imports/ImportConfirmInlineFlowTest.php`.
+- [x] T091 [P] [US5] Criar teste de estrategias de duplicidade (`ignore`/`update`) em `tests/Feature/Imports/ImportDuplicateStrategyTest.php`.
+- [x] T092 [P] [US5] Criar teste de bloqueio de linhas invalidas em `tests/Feature/Imports/ImportInvalidRowsNotPersistedTest.php`.
 
 ### Implementation for User Story 5
 
-- [ ] T093 [P] [US5] Criar migration de lotes de importacao em `database/migrations/*_create_import_batches_table.php`.
-- [ ] T094 [P] [US5] Criar model `ImportBatch` em `app/Models/ImportBatch.php`.
-- [ ] T095 [P] [US5] Criar enum `ImportStatus` em `app/Enums/ImportStatus.php`.
-- [ ] T096 [P] [US5] Criar requests de importacao em `app/Http/Requests/Imports/`.
-- [ ] T097 [P] [US5] Criar resources de importacao em `app/Http/Resources/Imports/`.
-- [ ] T098 [P] [US5] Criar `ImportParserService` em `app/Services/Imports/ImportParserService.php`.
-- [ ] T099 [P] [US5] Criar `ImportPreviewService` em `app/Services/Imports/ImportPreviewService.php`.
-- [ ] T100 [P] [US5] Criar `ImportConfirmService` em `app/Services/Imports/ImportConfirmService.php`.
-- [ ] T101 [US5] Implementar controllers de importacao por modulo em `app/Http/Controllers/Api/Customers/CustomerImportController.php`, `.../Suppliers/SupplierImportController.php`, `.../Brands/BrandImportController.php`, `.../Categories/CategoryImportController.php`, `.../Products/ProductImportController.php`.
-- [ ] T102 [US5] Registrar rotas de importacao em `routes/api.php`.
+- [x] T093 [P] [US5] Criar migration de lotes de importacao em `database/migrations/*_create_import_batches_table.php`.
+- [x] T094 [P] [US5] Criar model `ImportBatch` em `app/Models/ImportBatch.php`.
+- [x] T095 [P] [US5] Criar enum `ImportStatus` em `app/Enums/ImportStatus.php`.
+- [x] T096 [P] [US5] Criar requests de importacao em `app/Http/Requests/Imports/`.
+- [x] T097 [P] [US5] Criar resources de importacao em `app/Http/Resources/Imports/`.
+- [x] T098 [P] [US5] Criar `ImportParserService` em `app/Services/Imports/ImportParserService.php`.
+- [x] T099 [P] [US5] Criar `ImportPreviewService` em `app/Services/Imports/ImportPreviewService.php`.
+- [x] T100 [P] [US5] Criar `ImportConfirmService` em `app/Services/Imports/ImportConfirmService.php`.
+- [x] T101 [US5] Implementar controllers de importacao por modulo em `app/Http/Controllers/Api/Customers/CustomerImportController.php`, `.../Suppliers/SupplierImportController.php`, `.../Brands/BrandImportController.php`, `.../Categories/CategoryImportController.php`, `.../Products/ProductImportController.php`.
+- [x] T102 [US5] Registrar rotas de importacao em `routes/api.php`.
 
 **Checkpoint**: Importacao real com preview e confirmacao no mesmo fluxo.
 
