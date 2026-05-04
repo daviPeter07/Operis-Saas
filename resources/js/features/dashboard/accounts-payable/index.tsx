@@ -1,48 +1,40 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
-import { usePurchases } from '@/hooks/use-purchases';
-import { useSuppliers } from '@/hooks/use-suppliers';
 import {
-    formatDateBR,
-    formatCurrencyBR,
-    translatePaymentMethod,
-} from '@/lib/format';
+    useAccountPayables,
+    useSettleAccountPayable,
+} from '@/hooks/use-account-payables';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
 type PayableRow = {
     id: string;
-    supplier_id: number;
-    supplierName: string;
-    total: number;
-    status: string;
-    payment_method: string;
+    purchase_id: number;
+    installment_number: number;
+    amount: number;
     due_date: string;
-    date: string;
+    status: string;
+    paid_at: string | null;
+    paid_method: string | null;
 };
 
 export function AccountsPayableModule() {
-    const { data: purchases = [] } = usePurchases();
-    const { data: suppliers = [] } = useSuppliers();
+    const { data: payables = [] } = useAccountPayables();
+    const settleAccountPayable = useSettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    const suppliersById = new Map(
-        suppliers.map((supplier) => [supplier.id, supplier.name]),
-    );
-
-    const rows: PayableRow[] = purchases.map((purchase) => ({
-        id: String(purchase.id),
-        supplier_id: purchase.supplier_id,
-        supplierName:
-            suppliersById.get(purchase.supplier_id) || `#${purchase.supplier_id}`,
-        total: purchase.total,
-        status: purchase.status,
-        payment_method: purchase.payment_method,
-        due_date: purchase.due_date,
-        date: purchase.date,
+    const rows: PayableRow[] = payables.map((payable) => ({
+        id: String(payable.id),
+        purchase_id: payable.purchase_id,
+        installment_number: payable.installment_number,
+        amount: payable.amount,
+        due_date: payable.due_date,
+        status: payable.status,
+        paid_at: payable.paid_at,
+        paid_method: payable.paid_method,
     }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
@@ -57,17 +49,31 @@ export function AccountsPayableModule() {
         setSelectedIds(next);
     };
 
-    const handleConfirmPayment = () => {
-        toast.info(
-            `${selectedIds.size} conta(s) selecionada(s). A confirmação financeira será ligada no endpoint de baixa.`,
+    const handleConfirmPayment = async () => {
+        const ids = Array.from(selectedIds).map((id) => Number(id));
+
+        if (ids.length === 0) {
+            return;
+        }
+
+        await Promise.all(
+            ids.map((id) =>
+                settleAccountPayable.mutateAsync({
+                    id,
+                    paid_at: new Date().toISOString().slice(0, 10),
+                    paid_method: 'pix',
+                }),
+            ),
         );
+
+        toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
         setSelectedIds(new Set());
     };
 
     const totalSelected = selectedIds.size;
     const totalValue = rows
         .filter((row) => selectedIds.has(row.id))
-        .reduce((sum, row) => sum + row.total, 0);
+        .reduce((sum, row) => sum + row.amount, 0);
 
     const columns: Column<PayableRow>[] = [
         {
@@ -102,9 +108,14 @@ export function AccountsPayableModule() {
                 />
             ),
         },
-        { key: 'supplierName', header: 'Fornecedor' },
         {
-            key: 'total',
+            key: 'purchase_id',
+            header: 'Compra',
+            render: (val: unknown) => `#${String(val)}`,
+        },
+        { key: 'installment_number', header: 'Parcela' },
+        {
+            key: 'amount',
             header: 'Valor',
             render: (val: unknown) => formatCurrencyBR(Number(val)),
         },
@@ -114,16 +125,6 @@ export function AccountsPayableModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'payment_method',
-            header: 'Método',
-            render: (val: unknown) => translatePaymentMethod(String(val)),
-        },
-        {
-            key: 'date',
-            header: 'Data',
-            render: (val: unknown) => formatDateBR(String(val)),
-        },
-        {
             key: 'due_date',
             header: 'Vencimento',
             render: (val: unknown) => formatDateBR(String(val)),
@@ -131,18 +132,11 @@ export function AccountsPayableModule() {
     ];
 
     const filterFields = [
-        { key: 'supplierName', label: 'Fornecedor', type: 'text' as const },
         {
             key: 'status',
             label: 'Status',
             type: 'select' as const,
             options: [...STATUS_OPTIONS],
-        },
-        {
-            key: 'payment_method',
-            label: 'Método de Pagamento',
-            type: 'select' as const,
-            options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
 
@@ -157,7 +151,7 @@ export function AccountsPayableModule() {
                         </p>
                     </div>
                     <button
-                        onClick={handleConfirmPayment}
+                        onClick={() => void handleConfirmPayment()}
                         className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
                     >
                         Marcar como Paga

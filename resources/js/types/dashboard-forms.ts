@@ -1,9 +1,9 @@
 import type {
-    Client,
-    Product,
-    Purchase,
-    Supplier,
-} from '@/lib/mocks/mock-data';
+    UiCustomer,
+    UiProduct,
+    UiPurchase,
+    UiSupplier,
+} from '@/types/dashboard-entities';
 
 export type ClientPersonType = 'pf' | 'pj';
 
@@ -21,7 +21,7 @@ export type ClientForm = {
     zipCode: string;
 };
 
-export type ClientCreateDialogPayload = Client & {
+export type ClientCreateDialogPayload = UiCustomer & {
     personType: ClientPersonType;
 };
 
@@ -51,19 +51,19 @@ export type PurchaseLineItem = {
 export type PurchaseCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: Purchase) => void;
-    products: Product[];
-    suppliers: Supplier[];
-    onCreateSupplier: (data: Supplier) => Supplier;
+    onSubmit: (data: UiPurchase) => void;
+    products: UiProduct[];
+    suppliers: UiSupplier[];
+    onCreateSupplier: (data: UiSupplier) => UiSupplier;
     onApplyStock: (items: PurchaseLineItem[]) => void;
 };
 
 export type AccountsPayableCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: Purchase) => void;
-    suppliers: Supplier[];
-    onCreateSupplier: (data: Supplier) => Supplier;
+    onSubmit: (data: UiPurchase) => void;
+    suppliers: UiSupplier[];
+    onCreateSupplier: (data: UiSupplier) => UiSupplier;
 };
 
 export type SupplierForm = {
@@ -82,5 +82,5 @@ export type SupplierForm = {
 export type SupplierCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: Supplier) => void;
+    onSubmit: (data: UiSupplier) => void;
 };

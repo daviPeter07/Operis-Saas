@@ -7,8 +7,8 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatCurrencyBR } from '@/lib/format';
-import type { Product } from '@/lib/mocks/mock-data';
 import { cn } from '@/lib/utils';
+import type { UiProduct as Product } from '@/types/dashboard-entities';
 
 interface CatalogPanelProps {
     productSearch: string;

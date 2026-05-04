@@ -1,7 +1,9 @@
+import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
-import { usePurchases } from '@/hooks/use-purchases';
+import { useProducts } from '@/hooks/use-products';
+import { useCreatePurchase, usePurchases } from '@/hooks/use-purchases';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import {
     formatDateBR,
@@ -25,6 +27,8 @@ type PurchaseRow = {
 export function PurchasesModule() {
     const { data: purchases = [] } = usePurchases();
     const { data: suppliers = [] } = useSuppliers();
+    const { data: products = [] } = useProducts();
+    const createPurchase = useCreatePurchase();
 
     const suppliersById = new Map(
         suppliers.map((supplier) => [supplier.id, supplier.name]),
@@ -87,12 +91,107 @@ export function PurchasesModule() {
         },
     ];
 
+    const createFields = [
+        {
+            name: 'supplier_id',
+            label: 'Fornecedor',
+            type: 'select' as const,
+            options: suppliers.map((supplier) => ({
+                value: String(supplier.id),
+                label: supplier.name,
+            })),
+            required: true,
+        },
+        {
+            name: 'product_id',
+            label: 'Produto',
+            type: 'select' as const,
+            options: products.map((product) => ({
+                value: String(product.id),
+                label: product.name,
+            })),
+            required: true,
+        },
+        {
+            name: 'quantity',
+            label: 'Quantidade',
+            type: 'number' as const,
+            required: true,
+        },
+        {
+            name: 'unit_cost',
+            label: 'Custo unitário',
+            type: 'number' as const,
+            required: true,
+        },
+        {
+            name: 'payment_method',
+            label: 'Método de pagamento',
+            type: 'select' as const,
+            options: [
+                { value: 'cash', label: 'Dinheiro' },
+                { value: 'pix', label: 'PIX' },
+                { value: 'card', label: 'Cartão' },
+                { value: 'installment', label: 'Parcelado' },
+            ],
+            required: true,
+        },
+        {
+            name: 'date',
+            label: 'Data',
+            type: 'date' as const,
+            required: true,
+        },
+        {
+            name: 'due_date',
+            label: 'Vencimento',
+            type: 'date' as const,
+        },
+    ];
+
+    const handleCreate = async (data: Record<string, unknown>) => {
+        const supplierId = Number(data.supplier_id || 0);
+        const productId = Number(data.product_id || 0);
+        const quantity = Number(data.quantity || 0);
+        const unitCost = Number(data.unit_cost || 0);
+        const paymentMethod = String(data.payment_method || 'pix') as
+            | 'cash'
+            | 'pix'
+            | 'card'
+            | 'installment';
+        const date = String(data.date || '').trim();
+        const dueDate = String(data.due_date || '').trim();
+
+        if (!supplierId || !productId || quantity <= 0 || unitCost < 0) {
+            throw new Error('Preencha os dados obrigatórios da compra.');
+        }
+
+        await createPurchase.mutateAsync({
+            supplier_id: supplierId,
+            date: date || new Date().toISOString().slice(0, 10),
+            due_date: dueDate || undefined,
+            payment_method: paymentMethod,
+            status: 'pending',
+            items: [
+                {
+                    product_id: productId,
+                    quantity,
+                    unit_cost: unitCost,
+                },
+            ],
+        });
+
+        toast.success('Compra criada com sucesso.');
+    };
+
     return (
         <GenericTable
             data={rows}
             columns={columns}
             title="Compras"
             filterFields={filterFields}
+            onCreate={handleCreate as (data: PurchaseRow) => Promise<void>}
+            createFields={createFields}
         />
     );
 }

@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { formatCurrencyBR } from '@/lib/format';
-import type { Product } from '@/lib/mocks/mock-data';
+import type { UiProduct as Product } from '@/types/dashboard-entities';
 import type { SaleDiscountType } from '@/types/sales-dialog';
 import { applyFieldMask, onlyDigits } from '@/utils/form-fields';
 

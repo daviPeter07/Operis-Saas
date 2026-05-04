@@ -1,4 +1,4 @@
-import type { Sale } from '@/lib/mocks/mock-data';
+import type { UiSale } from '@/types/dashboard-entities';
 
 export type SaleDiscountType = 'amount' | 'percent';
 
@@ -13,7 +13,7 @@ export type SalesLineItem = {
     subtotal: number;
 };
 
-export type SalesRecord = Sale & {
+export type SalesRecord = UiSale & {
     notes?: string;
     lineItems: SalesLineItem[];
     discountType?: SaleDiscountType;

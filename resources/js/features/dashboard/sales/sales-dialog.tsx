@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useSalesDialog } from '@/hooks/use-sales-dialog';
 import { formatCurrencyBR } from '@/lib/format';
-import type { Client, Product } from '@/lib/mocks/mock-data';
+import type { UiCustomer as Client, UiProduct as Product } from '@/types/dashboard-entities';
 import type {
     SalesLineItem,
     SalesRecord,

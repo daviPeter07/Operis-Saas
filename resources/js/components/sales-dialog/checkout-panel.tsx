@@ -22,7 +22,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatCurrencyBR } from '@/lib/format';
-import type { Client } from '@/lib/mocks/mock-data';
+import type { UiCustomer as Client } from '@/types/dashboard-entities';
 import type { SalesLineItem } from '@/types/sales-dialog';
 import { paymentMethodOptions } from '@/utils/sales-dialog';
 

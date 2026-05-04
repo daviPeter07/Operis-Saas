@@ -31,7 +31,7 @@ import {
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import { formatCurrencyBR } from '@/lib/format';
-import type { Supplier } from '@/lib/mocks/mock-data';
+import type { UiSupplier } from '@/types/dashboard-entities';
 import type { FinancialEntryForm } from '@/types/dashboard-forms';
 
 type FinancialEntryDialogProps = {
@@ -49,7 +49,7 @@ type FinancialEntryDialogProps = {
     onSubmit: () => void;
     catalogSection?: React.ReactNode;
     summaryLabel?: string;
-    suppliers?: Supplier[];
+    suppliers?: UiSupplier[];
     onCreateSupplier?: (supplierName: string) => void;
 };
 

@@ -2,43 +2,33 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { STATUS_OPTIONS } from '@/constants/status';
-import { useCustomers } from '@/hooks/use-customers';
-import { useSales } from '@/hooks/use-sales';
-import {
-    formatDateBR,
-    formatCurrencyBR,
-    translatePaymentMethod,
-} from '@/lib/format';
+import { useAccountReceivables } from '@/hooks/use-account-receivables';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
 type ReceivableRow = {
     id: string;
-    customer_id: number;
-    clientName: string;
-    total: number;
+    sale_id: number;
+    installment_number: number;
+    amount: number;
+    due_date: string;
     status: string;
-    payment_method: string;
-    date: string;
+    received_at: string | null;
 };
 
 export function AccountsReceivableModule() {
-    const { data: sales = [] } = useSales();
-    const { data: customers = [] } = useCustomers();
+    const { data: receivables = [] } = useAccountReceivables();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    const customerById = new Map(
-        customers.map((customer) => [customer.id, customer.name]),
-    );
-
-    const rows: ReceivableRow[] = sales.map((sale) => ({
-        id: String(sale.id),
-        customer_id: sale.customer_id,
-        clientName: customerById.get(sale.customer_id) || `#${sale.customer_id}`,
-        total: sale.total,
-        status: sale.status,
-        payment_method: sale.payment_method,
-        date: sale.date,
+    const rows: ReceivableRow[] = receivables.map((receivable) => ({
+        id: String(receivable.id),
+        sale_id: receivable.sale_id,
+        installment_number: receivable.installment_number,
+        amount: receivable.amount,
+        due_date: receivable.due_date,
+        status: receivable.status,
+        received_at: receivable.received_at,
     }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
@@ -55,7 +45,7 @@ export function AccountsReceivableModule() {
 
     const handleConfirmReceipt = () => {
         toast.info(
-            `${selectedIds.size} conta(s) selecionada(s). A confirmação financeira será ligada no endpoint de baixa.`,
+            'Recebimento em lote não disponível no backend atual (apenas listagem de contas a receber).',
         );
         setSelectedIds(new Set());
     };
@@ -63,7 +53,7 @@ export function AccountsReceivableModule() {
     const totalSelected = selectedIds.size;
     const totalValue = rows
         .filter((row) => selectedIds.has(row.id))
-        .reduce((sum, row) => sum + row.total, 0);
+        .reduce((sum, row) => sum + row.amount, 0);
 
     const columns: Column<ReceivableRow>[] = [
         {
@@ -98,9 +88,14 @@ export function AccountsReceivableModule() {
                 />
             ),
         },
-        { key: 'clientName', header: 'Cliente' },
         {
-            key: 'total',
+            key: 'sale_id',
+            header: 'Venda',
+            render: (val: unknown) => `#${String(val)}`,
+        },
+        { key: 'installment_number', header: 'Parcela' },
+        {
+            key: 'amount',
             header: 'Valor',
             render: (val: unknown) => formatCurrencyBR(Number(val)),
         },
@@ -110,19 +105,13 @@ export function AccountsReceivableModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'payment_method',
-            header: 'Método',
-            render: (val: unknown) => translatePaymentMethod(String(val)),
-        },
-        {
-            key: 'date',
-            header: 'Data',
+            key: 'due_date',
+            header: 'Vencimento',
             render: (val: unknown) => formatDateBR(String(val)),
         },
     ];
 
     const filterFields = [
-        { key: 'clientName', label: 'Cliente', type: 'text' as const },
         {
             key: 'status',
             label: 'Status',

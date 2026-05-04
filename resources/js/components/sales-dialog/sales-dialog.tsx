@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
 import { useSalesDialog } from '@/hooks/use-sales-dialog';
-import type { Client, Product } from '@/lib/mocks/mock-data';
+import type { UiCustomer as Client, UiProduct as Product } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';
 import { filterProductsByQuery } from '@/utils/sales-dialog';

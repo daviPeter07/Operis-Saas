@@ -13,8 +13,8 @@ import { TableActions } from '@/components/table/table-actions';
 import { TableToolbar } from '@/components/table/table-toolbar';
 import { Badge } from '@/components/ui/badge';
 import { useTablePagination } from '@/hooks/use-table-pagination';
-import type { Client } from '@/lib/mocks/mock-data';
 import { cn } from '@/lib/utils';
+import type { UiCustomer as Client } from '@/types/dashboard-entities';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 
 interface ClientsTableProps {

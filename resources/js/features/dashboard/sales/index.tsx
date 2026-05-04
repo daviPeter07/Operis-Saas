@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
+import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import { useCustomers } from '@/hooks/use-customers';
-import { useSales } from '@/hooks/use-sales';
+import { useProducts } from '@/hooks/use-products';
+import { useCreateSale, useSales } from '@/hooks/use-sales';
 import {
     formatCurrencyBR,
     formatDateBR,
@@ -26,6 +28,8 @@ type SaleRow = {
 export function SalesModule() {
     const { data: sales = [] } = useSales();
     const { data: customers = [] } = useCustomers();
+    const { data: products = [] } = useProducts();
+    const createSale = useCreateSale();
 
     const customerNameById = useMemo(
         () => new Map(customers.map((customer) => [customer.id, customer.name])),
@@ -97,6 +101,92 @@ export function SalesModule() {
         },
     ];
 
+    const createFields = [
+        {
+            name: 'customer_id',
+            label: 'Cliente',
+            type: 'select' as const,
+            options: customers.map((customer) => ({
+                value: String(customer.id),
+                label: customer.name,
+            })),
+            required: true,
+        },
+        {
+            name: 'product_id',
+            label: 'Produto',
+            type: 'select' as const,
+            options: products.map((product) => ({
+                value: String(product.id),
+                label: product.name,
+            })),
+            required: true,
+        },
+        {
+            name: 'quantity',
+            label: 'Quantidade',
+            type: 'number' as const,
+            required: true,
+        },
+        {
+            name: 'unit_price',
+            label: 'Preço unitário',
+            type: 'number' as const,
+            required: true,
+        },
+        {
+            name: 'payment_method',
+            label: 'Método de pagamento',
+            type: 'select' as const,
+            options: [
+                { value: 'cash', label: 'Dinheiro' },
+                { value: 'pix', label: 'PIX' },
+                { value: 'card', label: 'Cartão' },
+                { value: 'installment', label: 'Parcelado' },
+            ],
+            required: true,
+        },
+        {
+            name: 'date',
+            label: 'Data',
+            type: 'date' as const,
+            required: true,
+        },
+    ];
+
+    const handleCreate = async (data: Record<string, unknown>) => {
+        const customerId = Number(data.customer_id || 0);
+        const productId = Number(data.product_id || 0);
+        const quantity = Number(data.quantity || 0);
+        const unitPrice = Number(data.unit_price || 0);
+        const paymentMethod = String(data.payment_method || 'pix') as
+            | 'cash'
+            | 'pix'
+            | 'card'
+            | 'installment';
+        const date = String(data.date || '').trim();
+
+        if (!customerId || !productId || quantity <= 0 || unitPrice < 0) {
+            throw new Error('Preencha os dados obrigatórios da venda.');
+        }
+
+        await createSale.mutateAsync({
+            customer_id: customerId,
+            date: date || new Date().toISOString().slice(0, 10),
+            payment_method: paymentMethod,
+            status: 'pending',
+            items: [
+                {
+                    product_id: productId,
+                    quantity,
+                    unit_price: unitPrice,
+                },
+            ],
+        });
+
+        toast.success('Venda criada com sucesso.');
+    };
+
     return (
         <div className="space-y-5">
             <SalesHeader metrics={metrics} />
@@ -106,6 +196,8 @@ export function SalesModule() {
                 columns={columns}
                 title="Vendas"
                 filterFields={filterFields}
+                onCreate={handleCreate as (data: SaleRow) => Promise<void>}
+                createFields={createFields}
             />
         </div>
     );

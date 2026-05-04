@@ -1,4 +1,4 @@
-import type { Supplier } from '@/lib/mocks/mock-data';
+import type { UiSupplier } from '@/types/dashboard-entities';
 import type { SupplierForm } from '@/types/dashboard-forms';
 
 type AddressFormShape = {
@@ -16,7 +16,7 @@ export function composeSupplierAddress(
         .join(', ');
 }
 
-export function buildQuickCreateSupplierPayload(name: string): Supplier {
+export function buildQuickCreateSupplierPayload(name: string): UiSupplier {
     return {
         id: '',
         name: name.trim(),
@@ -30,7 +30,7 @@ export function buildQuickCreateSupplierPayload(name: string): Supplier {
     };
 }
 
-export function createSupplierRecord(data: Supplier): Supplier {
+export function createSupplierRecord(data: UiSupplier): UiSupplier {
     return {
         id: crypto.randomUUID(),
         name: String(data.name || '').trim(),

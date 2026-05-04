@@ -1,9 +1,13 @@
-import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
+import type {
+    UiCustomer,
+    UiProduct,
+    UiSale,
+} from '@/types/dashboard-entities';
 import type { QuickCreateField } from '@/types/quick-create';
 import type { SaleDiscountType, SalesLineItem } from '@/types/sales-dialog';
 
 export const salesStatusOptions: Array<{
-    value: Sale['status'];
+    value: UiSale['status'];
     label: string;
 }> = [
     { value: 'pending', label: 'Pendente' },
@@ -12,7 +16,7 @@ export const salesStatusOptions: Array<{
 ];
 
 export const paymentMethodOptions: Array<{
-    value: Sale['paymentMethod'];
+    value: UiSale['paymentMethod'];
     label: string;
 }> = [
     { value: 'money', label: 'Dinheiro' },
@@ -30,14 +34,8 @@ export function todayString(): string {
     }).format(new Date());
 }
 
-export function sortByName<T extends { name: string }>(items: T[]): T[] {
-    return [...items].sort((first, second) =>
-        first.name.localeCompare(second.name, 'pt-BR'),
-    );
-}
-
 export function makeSaleLineItem(
-    product: Product,
+    product: UiProduct,
     quantity: number,
     salePrice?: number,
 ): SalesLineItem {
@@ -56,9 +54,9 @@ export function makeSaleLineItem(
 }
 
 export function filterProductsByQuery(
-    products: Product[],
+    products: UiProduct[],
     query: string,
-): Product[] {
+): UiProduct[] {
     const normalizedQuery = query.trim().toLowerCase();
 
     if (!normalizedQuery) {
@@ -124,103 +122,40 @@ export function calculateFinalTotal(
     return Number(Math.max(0, subtotal - discountAmountApplied).toFixed(2));
 }
 
-export function buildClientFields(clients: Client[]): QuickCreateField[] {
+export function buildClientFields(clients: UiCustomer[]): QuickCreateField[] {
     const cityOptions = Array.from(
         new Set(clients.map((client) => client.city)),
-    )
-        .sort((first, second) => first.localeCompare(second, 'pt-BR'))
-        .map((value) => ({ value, label: value }));
+    ).map((value) => ({ value, label: value }));
 
     const stateOptions = Array.from(
         new Set(clients.map((client) => client.state)),
-    )
-        .sort((first, second) => first.localeCompare(second, 'pt-BR'))
-        .map((value) => ({ value, label: value }));
+    ).map((value) => ({ value, label: value }));
 
     return [
-        {
-            name: 'name',
-            label: 'Nome',
-            type: 'text',
-            required: true,
-            placeholder: 'Nome completo',
-        },
-        {
-            name: 'email',
-            label: 'Email',
-            type: 'text',
-            placeholder: 'cliente@empresa.com',
-        },
-        {
-            name: 'phone',
-            label: 'Telefone',
-            type: 'text',
-            placeholder: '(00) 00000-0000',
-            mask: 'phone',
-        },
-        {
-            name: 'document',
-            label: 'Documento',
-            type: 'text',
-            placeholder: 'CPF/CNPJ',
-            mask: 'document',
-        },
+        { name: 'name', label: 'Nome', type: 'text', required: true },
+        { name: 'email', label: 'Email', type: 'text' },
+        { name: 'phone', label: 'Telefone', type: 'text', mask: 'phone' },
+        { name: 'document', label: 'Documento', type: 'text', mask: 'document' },
         { name: 'city', label: 'Cidade', type: 'select', options: cityOptions },
-        {
-            name: 'state',
-            label: 'Estado',
-            type: 'select',
-            options: stateOptions,
-        },
-        {
-            name: 'address',
-            label: 'Endereco',
-            type: 'text',
-            placeholder: 'Rua, numero e complemento',
-        },
-        {
-            name: 'createdAt',
-            label: 'Data de cadastro',
-            type: 'date',
-            required: true,
-        },
+        { name: 'state', label: 'Estado', type: 'select', options: stateOptions },
+        { name: 'address', label: 'Endereco', type: 'text' },
+        { name: 'createdAt', label: 'Data de cadastro', type: 'date', required: true },
     ];
 }
 
-export function buildProductFields(products: Product[]): QuickCreateField[] {
+export function buildProductFields(products: UiProduct[]): QuickCreateField[] {
     const brandOptions = Array.from(
         new Set(products.map((product) => product.brand)),
-    )
-        .sort((first, second) => first.localeCompare(second, 'pt-BR'))
-        .map((value) => ({ value, label: value }));
+    ).map((value) => ({ value, label: value }));
 
     const categoryOptions = Array.from(
         new Set(products.map((product) => product.category)),
-    )
-        .sort((first, second) => first.localeCompare(second, 'pt-BR'))
-        .map((value) => ({ value, label: value }));
+    ).map((value) => ({ value, label: value }));
 
     return [
-        {
-            name: 'name',
-            label: 'Nome do produto',
-            type: 'text',
-            required: true,
-            placeholder: 'Digite o nome do produto',
-        },
-        {
-            name: 'sku',
-            label: 'Codigo interno',
-            type: 'text',
-            required: true,
-            placeholder: 'Codigo de identificacao',
-        },
-        {
-            name: 'barcode',
-            label: 'Codigo de barras',
-            type: 'text',
-            placeholder: 'Escaneie ou digite o codigo',
-        },
+        { name: 'name', label: 'Nome do produto', type: 'text', required: true },
+        { name: 'sku', label: 'Codigo interno', type: 'text', required: true },
+        { name: 'barcode', label: 'Codigo de barras', type: 'text' },
         {
             name: 'brand',
             label: 'Marca',
@@ -244,7 +179,6 @@ export function buildProductFields(products: Product[]): QuickCreateField[] {
             label: 'Custo',
             type: 'text',
             required: true,
-            placeholder: 'R$ 0,00',
             mask: 'currency',
         },
         {
@@ -252,28 +186,10 @@ export function buildProductFields(products: Product[]): QuickCreateField[] {
             label: 'Preco de venda',
             type: 'text',
             required: true,
-            placeholder: 'R$ 0,00',
             mask: 'currency',
         },
-        {
-            name: 'stock',
-            label: 'Estoque inicial',
-            type: 'number',
-            required: true,
-            placeholder: 'Quantidade em estoque',
-        },
-        {
-            name: 'minStock',
-            label: 'Estoque minimo',
-            type: 'number',
-            required: true,
-            placeholder: 'Limite minimo',
-        },
-        {
-            name: 'createdAt',
-            label: 'Data de cadastro',
-            type: 'date',
-            required: true,
-        },
+        { name: 'stock', label: 'Estoque inicial', type: 'number', required: true },
+        { name: 'minStock', label: 'Estoque minimo', type: 'number', required: true },
+        { name: 'createdAt', label: 'Data de cadastro', type: 'date', required: true },
     ];
 }
