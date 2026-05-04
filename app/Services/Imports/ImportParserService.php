@@ -47,7 +47,6 @@ class ImportParserService
 
         // CSV handling continues below
 
-
         $handle = fopen($file->getRealPath(), 'rb');
         if (! $handle) {
             throw ValidationException::withMessages(['file' => 'Nao foi possivel ler o arquivo.']);

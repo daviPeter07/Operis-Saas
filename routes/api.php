@@ -41,7 +41,7 @@ Route::prefix('onboarding')
         Route::post('company', [CompanyOnboardingController::class, 'store'])->name('api.onboarding.company.store');
         Route::post('verify-code', [CompanyVerificationCodeController::class, 'store'])->name('api.onboarding.verify-code.store');
         Route::post('resend-code', [CompanyVerificationResendController::class, 'store'])->name('api.onboarding.resend-code.store');
-Route::get('state', [OnboardingStateController::class, 'index'])->name('api.onboarding.state');
+        Route::get('state', [OnboardingStateController::class, 'index'])->name('api.onboarding.state');
     });
 
 Route::middleware([
