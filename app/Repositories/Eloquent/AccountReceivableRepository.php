@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Repositories\Eloquent;
+
+use App\Models\AccountReceivable;
+use App\Models\Sale;
+use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+
+class AccountReceivableRepository implements AccountReceivableRepositoryInterface
+{
+    public function paginateByCompany(int $companyId): LengthAwarePaginator
+    {
+        return AccountReceivable::query()->forCompany($companyId)->latest()->paginate();
+    }
+
+    public function forSale(Sale $sale): Collection
+    {
+        return AccountReceivable::query()->where('sale_id', $sale->id)->get();
+    }
+
+    public function create(array $data): AccountReceivable
+    {
+        return AccountReceivable::query()->create($data);
+    }
+}

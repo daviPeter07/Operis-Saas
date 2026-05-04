@@ -128,27 +128,27 @@
 
 ### Tests for User Story 3
 
-- [ ] T052 [P] [US3] Criar teste de conclusao de venda e baixa de estoque em `tests/Feature/Sales/SaleCompletionStockTest.php`.
-- [ ] T053 [P] [US3] Criar teste de venda com estoque negativo em `tests/Feature/Sales/SaleNegativeStockAllowedTest.php`.
-- [ ] T054 [P] [US3] Criar teste de edicao de venda concluida com ajuste compensatorio em `tests/Feature/Sales/SaleEditCompensatoryStockTest.php`.
-- [ ] T055 [P] [US3] Criar teste de cancelamento de venda e estorno em `tests/Feature/Sales/SaleCancelRollbackTest.php`.
-- [ ] T056 [P] [US3] Criar teste de geracao/recalculo de contas a receber em `tests/Feature/Finance/ReceivableFromSaleTest.php`.
+- [x] T052 [P] [US3] Criar teste de conclusao de venda e baixa de estoque em `tests/Feature/Sales/SaleCompletionStockTest.php`.
+- [x] T053 [P] [US3] Criar teste de venda com estoque negativo em `tests/Feature/Sales/SaleNegativeStockAllowedTest.php`.
+- [x] T054 [P] [US3] Criar teste de edicao de venda concluida com ajuste compensatorio em `tests/Feature/Sales/SaleEditCompensatoryStockTest.php`.
+- [x] T055 [P] [US3] Criar teste de cancelamento de venda e estorno em `tests/Feature/Sales/SaleCancelRollbackTest.php`.
+- [x] T056 [P] [US3] Criar teste de geracao/recalculo de contas a receber em `tests/Feature/Finance/ReceivableFromSaleTest.php`.
 
 ### Implementation for User Story 3
 
-- [ ] T057 [P] [US3] Criar migrations de estoque e vendas em `database/migrations/*_create_stock_movements_table.php`, `*_create_sales_table.php`, `*_create_sale_items_table.php`, `*_create_sale_payments_table.php`, `*_create_account_receivables_table.php`.
-- [ ] T058 [P] [US3] Criar models `StockMovement`, `Sale`, `SaleItem`, `SalePayment`, `AccountReceivable` em `app/Models/`.
-- [ ] T059 [P] [US3] Criar enums `SaleStatus`, `FinancialStatus`, `StockMovementType`, `PaymentMethod` em `app/Enums/`.
-- [ ] T060 [P] [US3] Criar requests de venda em `app/Http/Requests/Sales/`.
-- [ ] T061 [P] [US3] Criar resources de venda/financeiro em `app/Http/Resources/Sales/` e `app/Http/Resources/Finance/`.
-- [ ] T062 [P] [US3] Criar policy de vendas e contas a receber em `app/Policies/SalePolicy.php` e `app/Policies/AccountReceivablePolicy.php`.
-- [ ] T063 [P] [US3] Criar repositories de venda/estoque/recebiveis em `app/Repositories/Contracts/` e `app/Repositories/Eloquent/`.
-- [ ] T064 [US3] Implementar `StockMovementService` em `app/Services/Products/StockMovementService.php`.
-- [ ] T065 [US3] Implementar `SaleService` com transacoes e ajuste compensatorio em `app/Services/Sales/SaleService.php`.
-- [ ] T066 [US3] Implementar `ReceivableService` em `app/Services/Finance/ReceivableService.php`.
-- [ ] T067 [US3] Implementar controllers de venda em `app/Http/Controllers/Api/Sales/SaleController.php` e `.../SaleCancelController.php`.
-- [ ] T068 [US3] Implementar controller de contas a receber em `app/Http/Controllers/Api/Finance/AccountReceivableController.php`.
-- [ ] T069 [US3] Registrar rotas de vendas/recebiveis em `routes/api.php`.
+- [x] T057 [P] [US3] Criar migrations de estoque e vendas em `database/migrations/*_create_stock_movements_table.php`, `*_create_sales_table.php`, `*_create_sale_items_table.php`, `*_create_sale_payments_table.php`, `*_create_account_receivables_table.php`.
+- [x] T058 [P] [US3] Criar models `StockMovement`, `Sale`, `SaleItem`, `SalePayment`, `AccountReceivable` em `app/Models/`.
+- [x] T059 [P] [US3] Criar enums `SaleStatus`, `FinancialStatus`, `StockMovementType`, `PaymentMethod` em `app/Enums/`.
+- [x] T060 [P] [US3] Criar requests de venda em `app/Http/Requests/Sales/`.
+- [x] T061 [P] [US3] Criar resources de venda/financeiro em `app/Http/Resources/Sales/` e `app/Http/Resources/Finance/`.
+- [x] T062 [P] [US3] Criar policy de vendas e contas a receber em `app/Policies/SalePolicy.php` e `app/Policies/AccountReceivablePolicy.php`.
+- [x] T063 [P] [US3] Criar repositories de venda/estoque/recebiveis em `app/Repositories/Contracts/` e `app/Repositories/Eloquent/`.
+- [x] T064 [US3] Implementar `StockMovementService` em `app/Services/Products/StockMovementService.php`.
+- [x] T065 [US3] Implementar `SaleService` com transacoes e ajuste compensatorio em `app/Services/Sales/SaleService.php`.
+- [x] T066 [US3] Implementar `ReceivableService` em `app/Services/Finance/ReceivableService.php`.
+- [x] T067 [US3] Implementar controllers de venda em `app/Http/Controllers/Api/Sales/SaleController.php` e `.../SaleCancelController.php`.
+- [x] T068 [US3] Implementar controller de contas a receber em `app/Http/Controllers/Api/Finance/AccountReceivableController.php`.
+- [x] T069 [US3] Registrar rotas de vendas/recebiveis em `routes/api.php`.
 
 **Checkpoint**: Fluxo de vendas completo com estoque e financeiro automatico.
 

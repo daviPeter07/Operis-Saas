@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Services\Products;
+
+use App\Enums\StockMovementType;
+use App\Models\Product;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
+
+class StockMovementService
+{
+    public function __construct(private readonly StockMovementRepositoryInterface $stockMovements) {}
+
+    public function register(Product $product, float $delta, StockMovementType $type, int $referenceId, ?int $userId = null): void
+    {
+        $product->update([
+            'stock' => (float) $product->stock + $delta,
+        ]);
+
+        $this->stockMovements->create([
+            'company_id' => $product->company_id,
+            'product_id' => $product->id,
+            'type' => $type->value,
+            'quantity_delta' => $delta,
+            'reference_type' => 'sale',
+            'reference_id' => $referenceId,
+            'created_by' => $userId,
+        ]);
+    }
+}

@@ -2,15 +2,21 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
 use App\Repositories\Contracts\BrandRepositoryInterface;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
 use App\Repositories\Contracts\CustomerRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Repositories\Contracts\SaleRepositoryInterface;
+use App\Repositories\Contracts\StockMovementRepositoryInterface;
 use App\Repositories\Contracts\SupplierRepositoryInterface;
+use App\Repositories\Eloquent\AccountReceivableRepository;
 use App\Repositories\Eloquent\BrandRepository;
 use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Eloquent\CustomerRepository;
 use App\Repositories\Eloquent\ProductRepository;
+use App\Repositories\Eloquent\SaleRepository;
+use App\Repositories\Eloquent\StockMovementRepository;
 use App\Repositories\Eloquent\SupplierRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -30,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(BrandRepositoryInterface::class, BrandRepository::class);
         $this->app->bind(CategoryRepositoryInterface::class, CategoryRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, ProductRepository::class);
+        $this->app->bind(SaleRepositoryInterface::class, SaleRepository::class);
+        $this->app->bind(StockMovementRepositoryInterface::class, StockMovementRepository::class);
+        $this->app->bind(AccountReceivableRepositoryInterface::class, AccountReceivableRepository::class);
     }
 
     /**
