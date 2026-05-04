@@ -38,3 +38,14 @@ export function useCreateCustomer() {
         },
     });
 }
+
+export function useDeleteCustomer() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => customerService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
+        },
+    });
+}

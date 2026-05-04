@@ -44,7 +44,7 @@ export interface GenericTableProps<T extends { id: string }> {
     }[];
     onView?: (row: T) => void;
     onEdit?: (row: T) => void;
-    onDelete?: (row: T) => void;
+    onDelete?: (row: T) => void | Promise<void>;
     onCreate?: (data: T) => void | Promise<void>;
     onImport?: (data: T[]) => void;
     className?: string;
@@ -702,15 +702,16 @@ export function GenericTable<T extends { id: string }>({
                           )
                         : undefined
                 }
-                onConfirm={() => {
+                onConfirm={async () => {
                     try {
                         if (selectedRow) {
-                            onDelete?.(selectedRow);
+                            await onDelete?.(selectedRow);
                         }
 
                         toast.success(
                             `${title}: registro excluido com sucesso.`,
                         );
+                        setIsDeleteOpen(false);
                         setSelectedRow(null);
                     } catch (error) {
                         const message =

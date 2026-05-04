@@ -38,3 +38,14 @@ export function useCreateSale() {
         },
     });
 }
+
+export function useDeleteSale() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => saleService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: salesQueryKey });
+        },
+    });
+}

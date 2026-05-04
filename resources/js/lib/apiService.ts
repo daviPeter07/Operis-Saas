@@ -109,6 +109,6 @@ export abstract class ApiService<T extends { id: number }> {
             `${this.basePath}/${id}`,
         );
 
-        return response.data;
+        return response.data ?? { success: true };
     }
 }

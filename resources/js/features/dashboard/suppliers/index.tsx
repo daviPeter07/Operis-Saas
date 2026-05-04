@@ -1,5 +1,9 @@
 import { PersonTypeBadge } from '@/components/common/person-type-badge';
-import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
+import {
+    useCreateSupplier,
+    useDeleteSupplier,
+    useSuppliers,
+} from '@/hooks/use-suppliers';
 import { inferPersonType } from '@/utils/clients';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
@@ -17,6 +21,7 @@ type SupplierRow = {
 export function SuppliersModule() {
     const { data: suppliers = [] } = useSuppliers();
     const createSupplier = useCreateSupplier();
+    const deleteSupplier = useDeleteSupplier();
 
     const columns: Column<SupplierRow>[] = [
         { key: 'name', header: 'Nome' },
@@ -68,6 +73,9 @@ export function SuppliersModule() {
             columns={columns}
             title="Fornecedores"
             onCreate={handleCreate as (data: SupplierRow) => Promise<void>}
+            onDelete={async (row) => {
+                await deleteSupplier.mutateAsync(Number(row.id));
+            }}
             createDialog={({ open, onOpenChange, onSubmit }) => (
                 <SupplierCreateDialog
                     open={open}

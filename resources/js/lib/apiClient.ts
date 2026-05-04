@@ -41,6 +41,10 @@ class ApiClient {
                 };
             }
 
+            if (response.status === 204) {
+                return {} as T;
+            }
+
             const responseData = await response.json();
 
             return responseData as T;

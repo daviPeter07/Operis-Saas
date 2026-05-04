@@ -34,3 +34,16 @@ export function useCreateCategory() {
         },
     });
 }
+
+export function useDeleteCategory() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => categoryService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: categoriesQueryKey,
+            });
+        },
+    });
+}

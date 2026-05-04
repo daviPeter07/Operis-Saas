@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
-import { useCreateProduct, useProducts } from '@/hooks/use-products';
+import {
+    useCreateProduct,
+    useDeleteProduct,
+    useProducts,
+} from '@/hooks/use-products';
 import { formatCurrencyBR, formatQuantityWithUnit } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
@@ -24,6 +28,7 @@ export function InventoryModule() {
     const { data: brands = [] } = useBrands();
     const { data: categories = [] } = useCategories();
     const createProduct = useCreateProduct();
+    const deleteProduct = useDeleteProduct();
 
     const rows: ProductRow[] = products.map((product) => ({
         id: String(product.id),
@@ -146,6 +151,9 @@ export function InventoryModule() {
             title="Estoque"
             filterFields={filterFields}
             onCreate={handleCreate as (data: ProductRow) => Promise<void>}
+            onDelete={async (row) => {
+                await deleteProduct.mutateAsync(Number(row.id));
+            }}
             createFields={[
                 {
                     name: 'name',

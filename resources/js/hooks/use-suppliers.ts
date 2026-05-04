@@ -40,3 +40,16 @@ export function useCreateSupplier() {
         },
     });
 }
+
+export function useDeleteSupplier() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => supplierService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: suppliersQueryKey,
+            });
+        },
+    });
+}

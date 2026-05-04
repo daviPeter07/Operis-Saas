@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useBrands, useCreateBrand } from '@/hooks/use-brands';
+import { useBrands, useCreateBrand, useDeleteBrand } from '@/hooks/use-brands';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -12,6 +12,7 @@ type BrandRow = {
 export function BrandsModule() {
     const { data: brands = [] } = useBrands();
     const createBrand = useCreateBrand();
+    const deleteBrand = useDeleteBrand();
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -53,6 +54,9 @@ export function BrandsModule() {
             columns={columns}
             title="Marcas"
             onCreate={handleCreate}
+            onDelete={async (row) => {
+                await deleteBrand.mutateAsync(Number(row.id));
+            }}
             isCreateOpen={isCreateOpen}
             onCreateOpenChange={setIsCreateOpen}
             createFields={[

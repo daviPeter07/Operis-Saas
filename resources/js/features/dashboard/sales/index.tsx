@@ -5,7 +5,7 @@ import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
-import { useCreateSale, useSales } from '@/hooks/use-sales';
+import { useCreateSale, useDeleteSale, useSales } from '@/hooks/use-sales';
 import {
     formatCurrencyBR,
     formatDateBR,
@@ -30,6 +30,7 @@ export function SalesModule() {
     const { data: customers = [] } = useCustomers();
     const { data: products = [] } = useProducts();
     const createSale = useCreateSale();
+    const deleteSale = useDeleteSale();
 
     const customerNameById = useMemo(
         () => new Map(customers.map((customer) => [customer.id, customer.name])),
@@ -197,6 +198,9 @@ export function SalesModule() {
                 title="Vendas"
                 filterFields={filterFields}
                 onCreate={handleCreate as (data: SaleRow) => Promise<void>}
+                onDelete={async (row) => {
+                    await deleteSale.mutateAsync(Number(row.id));
+                }}
                 createFields={createFields}
             />
         </div>

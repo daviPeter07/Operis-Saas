@@ -42,3 +42,16 @@ export function useCreatePurchase() {
         },
     });
 }
+
+export function useDeletePurchase() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => purchaseService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: purchasesQueryKey,
+            });
+        },
+    });
+}

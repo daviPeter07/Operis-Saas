@@ -1,5 +1,9 @@
 import { PersonTypeBadge } from '@/components/common/person-type-badge';
-import { useCreateCustomer, useCustomers } from '@/hooks/use-customers';
+import {
+    useCreateCustomer,
+    useCustomers,
+    useDeleteCustomer,
+} from '@/hooks/use-customers';
 import { inferClientPersonType } from '@/utils/clients';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
@@ -18,6 +22,7 @@ type ClientRow = {
 export function ClientsModule() {
     const { data: customers = [] } = useCustomers();
     const createCustomer = useCreateCustomer();
+    const deleteCustomer = useDeleteCustomer();
 
     const rows: ClientRow[] = customers.map((customer) => ({
         id: String(customer.id),
@@ -79,6 +84,9 @@ export function ClientsModule() {
             title="Clientes"
             routeUrl="/dashboard/clients"
             onCreate={handleCreate as (data: ClientRow) => Promise<void>}
+            onDelete={async (row) => {
+                await deleteCustomer.mutateAsync(Number(row.id));
+            }}
             createFields={[
                 {
                     name: 'name',

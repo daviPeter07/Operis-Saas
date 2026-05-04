@@ -41,3 +41,14 @@ export function useCreateProduct() {
         },
     });
 }
+
+export function useDeleteProduct() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => productService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+        },
+    });
+}

@@ -32,3 +32,14 @@ export function useCreateBrand() {
         },
     });
 }
+
+export function useDeleteBrand() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => brandService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: brandsQueryKey });
+        },
+    });
+}

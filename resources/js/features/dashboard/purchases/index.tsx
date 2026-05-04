@@ -3,7 +3,11 @@ import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import { useProducts } from '@/hooks/use-products';
-import { useCreatePurchase, usePurchases } from '@/hooks/use-purchases';
+import {
+    useCreatePurchase,
+    useDeletePurchase,
+    usePurchases,
+} from '@/hooks/use-purchases';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import {
     formatDateBR,
@@ -29,6 +33,7 @@ export function PurchasesModule() {
     const { data: suppliers = [] } = useSuppliers();
     const { data: products = [] } = useProducts();
     const createPurchase = useCreatePurchase();
+    const deletePurchase = useDeletePurchase();
 
     const suppliersById = new Map(
         suppliers.map((supplier) => [supplier.id, supplier.name]),
@@ -191,6 +196,9 @@ export function PurchasesModule() {
             title="Compras"
             filterFields={filterFields}
             onCreate={handleCreate as (data: PurchaseRow) => Promise<void>}
+            onDelete={async (row) => {
+                await deletePurchase.mutateAsync(Number(row.id));
+            }}
             createFields={createFields}
         />
     );

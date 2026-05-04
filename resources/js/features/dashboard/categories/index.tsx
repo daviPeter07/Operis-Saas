@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useCategories, useCreateCategory } from '@/hooks/use-categories';
+import {
+    useCategories,
+    useCreateCategory,
+    useDeleteCategory,
+} from '@/hooks/use-categories';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -12,6 +16,7 @@ type CategoryRow = {
 export function CategoriesModule() {
     const { data: categories = [] } = useCategories();
     const createCategory = useCreateCategory();
+    const deleteCategory = useDeleteCategory();
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -53,6 +58,9 @@ export function CategoriesModule() {
             columns={columns}
             title="Categorias"
             onCreate={handleCreate}
+            onDelete={async (row) => {
+                await deleteCategory.mutateAsync(Number(row.id));
+            }}
             isCreateOpen={isCreateOpen}
             onCreateOpenChange={setIsCreateOpen}
             createFields={[
