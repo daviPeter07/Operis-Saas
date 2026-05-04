@@ -91,30 +91,30 @@
 
 ### Tests for User Story 2
 
-- [ ] T031 [P] [US2] Criar teste de ciclo CRUD de clientes em `tests/Feature/Customers/CustomerCrudTest.php`.
-- [ ] T032 [P] [US2] Criar teste de ciclo CRUD de fornecedores em `tests/Feature/Suppliers/SupplierCrudTest.php`.
-- [ ] T033 [P] [US2] Criar teste de ciclo CRUD de marcas/categorias em `tests/Feature/Catalog/CatalogCrudTest.php`.
-- [ ] T034 [P] [US2] Criar teste de ciclo CRUD de produtos em `tests/Feature/Products/ProductCrudTest.php`.
-- [ ] T035 [P] [US2] Criar teste de inativacao por vinculo historico em `tests/Feature/Shared/InactivationByHistoryRuleTest.php`.
+- [x] T031 [P] [US2] Criar teste de ciclo CRUD de clientes em `tests/Feature/Customers/CustomerCrudTest.php`.
+- [x] T032 [P] [US2] Criar teste de ciclo CRUD de fornecedores em `tests/Feature/Suppliers/SupplierCrudTest.php`.
+- [x] T033 [P] [US2] Criar teste de ciclo CRUD de marcas/categorias em `tests/Feature/Catalog/CatalogCrudTest.php`.
+- [x] T034 [P] [US2] Criar teste de ciclo CRUD de produtos em `tests/Feature/Products/ProductCrudTest.php`.
+- [x] T035 [P] [US2] Criar teste de inativacao por vinculo historico em `tests/Feature/Shared/InactivationByHistoryRuleTest.php`.
 
 ### Implementation for User Story 2
 
-- [ ] T036 [P] [US2] Criar migrations de clientes e fornecedores em `database/migrations/*_create_customers_table.php` e `*_create_suppliers_table.php`.
-- [ ] T037 [P] [US2] Criar migrations de marcas e categorias em `database/migrations/*_create_brands_table.php` e `*_create_categories_table.php`.
-- [ ] T038 [P] [US2] Criar migration de produtos em `database/migrations/*_create_products_table.php`.
-- [ ] T039 [P] [US2] Criar models `Customer`, `Supplier`, `Brand`, `Category`, `Product` em `app/Models/`.
-- [ ] T040 [P] [US2] Criar enums `ProductStatus` e `PersonType` em `app/Enums/`.
-- [ ] T041 [P] [US2] Criar requests de clientes em `app/Http/Requests/Customers/`.
-- [ ] T042 [P] [US2] Criar requests de fornecedores em `app/Http/Requests/Suppliers/`.
-- [ ] T043 [P] [US2] Criar requests de marcas/categorias em `app/Http/Requests/Brands/` e `app/Http/Requests/Categories/`.
-- [ ] T044 [P] [US2] Criar requests de produtos em `app/Http/Requests/Products/`.
-- [ ] T045 [P] [US2] Criar resources de clientes/fornecedores em `app/Http/Resources/Customers/` e `app/Http/Resources/Suppliers/`.
-- [ ] T046 [P] [US2] Criar resources de marcas/categorias/produtos em `app/Http/Resources/Brands/`, `app/Http/Resources/Categories/`, `app/Http/Resources/Products/`.
-- [ ] T047 [P] [US2] Criar policies de cadastro em `app/Policies/CustomerPolicy.php`, `SupplierPolicy.php`, `BrandPolicy.php`, `CategoryPolicy.php`, `ProductPolicy.php`.
-- [ ] T048 [P] [US2] Criar repositories de cadastro em `app/Repositories/Contracts/` e `app/Repositories/Eloquent/`.
-- [ ] T049 [P] [US2] Criar services de cadastro em `app/Services/Customers/`, `app/Services/Suppliers/`, `app/Services/Brands/`, `app/Services/Categories/`, `app/Services/Products/`.
-- [ ] T050 [US2] Implementar controllers API de cadastro em `app/Http/Controllers/Api/Customers/CustomerController.php`, `.../Suppliers/SupplierController.php`, `.../Brands/BrandController.php`, `.../Categories/CategoryController.php`, `.../Products/ProductController.php`.
-- [ ] T051 [US2] Registrar rotas de cadastros em `routes/api.php`.
+- [x] T036 [P] [US2] Criar migrations de clientes e fornecedores em `database/migrations/*_create_customers_table.php` e `*_create_suppliers_table.php`.
+- [x] T037 [P] [US2] Criar migrations de marcas e categorias em `database/migrations/*_create_brands_table.php` e `*_create_categories_table.php`.
+- [x] T038 [P] [US2] Criar migration de produtos em `database/migrations/*_create_products_table.php`.
+- [x] T039 [P] [US2] Criar models `Customer`, `Supplier`, `Brand`, `Category`, `Product` em `app/Models/`.
+- [x] T040 [P] [US2] Criar enums `ProductStatus` e `PersonType` em `app/Enums/`.
+- [x] T041 [P] [US2] Criar requests de clientes em `app/Http/Requests/Customers/`.
+- [x] T042 [P] [US2] Criar requests de fornecedores em `app/Http/Requests/Suppliers/`.
+- [x] T043 [P] [US2] Criar requests de marcas/categorias em `app/Http/Requests/Brands/` e `app/Http/Requests/Categories/`.
+- [x] T044 [P] [US2] Criar requests de produtos em `app/Http/Requests/Products/`.
+- [x] T045 [P] [US2] Criar resources de clientes/fornecedores em `app/Http/Resources/Customers/` e `app/Http/Resources/Suppliers/`.
+- [x] T046 [P] [US2] Criar resources de marcas/categorias/produtos em `app/Http/Resources/Brands/`, `app/Http/Resources/Categories/`, `app/Http/Resources/Products/`.
+- [x] T047 [P] [US2] Criar policies de cadastro em `app/Policies/CustomerPolicy.php`, `SupplierPolicy.php`, `BrandPolicy.php`, `CategoryPolicy.php`, `ProductPolicy.php`.
+- [x] T048 [P] [US2] Criar repositories de cadastro em `app/Repositories/Contracts/` e `app/Repositories/Eloquent/`.
+- [x] T049 [P] [US2] Criar services de cadastro em `app/Services/Customers/`, `app/Services/Suppliers/`, `app/Services/Brands/`, `app/Services/Categories/`, `app/Services/Products/`.
+- [x] T050 [US2] Implementar controllers API de cadastro em `app/Http/Controllers/Api/Customers/CustomerController.php`, `.../Suppliers/SupplierController.php`, `.../Brands/BrandController.php`, `.../Categories/CategoryController.php`, `.../Products/ProductController.php`.
+- [x] T051 [US2] Registrar rotas de cadastros em `routes/api.php`.
 
 **Checkpoint**: Cadastros operacionais completos e independentes.
 
