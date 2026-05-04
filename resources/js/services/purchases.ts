@@ -1,10 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
-import {
-    ApiService
-    
-    
-} from '@/lib/apiService';
-import type {ListParams, PaginatedData} from '@/lib/apiService';
+import { ApiService } from '@/lib/apiService';
+import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { Purchase } from '@/schemas/purchase';
 
 class PurchaseService extends ApiService<Purchase> {
@@ -33,7 +29,7 @@ class PurchaseService extends ApiService<Purchase> {
     }
 
     async cancel(id: number): Promise<{ success: boolean }> {
-        const response = await apiClient.post<{ data: { success: boolean } }>(
+        const response = await apiClient.post<{ success: boolean }>(
             `/purchases/${id}/cancel`,
             {},
         );
