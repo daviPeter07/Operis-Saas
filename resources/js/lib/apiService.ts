@@ -31,7 +31,10 @@ export abstract class ApiService<T extends { id: number }> {
     }
 
     async list(params?: ListParams): Promise<PaginatedData<T>> {
-        const response = await apiClient.get<PaginatedData<T>>(this.basePath, params);
+        const response = await apiClient.get<PaginatedData<T>>(
+            this.basePath,
+            params,
+        );
 
         return response.data;
     }

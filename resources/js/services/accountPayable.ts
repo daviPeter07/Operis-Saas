@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
-import { ApiService   } from '@/lib/apiService';
-import type {ListParams, PaginatedData} from '@/lib/apiService';
+import { ApiService } from '@/lib/apiService';
+import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { AccountPayable } from '@/schemas/accountPayable';
 
 class AccountPayableService extends ApiService<AccountPayable> {
@@ -20,7 +20,7 @@ class AccountPayableService extends ApiService<AccountPayable> {
         id: number,
         data: { paid_method: string; payment_notes?: string },
     ): Promise<{ success: boolean }> {
-        const response = await apiClient.post<{ data: { success: boolean } }>(
+        const response = await apiClient.post<{ success: boolean }>(
             `/account-payables/${id}/settle`,
             data,
         );
