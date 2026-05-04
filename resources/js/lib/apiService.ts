@@ -31,12 +31,59 @@ export abstract class ApiService<T extends { id: number }> {
     }
 
     async list(params?: ListParams): Promise<PaginatedData<T>> {
-        const response = await apiClient.get<PaginatedData<T>>(
-            this.basePath,
-            params,
-        );
+        const response = await apiClient.get<unknown>(this.basePath, params);
+        const payload = response.data as unknown;
 
-        return response.data;
+        if (Array.isArray(payload)) {
+            return {
+                data: payload as T[],
+                meta: {
+                    current_page: 1,
+                    last_page: 1,
+                    per_page: payload.length,
+                    total: payload.length,
+                },
+            };
+        }
+
+        if (payload && typeof payload === 'object') {
+            const maybePaginated = payload as {
+                data?: unknown;
+                meta?: {
+                    current_page?: number;
+                    last_page?: number;
+                    per_page?: number;
+                    total?: number;
+                };
+            };
+
+            if (Array.isArray(maybePaginated.data)) {
+                const total = maybePaginated.meta?.total ?? maybePaginated.data.length;
+                const perPage = maybePaginated.meta?.per_page ?? maybePaginated.data.length;
+                const lastPage = maybePaginated.meta?.last_page ?? 1;
+                const currentPage = maybePaginated.meta?.current_page ?? 1;
+
+                return {
+                    data: maybePaginated.data as T[],
+                    meta: {
+                        current_page: currentPage,
+                        last_page: lastPage,
+                        per_page: perPage,
+                        total,
+                    },
+                };
+            }
+        }
+
+        return {
+            data: [],
+            meta: {
+                current_page: 1,
+                last_page: 1,
+                per_page: 0,
+                total: 0,
+            },
+        };
     }
 
     async get(id: number): Promise<T> {

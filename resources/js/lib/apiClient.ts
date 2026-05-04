@@ -57,23 +57,53 @@ class ApiClient {
         url: string,
         params?: Record<string, unknown>,
     ): Promise<ApiResponse<T>> {
-        return this.request<ApiResponse<T>>('GET', url, { params });
+        const response = await this.request<unknown>('GET', url, { params });
+
+        if (response && typeof response === 'object' && 'data' in response) {
+            return response as ApiResponse<T>;
+        }
+
+        return { data: response as T };
     }
 
     async post<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
-        return this.request<ApiResponse<T>>('POST', url, { data });
+        const response = await this.request<unknown>('POST', url, { data });
+
+        if (response && typeof response === 'object' && 'data' in response) {
+            return response as ApiResponse<T>;
+        }
+
+        return { data: response as T };
     }
 
     async put<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
-        return this.request<ApiResponse<T>>('PUT', url, { data });
+        const response = await this.request<unknown>('PUT', url, { data });
+
+        if (response && typeof response === 'object' && 'data' in response) {
+            return response as ApiResponse<T>;
+        }
+
+        return { data: response as T };
     }
 
     async patch<T>(url: string, data?: unknown): Promise<ApiResponse<T>> {
-        return this.request<ApiResponse<T>>('PATCH', url, { data });
+        const response = await this.request<unknown>('PATCH', url, { data });
+
+        if (response && typeof response === 'object' && 'data' in response) {
+            return response as ApiResponse<T>;
+        }
+
+        return { data: response as T };
     }
 
     async delete<T>(url: string): Promise<ApiResponse<T>> {
-        return this.request<ApiResponse<T>>('DELETE', url);
+        const response = await this.request<unknown>('DELETE', url);
+
+        if (response && typeof response === 'object' && 'data' in response) {
+            return response as ApiResponse<T>;
+        }
+
+        return { data: response as T };
     }
 }
 

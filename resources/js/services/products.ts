@@ -1,6 +1,17 @@
 import { ApiService } from '@/lib/apiService';
 import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { Product } from '@/schemas/product';
+import { toNumber } from './normalizers';
+
+function normalizeProduct(product: Product): Product {
+    return {
+        ...product,
+        sale_price: toNumber(product.sale_price),
+        cost: toNumber(product.cost),
+        stock: toNumber(product.stock),
+        min_stock: toNumber(product.min_stock),
+    };
+}
 
 class ProductService extends ApiService<Product> {
     constructor() {
@@ -8,19 +19,30 @@ class ProductService extends ApiService<Product> {
     }
 
     async list(params?: ListParams): Promise<PaginatedData<Product>> {
-        return super.list(params);
+        const response = await super.list(params);
+
+        return {
+            ...response,
+            data: response.data.map(normalizeProduct),
+        };
     }
 
     async get(id: number): Promise<Product> {
-        return super.get(id);
+        const product = await super.get(id);
+
+        return normalizeProduct(product);
     }
 
     async create(data: Partial<Product>): Promise<Product> {
-        return super.create(data);
+        const product = await super.create(data);
+
+        return normalizeProduct(product);
     }
 
     async update(id: number, data: Partial<Product>): Promise<Product> {
-        return super.update(id, data);
+        const product = await super.update(id, data);
+
+        return normalizeProduct(product);
     }
 
     async delete(id: number): Promise<{ success: boolean }> {

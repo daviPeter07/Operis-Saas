@@ -24,7 +24,7 @@ class CatalogDataSeeder extends Seeder
             'Logitech',
             'Samsung',
         ])->map(
-            fn (string $name): Brand => Brand::firstOrCreate(
+            fn(string $name): Brand => Brand::firstOrCreate(
                 ['company_id' => $companyId, 'name' => $name],
                 ['status' => 'active']
             )
@@ -36,7 +36,7 @@ class CatalogDataSeeder extends Seeder
             'Periféricos',
             'Armazenamento',
         ])->map(
-            fn (string $name): Category => Category::firstOrCreate(
+            fn(string $name): Category => Category::firstOrCreate(
                 ['company_id' => $companyId, 'name' => $name],
                 ['status' => 'active']
             )

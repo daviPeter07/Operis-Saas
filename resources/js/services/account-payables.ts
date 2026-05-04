@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/apiClient';
 import { ApiService } from '@/lib/apiService';
 import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { AccountPayable } from '@/schemas/accountPayable';
+import { toNumber } from './normalizers';
 
 type SettleAccountPayablePayload = {
     paid_at: string;
@@ -9,29 +10,43 @@ type SettleAccountPayablePayload = {
     payment_notes?: string;
 };
 
+function normalizeAccountPayable(accountPayable: AccountPayable): AccountPayable {
+    return {
+        ...accountPayable,
+        amount: toNumber(accountPayable.amount),
+    };
+}
+
 class AccountPayableService extends ApiService<AccountPayable> {
     constructor() {
         super({ basePath: '/account-payables' });
     }
 
     async list(params?: ListParams): Promise<PaginatedData<AccountPayable>> {
-        return super.list(params);
+        const response = await super.list(params);
+
+        return {
+            ...response,
+            data: response.data.map(normalizeAccountPayable),
+        };
     }
 
     async get(id: number): Promise<AccountPayable> {
-        return super.get(id);
+        const accountPayable = await super.get(id);
+
+        return normalizeAccountPayable(accountPayable);
     }
 
     async settle(
         id: number,
         payload: SettleAccountPayablePayload,
     ): Promise<AccountPayable> {
-        const response = await apiClient.post<{ data: AccountPayable }>(
+        const response = await apiClient.post<AccountPayable>(
             `/account-payables/${id}/settle`,
             payload,
         );
 
-        return response.data.data;
+        return normalizeAccountPayable(response.data);
     }
 }
 

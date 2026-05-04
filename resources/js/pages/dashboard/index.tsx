@@ -21,6 +21,7 @@ import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrencyBR } from '@/lib/format';
+import { toNumber } from '@/services/normalizers';
 
 function dateToLabel(date: string): string {
     const [year, month, day] = date.split('-');
@@ -70,17 +71,17 @@ export default function DashboardPage() {
     };
 
     const metrics = useMemo(() => {
-        const salesTotal = sales.reduce((sum, sale) => sum + sale.total, 0);
+        const salesTotal = sales.reduce((sum, sale) => sum + toNumber(sale.total), 0);
         const purchasesTotal = purchases.reduce(
-            (sum, purchase) => sum + purchase.total,
+            (sum, purchase) => sum + toNumber(purchase.total),
             0,
         );
         const receivableTotal = receivables
             .filter((r) => r.status !== 'received')
-            .reduce((sum, r) => sum + r.amount, 0);
+            .reduce((sum, r) => sum + toNumber(r.amount), 0);
         const payableTotal = payables
             .filter((p) => p.status !== 'paid')
-            .reduce((sum, p) => sum + p.amount, 0);
+            .reduce((sum, p) => sum + toNumber(p.amount), 0);
 
         return [
             {
@@ -182,10 +183,10 @@ export default function DashboardPage() {
     const charts = useMemo(() => {
         const salesSeries = sales
             .slice(-12)
-            .map((sale) => ({ date: sale.date, value: sale.total }));
+            .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
         const profitSeries = sales
             .slice(-12)
-            .map((sale) => ({ date: sale.date, value: sale.total * 0.3 }));
+            .map((sale) => ({ date: sale.date, value: toNumber(sale.total) * 0.3 }));
 
         return [
             {

@@ -6,9 +6,9 @@ export function useCurrentUser() {
     return useQuery({
         queryKey: ['currentUser'],
         queryFn: async (): Promise<User> => {
-            const response = await apiClient.get<{ data: User }>('/auth/me');
+            const response = await apiClient.get<User>('/auth/me');
 
-            return response.data.data;
+            return response.data;
         },
         staleTime: 1000 * 60 * 5,
     });

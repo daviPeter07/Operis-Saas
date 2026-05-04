@@ -2,6 +2,21 @@ import { apiClient } from '@/lib/apiClient';
 import { ApiService } from '@/lib/apiService';
 import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { Sale } from '@/schemas/sale';
+import { toNumber } from './normalizers';
+
+function normalizeSale(sale: Sale): Sale {
+    return {
+        ...sale,
+        subtotal: toNumber(sale.subtotal),
+        total: toNumber(sale.total),
+        items: sale.items?.map((item) => ({
+            ...item,
+            quantity: toNumber(item.quantity),
+            unit_price: toNumber(item.unit_price),
+            subtotal: toNumber(item.subtotal),
+        })),
+    };
+}
 
 class SaleService extends ApiService<Sale> {
     constructor() {
@@ -9,19 +24,30 @@ class SaleService extends ApiService<Sale> {
     }
 
     async list(params?: ListParams): Promise<PaginatedData<Sale>> {
-        return super.list(params);
+        const response = await super.list(params);
+
+        return {
+            ...response,
+            data: response.data.map(normalizeSale),
+        };
     }
 
     async get(id: number): Promise<Sale> {
-        return super.get(id);
+        const sale = await super.get(id);
+
+        return normalizeSale(sale);
     }
 
     async create(data: Partial<Sale>): Promise<Sale> {
-        return super.create(data);
+        const sale = await super.create(data);
+
+        return normalizeSale(sale);
     }
 
     async update(id: number, data: Partial<Sale>): Promise<Sale> {
-        return super.update(id, data);
+        const sale = await super.update(id, data);
+
+        return normalizeSale(sale);
     }
 
     async delete(id: number): Promise<{ success: boolean }> {
