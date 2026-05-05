@@ -49,7 +49,7 @@ class PurchaseService
                 $this->payableService->regenerateFromPurchase($purchase);
             }
 
-            return $purchase->refresh()->load('items');
+            return $purchase->refresh()->load(['items.product.category', 'items.product.brand']);
         });
     }
 
@@ -83,7 +83,7 @@ class PurchaseService
                 $this->payableService->regenerateFromPurchase($purchase);
             }
 
-            return $purchase->refresh()->load('items');
+            return $purchase->refresh()->load(['items.product.category', 'items.product.brand']);
         });
     }
 

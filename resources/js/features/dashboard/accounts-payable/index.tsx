@@ -38,6 +38,7 @@ export function AccountsPayableModule() {
         const params = new URLSearchParams(window.location.search);
 
         if (params.get('action') === 'create-expense') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsCreateOpen(true);
             window.history.replaceState({}, '', '/dashboard/accounts-payable');
         }
@@ -113,17 +114,31 @@ export function AccountsPayableModule() {
         .filter((row) => selectedIds.has(row.id))
         .reduce((sum, row) => sum + row.amount, 0);
 
-    const handleCreateSupplier = (supplier: UiSupplier): UiSupplier => {
-        setDialogSuppliers((previous) => [supplier, ...previous]);
-
-        void createSupplier.mutateAsync({
+    const handleCreateSupplier = async (
+        supplier: UiSupplier,
+    ): Promise<UiSupplier> => {
+        const createdSupplier = await createSupplier.mutateAsync({
             name: supplier.name,
             email: supplier.email,
             phone: supplier.phone,
             document: supplier.document,
         });
 
-        return supplier;
+        const mappedSupplier: UiSupplier = {
+            id: String(createdSupplier.id),
+            name: createdSupplier.name,
+            email: createdSupplier.email ?? '',
+            phone: createdSupplier.phone ?? '',
+            document: createdSupplier.document ?? '',
+            city: '',
+            state: '',
+            address: '',
+            createdAt: new Date().toISOString().slice(0, 10),
+        };
+
+        setDialogSuppliers((previous) => [mappedSupplier, ...previous]);
+
+        return mappedSupplier;
     };
 
     const columns: Column<PayableRow>[] = [

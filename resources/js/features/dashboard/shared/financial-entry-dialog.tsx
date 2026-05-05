@@ -50,7 +50,7 @@ type FinancialEntryDialogProps = {
     catalogSection?: React.ReactNode;
     summaryLabel?: string;
     suppliers?: UiSupplier[];
-    onCreateSupplier?: (supplierName: string) => void;
+    onOpenCreateSupplier?: () => void;
 };
 
 export function FinancialEntryDialog({
@@ -66,8 +66,9 @@ export function FinancialEntryDialog({
     catalogSection,
     summaryLabel = 'Total',
     suppliers = [],
-    onCreateSupplier,
+    onOpenCreateSupplier,
 }: FinancialEntryDialogProps) {
+    const hasCatalogSection = Boolean(catalogSection);
     const [supplierSearch, setSupplierSearch] = React.useState('');
     const selectedSupplier = suppliers.find(
         (supplier) => supplier.name === form.supplierName,
@@ -91,6 +92,17 @@ export function FinancialEntryDialog({
         }
     }, [open]);
 
+    React.useEffect(() => {
+        if (
+            selectedSupplier &&
+            form.supplierName === selectedSupplier.name &&
+            supplierSearch !== selectedSupplier.name
+        ) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSupplierSearch(selectedSupplier.name);
+        }
+    }, [form.supplierName, selectedSupplier, supplierSearch]);
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-[min(1700px,calc(100vw-1rem))] overflow-y-auto p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]">
@@ -101,16 +113,18 @@ export function FinancialEntryDialog({
                         onSubmit();
                     }}
                 >
-                    <section className="flex min-h-0 flex-col border-r">
-                        <div className="border-b p-4">
+                    <section className="flex min-h-0 flex-col border-r bg-background">
+                        <div className="border-b px-5 py-4">
                             <DialogHeader className="text-left">
-                                <DialogTitle>{title}</DialogTitle>
+                                <DialogTitle className="text-xl">
+                                    {title}
+                                </DialogTitle>
                                 <DialogDescription>
                                     {description}
                                 </DialogDescription>
                             </DialogHeader>
                         </div>
-                        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                             {catalogSection ?? (
                                 <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
                                     Nenhum item adicional para listar.
@@ -120,26 +134,27 @@ export function FinancialEntryDialog({
                     </section>
 
                     <section className="flex min-h-0 flex-col bg-card">
-                        <div className="border-b p-4">
+                        <div className="border-b px-5 py-4">
                             <DialogHeader className="text-left">
                                 <DialogTitle className="text-lg">
                                     {primarySectionTitle}
                                 </DialogTitle>
                                 <DialogDescription>
-                                    Fornecedor, pagamento e fechamento.
+                                    Fornecedor, pagamento e fechamento
+                                    operacional.
                                 </DialogDescription>
                             </DialogHeader>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                             <div className="space-y-4">
-                                <Card>
+                                <Card className="border-border/70 shadow-none">
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-sm">
                                                 Fornecedor
                                             </CardTitle>
-                                            {onCreateSupplier ? (
+                                            {onOpenCreateSupplier ? (
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <Button
@@ -147,15 +162,8 @@ export function FinancialEntryDialog({
                                                             variant="ghost"
                                                             size="icon"
                                                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                                            disabled={
-                                                                supplierSearch.trim()
-                                                                    .length ===
-                                                                0
-                                                            }
-                                                            onClick={() =>
-                                                                onCreateSupplier(
-                                                                    supplierSearch.trim(),
-                                                                )
+                                                            onClick={
+                                                                onOpenCreateSupplier
                                                             }
                                                         >
                                                             <UserPlus className="h-4 w-4" />
@@ -210,55 +218,152 @@ export function FinancialEntryDialog({
                                     </CardContent>
                                 </Card>
 
-                                <Card>
+                                <Card className="border-border/70 shadow-none">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-sm">
-                                            Valores
+                                            Resumo da operacao
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="grid gap-3 sm:grid-cols-2">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="financial-items">
-                                                Itens *
-                                            </Label>
-                                            <Input
-                                                id="financial-items"
-                                                type="number"
-                                                min="1"
-                                                value={form.items}
-                                                onChange={(event) =>
-                                                    onChange(
-                                                        'items',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                required
-                                            />
+                                    <CardContent className="space-y-3">
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            <div className="rounded-lg border bg-muted/30 p-3">
+                                                <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                                                    Itens
+                                                </p>
+                                                {hasCatalogSection ? (
+                                                    <>
+                                                        <p className="mt-1 text-2xl font-semibold">
+                                                            {form.items || '0'}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Quantidade total no
+                                                            carrinho.
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <div className="mt-2 grid gap-2">
+                                                        <Label htmlFor="financial-items">
+                                                            Itens *
+                                                        </Label>
+                                                        <Input
+                                                            id="financial-items"
+                                                            type="number"
+                                                            min="1"
+                                                            value={form.items}
+                                                            onChange={(event) =>
+                                                                onChange(
+                                                                    'items',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            required
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="rounded-lg border bg-muted/30 p-3">
+                                                <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                                                    Total
+                                                </p>
+                                                {hasCatalogSection ? (
+                                                    <>
+                                                        <p className="mt-1 text-2xl font-semibold">
+                                                            {formatCurrencyBR(
+                                                                Number(
+                                                                    form.total ||
+                                                                        0,
+                                                                ),
+                                                            )}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Calculado a partir
+                                                            dos custos por
+                                                            linha.
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <div className="mt-2 grid gap-2">
+                                                        <Label htmlFor="financial-total">
+                                                            Total *
+                                                        </Label>
+                                                        <Input
+                                                            id="financial-total"
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            value={form.total}
+                                                            onChange={(event) =>
+                                                                onChange(
+                                                                    'total',
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            required
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="financial-total">
-                                                Total *
-                                            </Label>
-                                            <Input
-                                                id="financial-total"
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={form.total}
-                                                onChange={(event) =>
-                                                    onChange(
-                                                        'total',
-                                                        event.target.value,
-                                                    )
-                                                }
-                                                required
-                                            />
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="financial-status">
+                                                    Status *
+                                                </Label>
+                                                <Select
+                                                    value={form.status}
+                                                    onValueChange={(value) =>
+                                                        onChange(
+                                                            'status',
+                                                            value,
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger id="financial-status">
+                                                        <SelectValue placeholder="Status" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {STATUS_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value
+                                                                    }
+                                                                    value={
+                                                                        option.value
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        option.label
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label>Data *</Label>
+                                                <DatePickerInput
+                                                    value={form.createdAt}
+                                                    onChange={(value) =>
+                                                        onChange(
+                                                            'createdAt',
+                                                            value,
+                                                        )
+                                                    }
+                                                    placeholder="Selecionar data"
+                                                />
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
 
-                                <Card>
+                                <Card className="border-border/70 shadow-none">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-sm">
                                             Forma de pagamento
@@ -302,10 +407,10 @@ export function FinancialEntryDialog({
                                 </Card>
 
                                 {form.paymentMethod === 'card' ? (
-                                    <Card>
+                                    <Card className="border-border/70 shadow-none">
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-sm">
-                                                Detalhes do cartão
+                                                Detalhes do cartao
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
@@ -340,59 +445,7 @@ export function FinancialEntryDialog({
                                     </Card>
                                 ) : null}
 
-                                <Card>
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-sm">
-                                            Status e data
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="grid gap-3">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="financial-status">
-                                                Status *
-                                            </Label>
-                                            <Select
-                                                value={form.status}
-                                                onValueChange={(value) =>
-                                                    onChange('status', value)
-                                                }
-                                            >
-                                                <SelectTrigger id="financial-status">
-                                                    <SelectValue placeholder="Status" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {STATUS_OPTIONS.map(
-                                                        (option) => (
-                                                            <SelectItem
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label>Data *</Label>
-                                            <DatePickerInput
-                                                value={form.createdAt}
-                                                onChange={(value) =>
-                                                    onChange('createdAt', value)
-                                                }
-                                                placeholder="Selecionar data"
-                                            />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                <div className="space-y-2 rounded-md border p-3">
+                                <div className="space-y-2 rounded-xl border p-3">
                                     <div className="flex items-center justify-between">
                                         <span className="text-lg font-bold">
                                             {summaryLabel}

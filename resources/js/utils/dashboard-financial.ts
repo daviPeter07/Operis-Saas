@@ -1,4 +1,4 @@
-import type { UiProduct, UiPurchase } from '@/types/dashboard-entities';
+import type { UiPurchase } from '@/types/dashboard-entities';
 import type {
     FinancialEntryForm,
     PurchaseLineItem,
@@ -33,20 +33,15 @@ function resolveDueDate(form: FinancialEntryForm): string {
 
 export function computePurchaseTotals(
     items: PurchaseLineItem[],
-    products: UiProduct[],
 ): { items: number; total: number } {
     return items.reduce(
         (acc, item) => {
-            const product = products.find(
-                (entry) => entry.id === item.productId,
-            );
-
-            if (!product) {
+            if (!item.productId || item.quantity <= 0) {
                 return acc;
             }
 
             acc.items += item.quantity;
-            acc.total += product.cost * item.quantity;
+            acc.total += item.unitCost * item.quantity;
 
             return acc;
         },

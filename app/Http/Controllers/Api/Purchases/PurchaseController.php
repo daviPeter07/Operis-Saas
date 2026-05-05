@@ -46,7 +46,7 @@ class PurchaseController extends Controller
     {
         $this->authorize('view', $purchase);
 
-        return response()->json(['data' => PurchaseResource::make($purchase->load('items'))]);
+        return response()->json(['data' => PurchaseResource::make($purchase->load(['items.product.category', 'items.product.brand']))]);
     }
 
     /**

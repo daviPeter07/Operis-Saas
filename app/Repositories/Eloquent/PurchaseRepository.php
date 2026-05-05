@@ -10,7 +10,11 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 {
     public function paginateByCompany(int $companyId): LengthAwarePaginator
     {
-        return Purchase::query()->forCompany($companyId)->latest()->paginate();
+        return Purchase::query()
+            ->forCompany($companyId)
+            ->with(['items.product.category', 'items.product.brand'])
+            ->latest()
+            ->paginate();
     }
 
     public function createForCompany(int $companyId, array $data): Purchase

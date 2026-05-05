@@ -46,6 +46,7 @@ export type FinancialEntryForm = {
 export type PurchaseLineItem = {
     productId: string;
     quantity: number;
+    unitCost: number;
 };
 
 export type PurchaseCreateDialogProps = {
@@ -54,7 +55,21 @@ export type PurchaseCreateDialogProps = {
     onSubmit: (data: UiPurchase) => void;
     products: UiProduct[];
     suppliers: UiSupplier[];
-    onCreateSupplier: (data: UiSupplier) => UiSupplier;
+    categories: Array<{ id: number; name: string }>;
+    brands: Array<{ id: number; name: string }>;
+    onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;
+    onCreateProduct: (data: {
+        name: string;
+        sku: string;
+        barcode: string;
+        categoryId: number;
+        brandId: number | null;
+        cost: number;
+        price: number;
+        stock: number;
+        minStock: number;
+        createdAt: string;
+    }) => Promise<UiProduct>;
     onApplyStock: (items: PurchaseLineItem[]) => void;
 };
 
@@ -63,7 +78,7 @@ export type AccountsPayableCreateDialogProps = {
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: UiPurchase) => void;
     suppliers: UiSupplier[];
-    onCreateSupplier: (data: UiSupplier) => UiSupplier;
+    onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;
 };
 
 export type SupplierForm = {

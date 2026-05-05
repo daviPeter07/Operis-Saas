@@ -17,27 +17,22 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useCreateSupplier } from '@/hooks/use-suppliers';
 import { initialSupplierForm } from '@/constants/dashboard-form-initials';
 import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
 import { useFormState } from '@/hooks/use-form-state';
+import { useCreateSupplier } from '@/hooks/use-suppliers';
 import { formatDocumentInputByType, formatPhoneInput } from '@/utils/form-fields';
-
-type SupplierCreatePayload = {
-    name: string;
-    email: string;
-    phone: string;
-    document: string;
-};
 
 type SupplierCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onSuccess?: (supplier: { id: number; name: string }) => void;
 };
 
 export function SupplierCreateDialog({
     open,
     onOpenChange,
+    onSuccess,
 }: SupplierCreateDialogProps) {
     const { form, setField } = useFormState(initialSupplierForm, open);
     const createSupplier = useCreateSupplier();
@@ -68,8 +63,12 @@ export function SupplierCreateDialog({
                                 person_type: form.personType,
                             },
                             {
-                                onSuccess: () => {
+                                onSuccess: (data) => {
                                     onOpenChange(false);
+                                    onSuccess?.({
+                                        id: data.id,
+                                        name: data.name,
+                                    });
                                 },
                             },
                         );

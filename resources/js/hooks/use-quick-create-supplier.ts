@@ -3,7 +3,7 @@ import type { UiSupplier } from '@/types/dashboard-entities';
 import { buildQuickCreateSupplierPayload } from '@/utils/suppliers';
 
 type UseQuickCreateSupplierParams = {
-    onCreateSupplier: (data: UiSupplier) => UiSupplier;
+    onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;
     onSupplierCreated: (supplier: UiSupplier) => void;
 };
 
@@ -12,8 +12,8 @@ export function useQuickCreateSupplier({
     onSupplierCreated,
 }: UseQuickCreateSupplierParams) {
     return React.useCallback(
-        (supplierName: string) => {
-            const createdSupplier = onCreateSupplier(
+        async (supplierName: string) => {
+            const createdSupplier = await onCreateSupplier(
                 buildQuickCreateSupplierPayload(supplierName),
             );
 
