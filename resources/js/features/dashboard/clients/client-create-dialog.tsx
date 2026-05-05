@@ -201,9 +201,16 @@ export function ClientCreateDialog({
                                 id="client-zip"
                                 value={form.zipCode}
                                 onChange={(event) =>
-                                    setField('zipCode', event.target.value)
+                                    setField(
+                                        'zipCode',
+                                        event.target.value
+                                            .replace(/\D/g, '')
+                                            .slice(0, 8)
+                                            .replace(/(\d{5})(\d)/, '$1-$2'),
+                                    )
                                 }
                                 placeholder="00000-000"
+                                maxLength={9}
                             />
                         </div>
                     </div>
