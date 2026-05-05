@@ -20,6 +20,10 @@ class BypassAuth
             return $next($request);
         }
 
+        if ($request->is('register') || $request->routeIs('register')) {
+            return $next($request);
+        }
+
         if (! app()->environment('local', 'development')) {
             return $next($request);
         }
