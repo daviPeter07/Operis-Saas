@@ -14,6 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
@@ -309,24 +316,35 @@ export function CreateModal<T extends Record<string, unknown>>({
         if (field.type === 'select') {
             return (
                 <div className="flex min-w-0 items-center gap-2">
-                    <Input
-                        id={field.name}
-                        ref={(node) => {
-                            inputRefs.current[field.name] = node;
-                        }}
-                        list={`${field.name}-options`}
-                        type="text"
-                        placeholder={
-                            field.placeholder ||
-                            `Digite ou selecione ${field.label.toLowerCase()}`
-                        }
+                    <Select
                         value={value}
-                        onChange={(event) =>
-                            handleChange(field, event.target.value)
+                        onValueChange={(newValue) =>
+                            handleChange(field, newValue)
                         }
                         required={field.required}
-                        className="min-w-0 flex-1"
-                    />
+                    >
+                        <SelectTrigger
+                            id={field.name}
+                            className="min-w-0 flex-1"
+                        >
+                            <SelectValue
+                                placeholder={
+                                    field.placeholder ||
+                                    `Selecione ${field.label.toLowerCase()}`
+                                }
+                            />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {field.options?.map((option) => (
+                                <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     {field.actionButton ? (
                         <Button
                             type="button"
@@ -337,15 +355,6 @@ export function CreateModal<T extends Record<string, unknown>>({
                         >
                             {field.actionButton.label}
                         </Button>
-                    ) : null}
-                    {field.options && field.options.length > 0 ? (
-                        <datalist id={`${field.name}-options`}>
-                            {field.options.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </datalist>
                     ) : null}
                 </div>
             );
