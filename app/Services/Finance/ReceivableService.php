@@ -25,15 +25,23 @@ class ReceivableService
             $receivable->delete();
         }
 
-        $this->receivables->create([
-            'company_id' => $sale->company_id,
-            'sale_id' => $sale->id,
-            'installment_number' => 1,
-            'due_date' => $sale->date,
-            'amount' => $sale->total,
-            'status' => $sale->payment_method === 'cash' ? FinancialStatus::Received->value : FinancialStatus::Pending->value,
-            'received_at' => $sale->payment_method === 'cash' ? now() : null,
-        ]);
+        $installments = $sale->installments ?? 1;
+        $installmentAmount = $sale->total / $installments;
+        $firstInstallmentDate = $sale->first_installment_date ?? $sale->date;
+
+        for ($i = 0; $i < $installments; $i++) {
+            $dueDate = (new \DateTime($firstInstallmentDate))->modify("+{$i} month");
+
+            $this->receivables->create([
+                'company_id' => $sale->company_id,
+                'sale_id' => $sale->id,
+                'installment_number' => $i + 1,
+                'due_date' => $dueDate->format('Y-m-d'),
+                'amount' => $installmentAmount,
+                'status' => FinancialStatus::Pending->value,
+                'received_at' => null,
+            ]);
+        }
     }
 
     public function cancelFromSale(Sale $sale): void

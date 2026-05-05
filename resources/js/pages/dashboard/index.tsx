@@ -206,7 +206,7 @@ export default function DashboardPage() {
         return [...salesItems, ...purchaseItems, ...customerItems, ...supplierItems, ...productItems]
             .filter((item) => item.time)
             .sort((a, b) => b.time.localeCompare(a.time))
-            .slice(0, 8);
+            .slice(0, 5);
     }, [activeSales, activePurchases, customers, suppliers, products, auth.user?.name]);
 
     const alerts = useMemo(

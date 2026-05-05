@@ -1,9 +1,10 @@
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
     money: 'Dinheiro',
+    cash: 'Dinheiro',
     pix: 'PIX',
-    card: 'Cartao',
-    credit: 'Cartao de credito',
-    debit: 'Cartao de debito',
+    card: 'Cartão',
+    credit: 'Cartão de crédito',
+    debit: 'Cartão de débito',
     other: 'Outros',
     installment: 'Parcelado',
 };

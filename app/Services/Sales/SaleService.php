@@ -39,6 +39,9 @@ class SaleService
                 'total' => $totals,
                 'status' => $status,
                 'payment_method' => $data['payment_method'],
+                'installments' => $data['installments'] ?? 1,
+                'first_installment_date' => $data['first_installment_date'] ?? $data['date'],
+                'installment_value' => $data['installment_value'] ?? null,
             ]);
 
             $this->syncItems($sale, $data['items']);
