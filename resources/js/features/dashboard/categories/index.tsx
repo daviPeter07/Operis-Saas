@@ -4,6 +4,7 @@ import {
     useCreateCategory,
     useDeleteCategory,
 } from '@/hooks/use-categories';
+import { StatusBadge } from '@/components/common/status-badge';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
@@ -33,7 +34,7 @@ export function CategoriesModule() {
 
     const columns: Column<CategoryRow>[] = [
         { key: 'name', header: 'Nome' },
-        { key: 'status', header: 'Status' },
+        { key: 'status', header: 'Status', render: (val: unknown) => <StatusBadge status={String(val)} /> },
     ];
 
     const handleCreate = async (data: CategoryRow) => {

@@ -1,4 +1,5 @@
 import { PersonTypeBadge } from '@/components/common/person-type-badge';
+import { StatusBadge } from '@/components/common/status-badge';
 import {
     useCreateSupplier,
     useDeleteSupplier,
@@ -35,7 +36,7 @@ export function SuppliersModule() {
         { key: 'email', header: 'Email' },
         { key: 'phone', header: 'Telefone' },
         { key: 'document', header: 'Documento' },
-        { key: 'status', header: 'Status' },
+        { key: 'status', header: 'Status', render: (val: unknown) => <StatusBadge status={String(val)} /> },
     ];
 
     const rows: SupplierRow[] = suppliers.map((supplier) => ({

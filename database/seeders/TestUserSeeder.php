@@ -13,10 +13,10 @@ class TestUserSeeder extends Seeder
     public function run(): void
     {
         $user = User::firstOrCreate(
-            ['email' => 'demo@operis.test'],
+            ['email' => 'davipetersondev173@gmail.com'],
             [
-                'name' => 'Demo User',
-                'password' => Hash::make('password'),
+                'name' => 'Davi Peterson',
+                'password' => Hash::make('121006Davizin12'),
             ]
         );
 
@@ -27,6 +27,7 @@ class TestUserSeeder extends Seeder
                 'document' => '12.345.678/0001-90',
                 'address' => 'Rua Example, 123',
                 'email' => 'contato@empresademo.com.br',
+                'verified_at' => now(),
                 'phone' => '(11) 99999-9999',
                 'city' => 'São Paulo',
                 'state' => 'SP',

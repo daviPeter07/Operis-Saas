@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useBrands, useCreateBrand, useDeleteBrand } from '@/hooks/use-brands';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { StatusBadge } from '@/components/common/status-badge';
 
 type BrandRow = {
     id: string;
@@ -29,7 +30,7 @@ export function BrandsModule() {
 
     const columns: Column<BrandRow>[] = [
         { key: 'name', header: 'Nome' },
-        { key: 'status', header: 'Status' },
+        { key: 'status', header: 'Status', render: (val: unknown) => <StatusBadge status={String(val)} /> },
     ];
 
     const handleCreate = async (data: BrandRow) => {
