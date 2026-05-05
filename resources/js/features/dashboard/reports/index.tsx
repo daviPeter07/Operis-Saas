@@ -11,8 +11,10 @@ import {
     ShoppingCart,
     Tag,
     ChevronRight,
+    Clock3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
 
 const reportCategories = [
     {
@@ -103,48 +105,55 @@ const reportCategories = [
 
 export function ReportsModule() {
     return (
-        <div className={cn('space-y-8')}>
-            {reportCategories.map((category) => (
-                <div key={category.category}>
-                    <div className="mb-3 flex items-center gap-2">
-                        <span
-                            className={cn(
-                                'h-3 w-3 rounded-full',
-                                category.color,
-                            )}
-                        />
-                        <h2 className="text-lg font-semibold">
-                            {category.category}
-                        </h2>
-                    </div>
-                    <div className="space-y-2">
-                        {category.reports.map((report) => {
-                            const Icon = report.icon;
+        <div className="relative">
+            <div className={cn('pointer-events-none space-y-8 opacity-40')}>
+                {reportCategories.map((category) => (
+                    <div key={category.category}>
+                        <div className="mb-3 flex items-center gap-2">
+                            <span
+                                className={cn(
+                                    'h-3 w-3 rounded-full',
+                                    category.color,
+                                )}
+                            />
+                            <h2 className="text-lg font-semibold">
+                                {category.category}
+                            </h2>
+                        </div>
+                        <div className="space-y-2">
+                            {category.reports.map((report) => {
+                                const Icon = report.icon;
 
-                            return (
-                                <Link
-                                    key={report.slug}
-                                    href={`/dashboard/reports/${report.slug}`}
-                                    className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-                                >
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                                        <Icon className="h-5 w-5 text-foreground" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="font-medium text-card-foreground">
-                                            {report.title}
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            {report.description}
-                                        </p>
-                                    </div>
-                                    <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-                                </Link>
-                            );
-                        })}
+                                return (
+                                    <Link
+                                        key={report.slug}
+                                        href={`/dashboard/reports/${report.slug}`}
+                                        className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                                    >
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                            <Icon className="h-5 w-5 text-foreground" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-medium text-card-foreground">
+                                                {report.title}
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                {report.description}
+                                            </p>
+                                        </div>
+                                        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                    </Link>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
+
+            <ComingSoonOverlay
+                title="Relatórios em breve"
+                description="Estamos preparando uma área para você gerenciar membros, funções e acessos da equipe de forma simples, segura e organizada."
+            />
         </div>
     );
 }

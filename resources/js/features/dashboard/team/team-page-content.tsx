@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { WorkspaceRole, WorkspaceTeamAccessMode } from '@/types/workspace';
+import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
 
 type TeamMember = {
     nome: string;
@@ -211,202 +212,215 @@ export function TeamPageContent({
     }
 
     return (
-        <>
-            <div className="space-y-4">
-                <section className="rounded-2xl border bg-card p-4">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div>
-                            <p className="text-xs font-medium tracking-[0.24em] text-orange-500 uppercase">
-                                Equipe
-                            </p>
-                            <h2 className="mt-2 text-xl font-semibold text-foreground">
-                                Usuários e permissões de acesso.
-                            </h2>
-                            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
-                                Visualização compacta de membros com foco em
-                                nome, email, senha, role e status.
-                            </p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-3">
-                            {isAdmin ? (
-                                <Button
-                                    className="rounded-xl bg-orange-500 text-white hover:bg-orange-500/90"
-                                    onClick={() => setAddMemberOpen(true)}
-                                >
-                                    <UsersRound className="mr-2 h-4 w-4" />
-                                    Adicionar membro
-                                </Button>
-                            ) : needsAdminRequest ? (
-                                <Link
-                                    href={requestAdminHref}
-                                    className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-muted"
-                                >
-                                    Solicitar ao admin
-                                </Link>
-                            ) : (
-                                <Badge
-                                    variant="outline"
-                                    className="rounded-full px-3 py-1 text-xs"
-                                >
-                                    Somente visualização
-                                </Badge>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        {summary.map((item) => (
-                            <div
-                                key={item.title}
-                                className="rounded-xl border border-border/70 bg-background/40 p-3"
-                            >
-                                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/10 text-orange-500">
-                                    <item.icon className="h-4 w-4" />
-                                </div>
-                                <p className="text-xs font-medium text-muted-foreground">
-                                    {item.title}
+        <div className="relative">
+            <div className="pointer-events-none opacity-40">
+                <div className="space-y-4">
+                    <section className="rounded-2xl border bg-card p-4">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div>
+                                <p className="text-xs font-medium tracking-[0.24em] text-orange-500 uppercase">
+                                    Equipe
                                 </p>
-                                <p className="mt-1 text-xl font-semibold text-foreground">
-                                    {item.value}
-                                </p>
-                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                    {item.description}
+                                <h2 className="mt-2 text-xl font-semibold text-foreground">
+                                    Usuários e permissões de acesso.
+                                </h2>
+                                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+                                    Visualização compacta de membros com foco em
+                                    nome, email, senha, role e status.
                                 </p>
                             </div>
-                        ))}
-                    </div>
-                </section>
 
-                <section className="rounded-2xl border bg-card p-3">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                        <div>
-                            <h3 className="font-semibold text-foreground">
-                                Membros da equipe
-                            </h3>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Exibição compacta sem IDs, timestamps e foto.
-                            </p>
+                            <div className="flex flex-wrap gap-3">
+                                {isAdmin ? (
+                                    <Button
+                                        className="rounded-xl bg-orange-500 text-white hover:bg-orange-500/90"
+                                        onClick={() => setAddMemberOpen(true)}
+                                    >
+                                        <UsersRound className="mr-2 h-4 w-4" />
+                                        Adicionar membro
+                                    </Button>
+                                ) : needsAdminRequest ? (
+                                    <Link
+                                        href={requestAdminHref}
+                                        className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-muted"
+                                    >
+                                        Solicitar ao admin
+                                    </Link>
+                                ) : (
+                                    <Badge
+                                        variant="outline"
+                                        className="rounded-full px-3 py-1 text-xs"
+                                    >
+                                        Somente visualização
+                                    </Badge>
+                                )}
+                            </div>
                         </div>
-                        <Badge
-                            variant="outline"
-                            className="rounded-full px-3 py-1 text-xs"
-                        >
-                            {members.length} membros
-                        </Badge>
-                    </div>
 
-                    <div className="space-y-2.5">
-                        {members.map((member) => (
-                            <div
-                                key={member.email}
-                                className="rounded-xl border border-border/70 bg-background/40 px-3 py-3"
+                        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                            {summary.map((item) => (
+                                <div
+                                    key={item.title}
+                                    className="rounded-xl border border-border/70 bg-background/40 p-3"
+                                >
+                                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/10 text-orange-500">
+                                        <item.icon className="h-4 w-4" />
+                                    </div>
+                                    <p className="text-xs font-medium text-muted-foreground">
+                                        {item.title}
+                                    </p>
+                                    <p className="mt-1 text-xl font-semibold text-foreground">
+                                        {item.value}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                        {item.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section className="rounded-2xl border bg-card p-3">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <div>
+                                <h3 className="font-semibold text-foreground">
+                                    Membros da equipe
+                                </h3>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Exibição compacta sem IDs, timestamps e
+                                    foto.
+                                </p>
+                            </div>
+                            <Badge
+                                variant="outline"
+                                className="rounded-full px-3 py-1 text-xs"
                             >
-                                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                                    <div className="flex items-start gap-3">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500 text-xs font-semibold text-white">
-                                            {getAvatarFromName(member.nome)}
+                                {members.length} membros
+                            </Badge>
+                        </div>
+
+                        <div className="space-y-2.5">
+                            {members.map((member) => (
+                                <div
+                                    key={member.email}
+                                    className="rounded-xl border border-border/70 bg-background/40 px-3 py-3"
+                                >
+                                    <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500 text-xs font-semibold text-white">
+                                                {getAvatarFromName(member.nome)}
+                                            </div>
+
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="text-base font-semibold text-foreground">
+                                                        {member.nome}
+                                                    </p>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="rounded-full text-[11px]"
+                                                    >
+                                                        {
+                                                            roleLabels[
+                                                                member.role
+                                                            ]
+                                                        }
+                                                    </Badge>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="rounded-full text-[11px]"
+                                                    >
+                                                        {
+                                                            statusLabels[
+                                                                member.status
+                                                            ]
+                                                        }
+                                                    </Badge>
+                                                </div>
+
+                                                <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <Mail className="h-3.5 w-3.5 text-orange-500" />
+                                                        {member.email}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="min-w-0">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <p className="text-base font-semibold text-foreground">
-                                                    {member.nome}
-                                                </p>
+                                        <div className="flex items-center justify-end gap-3">
+                                            {isAdmin ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="rounded-lg"
+                                                    onClick={() =>
+                                                        openManageDialog(member)
+                                                    }
+                                                >
+                                                    Gerenciar
+                                                </Button>
+                                            ) : needsAdminRequest ? (
+                                                <Link
+                                                    href={requestAdminHref}
+                                                    className="inline-flex h-10 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 text-sm font-medium text-orange-500 hover:bg-orange-500/15"
+                                                >
+                                                    Solicitar gestão
+                                                </Link>
+                                            ) : (
                                                 <Badge
                                                     variant="outline"
-                                                    className="rounded-full text-[11px]"
+                                                    className="rounded-full px-3 py-1 text-xs"
                                                 >
-                                                    {roleLabels[member.role]}
+                                                    Visualização
                                                 </Badge>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="rounded-full text-[11px]"
-                                                >
-                                                    {
-                                                        statusLabels[
-                                                            member.status
-                                                        ]
-                                                    }
-                                                </Badge>
-                                            </div>
-
-                                            <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                                <span className="inline-flex items-center gap-2">
-                                                    <Mail className="h-3.5 w-3.5 text-orange-500" />
-                                                    {member.email}
-                                                </span>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
-
-                                    <div className="flex items-center justify-end gap-3">
-                                        {isAdmin ? (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="rounded-lg"
-                                                onClick={() =>
-                                                    openManageDialog(member)
-                                                }
-                                            >
-                                                Gerenciar
-                                            </Button>
-                                        ) : needsAdminRequest ? (
-                                            <Link
-                                                href={requestAdminHref}
-                                                className="inline-flex h-10 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 text-sm font-medium text-orange-500 hover:bg-orange-500/15"
-                                            >
-                                                Solicitar gestão
-                                            </Link>
-                                        ) : (
-                                            <Badge
-                                                variant="outline"
-                                                className="rounded-full px-3 py-1 text-xs"
-                                            >
-                                                Visualização
-                                            </Badge>
-                                        )}
-                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                            ))}
+                        </div>
+                    </section>
 
-                <section className="rounded-2xl border bg-card p-4">
-                    <div className="mb-4">
-                        <h3 className="font-semibold text-foreground">
-                            Enviar convite por email
-                        </h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Fluxo visual para convite de novo usuário da equipe.
-                        </p>
-                    </div>
+                    <section className="rounded-2xl border bg-card p-4">
+                        <div className="mb-4">
+                            <h3 className="font-semibold text-foreground">
+                                Enviar convite por email
+                            </h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Fluxo visual para convite de novo usuário da
+                                equipe.
+                            </p>
+                        </div>
 
-                    <form
-                        onSubmit={handleInviteSubmit}
-                        className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px]"
-                    >
-                        <Input
-                            type="email"
-                            placeholder="Digite o email do usuário"
-                            value={inviteEmail}
-                            onChange={(event) =>
-                                setInviteEmail(event.target.value)
-                            }
-                            required
-                        />
-
-                        <Button
-                            type="submit"
-                            className="bg-orange-500 text-white hover:bg-orange-500/90"
+                        <form
+                            onSubmit={handleInviteSubmit}
+                            className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px]"
                         >
-                            Enviar convite
-                        </Button>
-                    </form>
-                </section>
+                            <Input
+                                type="email"
+                                placeholder="Digite o email do usuário"
+                                value={inviteEmail}
+                                onChange={(event) =>
+                                    setInviteEmail(event.target.value)
+                                }
+                                required
+                            />
+
+                            <Button
+                                type="submit"
+                                className="bg-orange-500 text-white hover:bg-orange-500/90"
+                            >
+                                Enviar convite
+                            </Button>
+                        </form>
+                    </section>
+                </div>
             </div>
+
+            <ComingSoonOverlay
+                title="Equipe em breve"
+                description="Estamos preparando uma área para você ajustar preferências do sistema, dados da empresa, permissões e outros detalhes importantes da operação com mais controle."
+            />
 
             <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
                 <DialogContent className="sm:max-w-xl">
@@ -629,7 +643,7 @@ export function TeamPageContent({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </>
+        </div>
     );
 }
 
