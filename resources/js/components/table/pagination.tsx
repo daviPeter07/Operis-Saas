@@ -25,11 +25,6 @@ export function Pagination({
     ...props
 }: PaginationProps) {
     const range = React.useMemo(() => {
-        const generateRange = (start: number, end: number) => {
-            return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-        };
-
-        const delta = siblingCount + 5;
         const left = Math.max(2, currentPage - siblingCount);
         const right = Math.min(totalPages - 1, currentPage + siblingCount);
 

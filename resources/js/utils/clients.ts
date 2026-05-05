@@ -1,4 +1,4 @@
-import type { Client } from '@/lib/mocks/mock-data';
+import type { UiCustomer } from '@/types/dashboard-entities';
 import type {
     ClientCreateDialogPayload,
     ClientForm,
@@ -16,7 +16,9 @@ export function inferClientPersonType(document: string): ClientPersonType {
     return inferPersonType(document);
 }
 
-export function createClientRecord(data: ClientCreateDialogPayload): Client {
+export function createClientRecord(
+    data: ClientCreateDialogPayload,
+): UiCustomer {
     return {
         id: crypto.randomUUID(),
         name: String(data.name || '').trim(),

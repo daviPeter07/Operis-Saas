@@ -24,4 +24,9 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
         return $purchase->refresh();
     }
+
+    public function delete(Purchase $purchase): void
+    {
+        $purchase->delete();
+    }
 }

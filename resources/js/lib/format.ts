@@ -1,7 +1,7 @@
-import { PAYMENT_METHOD_LABELS } from '@/constants/payment-methods';
-import { STATUS_LABELS } from '@/constants/status';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PAYMENT_METHOD_LABELS } from '@/constants/payment-methods';
+import { STATUS_LABELS } from '@/constants/status';
 
 export function formatDateBR(dateString: string): string {
     return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });

@@ -66,7 +66,7 @@ class PurchaseController extends Controller
     public function destroy(Purchase $purchase): JsonResponse
     {
         $this->authorize('delete', $purchase);
-        $this->purchaseService->cancel($purchase, auth()->id());
+        $this->purchaseService->delete($purchase, auth()->id());
 
         return response()->json(status: 204);
     }

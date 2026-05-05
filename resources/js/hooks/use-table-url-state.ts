@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Filter } from './use-table-filters';
 
 export interface UseTableUrlStateOptions {

@@ -1,67 +1,77 @@
 import { useState } from 'react';
-import { mockSales } from '@/lib/mocks/mock-data';
-import type { Sale } from '@/lib/mocks/mock-data';
-import { GenericTable } from '../generic-table';
-import type { Column } from '../generic-table';
+import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { STATUS_OPTIONS } from '@/constants/status';
-import {
-    formatDateBR,
-    formatCurrencyBR,
-    translatePaymentMethod,
-} from '@/lib/format';
-import { toast } from 'sonner';
+import { useAccountReceivables } from '@/hooks/use-account-receivables';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
+import { GenericTable } from '../generic-table';
+import type { Column } from '../generic-table';
+
+type ReceivableRow = {
+    id: string;
+    sale_id: number;
+    installment_number: number;
+    amount: number;
+    due_date: string;
+    status: string;
+    received_at: string | null;
+};
 
 export function AccountsReceivableModule() {
-    const [sales, setSales] = useState(() => [...mockSales]);
+    const { data: receivables = [] } = useAccountReceivables();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+    const rows: ReceivableRow[] = receivables.map((receivable) => ({
+        id: String(receivable.id),
+        sale_id: receivable.sale_id,
+        installment_number: receivable.installment_number,
+        amount: receivable.amount,
+        due_date: receivable.due_date,
+        status: receivable.status,
+        received_at: receivable.received_at,
+    }));
+
     const handleSelectOne = (id: string, checked: boolean) => {
-        const newSelected = new Set(selectedIds);
+        const next = new Set(selectedIds);
+
         if (checked) {
-            newSelected.add(id);
+            next.add(id);
         } else {
-            newSelected.delete(id);
+            next.delete(id);
         }
-        setSelectedIds(newSelected);
+
+        setSelectedIds(next);
     };
 
     const handleConfirmReceipt = () => {
-        setSales((prev) =>
-            prev.map((s) =>
-                selectedIds.has(s.id) ? { ...s, status: 'completed' } : s,
-            ),
-        );
-        toast.success(
-            `${selectedIds.size} conta(s) marcada(s) como recebida(s)`,
+        toast.info(
+            'Recebimento em lote não disponível no backend atual (apenas listagem de contas a receber).',
         );
         setSelectedIds(new Set());
     };
 
     const totalSelected = selectedIds.size;
-    const totalValue = sales
-        .filter((s) => selectedIds.has(s.id))
-        .reduce((sum, s) => sum + s.total, 0);
+    const totalValue = rows
+        .filter((row) => selectedIds.has(row.id))
+        .reduce((sum, row) => sum + row.amount, 0);
 
-    const columns: Column<Sale>[] = [
+    const columns: Column<ReceivableRow>[] = [
         {
             key: 'select',
             header: (
                 <input
                     type="checkbox"
-                    checked={
-                        selectedIds.size === sales.length && sales.length > 0
-                    }
+                    checked={selectedIds.size === rows.length && rows.length > 0}
                     ref={(el) => {
                         if (el) {
                             el.indeterminate =
                                 selectedIds.size > 0 &&
-                                selectedIds.size < sales.length;
+                                selectedIds.size < rows.length;
                         }
                     }}
                     onChange={(e) => {
                         if (e.target.checked) {
-                            setSelectedIds(new Set(sales.map((s) => s.id)));
+                            setSelectedIds(new Set(rows.map((row) => row.id)));
                         } else {
                             setSelectedIds(new Set());
                         }
@@ -69,7 +79,7 @@ export function AccountsReceivableModule() {
                     className="h-4 w-4 cursor-pointer rounded border border-gray-400 accent-gray-600"
                 />
             ),
-            render: (_, row: Sale) => (
+            render: (_, row: ReceivableRow) => (
                 <input
                     type="checkbox"
                     checked={selectedIds.has(row.id)}
@@ -78,9 +88,14 @@ export function AccountsReceivableModule() {
                 />
             ),
         },
-        { key: 'clientName', header: 'Cliente' },
         {
-            key: 'total',
+            key: 'sale_id',
+            header: 'Venda',
+            render: (val: unknown) => `#${String(val)}`,
+        },
+        { key: 'installment_number', header: 'Parcela' },
+        {
+            key: 'amount',
             header: 'Valor',
             render: (val: unknown) => formatCurrencyBR(Number(val)),
         },
@@ -90,36 +105,18 @@ export function AccountsReceivableModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'paymentMethod',
-            header: 'Método',
-            render: (val: unknown) => translatePaymentMethod(String(val)),
-        },
-        {
-            key: 'createdAt',
-            header: 'Data',
+            key: 'due_date',
+            header: 'Vencimento',
             render: (val: unknown) => formatDateBR(String(val)),
         },
     ];
 
     const filterFields = [
-        { key: 'clientName', label: 'Cliente', type: 'text' as const },
         {
             key: 'status',
             label: 'Status',
             type: 'select' as const,
             options: [...STATUS_OPTIONS],
-        },
-        {
-            key: 'paymentMethod',
-            label: 'Método de Pagamento',
-            type: 'select' as const,
-            options: [
-                { value: 'money', label: 'Dinheiro' },
-                { value: 'credit', label: 'Crédito' },
-                { value: 'debit', label: 'Débito' },
-                { value: 'pix', label: 'PIX' },
-                { value: 'installment', label: 'Parcelado' },
-            ],
         },
     ];
 
@@ -127,38 +124,27 @@ export function AccountsReceivableModule() {
         <div className="space-y-4">
             {totalSelected > 0 && (
                 <div className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                            <span className="text-lg font-medium text-gray-600">
-                                {totalSelected}
-                            </span>
-                        </div>
-                        <div>
-                            <p className="font-medium">
-                                {totalSelected} conta(s) selecionada(s)
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Total: {formatCurrencyBR(totalValue)}
-                            </p>
-                        </div>
+                    <div>
+                        <p className="font-medium">{totalSelected} selecionada(s)</p>
+                        <p className="text-sm text-muted-foreground">
+                            Total: {formatCurrencyBR(totalValue)}
+                        </p>
                     </div>
                     <button
                         onClick={handleConfirmReceipt}
-                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-gray-600 px-4 text-sm font-medium whitespace-nowrap text-white transition-colors hover:bg-gray-700"
+                        className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
                     >
                         Marcar como Recebida
                     </button>
                 </div>
             )}
             <GenericTable
-                data={sales}
+                data={rows}
                 columns={columns}
                 filterFields={filterFields}
                 title="Contas a Receber"
                 clickableRow
-                onRowClick={(row) =>
-                    handleSelectOne(row.id, !selectedIds.has(row.id))
-                }
+                onRowClick={(row) => handleSelectOne(row.id, !selectedIds.has(row.id))}
             />
         </div>
     );

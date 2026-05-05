@@ -12,7 +12,11 @@ class AccountPayableRepository implements AccountPayableRepositoryInterface
 {
     public function paginateByCompany(int $companyId): LengthAwarePaginator
     {
-        return AccountPayable::query()->forCompany($companyId)->latest()->paginate();
+        return AccountPayable::query()
+            ->forCompany($companyId)
+            ->where('status', '!=', 'cancelled')
+            ->latest()
+            ->paginate();
     }
 
     public function forPurchase(Purchase $purchase): Collection

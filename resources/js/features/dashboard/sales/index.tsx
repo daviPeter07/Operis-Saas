@@ -1,43 +1,56 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { toast } from 'sonner';
+import { StatusBadge } from '@/components/common/status-badge';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { STATUS_OPTIONS } from '@/constants/status';
+import { useCustomers } from '@/hooks/use-customers';
+import { useProducts } from '@/hooks/use-products';
+import { useCreateSale, useDeleteSale, useSales } from '@/hooks/use-sales';
 import {
     formatCurrencyBR,
     formatDateBR,
-    formatQuantityWithUnit,
     translatePaymentMethod,
 } from '@/lib/format';
-import { StatusBadge } from '@/components/common/status-badge';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS, STATUS_VALUES } from '@/constants/status';
-import { mockClients, mockProducts, mockSales } from '@/lib/mocks/mock-data';
-import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SalesHeader } from './sales-header';
-import type { SalesRecord } from '@/types/sales-dialog';
-import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
+
+type SaleRow = {
+    id: string;
+    customer_id: number;
+    clientName: string;
+    total: number;
+    status: string;
+    payment_method: string;
+    date: string;
+};
 
 export function SalesModule() {
-    const [sales, setSales] = useState<SalesRecord[]>(() =>
-        mockSales.map((sale) => ({
-            ...sale,
-            lineItems: [],
-        })),
+    const { data: sales = [] } = useSales();
+    const { data: customers = [] } = useCustomers();
+    const { data: products = [] } = useProducts();
+    const createSale = useCreateSale();
+    const deleteSale = useDeleteSale();
+
+    const customerNameById = useMemo(
+        () => new Map(customers.map((customer) => [customer.id, customer.name])),
+        [customers],
     );
-    const [clients, setClients] = useState<Client[]>(() => [...mockClients]);
-    const [products, setProducts] = useState<Product[]>(() => [
-        ...mockProducts,
-    ]);
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('action') === 'create-sale') {
-            setIsCreateOpen(true);
-            window.history.replaceState({}, '', '/dashboard/sales');
-        }
-    }, []);
+    const rows: SaleRow[] = sales
+        .filter((sale) => sale.status !== 'cancelled')
+        .map((sale) => ({
+            id: String(sale.id),
+            customer_id: sale.customer_id,
+            clientName:
+                customerNameById.get(sale.customer_id) || `#${sale.customer_id}`,
+            total: sale.total,
+            status: sale.status,
+            payment_method: sale.payment_method,
+            date: sale.date,
+        }));
 
-    const columns: Column<Sale>[] = [
+    const columns: Column<SaleRow>[] = [
         { key: 'clientName', header: 'Cliente' },
         {
             key: 'total',
@@ -50,51 +63,31 @@ export function SalesModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'paymentMethod',
-            header: 'Metodo',
+            key: 'payment_method',
+            header: 'Método',
             render: (val: unknown) => translatePaymentMethod(String(val)),
         },
         {
-            key: 'items',
-            header: 'Itens',
-            render: (val: unknown) => formatQuantityWithUnit(Number(val)),
-        },
-        {
-            key: 'createdAt',
+            key: 'date',
             header: 'Data',
             render: (val: unknown) => formatDateBR(String(val)),
         },
     ];
 
     const metrics = useMemo(() => {
-        const salesCount = sales.length;
-        const salesTotal = sales.reduce((sum, sale) => sum + sale.total, 0);
-        const receivable = sales
+        const salesCount = rows.length;
+        const salesTotal = rows.reduce((sum, sale) => sum + sale.total, 0);
+        const receivable = rows
             .filter((sale) => sale.status === 'pending')
             .reduce((sum, sale) => sum + sale.total, 0);
-        const profit = sales.reduce<number>((sum, sale) => {
-            if (sale.lineItems.length > 0) {
-                return (
-                    sum +
-                    sale.lineItems.reduce<number>(
-                        (itemSum, item) =>
-                            itemSum +
-                            (item.unitPrice - item.unitCost) * item.quantity,
-                        0,
-                    )
-                );
-            }
-
-            return sum + sale.total * 0.32;
-        }, 0);
 
         return {
             salesCount,
             salesTotal,
-            profit,
+            profit: 0,
             receivable,
         };
-    }, [sales]);
+    }, [rows]);
 
     const filterFields = [
         { key: 'clientName', label: 'Cliente', type: 'text' as const },
@@ -105,65 +98,97 @@ export function SalesModule() {
             options: [...STATUS_OPTIONS],
         },
         {
-            key: 'paymentMethod',
-            label: 'Metodo de Pagamento',
+            key: 'payment_method',
+            label: 'Método de Pagamento',
             type: 'select' as const,
             options: [...PAYMENT_METHOD_OPTIONS],
         },
     ];
 
-    const handleCreate = (data: SalesRecord) => {
-        const status = STATUS_VALUES.includes(data.status)
-            ? data.status
-            : 'pending';
+    const createFields = [
+        {
+            name: 'customer_id',
+            label: 'Cliente',
+            type: 'select' as const,
+            options: customers.map((customer) => ({
+                value: String(customer.id),
+                label: customer.name,
+            })),
+            required: true,
+        },
+        {
+            name: 'product_id',
+            label: 'Produto',
+            type: 'select' as const,
+            options: products.map((product) => ({
+                value: String(product.id),
+                label: product.name,
+            })),
+            required: true,
+        },
+        {
+            name: 'quantity',
+            label: 'Quantidade',
+            type: 'number' as const,
+            required: true,
+        },
+        {
+            name: 'unit_price',
+            label: 'Preço unitário',
+            type: 'number' as const,
+            required: true,
+        },
+        {
+            name: 'payment_method',
+            label: 'Método de pagamento',
+            type: 'select' as const,
+            options: [
+                { value: 'cash', label: 'Dinheiro' },
+                { value: 'pix', label: 'PIX' },
+                { value: 'card', label: 'Cartão' },
+                { value: 'installment', label: 'Parcelado' },
+            ],
+            required: true,
+        },
+        {
+            name: 'date',
+            label: 'Data',
+            type: 'date' as const,
+            required: true,
+        },
+    ];
 
-        const paymentMethodOptions: Sale['paymentMethod'][] = [
-            'money',
-            'pix',
-            'card',
-            'other',
-        ];
-        const paymentMethod = paymentMethodOptions.includes(data.paymentMethod)
-            ? data.paymentMethod
-            : 'pix';
+    const handleCreate = async (data: Record<string, unknown>) => {
+        const customerId = Number(data.customer_id || 0);
+        const productId = Number(data.product_id || 0);
+        const quantity = Number(data.quantity || 0);
+        const unitPrice = Number(data.unit_price || 0);
+        const paymentMethod = String(data.payment_method || 'pix') as
+            | 'cash'
+            | 'pix'
+            | 'card'
+            | 'installment';
+        const date = String(data.date || '').trim();
 
-        const newSale: Sale = {
-            id: crypto.randomUUID(),
-            clientId: data.clientId,
-            clientName: String(data.clientName || ''),
-            total: Number(data.finalTotal || data.total || 0),
-            status,
-            paymentMethod,
-            items: Number(data.items || 1),
-            createdAt:
-                String(data.createdAt || '') ||
-                new Date().toISOString().slice(0, 10),
-        };
+        if (!customerId || !productId || quantity <= 0 || unitPrice < 0) {
+            throw new Error('Preencha os dados obrigatórios da venda.');
+        }
 
-        setSales((previous) => [
-            {
-                ...newSale,
-                notes: data.notes,
-                lineItems: data.lineItems,
-                discountType: data.discountType,
-                discountValue: data.discountValue,
-                discountAmountApplied: data.discountAmountApplied,
-                finalTotal: data.finalTotal,
-            },
-            ...previous,
-        ]);
-    };
+        await createSale.mutateAsync({
+            customer_id: customerId,
+            date: date || new Date().toISOString().slice(0, 10),
+            payment_method: paymentMethod,
+            status: 'pending',
+            items: [
+                {
+                    product_id: productId,
+                    quantity,
+                    unit_price: unitPrice,
+                },
+            ],
+        });
 
-    const handleCreateClient = (client: Client): Client => {
-        setClients((previous) => [client, ...previous]);
-
-        return client;
-    };
-
-    const handleCreateProduct = (product: Product): Product => {
-        setProducts((previous) => [product, ...previous]);
-
-        return product;
+        toast.success('Venda criada com sucesso.');
     };
 
     return (
@@ -171,25 +196,15 @@ export function SalesModule() {
             <SalesHeader metrics={metrics} />
 
             <GenericTable
-                data={sales}
+                data={rows}
                 columns={columns}
                 title="Vendas"
                 filterFields={filterFields}
-                onCreate={handleCreate}
-                isCreateOpen={isCreateOpen}
-                onCreateOpenChange={setIsCreateOpen}
-                createDialog={({ open, onOpenChange, onSubmit }) => (
-                    <SalesDialog
-                        open={open}
-                        onOpenChange={onOpenChange}
-                        onSubmit={onSubmit}
-                        clients={clients}
-                        products={products}
-                        onCreateClient={handleCreateClient}
-                        onCreateProduct={handleCreateProduct}
-                        defaultTab="checkout"
-                    />
-                )}
+                onCreate={handleCreate as (data: SaleRow) => Promise<void>}
+                onDelete={async (row) => {
+                    await deleteSale.mutateAsync(Number(row.id));
+                }}
+                createFields={createFields}
             />
         </div>
     );

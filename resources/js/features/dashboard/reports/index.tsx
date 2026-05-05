@@ -3,7 +3,6 @@ import {
     BarChart3,
     TrendingUp,
     Package,
-    AlertTriangle,
     XCircle,
     DollarSign,
     CreditCard,

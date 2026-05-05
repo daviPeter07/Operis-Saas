@@ -24,4 +24,9 @@ class SaleRepository implements SaleRepositoryInterface
 
         return $sale->refresh();
     }
+
+    public function delete(Sale $sale): void
+    {
+        $sale->delete();
+    }
 }

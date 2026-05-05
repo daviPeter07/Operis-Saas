@@ -27,12 +27,6 @@ class BrandService
 
     public function delete(Brand $brand): void
     {
-        if ($brand->products()->exists()) {
-            $this->brands->update($brand, ['status' => 'inactive']);
-
-            return;
-        }
-
         $this->brands->delete($brand);
     }
 }

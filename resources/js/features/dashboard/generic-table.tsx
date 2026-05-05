@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { toast } from 'sonner';
 import { CreateModal } from '@/components/table/create-modal';
 import type { FormField } from '@/components/table/create-modal';
 import {
@@ -19,11 +20,10 @@ import { TableToolbar } from '@/components/table/table-toolbar';
 import { ViewDialog } from '@/components/table/view-dialog';
 import type { ViewField } from '@/components/table/view-dialog';
 import type { FilterOperator } from '@/hooks/use-table-filters';
+import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
 import { cn } from '@/lib/utils';
-import { useTableQueryState } from '@/hooks/use-table-query-state';
-import { toast } from 'sonner';
 
 export interface Column<T> {
     key: string;
@@ -44,8 +44,8 @@ export interface GenericTableProps<T extends { id: string }> {
     }[];
     onView?: (row: T) => void;
     onEdit?: (row: T) => void;
-    onDelete?: (row: T) => void;
-    onCreate?: (data: T) => void;
+    onDelete?: (row: T) => void | Promise<void>;
+    onCreate?: (data: T) => void | Promise<void>;
     onImport?: (data: T[]) => void;
     className?: string;
     routeUrl?: string;
@@ -68,7 +68,6 @@ export function GenericTable<T extends { id: string }>({
     data,
     columns,
     title,
-    searchPlaceholder = 'Buscar...',
     filterFields = [],
     onView,
     onEdit,
@@ -80,7 +79,6 @@ export function GenericTable<T extends { id: string }>({
     showActions = true,
     clickableRow = false,
     onRowClick,
-    showMobileList = false,
     createFields,
     createDialog,
     isCreateOpen: externalIsCreateOpen,
@@ -107,7 +105,6 @@ export function GenericTable<T extends { id: string }>({
         sortDirection,
         setSearch,
         setCurrentPage,
-        setPerPage,
         setFilters,
         setSortBy,
         setSortDirection,
@@ -231,11 +228,6 @@ export function GenericTable<T extends { id: string }>({
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         updateUrl({ page });
-    };
-
-    const handleFilterChange = (newFilters: Record<string, string>) => {
-        setFilters(newFilters);
-        updateUrl({ filters: newFilters, page: 1 });
     };
 
     const handleClearFilters = () => {
@@ -710,15 +702,16 @@ export function GenericTable<T extends { id: string }>({
                           )
                         : undefined
                 }
-                onConfirm={() => {
+                onConfirm={async () => {
                     try {
                         if (selectedRow) {
-                            onDelete?.(selectedRow);
+                            await onDelete?.(selectedRow);
                         }
 
                         toast.success(
                             `${title}: registro excluido com sucesso.`,
                         );
+                        setIsDeleteOpen(false);
                         setSelectedRow(null);
                     } catch (error) {
                         const message =
@@ -736,9 +729,9 @@ export function GenericTable<T extends { id: string }>({
                     open: isCreateOpenValue,
                     onOpenChange: handleCreateOpenChange,
                     title: `Criar Novo ${title}`,
-                    onSubmit: (data) => {
+                    onSubmit: async (data) => {
                         try {
-                            onCreate?.(data);
+                            await onCreate?.(data);
                             toast.success(
                                 `${title}: registro criado com sucesso.`,
                             );
@@ -760,9 +753,9 @@ export function GenericTable<T extends { id: string }>({
                     title={`Criar Novo ${title}`}
                     description="Preencha os dados abaixo para criar um novo registro."
                     fields={resolvedCreateFields}
-                    onSubmit={(data) => {
+                    onSubmit={async (data) => {
                         try {
-                            onCreate?.(data as T);
+                            await onCreate?.(data as T);
                             toast.success(
                                 `${title}: registro criado com sucesso.`,
                             );

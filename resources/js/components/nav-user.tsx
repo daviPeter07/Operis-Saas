@@ -1,8 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronsUpDown, Building2 } from 'lucide-react';
 import { useState } from 'react';
-import { CompanySwitcherModal } from '@/features/dashboard/layout/company-switcher-modal';
-import { useWorkspace } from '@/features/dashboard/workspace-context';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,12 +15,14 @@ import {
 } from '@/components/ui/sidebar';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
+import { CompanySwitcherModal } from '@/features/dashboard/layout/company-switcher-modal';
+import { useWorkspace } from '@/features/dashboard/workspace-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export function NavUser() {
     const { auth } = usePage().props;
     const isMobile = useIsMobile();
-    const { currentCompany, companies } = useWorkspace();
+    const { currentCompany } = useWorkspace();
     const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
 
     if (!auth.user) {

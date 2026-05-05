@@ -1,10 +1,10 @@
 import * as React from 'react';
-import type { Supplier } from '@/lib/mocks/mock-data';
+import type { UiSupplier } from '@/types/dashboard-entities';
 import { buildQuickCreateSupplierPayload } from '@/utils/suppliers';
 
 type UseQuickCreateSupplierParams = {
-    onCreateSupplier: (data: Supplier) => Supplier;
-    onSupplierCreated: (supplier: Supplier) => void;
+    onCreateSupplier: (data: UiSupplier) => UiSupplier;
+    onSupplierCreated: (supplier: UiSupplier) => void;
 };
 
 export function useQuickCreateSupplier({

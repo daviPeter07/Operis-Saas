@@ -2,8 +2,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarDays, Trash2, UserPlus } from 'lucide-react';
 import * as React from 'react';
-import { SearchableSelect } from '@/components/searchable-select';
 import { CardPaymentFields } from '@/components/payment/card-payment-fields';
+import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatCurrencyBR } from '@/lib/format';
-import type { Client } from '@/lib/mocks/mock-data';
+import type { UiCustomer as Client } from '@/types/dashboard-entities';
 import type { SalesLineItem } from '@/types/sales-dialog';
 import { paymentMethodOptions } from '@/utils/sales-dialog';
 

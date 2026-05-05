@@ -14,7 +14,7 @@ export default function Login({
 }: Props) {
     return (
         <>
-            <Head title="Log in" />
+            <Head title="Entrar" />
             <LoginPageContent
                 status={status}
                 canResetPassword={canResetPassword}
@@ -25,6 +25,6 @@ export default function Login({
 }
 
 Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
+    title: 'Acesse sua conta',
+    description: 'Informe seu e-mail e senha para continuar',
 };

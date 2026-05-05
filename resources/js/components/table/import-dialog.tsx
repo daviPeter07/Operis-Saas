@@ -47,7 +47,7 @@ export function ImportDialog({
     acceptFormats = ['.xlsx', '.xls', '.csv'],
     className,
 }: ImportDialogProps) {
-    const [file, setFile] = React.useState<File | null>(null);
+    const [, setFile] = React.useState<File | null>(null);
     const [parsedData, setParsedData] = React.useState<ParsedData | null>(null);
     const [error, setError] = React.useState<string | null>(null);
     const [isProcessing, setIsProcessing] = React.useState(false);
@@ -78,7 +78,7 @@ export function ImportDialog({
             setIsProcessing(true);
             const data = await readFile(selectedFile);
             setParsedData(data);
-        } catch (err) {
+        } catch {
             setError(
                 'Erro ao processar arquivo. Verifique se o formato está correto.',
             );
@@ -117,8 +117,8 @@ export function ImportDialog({
                         fileName: file.name,
                         fileType: fileExtension(file.name),
                     });
-                } catch (err) {
-                    reject(err);
+                } catch (_err) {
+                    reject(_err);
                 }
             };
 

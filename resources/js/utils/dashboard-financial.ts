@@ -1,4 +1,4 @@
-import type { Product, Purchase } from '@/lib/mocks/mock-data';
+import type { UiProduct, UiPurchase } from '@/types/dashboard-entities';
 import type {
     FinancialEntryForm,
     PurchaseLineItem,
@@ -6,7 +6,7 @@ import type {
 
 function resolvePurchasePaymentMethod(
     form: FinancialEntryForm,
-): Purchase['paymentMethod'] {
+): UiPurchase['paymentMethod'] {
     if (form.paymentMethod === 'card') {
         return form.cardType;
     }
@@ -33,19 +33,21 @@ function resolveDueDate(form: FinancialEntryForm): string {
 
 export function computePurchaseTotals(
     items: PurchaseLineItem[],
-    products: Product[],
+    products: UiProduct[],
 ): { items: number; total: number } {
     return items.reduce(
         (acc, item) => {
             const product = products.find(
                 (entry) => entry.id === item.productId,
             );
+
             if (!product) {
                 return acc;
             }
 
             acc.items += item.quantity;
             acc.total += product.cost * item.quantity;
+
             return acc;
         },
         { items: 0, total: 0 },
@@ -55,13 +57,13 @@ export function computePurchaseTotals(
 export function mapFinancialFormToPurchase(
     form: FinancialEntryForm,
     fallback: { items: number; total: number },
-): Purchase {
+): UiPurchase {
     return {
         id: '',
         supplierId: '',
         supplierName: form.supplierName,
         total: Number(form.total || 0) || fallback.total,
-        status: form.status as Purchase['status'],
+        status: form.status as UiPurchase['status'],
         paymentMethod: resolvePurchasePaymentMethod(form),
         items: Number(form.items || 0) || fallback.items,
         dueDate: resolveDueDate(form),
@@ -71,13 +73,13 @@ export function mapFinancialFormToPurchase(
 
 export function mapFinancialFormToAccountsPayable(
     form: FinancialEntryForm,
-): Purchase {
+): UiPurchase {
     return {
         id: '',
         supplierId: '',
         supplierName: form.supplierName,
         total: Number(form.total || 0),
-        status: form.status as Purchase['status'],
+        status: form.status as UiPurchase['status'],
         paymentMethod: resolvePurchasePaymentMethod(form),
         items: Number(form.items || 1),
         dueDate: resolveDueDate(form),

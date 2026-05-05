@@ -44,9 +44,6 @@ export function CardPaymentFields({
         1,
         Math.min(24, Number(installments) || 1),
     );
-    const installmentValue = Number(
-        (Math.max(0, totalAmount) / safeInstallments).toFixed(2),
-    );
     const installmentOptionsWithAmount = INSTALLMENT_OPTIONS.map((option) => {
         const valuePerInstallment = Number(
             (Math.max(0, totalAmount) / option.installments).toFixed(2),

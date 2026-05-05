@@ -142,6 +142,7 @@ export function TeamPageContent({
             return;
         }
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setInviteCopySuccess(false);
     }, [inviteDialogOpen]);
 

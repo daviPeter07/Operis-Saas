@@ -1,37 +1,38 @@
-import { useEffect, useMemo, useState } from 'react';
-import { StateCityFilter } from '@/components/filters/state-city-filter';
-import { mockClients } from '@/lib/mocks/mock-data';
-import type { Client } from '@/lib/mocks/mock-data';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
+import {
+    useCreateCustomer,
+    useCustomers,
+    useDeleteCustomer,
+} from '@/hooks/use-customers';
+import { inferClientPersonType } from '@/utils/clients';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
-import { createClientRecord, inferClientPersonType } from '@/utils/clients';
-import type { ClientCreateDialogPayload } from '@/types/dashboard-forms';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { ClientCreateDialog } from './client-create-dialog';
-import { PersonTypeBadge } from '@/components/common/person-type-badge';
 
-type ClientRow = Client & {
+type ClientRow = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    document: string;
+    status: 'active' | 'inactive';
     personType: 'pf' | 'pj';
 };
 
 export function ClientsModule() {
-    const [clients, setClients] = useState<ClientRow[]>(() =>
-        mockClients.map((client) => ({
-            ...client,
-            personType: inferClientPersonType(client.document),
-        })),
-    );
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [stateFilter, setStateFilter] = useState('');
-    const [cityFilter, setCityFilter] = useState('');
+    const { data: customers = [] } = useCustomers();
+    const createCustomer = useCreateCustomer();
+    const deleteCustomer = useDeleteCustomer();
 
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('action') === 'create-client') {
-            setIsCreateOpen(true);
-            window.history.replaceState({}, '', '/dashboard/clients');
-        }
-    }, []);
+    const rows: ClientRow[] = customers.map((customer) => ({
+        id: String(customer.id),
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        document: customer.document,
+        status: customer.status,
+        personType: inferClientPersonType(customer.document || ''),
+    }));
 
     const columns: Column<ClientRow>[] = [
         { key: 'name', header: 'Nome' },
@@ -46,78 +47,73 @@ export function ClientsModule() {
         {
             key: 'phone',
             header: 'Telefone',
-            render: (value: unknown) => formatPhoneInput(String(value || '')),
+            render: (value: unknown) => formatPhoneInput(String(value ?? '')),
         },
         {
             key: 'document',
             header: 'Documento',
             render: (value: unknown) =>
-                formatDocumentInput(String(value || '')),
+                formatDocumentInput(String(value ?? '')),
         },
-        { key: 'city', header: 'Cidade' },
-        { key: 'state', header: 'Estado' },
     ];
 
-    const filterFields = [
-        { key: 'name', label: 'Nome', type: 'text' as const },
-        { key: 'email', label: 'Email', type: 'text' as const },
-    ];
+    const handleCreate = async (data: {
+        name: string;
+        email: string;
+        phone: string;
+        document: string;
+    }) => {
+        const name = String(data.name || '').trim();
 
-    const filteredClients = useMemo(() => {
-        return clients.filter((client) => {
-            if (stateFilter && client.state !== stateFilter) {
-                return false;
-            }
-
-            if (cityFilter && client.city !== cityFilter) {
-                return false;
-            }
-
-            return true;
-        });
-    }, [cityFilter, clients, stateFilter]);
-
-    const handleCreate = (data: ClientCreateDialogPayload) => {
-        const newClient = createClientRecord(data);
-
-        if (!newClient.name) {
+        if (!name) {
             throw new Error('Informe o nome do cliente');
         }
 
-        setClients((previous) => [
-            {
-                ...newClient,
-                personType: data.personType,
-            },
-            ...previous,
-        ]);
+        await createCustomer.mutateAsync({
+            name,
+            email: String(data.email || '').trim(),
+            phone: String(data.phone || '').trim(),
+            document: String(data.document || '').trim(),
+        });
     };
 
     return (
-        <div className="space-y-4">
-            <StateCityFilter
-                stateValue={stateFilter}
-                cityValue={cityFilter}
-                onStateChange={setStateFilter}
-                onCityChange={setCityFilter}
-            />
-
-            <GenericTable
-                data={filteredClients}
-                columns={columns}
-                title="Clientes"
-                filterFields={filterFields}
-                onCreate={handleCreate}
-                isCreateOpen={isCreateOpen}
-                onCreateOpenChange={setIsCreateOpen}
-                createDialog={({ open, onOpenChange, onSubmit }) => (
-                    <ClientCreateDialog
-                        open={open}
-                        onOpenChange={onOpenChange}
-                        onSubmit={onSubmit}
-                    />
-                )}
-            />
-        </div>
+        <GenericTable
+            data={rows}
+            columns={columns}
+            title="Clientes"
+            routeUrl="/dashboard/clients"
+            onCreate={handleCreate as (data: ClientRow) => Promise<void>}
+            onDelete={async (row) => {
+                await deleteCustomer.mutateAsync(Number(row.id));
+            }}
+            createFields={[
+                {
+                    name: 'name',
+                    label: 'Nome',
+                    type: 'text',
+                    required: true,
+                    placeholder: 'Digite o nome do cliente',
+                },
+                {
+                    name: 'email',
+                    label: 'Email',
+                    type: 'email',
+                    placeholder: 'cliente@email.com',
+                },
+                {
+                    name: 'phone',
+                    label: 'Telefone',
+                    type: 'text',
+                    placeholder: '(00) 00000-0000',
+                },
+                {
+                    name: 'document',
+                    label: 'Documento',
+                    type: 'text',
+                    placeholder: 'CPF/CNPJ',
+                },
+            ]}
+        />
     );
 }

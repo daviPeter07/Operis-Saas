@@ -1,5 +1,4 @@
 import { Barcode, PackagePlus, Search } from 'lucide-react';
-import type { Product } from '@/lib/mocks/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -9,6 +8,7 @@ import {
 } from '@/components/ui/tooltip';
 import { formatCurrencyBR } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import type { UiProduct as Product } from '@/types/dashboard-entities';
 
 interface CatalogPanelProps {
     productSearch: string;

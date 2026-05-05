@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Client, Product, Sale } from '@/lib/mocks/mock-data';
+import type {
+    UiCustomer,
+    UiProduct,
+    UiSale,
+} from '@/types/dashboard-entities';
 import type { SaleDiscountType, SalesLineItem } from '@/types/sales-dialog';
+import { parseCurrencyInput, parsePercentInput } from '@/utils/form-fields';
 import {
     buildClientFields,
     buildProductFields,
@@ -12,12 +17,11 @@ import {
     makeSaleLineItem,
     todayString,
 } from '../utils/sales-dialog';
-import { parseCurrencyInput, parsePercentInput } from '@/utils/form-fields';
 
 interface UseSalesDialogArgs {
     open: boolean;
-    clients: Client[];
-    products: Product[];
+    clients: UiCustomer[];
+    products: UiProduct[];
 }
 
 export function useSalesDialog({
@@ -31,9 +35,9 @@ export function useSalesDialog({
     const [productSearch, setProductSearch] = useState('');
     const [quantity, setQuantity] = useState('1');
     const [lineItems, setLineItems] = useState<SalesLineItem[]>([]);
-    const [status, setStatus] = useState<Sale['status']>('pending');
+    const [status, setStatus] = useState<UiSale['status']>('pending');
     const [paymentMethod, setPaymentMethod] =
-        useState<Sale['paymentMethod']>('pix');
+        useState<UiSale['paymentMethod']>('pix');
     const [cardType, setCardType] = useState<'debit' | 'credit'>('debit');
     const [installments, setInstallments] = useState('1');
     const [firstInstallmentDate, setFirstInstallmentDate] =
@@ -53,24 +57,43 @@ export function useSalesDialog({
 
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setClientId('');
+
             setClientSearch('');
+
             setProductId('');
+
             setProductSearch('');
+
             setQuantity('1');
+
             setLineItems([]);
+
             setStatus('pending');
+
             setPaymentMethod('pix');
+
             setCardType('debit');
+
             setInstallments('1');
+
             setFirstInstallmentDate(todayString());
+
             setSaleDate(todayString());
+
             setNotes('');
+
             setDiscountType('amount');
+
             setDiscountValue('');
+
             setAppliedDiscountType('amount');
+
             setAppliedDiscountValue(0);
+
             setDiscountAmountApplied(0);
+
             setIsScannerReady(false);
         }
     }, [open]);
@@ -169,7 +192,7 @@ export function useSalesDialog({
     };
 
     const addProductToCart = (
-        product: Product,
+        product: UiProduct,
         customQuantity: number,
         customSalePrice: number,
     ) => {

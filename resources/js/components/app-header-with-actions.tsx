@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react';
 import {
     Plus,
     UserPlus,
@@ -9,7 +10,6 @@ import {
     Sun,
     Moon,
 } from 'lucide-react';
-import { router } from '@inertiajs/react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Button } from '@/components/ui/button';
 import {

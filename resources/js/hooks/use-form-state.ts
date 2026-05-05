@@ -8,6 +8,7 @@ export function useFormState<T extends Record<string, string>>(
 
     React.useEffect(() => {
         if (resetKey) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setForm(initialState);
         }
     }, [initialState, resetKey]);

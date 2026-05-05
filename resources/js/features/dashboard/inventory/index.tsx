@@ -1,47 +1,62 @@
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { CreateModal } from '@/components/table/create-modal';
-import type { FormField } from '@/components/table/create-modal';
+import { useMemo } from 'react';
+import { useBrands } from '@/hooks/use-brands';
+import { useCategories } from '@/hooks/use-categories';
+import {
+    useCreateProduct,
+    useDeleteProduct,
+    useProducts,
+} from '@/hooks/use-products';
 import { formatCurrencyBR, formatQuantityWithUnit } from '@/lib/format';
-import { mockProducts } from '@/lib/mocks/mock-data';
-import type { Product } from '@/lib/mocks/mock-data';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 
+type ProductRow = {
+    id: string;
+    name: string;
+    sku: string;
+    barcode: string | null;
+    sale_price: number;
+    stock: number;
+    min_stock: number;
+    category_id: number;
+    brand_id: number | null;
+    status: 'active' | 'inactive';
+};
+
 export function InventoryModule() {
-    const [products, setProducts] = useState(() => [...mockProducts]);
-    const [customBrands, setCustomBrands] = useState<string[]>([]);
-    const [customCategories, setCustomCategories] = useState<string[]>([]);
-    const [isBrandCreateOpen, setIsBrandCreateOpen] = useState(false);
-    const [isCategoryCreateOpen, setIsCategoryCreateOpen] = useState(false);
+    const { data: products = [] } = useProducts();
+    const { data: brands = [] } = useBrands();
+    const { data: categories = [] } = useCategories();
+    const createProduct = useCreateProduct();
+    const deleteProduct = useDeleteProduct();
 
-    const brandOptions = useMemo(
+    const rows: ProductRow[] = products
+        .filter((product) => product.status === 'active')
+        .map((product) => ({
+            id: String(product.id),
+            name: product.name,
+            sku: product.sku,
+            barcode: product.barcode,
+            sale_price: product.sale_price,
+            stock: product.stock,
+            min_stock: product.min_stock,
+            category_id: product.category_id,
+            brand_id: product.brand_id,
+            status: product.status,
+        }));
+
+    const categoryNameById = useMemo(
         () =>
-            Array.from(
-                new Set([
-                    ...products.map((product) => product.brand),
-                    ...customBrands,
-                ]),
-            )
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-                .map((value) => ({ value, label: value })),
-        [customBrands, products],
+            new Map(categories.map((category) => [category.id, category.name])),
+        [categories],
     );
 
-    const categoryOptions = useMemo(
-        () =>
-            Array.from(
-                new Set([
-                    ...products.map((product) => product.category),
-                    ...customCategories,
-                ]),
-            )
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-                .map((value) => ({ value, label: value })),
-        [customCategories, products],
+    const brandNameById = useMemo(
+        () => new Map(brands.map((brand) => [brand.id, brand.name])),
+        [brands],
     );
 
-    const columns: Column<Product>[] = [
+    const columns: Column<ProductRow>[] = [
         { key: 'name', header: 'Produto' },
         { key: 'sku', header: 'Código' },
         {
@@ -49,10 +64,20 @@ export function InventoryModule() {
             header: 'Código de barras',
             render: (value: unknown) => String(value || 'Sem código'),
         },
-        { key: 'brand', header: 'Marca' },
-        { key: 'category', header: 'Categoria' },
         {
-            key: 'price',
+            key: 'brand_id',
+            header: 'Marca',
+            render: (value: unknown) =>
+                brandNameById.get(Number(value)) || 'Sem marca',
+        },
+        {
+            key: 'category_id',
+            header: 'Categoria',
+            render: (value: unknown) =>
+                categoryNameById.get(Number(value)) || '-',
+        },
+        {
+            key: 'sale_price',
             header: 'Preço de venda',
             render: (value: unknown) => formatCurrencyBR(Number(value || 0)),
         },
@@ -62,7 +87,7 @@ export function InventoryModule() {
             render: (value: unknown) => formatQuantityWithUnit(Number(value)),
         },
         {
-            key: 'minStock',
+            key: 'min_stock',
             header: 'Estoque Mínimo',
             render: (value: unknown) => formatQuantityWithUnit(Number(value)),
         },
@@ -71,244 +96,133 @@ export function InventoryModule() {
     const filterFields = [
         { key: 'name', label: 'Produto', type: 'text' as const },
         {
-            key: 'category',
+            key: 'category_id',
             label: 'Categoria',
             type: 'select' as const,
-            options: categoryOptions,
+            options: categories.map((category) => ({
+                value: String(category.id),
+                label: category.name,
+            })),
         },
         {
-            key: 'brand',
+            key: 'brand_id',
             label: 'Marca',
             type: 'select' as const,
-            options: brandOptions,
+            options: brands.map((brand) => ({
+                value: String(brand.id),
+                label: brand.name,
+            })),
         },
     ];
 
-    const createFields = useMemo<FormField[]>(
-        () => [
-            {
-                name: 'name',
-                label: 'Nome do produto',
-                type: 'text',
-                required: true,
-                placeholder: 'Digite o nome do produto',
-                section: 'Identificação',
-            },
-            {
-                name: 'sku',
-                label: 'Código interno',
-                type: 'text',
-                required: true,
-                placeholder: 'Gerar código interno',
-                section: 'Identificação',
-            },
-            {
-                name: 'barcode',
-                label: 'Código de barras',
-                type: 'text',
-                placeholder: 'Escaneie ou gere EAN-13',
-                section: 'Identificação',
-            },
-            {
-                name: 'cost',
-                label: 'Preço de custo',
-                type: 'text',
-                required: true,
-                placeholder: 'R$ 0,00',
-                section: 'Valores e estoque',
-                mask: 'currency',
-            },
-            {
-                name: 'price',
-                label: 'Preço de venda',
-                type: 'text',
-                required: true,
-                placeholder: 'R$ 0,00',
-                section: 'Valores e estoque',
-                mask: 'currency',
-            },
-            {
-                name: 'stock',
-                label: 'Estoque inicial',
-                type: 'number',
-                required: true,
-                placeholder: 'Quantidade em estoque',
-                section: 'Valores e estoque',
-            },
-            {
-                name: 'minStock',
-                label: 'Estoque mínimo',
-                type: 'number',
-                required: true,
-                placeholder: 'Limite mínimo',
-                section: 'Valores e estoque',
-            },
-            {
-                name: 'brand',
-                label: 'Marca',
-                type: 'select',
-                required: true,
-                options: brandOptions,
-                placeholder: 'Digite ou selecione marca',
-                section: 'Classificação',
-                searchable: true,
-                allowCustomValue: true,
-                actionButton: {
-                    label: 'Criar',
-                    onClick: () => setIsBrandCreateOpen(true),
-                },
-            },
-            {
-                name: 'category',
-                label: 'Categoria',
-                type: 'select',
-                required: true,
-                options: categoryOptions,
-                placeholder: 'Digite ou selecione categoria',
-                section: 'Classificação',
-                searchable: true,
-                allowCustomValue: true,
-                actionButton: {
-                    label: 'Criar',
-                    onClick: () => setIsCategoryCreateOpen(true),
-                },
-            },
-            {
-                name: 'description',
-                label: 'Descrição',
-                type: 'textarea',
-                placeholder: 'Adicione uma descrição opcional do produto',
-                section: 'Descrição',
-                span: 'full',
-            },
-        ],
-        [brandOptions, categoryOptions],
-    );
+    const handleCreate = async (data: Record<string, unknown>) => {
+        const name = String(data.name || '').trim();
+        const sku = String(data.sku || '').trim();
+        const categoryId = Number(data.category_id || 0);
 
-    const handleCreate = (data: Product) => {
-        const newProduct: Product = {
-            id: crypto.randomUUID(),
-            name: String(data.name || '').trim(),
-            sku: String(data.sku || '').trim(),
-            barcode: String(data.barcode || '').trim(),
-            description: String(data.description || '').trim(),
-            price: Number(data.price || 0),
-            cost: Number(data.cost || 0),
-            stock: Number(data.stock || 0),
-            category: String(data.category || '').trim(),
-            brand: String(data.brand || '').trim(),
-            minStock: Number(data.minStock || 0),
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
-
-        if (!newProduct.name) {
+        if (!name) {
             throw new Error('Informe o nome do produto');
         }
 
-        if (!newProduct.sku) {
-            throw new Error('Informe ou gere um código para o produto');
+        if (!sku) {
+            throw new Error('Informe o código do produto');
         }
 
-        setProducts((previous) => [newProduct, ...previous]);
+        if (!categoryId) {
+            throw new Error('Selecione uma categoria');
+        }
+
+        await createProduct.mutateAsync({
+            name,
+            sku,
+            barcode: String(data.barcode || '').trim() || null,
+            description: String(data.description || '').trim() || null,
+            sale_price: Number(data.sale_price || 0),
+            cost: Number(data.cost || 0),
+            stock: Number(data.stock || 0),
+            min_stock: Number(data.min_stock || 0),
+            category_id: categoryId,
+            brand_id: data.brand_id ? Number(data.brand_id) : null,
+        });
     };
 
     return (
-        <>
-            <GenericTable
-                data={products}
-                columns={columns}
-                title="Estoque"
-                filterFields={filterFields}
-                onCreate={handleCreate}
-                createDialog={({ open, onOpenChange, onSubmit, title }) => (
-                    <CreateModal<Record<string, unknown>>
-                        open={open}
-                        onOpenChange={onOpenChange}
-                        title={title}
-                        description="Preencha os dados abaixo para criar um novo registro."
-                        fields={createFields}
-                        onSubmit={(data) =>
-                            onSubmit(data as unknown as Product)
-                        }
-                    />
-                )}
-            />
-
-            <CreateModal<Record<string, unknown>>
-                open={isBrandCreateOpen}
-                onOpenChange={setIsBrandCreateOpen}
-                title="Criar Nova Marca"
-                description="Preencha os dados abaixo para criar um novo registro."
-                fields={[
-                    {
-                        name: 'name',
-                        label: 'Nome',
-                        type: 'text',
-                        required: true,
-                        placeholder: 'Digite o nome da marca',
-                    },
-                    {
-                        name: 'description',
-                        label: 'Descrição',
-                        type: 'text',
-                        placeholder: 'Descrição opcional',
-                    },
-                ]}
-                onSubmit={(data) => {
-                    const brand = String(data.name || '').trim();
-
-                    if (!brand) {
-                        throw new Error('Nome de marca inválido');
-                    }
-
-                    setCustomBrands((previous) =>
-                        previous.includes(brand)
-                            ? previous
-                            : [...previous, brand],
-                    );
-                    toast.success('Marca criada com sucesso');
-
-                    return brand;
-                }}
-            />
-
-            <CreateModal<Record<string, unknown>>
-                open={isCategoryCreateOpen}
-                onOpenChange={setIsCategoryCreateOpen}
-                title="Criar Nova Categoria"
-                description="Preencha os dados abaixo para criar um novo registro."
-                fields={[
-                    {
-                        name: 'name',
-                        label: 'Nome',
-                        type: 'text',
-                        required: true,
-                        placeholder: 'Digite o nome da categoria',
-                    },
-                    {
-                        name: 'description',
-                        label: 'Descrição',
-                        type: 'text',
-                        placeholder: 'Descrição opcional',
-                    },
-                ]}
-                onSubmit={(data) => {
-                    const category = String(data.name || '').trim();
-
-                    if (!category) {
-                        throw new Error('Nome de categoria inválido');
-                    }
-
-                    setCustomCategories((previous) =>
-                        previous.includes(category)
-                            ? previous
-                            : [...previous, category],
-                    );
-                    toast.success('Categoria criada com sucesso');
-
-                    return category;
-                }}
-            />
-        </>
+        <GenericTable
+            data={rows}
+            columns={columns}
+            title="Estoque"
+            filterFields={filterFields}
+            onCreate={handleCreate as (data: ProductRow) => Promise<void>}
+            onDelete={async (row) => {
+                await deleteProduct.mutateAsync(Number(row.id));
+            }}
+            createFields={[
+                {
+                    name: 'name',
+                    label: 'Nome do produto',
+                    type: 'text',
+                    required: true,
+                },
+                {
+                    name: 'sku',
+                    label: 'Código interno',
+                    type: 'text',
+                    required: true,
+                },
+                {
+                    name: 'barcode',
+                    label: 'Código de barras',
+                    type: 'text',
+                },
+                {
+                    name: 'cost',
+                    label: 'Preço de custo',
+                    type: 'number',
+                    required: true,
+                },
+                {
+                    name: 'sale_price',
+                    label: 'Preço de venda',
+                    type: 'number',
+                    required: true,
+                },
+                {
+                    name: 'stock',
+                    label: 'Estoque inicial',
+                    type: 'number',
+                    required: true,
+                },
+                {
+                    name: 'min_stock',
+                    label: 'Estoque mínimo',
+                    type: 'number',
+                    required: true,
+                },
+                {
+                    name: 'brand_id',
+                    label: 'Marca',
+                    type: 'select',
+                    options: brands.map((brand) => ({
+                        value: String(brand.id),
+                        label: brand.name,
+                    })),
+                },
+                {
+                    name: 'category_id',
+                    label: 'Categoria',
+                    type: 'select',
+                    required: true,
+                    options: categories.map((category) => ({
+                        value: String(category.id),
+                        label: category.name,
+                    })),
+                },
+                {
+                    name: 'description',
+                    label: 'Descrição',
+                    type: 'textarea',
+                },
+            ]}
+        />
     );
 }

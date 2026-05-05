@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('purchase_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('purchase_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('purchase_id');
             $table->string('method');
             $table->unsignedInteger('installments_count')->default(1);
             $table->date('first_due_date')->nullable();
             $table->json('metadata_json')->nullable();
             $table->timestamps();
+
+            $table->index('purchase_id');
         });
     }
 

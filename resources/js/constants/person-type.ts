@@ -10,7 +10,10 @@ export const PERSON_TYPE_LABELS: Record<ClientPersonType, string> = {
     pj: 'Pessoa Jurídica',
 };
 
-export const PERSON_TYPE_COLORS: Record<ClientPersonType, { bg: string; text: string }> = {
+export const PERSON_TYPE_COLORS: Record<
+    ClientPersonType,
+    { bg: string; text: string }
+> = {
     pf: { bg: 'bg-blue-100', text: 'text-blue-700' },
     pj: { bg: 'bg-purple-100', text: 'text-purple-700' },
 };

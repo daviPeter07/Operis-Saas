@@ -45,7 +45,7 @@ export interface DataTableRowProps {
     className?: string;
 }
 
-export function DataTableRow({ children, className }: DataTableRowProps) {
+export function DataTableRow({ children }: DataTableRowProps) {
     return <>{children}</>;
 }
 
