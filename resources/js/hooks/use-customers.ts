@@ -32,11 +32,12 @@ export function useCreateCustomer() {
                 email: payload.email,
                 phone: payload.phone,
                 document: payload.document,
-                person_type: payload.person_type || 'pf',
                 status: 'active',
             }),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: customersQueryKey,
+            });
         },
     });
 }
@@ -47,7 +48,9 @@ export function useDeleteCustomer() {
     return useMutation({
         mutationFn: async (id: number) => customerService.delete(id),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: customersQueryKey,
+            });
         },
     });
 }

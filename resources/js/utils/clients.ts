@@ -43,5 +43,8 @@ export function mapClientFormToPayload(
         email: form.email,
         phone: form.phone,
         document: form.document,
+        city: form.city,
+        state: form.state,
+        address: form.street,
     };
 }

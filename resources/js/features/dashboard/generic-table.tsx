@@ -372,6 +372,10 @@ export function GenericTable<T extends { id: string }>({
     };
 
     const handleEdit = (row: T) => {
+        if (onEdit) {
+            onEdit(row);
+            return;
+        }
         setSelectedRow(row);
         setIsEditOpen(true);
     };

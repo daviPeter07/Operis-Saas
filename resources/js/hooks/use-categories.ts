@@ -5,6 +5,7 @@ export const categoriesQueryKey = ['categories'] as const;
 
 type CreateCategoryInput = {
     name: string;
+    status?: 'active' | 'inactive';
 };
 
 export function useCategories() {
@@ -25,7 +26,7 @@ export function useCreateCategory() {
         mutationFn: async (payload: CreateCategoryInput) =>
             categoryService.create({
                 name: payload.name,
-                status: 'active',
+                status: payload.status ?? 'active',
             }),
         onSuccess: async () => {
             await queryClient.invalidateQueries({

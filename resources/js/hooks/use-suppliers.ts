@@ -32,7 +32,6 @@ export function useCreateSupplier() {
                 email: payload.email,
                 phone: payload.phone,
                 document: payload.document,
-                person_type: payload.person_type || 'pj',
                 status: 'active',
             }),
         onSuccess: async () => {

@@ -5,6 +5,7 @@ export const brandsQueryKey = ['brands'] as const;
 
 type CreateBrandInput = {
     name: string;
+    status?: 'active' | 'inactive';
 };
 
 export function useBrands() {
@@ -25,7 +26,7 @@ export function useCreateBrand() {
         mutationFn: async (payload: CreateBrandInput) =>
             brandService.create({
                 name: payload.name,
-                status: 'active',
+                status: payload.status ?? 'active',
             }),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: brandsQueryKey });
