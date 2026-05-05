@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
+import { ClientCreateDialog } from '@/features/dashboard/clients/client-create-dialog';
 import { useSalesDialog } from '@/hooks/use-sales-dialog';
 import type { UiCustomer as Client, UiProduct as Product } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
@@ -247,31 +248,11 @@ export function SalesDialog({
                     onConfirm={confirmAddProductFromCatalog}
                 />
 
-                <QuickCreateDialog<Client>
+                <ClientCreateDialog
                     open={clientCreateOpen}
                     onOpenChange={setClientCreateOpen}
-                    title="Novo cliente"
-                    description="Cadastre um cliente sem sair da venda atual."
-                    fields={clientQuickFields}
-                    submitLabel="Salvar cliente"
-                    keepOpenAfterSubmit
-                    onSubmit={async (values) => {
-                        const createdClient: Client = onCreateClient({
-                            id: crypto.randomUUID(),
-                            name: String(values.name || '').trim(),
-                            email: String(values.email || '').trim(),
-                            phone: String(values.phone || '').trim(),
-                            document: String(values.document || '').trim(),
-                            city: String(values.city || '').trim(),
-                            state: String(values.state || '').trim(),
-                            address: String(values.address || '').trim(),
-                            createdAt:
-                                values.createdAt ||
-                                new Date().toISOString().slice(0, 10),
-                        });
-                        selectClientById(createdClient.id);
-
-                        return createdClient;
+                    onSuccess={(client) => {
+                        selectClientById(String(client.id));
                     }}
                 />
 

@@ -26,6 +26,7 @@ import { formatDocumentInputByType, formatPhoneInput } from '@/utils/form-fields
 export function ClientCreateDialog({
     open,
     onOpenChange,
+    onSuccess,
 }: ClientCreateDialogProps) {
     const { form, setField } = useFormState(initialClientForm, open);
     const createCustomer = useCreateCustomer();
@@ -56,8 +57,11 @@ export function ClientCreateDialog({
                                 person_type: form.personType,
                             },
                             {
-                                onSuccess: () => {
+                                onSuccess: (data) => {
                                     onOpenChange(false);
+                                    if (onSuccess) {
+                                        onSuccess({ id: data.id, name: data.name });
+                                    }
                                 },
                             },
                         );

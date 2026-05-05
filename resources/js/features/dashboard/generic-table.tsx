@@ -86,6 +86,7 @@ export function GenericTable<T extends { id: string }>({
 }: GenericTableProps<T>) {
     const [internalIsCreateOpen, setInternalIsCreateOpen] =
         React.useState(false);
+
     const [isFilterOpen, setIsFilterOpen] = React.useState(false);
     const [filterOperators, setFilterOperators] = React.useState<
         Record<string, FilterOperator>

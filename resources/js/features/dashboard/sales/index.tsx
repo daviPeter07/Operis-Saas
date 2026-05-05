@@ -1,34 +1,58 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
 import { STATUS_OPTIONS } from '@/constants/status';
+import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
+import { useCreateSale, useDeleteSale, useSales } from '@/hooks/use-sales';
 import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
-import { useCreateSale, useDeleteSale, useSales } from '@/hooks/use-sales';
-import {
-    formatCurrencyBR,
-    formatDateBR,
-    translatePaymentMethod,
-} from '@/lib/format';
-import type { UiCustomer, UiProduct } from '@/types/dashboard-entities';
-import type { SalesRecord } from '@/types/sales-dialog';
+import { UiCustomer, UiProduct } from '@/types/dashboard-entities';
+import { formatCurrencyBR, translatePaymentMethod } from '@/lib/format';
+import { formatDateBR } from '@/lib/format';
+import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
+import { SalesHeader } from './sales-header';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { SalesHeader } from './sales-header';
+
+type SalesRecord = {
+    id: string;
+    clientId: string;
+    clientName: string;
+    createdAt?: string;
+    lineItems: {
+        productId: string;
+        quantity: number;
+        unitPrice: number;
+    }[];
+    paymentMethod: string;
+    cardType?: 'debit' | 'credit';
+    total: number;
+    status: 'pending' | 'completed' | 'cancelled';
+    date?: string;
+};
 
 type SaleRow = {
     id: string;
-    customer_id: number;
     clientName: string;
     total: number;
-    status: string;
     payment_method: string;
+    status: string;
     date: string;
 };
 
 export function SalesModule() {
+    const [isCreateOpen, setIsCreateOpen] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('action') === 'create-sale';
+    });
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('action') === 'create-sale') {
+            window.history.replaceState({}, '', '/dashboard/sales');
+        }
+    }, []);
     const { data: sales = [] } = useSales();
     const { data: customers = [] } = useCustomers();
     const { data: products = [] } = useProducts();
@@ -183,7 +207,7 @@ export function SalesModule() {
             throw new Error('Adicione ao menos um item válido na venda.');
         }
 
-        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' =
+        const paymentMethod =
             sale.paymentMethod === 'money'
                 ? 'cash'
                 : sale.paymentMethod === 'other'
@@ -193,7 +217,7 @@ export function SalesModule() {
         await createSale.mutateAsync({
             customer_id: customerId,
             date: sale.createdAt || new Date().toISOString().slice(0, 10),
-            payment_method: paymentMethod,
+            payment_method: paymentMethod as 'cash' | 'pix' | 'card' | 'installment',
             status: 'pending',
             items,
         });
@@ -222,6 +246,8 @@ export function SalesModule() {
                 columns={columns}
                 title="Vendas"
                 filterFields={filterFields}
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
                 onDelete={async (row) => {
                     await deleteSale.mutateAsync(Number(row.id));
                 }}

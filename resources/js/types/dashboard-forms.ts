@@ -28,6 +28,7 @@ export type ClientCreateDialogPayload = UiCustomer & {
 export type ClientCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onSuccess?: (client: { id: number; name: string }) => void;
 };
 
 export type FinancialEntryForm = {

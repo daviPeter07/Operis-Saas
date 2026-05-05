@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { PersonTypeBadge } from '@/components/common/person-type-badge';
 import {
     useCreateCustomer,
@@ -21,6 +22,17 @@ type ClientRow = {
 };
 
 export function ClientsModule() {
+    const [isCreateOpen, setIsCreateOpen] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('action') === 'create-client';
+    });
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('action') === 'create-client') {
+            window.history.replaceState({}, '', '/dashboard/clients');
+        }
+    }, []);
     const { data: customers = [] } = useCustomers();
     const createCustomer = useCreateCustomer();
     const deleteCustomer = useDeleteCustomer();
@@ -90,6 +102,8 @@ export function ClientsModule() {
             onDelete={async (row) => {
                 await deleteCustomer.mutateAsync(Number(row.id));
             }}
+            isCreateOpen={isCreateOpen}
+            onCreateOpenChange={setIsCreateOpen}
             createDialog={({ open, onOpenChange }) => (
                 <ClientCreateDialog
                     open={open}
