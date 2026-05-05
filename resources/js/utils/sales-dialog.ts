@@ -25,13 +25,21 @@ export const paymentMethodOptions: Array<{
     { value: 'other', label: 'Outros' },
 ];
 
-export function todayString(): string {
-    return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Sao_Paulo',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-    }).format(new Date());
+export function todayString(daysAgo = 0): string {
+    const brazilNow = new Date(
+        new Date().toLocaleString('en-US', {
+            timeZone: 'America/Sao_Paulo',
+        }),
+    );
+
+    brazilNow.setHours(0, 0, 0, 0);
+    brazilNow.setDate(brazilNow.getDate() - daysAgo);
+
+    const year = brazilNow.getFullYear();
+    const month = String(brazilNow.getMonth() + 1).padStart(2, '0');
+    const day = String(brazilNow.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
 }
 
 export function makeSaleLineItem(

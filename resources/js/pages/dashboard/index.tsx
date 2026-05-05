@@ -22,6 +22,8 @@ import { useSales } from '@/hooks/use-sales';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrencyBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
+import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
+import { todayString } from '@/utils/sales-dialog';
 
 function dateToLabel(date: string): string {
     const [year, month, day] = date.split('-');
@@ -48,8 +50,8 @@ export default function DashboardPage() {
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
     const [period, setPeriod] = useState<Period>('30d');
     const [customRange, setCustomRange] = useState<CustomRange>({
-        from: '2026-04-01',
-        to: '2026-04-23',
+        from: todayString(30),
+        to: todayString(),
     });
 
     const userName = auth.user?.name ?? 'usuário';
@@ -168,7 +170,8 @@ export default function DashboardPage() {
             {
                 id: 'undelivered-orders',
                 label: 'Pedidos não entregues',
-                value: activePurchases.filter((p) => p.status === 'pending').length,
+                value: activePurchases.filter((p) => p.status === 'pending')
+                    .length,
             },
             {
                 id: 'orders-to-confirm',
@@ -190,7 +193,10 @@ export default function DashboardPage() {
             .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
         const profitSeries = activeSales
             .slice(-12)
-            .map((sale) => ({ date: sale.date, value: toNumber(sale.total) * 0.3 }));
+            .map((sale) => ({
+                date: sale.date,
+                value: toNumber(sale.total) * 0.3,
+            }));
 
         return [
             {
@@ -229,7 +235,7 @@ export default function DashboardPage() {
             <PageContent>
                 <DashboardHeader
                     title={`Bem-vindo, ${userName}`}
-                    description={`Resumo do negócio (${customers.length} clientes).`}
+                    description={`${getDashboardGreetingForToday()}`}
                 >
                     <div className="flex flex-col gap-3 pt-4 md:flex-row md:items-center md:justify-between">
                         <ViewSwitcher view={view} onViewChange={setView} />
@@ -237,10 +243,16 @@ export default function DashboardPage() {
                             <PeriodFilter
                                 period={period}
                                 customRange={customRange}
-                                onPeriodChange={(nextPeriod, nextCustomRange) => {
+                                onPeriodChange={(
+                                    nextPeriod,
+                                    nextCustomRange,
+                                ) => {
                                     setPeriod(nextPeriod);
 
-                                    if (nextPeriod === 'custom' && nextCustomRange) {
+                                    if (
+                                        nextPeriod === 'custom' &&
+                                        nextCustomRange
+                                    ) {
                                         setCustomRange(nextCustomRange);
                                     }
                                 }}
@@ -257,13 +269,17 @@ export default function DashboardPage() {
                                 <RecentActivity activities={activities} />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
-                                <h3 className="mb-4 font-semibold">Alertas e lembretes</h3>
+                                <h3 className="mb-4 font-semibold">
+                                    Alertas e lembretes
+                                </h3>
                                 <div className="space-y-4">
                                     {alerts.map((alert) => (
                                         <button
                                             type="button"
                                             key={alert.id}
-                                            onClick={() => navigateByAlert(alert.id)}
+                                            onClick={() =>
+                                                navigateByAlert(alert.id)
+                                            }
                                             className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                                         >
                                             <span className="text-sm font-medium text-foreground">
@@ -292,13 +308,17 @@ export default function DashboardPage() {
                                 <RecentActivity activities={activities} />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
-                                <h3 className="mb-4 font-semibold">Alertas e lembretes</h3>
+                                <h3 className="mb-4 font-semibold">
+                                    Alertas e lembretes
+                                </h3>
                                 <div className="space-y-4">
                                     {alerts.map((alert) => (
                                         <button
                                             type="button"
                                             key={alert.id}
-                                            onClick={() => navigateByAlert(alert.id)}
+                                            onClick={() =>
+                                                navigateByAlert(alert.id)
+                                            }
                                             className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
                                         >
                                             <span className="text-sm font-medium text-foreground">
