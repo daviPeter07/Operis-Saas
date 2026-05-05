@@ -27,6 +27,7 @@ class UpdateCustomerRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'document' => ['nullable', 'string', 'max:20'],
+            'person_type' => ['nullable', 'string', 'in:pf,pj'],
             'status' => ['sometimes', 'in:active,inactive'],
         ];
     }

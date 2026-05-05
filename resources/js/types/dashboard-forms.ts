@@ -68,6 +68,7 @@ export type AccountsPayableCreateDialogProps = {
 
 export type SupplierForm = {
     name: string;
+    personType: 'pf' | 'pj';
     email: string;
     phone: string;
     document: string;

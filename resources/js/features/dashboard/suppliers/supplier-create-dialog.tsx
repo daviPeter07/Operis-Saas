@@ -11,8 +11,17 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { initialSupplierForm } from '@/constants/dashboard-form-initials';
+import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
 import { useFormState } from '@/hooks/use-form-state';
+import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 
 type SupplierCreatePayload = {
     name: string;
@@ -33,6 +42,7 @@ export function SupplierCreateDialog({
     onSubmit,
 }: SupplierCreateDialogProps) {
     const { form, setField } = useFormState(initialSupplierForm, open);
+    const documentLabel = form.personType === 'pj' ? 'CNPJ' : 'CPF';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,6 +80,36 @@ export function SupplierCreateDialog({
                                 required
                             />
                         </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="supplier-person-type">
+                                Tipo de pessoa
+                            </Label>
+                            <Select
+                                value={form.personType}
+                                onValueChange={(value) => {
+                                    if (value === 'pf' || value === 'pj') {
+                                        setField('personType', value);
+                                        setField('document', '');
+                                    }
+                                }}
+                            >
+                                <SelectTrigger id="supplier-person-type">
+                                    <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PERSON_TYPE_OPTIONS.map((option) => (
+                                        <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div className="grid gap-2">
                             <Label htmlFor="supplier-email">Email</Label>
                             <Input
@@ -82,26 +122,40 @@ export function SupplierCreateDialog({
                                 placeholder="contato@fornecedor.com"
                             />
                         </div>
+
                         <div className="grid gap-2">
                             <Label htmlFor="supplier-phone">Telefone</Label>
                             <Input
                                 id="supplier-phone"
                                 value={form.phone}
                                 onChange={(event) =>
-                                    setField('phone', event.target.value)
+                                    setField(
+                                        'phone',
+                                        formatPhoneInput(event.target.value),
+                                    )
                                 }
                                 placeholder="(00) 00000-0000"
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="supplier-document">Documento</Label>
+
+                        <div className="grid gap-2 sm:col-span-2">
+                            <Label htmlFor="supplier-document">
+                                {documentLabel}
+                            </Label>
                             <Input
                                 id="supplier-document"
                                 value={form.document}
                                 onChange={(event) =>
-                                    setField('document', event.target.value)
+                                    setField(
+                                        'document',
+                                        formatDocumentInput(event.target.value),
+                                    )
                                 }
-                                placeholder="CNPJ ou CPF"
+                                placeholder={
+                                    form.personType === 'pj'
+                                        ? '00.000.000/0000-00'
+                                        : '000.000.000-00'
+                                }
                             />
                         </div>
                     </div>

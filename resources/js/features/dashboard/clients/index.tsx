@@ -62,6 +62,7 @@ export function ClientsModule() {
         email: string;
         phone: string;
         document: string;
+        person_type?: string;
     }) => {
         const name = String(data.name || '').trim();
 
@@ -74,6 +75,7 @@ export function ClientsModule() {
             email: String(data.email || '').trim(),
             phone: String(data.phone || '').trim(),
             document: String(data.document || '').trim(),
+            person_type: data.person_type || 'pf',
         });
     };
 
@@ -94,6 +96,17 @@ export function ClientsModule() {
                     type: 'text',
                     required: true,
                     placeholder: 'Digite o nome do cliente',
+                },
+                {
+                    name: 'person_type',
+                    label: 'Tipo',
+                    type: 'select',
+                    options: [
+                        { value: 'pf', label: 'Pessoa Física' },
+                        { value: 'pj', label: 'Pessoa Jurídica' },
+                    ],
+                    required: true,
+                    placeholder: 'Selecione o tipo',
                 },
                 {
                     name: 'email',
