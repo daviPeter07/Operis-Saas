@@ -1,9 +1,9 @@
-import { DollarSign, ShoppingCart, Users, Package } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, Package, Truck } from 'lucide-react';
 import { EmptyState } from '@/components/table/empty-state';
 
 interface Activity {
     id: string;
-    type: 'sale' | 'purchase' | 'client' | 'product';
+    type: 'sale' | 'purchase' | 'client' | 'product' | 'supplier';
     responsible: string;
     description: string;
     amount?: string;
@@ -19,6 +19,7 @@ const iconMap = {
     purchase: ShoppingCart,
     client: Users,
     product: Package,
+    supplier: Truck,
 };
 
 const colorMap = {
@@ -26,6 +27,7 @@ const colorMap = {
     purchase: 'text-orange-600 bg-orange-600/10',
     client: 'text-blue-600 bg-blue-600/10',
     product: 'text-purple-600 bg-purple-600/10',
+    supplier: 'text-cyan-600 bg-cyan-600/10',
 };
 
 export function RecentActivity({ activities }: RecentActivityProps) {

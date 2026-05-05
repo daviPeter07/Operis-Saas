@@ -21,6 +21,7 @@ class CustomerResource extends ApiResource
             'phone' => $this->phone,
             'document' => $this->document,
             'status' => $this->status,
+            'createdAt' => $this->created_at?->format('Y-m-d H:i:s'),
         ];
     }
 }

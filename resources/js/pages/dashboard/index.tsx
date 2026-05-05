@@ -17,6 +17,7 @@ import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
 import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
+import { useSuppliers } from '@/hooks/use-suppliers';
 import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
 import AppLayout from '@/layouts/app-layout';
@@ -25,10 +26,19 @@ import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
 import { todayString } from '@/utils/sales-dialog';
 
-function dateToLabel(date: string): string {
-    const [year, month, day] = date.split('-');
+function formatDateTimeManaus(dateTime: string | undefined): string {
+    if (!dateTime) return '';
 
-    return `${day}/${month}/${year.slice(2)}`;
+    const date = new Date(dateTime + 'Z');
+
+    return date.toLocaleString('pt-BR', {
+        timeZone: 'America/Manaus',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 }
 
 export default function DashboardPage() {
@@ -46,6 +56,7 @@ export default function DashboardPage() {
     const { data: payables = [] } = useAccountPayables();
     const { data: customers = [] } = useCustomers();
     const { data: products = [] } = useProducts();
+    const { data: suppliers = [] } = useSuppliers();
 
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
     const [period, setPeriod] = useState<Period>('30d');
@@ -138,27 +149,50 @@ export default function DashboardPage() {
     }, [activeSales, activePurchases, receivables, payables]);
 
     const activities = useMemo(() => {
-        const salesItems = activeSales.slice(0, 4).map((sale) => ({
+        const userName = auth.user?.name ?? 'Usuário';
+        const salesItems = activeSales.slice(0, 3).map((sale) => ({
             id: `sale-${sale.id}`,
             type: 'sale' as const,
-            responsible: 'Sistema',
-            description: `Venda #${sale.id}`,
+            responsible: userName,
+            description: `Nova venda #${sale.id}`,
             amount: formatCurrencyBR(sale.total),
-            time: sale.date,
+            time: formatDateTimeManaus(sale.date),
         }));
-        const purchaseItems = activePurchases.slice(0, 4).map((purchase) => ({
+        const purchaseItems = activePurchases.slice(0, 3).map((purchase) => ({
             id: `purchase-${purchase.id}`,
             type: 'purchase' as const,
-            responsible: 'Sistema',
-            description: `Compra #${purchase.id}`,
+            responsible: userName,
+            description: `Nova compra #${purchase.id}`,
             amount: formatCurrencyBR(purchase.total),
-            time: purchase.date,
+            time: formatDateTimeManaus(purchase.date),
+        }));
+        const customerItems = customers.slice(0, 2).map((customer) => ({
+            id: `client-${customer.id}`,
+            type: 'client' as const,
+            responsible: userName,
+            description: `Novo cliente: ${customer.name}`,
+            time: formatDateTimeManaus((customer as { createdAt?: string }).createdAt),
+        }));
+        const supplierItems = suppliers.slice(0, 2).map((supplier) => ({
+            id: `supplier-${supplier.id}`,
+            type: 'supplier' as const,
+            responsible: userName,
+            description: `Novo fornecedor: ${supplier.name}`,
+            time: formatDateTimeManaus((supplier as { createdAt?: string }).createdAt),
+        }));
+        const productItems = products.slice(0, 2).map((product) => ({
+            id: `product-${product.id}`,
+            type: 'product' as const,
+            responsible: userName,
+            description: `Novo produto: ${product.name}`,
+            time: formatDateTimeManaus((product as { createdAt?: string }).createdAt),
         }));
 
-        return [...salesItems, ...purchaseItems]
+        return [...salesItems, ...purchaseItems, ...customerItems, ...supplierItems, ...productItems]
+            .filter((item) => item.time)
             .sort((a, b) => b.time.localeCompare(a.time))
-            .slice(0, 6);
-    }, [activeSales, activePurchases]);
+            .slice(0, 8);
+    }, [activeSales, activePurchases, customers, suppliers, products, auth.user?.name]);
 
     const alerts = useMemo(
         () => [
@@ -191,12 +225,10 @@ export default function DashboardPage() {
         const salesSeries = activeSales
             .slice(-12)
             .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
-        const profitSeries = activeSales
-            .slice(-12)
-            .map((sale) => ({
-                date: sale.date,
-                value: toNumber(sale.total) * 0.3,
-            }));
+        const profitSeries = activeSales.slice(-12).map((sale) => ({
+            date: sale.date,
+            value: toNumber(sale.total) * 0.3,
+        }));
 
         return [
             {
