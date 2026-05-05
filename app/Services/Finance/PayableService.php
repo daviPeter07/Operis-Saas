@@ -2,6 +2,7 @@
 
 namespace App\Services\Finance;
 
+use App\Enums\PurchaseStatus;
 use App\Models\AccountPayable;
 use App\Models\Purchase;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
@@ -60,5 +61,15 @@ class PayableService
         ]);
 
         return $payable->refresh();
+    }
+
+    public function syncMissingForCompany(int $companyId): void
+    {
+        Purchase::query()
+            ->where('company_id', $companyId)
+            ->whereIn('status', [PurchaseStatus::Pending->value, PurchaseStatus::Completed->value])
+            ->doesntHave('payables')
+            ->get()
+            ->each(fn (Purchase $purchase) => $this->regenerateFromPurchase($purchase));
     }
 }

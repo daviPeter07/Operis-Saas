@@ -43,10 +43,11 @@ class PurchaseService
 
             $this->syncItems($purchase, $data['items']);
 
+            $this->payableService->regenerateFromPurchase($purchase);
+
             if ($status === PurchaseStatus::Completed->value) {
                 $this->applyStock($purchase, [], $purchase->items->toArray(), $userId);
                 $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
-                $this->payableService->regenerateFromPurchase($purchase);
             }
 
             return $purchase->refresh()->load(['items.product.category', 'items.product.brand']);
@@ -76,11 +77,12 @@ class PurchaseService
             $purchase->items()->delete();
             $this->syncItems($purchase, $data['items']);
 
+            $this->payableService->regenerateFromPurchase($purchase);
+
             if ($purchase->status === PurchaseStatus::Completed->value) {
                 $newItems = $purchase->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
                 $this->applyStockDiff($purchase, $previousItems, $newItems, $userId);
                 $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
-                $this->payableService->regenerateFromPurchase($purchase);
             }
 
             return $purchase->refresh()->load(['items.product.category', 'items.product.brand']);

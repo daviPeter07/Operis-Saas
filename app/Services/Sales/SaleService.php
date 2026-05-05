@@ -46,9 +46,10 @@ class SaleService
 
             $this->syncItems($sale, $data['items']);
 
+            $this->receivableService->regenerateFromSale($sale);
+
             if ($status === SaleStatus::Completed->value) {
                 $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
-                $this->receivableService->regenerateFromSale($sale);
             }
 
             return $sale->refresh()->load('items');
@@ -78,10 +79,11 @@ class SaleService
             $sale->items()->delete();
             $this->syncItems($sale, $data['items']);
 
+            $this->receivableService->regenerateFromSale($sale);
+
             if ($sale->status === SaleStatus::Completed->value) {
                 $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
                 $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
-                $this->receivableService->regenerateFromSale($sale);
             }
 
             return $sale->refresh()->load('items');

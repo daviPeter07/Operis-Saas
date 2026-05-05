@@ -3,6 +3,7 @@
 namespace App\Services\Finance;
 
 use App\Enums\FinancialStatus;
+use App\Enums\SaleStatus;
 use App\Models\Sale;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
 use Illuminate\Validation\ValidationException;
@@ -53,5 +54,15 @@ class ReceivableService
                 'status' => FinancialStatus::Cancelled->value,
             ]);
         }
+    }
+
+    public function syncMissingForCompany(int $companyId): void
+    {
+        Sale::query()
+            ->where('company_id', $companyId)
+            ->whereIn('status', [SaleStatus::Pending->value, SaleStatus::Completed->value])
+            ->doesntHave('receivables')
+            ->get()
+            ->each(fn (Sale $sale) => $this->regenerateFromSale($sale));
     }
 }
