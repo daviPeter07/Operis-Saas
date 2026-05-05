@@ -1,5 +1,5 @@
-import { Inbox, Search, FileX } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import { Inbox, Search, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

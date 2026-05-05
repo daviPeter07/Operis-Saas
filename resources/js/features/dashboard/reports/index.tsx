@@ -13,8 +13,8 @@ import {
     ChevronRight,
     Clock3,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
+import { cn } from '@/lib/utils';
 
 const reportCategories = [
     {

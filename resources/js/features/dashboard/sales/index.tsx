@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
+import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import { useCustomers } from '@/hooks/use-customers';
@@ -15,7 +16,6 @@ import type { UiCustomer, UiProduct } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { SalesHeader } from './sales-header';
 
 type SaleRow = {

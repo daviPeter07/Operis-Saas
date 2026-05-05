@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
+import { BarChart3, CheckCircle2, LockKeyhole, UsersRound } from 'lucide-react';
 import OperisLogoIcon from '@/components/operis-logo-icon';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
-import { BarChart3, CheckCircle2, LockKeyhole, UsersRound } from 'lucide-react';
 
 export default function AuthSplitLayout({
     children,

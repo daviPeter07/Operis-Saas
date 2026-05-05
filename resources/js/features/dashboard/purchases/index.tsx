@@ -4,12 +4,12 @@ import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import { useProducts } from '@/hooks/use-products';
-import { useCreateSupplier } from '@/hooks/use-suppliers';
 import {
     useCreatePurchase,
     useDeletePurchase,
     usePurchases,
 } from '@/hooks/use-purchases';
+import { useCreateSupplier } from '@/hooks/use-suppliers';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import {
     formatDateBR,

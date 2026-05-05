@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
 import {
     Button,
     Checkbox,
@@ -27,7 +28,6 @@ import {
     SelectValue,
 } from '@/components/ui';
 import { useWorkspace } from '@/features/dashboard/workspace-context';
-import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
 
 export function SettingsModule() {
     const { canAccessSettings, currentCompany } = useWorkspace();

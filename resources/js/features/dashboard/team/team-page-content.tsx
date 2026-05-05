@@ -3,6 +3,7 @@ import { Check, Copy, Mail, ShieldCheck, UsersRound } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import type { WorkspaceRole, WorkspaceTeamAccessMode } from '@/types/workspace';
-import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
 
 type TeamMember = {
     nome: string;
