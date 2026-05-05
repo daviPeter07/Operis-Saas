@@ -1,18 +1,18 @@
 import { Link, router } from '@inertiajs/react';
 import {
+    Award,
+    BarChart3,
+    CreditCard,
     LayoutGrid,
-    Users,
+    Receipt,
+    Settings,
+    ShoppingCart,
+    Tags,
     TrendingUp,
     Truck,
-    Tags,
-    Award,
-    Warehouse,
-    ShoppingCart,
-    CreditCard,
-    Receipt,
+    Users,
     UsersRound,
-    BarChart3,
-    Settings,
+    Warehouse,
 } from 'lucide-react';
 import * as React from 'react';
 import AppLogo from '@/components/app-logo';
@@ -39,122 +39,83 @@ import {
     getAltShortcutLabel,
     isEditableElement,
 } from '@/lib/keyboard-shortcuts';
+import type { WorkspaceModuleKey } from '@/types/workspace';
 
-const navItems = [
+const navMetaByModule: Record<
+    WorkspaceModuleKey,
     {
-        title: 'Visão Geral',
-        href: '/dashboard',
+        icon: React.ComponentType<{ className?: string }>;
+        description: string;
+    }
+> = {
+    overview: {
         icon: LayoutGrid,
-        module: 'overview',
-        shortcut: '1',
         description: 'Acompanhe indicadores, alertas e atividades recentes.',
     },
-    {
-        title: 'Clientes',
-        href: '/dashboard/clients',
+    inventory: {
+        icon: Warehouse,
+        description: 'Monitore estoque, entradas, saÃ­das e rupturas.',
+    },
+    sales: {
+        icon: TrendingUp,
+        description: 'Visualize vendas, pedidos e desempenho comercial.',
+    },
+    purchases: {
+        icon: ShoppingCart,
+        description: 'Controle compras e acompanhe pedidos de reposiÃ§Ã£o.',
+    },
+    clients: {
         icon: Users,
-        module: 'clients',
-        shortcut: '2',
         description:
             'Gerencie clientes e acompanhe o relacionamento comercial.',
     },
-    {
-        title: 'Vendas',
-        href: '/dashboard/sales',
-        icon: TrendingUp,
-        module: 'sales',
-        shortcut: '3',
-        description: 'Visualize vendas, pedidos e desempenho comercial.',
-    },
-    {
-        title: 'Fornecedores',
-        href: '/dashboard/suppliers',
+    suppliers: {
         icon: Truck,
-        module: 'suppliers',
-        shortcut: '4',
-        description: 'Organize fornecedores e histórico de abastecimento.',
+        description: 'Organize fornecedores e histÃ³rico de abastecimento.',
     },
-    {
-        title: 'Categorias',
-        href: '/dashboard/categories',
-        icon: Tags,
-        module: 'categories',
-        shortcut: '5',
-        description: 'Agrupe produtos por categorias para facilitar a gestão.',
-    },
-    {
-        title: 'Marcas',
-        href: '/dashboard/brands',
+    brands: {
         icon: Award,
-        module: 'brands',
-        shortcut: '6',
-        description: 'Gerencie marcas vinculadas ao catálogo da operação.',
+        description: 'Gerencie marcas vinculadas ao catÃ¡logo da operaÃ§Ã£o.',
     },
-    {
-        title: 'Estoque',
-        href: '/dashboard/inventory',
-        icon: Warehouse,
-        module: 'inventory',
-        shortcut: '7',
-        description: 'Monitore estoque, entradas, saídas e rupturas.',
+    categories: {
+        icon: Tags,
+        description: 'Agrupe produtos por categorias para facilitar a gestÃ£o.',
     },
-    {
-        title: 'Compras',
-        href: '/dashboard/purchases',
-        icon: ShoppingCart,
-        module: 'purchases',
-        shortcut: '8',
-        description: 'Controle compras e acompanhe pedidos de reposição.',
-    },
-    {
-        title: 'Contas a Receber',
-        href: '/dashboard/accounts-receivable',
+    'accounts-receivable': {
         icon: CreditCard,
-        module: 'accounts-receivable',
-        shortcut: '9',
         description: 'Veja recebimentos pendentes e valores a receber.',
     },
-    {
-        title: 'Contas a Pagar',
-        href: '/dashboard/accounts-payable',
+    'accounts-payable': {
         icon: Receipt,
-        module: 'accounts-payable',
-        shortcut: '0',
         description: 'Acompanhe despesas, contas e pagamentos pendentes.',
     },
-    {
-        title: 'Equipe',
-        href: '/dashboard/team',
+    team: {
         icon: UsersRound,
-        module: 'team',
         description: 'Consulte a equipe e acompanhe responsabilidades.',
     },
-    {
-        title: 'Relatórios',
-        href: '/dashboard/reports',
+    reports: {
         icon: BarChart3,
-        module: 'reports',
-        description: 'Analise relatórios operacionais e financeiros.',
+        description: 'Analise relatÃ³rios operacionais e financeiros.',
     },
-    {
-        title: 'Configurações',
-        href: '/dashboard/settings',
+    settings: {
         icon: Settings,
-        module: 'settings',
-        description: 'Ajuste preferências e configurações da empresa.',
+        description: 'Ajuste preferÃªncias e configuraÃ§Ãµes da empresa.',
     },
-];
+};
 
 export function AppSidebar() {
     const { navigation } = useWorkspace();
 
     const navigationShortcuts = React.useMemo(() => {
         return new Map(
-            navItems
-                .filter((navItem) => navItem.shortcut)
-                .map((navItem) => [navItem.shortcut as string, navItem]),
+            navigation
+                .filter((navigationItem) => navigationItem.shortcut)
+                .map((navigationItem) => [
+                    navigationItem.shortcut as string,
+                    navigationItem,
+                ]),
         );
-    }, []);
+    }, [navigation]);
 
     React.useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -235,24 +196,22 @@ export function AppSidebar() {
                 <TooltipProvider>
                     <nav className="flex flex-col gap-1 px-3 group-data-[collapsible=icon]:gap-0.5">
                         {navigation.map((navigationItem) => {
-                            const item = navItems.find(
-                                (navItem) =>
-                                    navItem.module === navigationItem.key,
-                            );
+                            const meta = navMetaByModule[navigationItem.key];
 
-                            if (!item) {
+                            if (!meta) {
                                 return null;
                             }
 
-                            const isActive = item.href === location.pathname;
-                            const Icon = item.icon;
+                            const isActive =
+                                navigationItem.href === location.pathname;
+                            const Icon = meta.icon;
 
                             return (
-                                <Tooltip key={item.module}>
+                                <Tooltip key={navigationItem.key}>
                                     <TooltipTrigger asChild>
                                         <SidebarMenuItem className="relative list-none marker:content-none">
                                             <Link
-                                                href={item.href}
+                                                href={navigationItem.href}
                                                 prefetch
                                                 className={`relative flex items-center gap-3 rounded-xl px-3 py-2 pr-9 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:pr-0 ${
                                                     isActive
@@ -262,10 +221,10 @@ export function AppSidebar() {
                                             >
                                                 <Icon className="h-4 w-4 shrink-0" />
                                                 <span className="truncate group-data-[collapsible=icon]:hidden">
-                                                    {item.title}
+                                                    {navigationItem.label}
                                                 </span>
                                                 {renderShortcutBadge(
-                                                    item.shortcut,
+                                                    navigationItem.shortcut,
                                                 )}
                                             </Link>
                                         </SidebarMenuItem>
@@ -276,18 +235,18 @@ export function AppSidebar() {
                                         className="max-w-64 rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 text-sidebar-foreground shadow-xl"
                                     >
                                         <p className="text-sm font-semibold text-sidebar-foreground">
-                                            {item.title}
+                                            {navigationItem.label}
                                         </p>
-                                        {item.shortcut && (
+                                        {navigationItem.shortcut && (
                                             <p className="mt-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
                                                 Atalho{' '}
                                                 {getAltShortcutLabel(
-                                                    item.shortcut,
+                                                    navigationItem.shortcut,
                                                 )}
                                             </p>
                                         )}
                                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                            {item.description}
+                                            {meta.description}
                                         </p>
                                     </TooltipContent>
                                 </Tooltip>
