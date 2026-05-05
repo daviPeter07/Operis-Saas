@@ -13,8 +13,6 @@ interface Metric {
     id: string;
     label: string;
     value: string;
-    change: number;
-    trend: 'up' | 'down';
     icon: string;
     color: string;
     iconBackground: string;
@@ -38,7 +36,6 @@ export function MetricsGrid({ metrics }: MetricsGridProps) {
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
             {metrics.map((metric) => {
                 const Icon = iconMap[metric.icon] || Wallet;
-                const isPositive = metric.trend === 'up';
 
                 return (
                     <Card key={metric.id} className="border-border/40 bg-card">
@@ -59,16 +56,6 @@ export function MetricsGrid({ metrics }: MetricsGridProps) {
                                 <span className="text-lg leading-none font-bold text-foreground sm:text-xl">
                                     {metric.value}
                                 </span>
-                                <div
-                                    className={`flex items-center gap-1 text-xs font-medium sm:text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}
-                                >
-                                    <span>{Math.abs(metric.change)}%</span>
-                                    {isPositive ? (
-                                        <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                    ) : (
-                                        <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                    )}
-                                </div>
                             </div>
                         </CardContent>
                     </Card>
