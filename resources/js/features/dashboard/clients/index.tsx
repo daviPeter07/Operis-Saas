@@ -118,13 +118,16 @@ export function ClientsModule() {
                     name: 'phone',
                     label: 'Telefone',
                     type: 'text',
+                    mask: 'phone',
                     placeholder: '(00) 00000-0000',
                 },
                 {
                     name: 'document',
-                    label: 'Documento',
+                    label: 'CPF',
                     type: 'text',
-                    placeholder: 'CPF/CNPJ',
+                    mask: 'document',
+                    maskOptions: { dependsOn: 'person_type' },
+                    placeholder: '000.000.000-00',
                 },
             ]}
         />

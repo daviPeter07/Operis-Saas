@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
     applyFieldMask,
+    formatDocumentInputByType,
     generateEan13Code,
     generateInternalCode,
     isBarcodeField,
@@ -52,6 +53,9 @@ export interface FormField {
     searchable?: boolean;
     allowCustomValue?: boolean;
     mask?: FieldMask;
+    maskOptions?: {
+        dependsOn?: string;
+    };
     actionButton?: {
         label: string;
         onClick: () => void;
@@ -156,6 +160,10 @@ export function CreateModal<T extends Record<string, unknown>>({
             ) {
                 defaults[field.name] = 'pix';
             }
+
+            if (key === 'person_type') {
+                defaults[field.name] = 'pf';
+            }
         });
 
         return defaults as Partial<T>;
@@ -168,9 +176,23 @@ export function CreateModal<T extends Record<string, unknown>>({
     }, [buildDefaultFormData, open]);
 
     const handleChange = (field: FormField, value: string) => {
+        let maskedValue = value;
+
+        if (field.mask === 'document' && field.maskOptions?.dependsOn) {
+            const personType = formData[field.maskOptions.dependsOn] as
+                | 'pf'
+                | 'pj'
+                | undefined;
+            maskedValue = personType
+                ? formatDocumentInputByType(value, personType)
+                : applyFieldMask(value, field.mask);
+        } else {
+            maskedValue = applyFieldMask(value, field.mask);
+        }
+
         setFormData((previous) => ({
             ...previous,
-            [field.name]: applyFieldMask(value, field.mask),
+            [field.name]: maskedValue,
         }));
     };
 
