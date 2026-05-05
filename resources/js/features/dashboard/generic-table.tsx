@@ -431,7 +431,7 @@ export function GenericTable<T extends { id: string }>({
             <TableToolbar
                 searchValue={search}
                 onSearchChange={handleSearchChange}
-                showCreate={!!onCreate}
+                showCreate={!!onCreate || !!createDialog}
                 onCreate={() => handleCreateOpenChange(true)}
                 showImport
                 onImport={() => setIsImportOpen(true)}

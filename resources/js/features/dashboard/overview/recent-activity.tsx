@@ -1,4 +1,5 @@
 import { DollarSign, ShoppingCart, Users, Package } from 'lucide-react';
+import { EmptyState } from '@/components/table/empty-state';
 
 interface Activity {
     id: string;
@@ -28,6 +29,28 @@ const colorMap = {
 };
 
 export function RecentActivity({ activities }: RecentActivityProps) {
+    if (activities.length === 0) {
+        return (
+            <div className="rounded-xl border bg-card">
+                <div className="p-6 pb-4">
+                    <h3 className="font-semibold">Últimas Atividades</h3>
+                </div>
+
+                <div className="px-6 pb-6">
+                    <EmptyState
+                        title="Você ainda não tem atividades"
+                        description="Crie uma venda, compra, cliente ou produto para começar a alimentar essa área."
+                        action={{
+                            label: 'Ir para Vendas',
+                            href: '/dashboard/sales',
+                        }}
+                        className="py-6"
+                    />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="rounded-xl border bg-card">
             <div className="p-6 pb-4">

@@ -1,5 +1,5 @@
 import { Inbox, Search, FileX } from 'lucide-react';
-import * as React from 'react';
+import { Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,8 @@ export interface EmptyStateProps {
     description?: string;
     action?: {
         label: string;
-        onClick: () => void;
+        onClick?: () => void;
+        href?: string;
     };
     className?: string;
 }
@@ -66,11 +67,15 @@ export function EmptyState({
                 {description ?? config.defaultDescription}
             </p>
 
-            {action && (
+            {action && action.href ? (
+                <Button asChild className="mt-4">
+                    <Link href={action.href}>{action.label}</Link>
+                </Button>
+            ) : action ? (
                 <Button onClick={action.onClick} className="mt-4">
                     {action.label}
                 </Button>
-            )}
+            ) : null}
         </div>
     );
 }

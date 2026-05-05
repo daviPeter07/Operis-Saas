@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { router } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { STATUS_OPTIONS } from '@/constants/status';
@@ -6,9 +7,12 @@ import {
     useAccountPayables,
     useSettleAccountPayable,
 } from '@/hooks/use-account-payables';
+import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
+import type { UiSupplier } from '@/types/dashboard-entities';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
 
 type PayableRow = {
     id: string;
@@ -23,8 +27,42 @@ type PayableRow = {
 
 export function AccountsPayableModule() {
     const { data: payables = [] } = useAccountPayables();
+    const { data: suppliers = [] } = useSuppliers();
+    const createSupplier = useCreateSupplier();
     const settleAccountPayable = useSettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('action') === 'create-expense') {
+            setIsCreateOpen(true);
+            window.history.replaceState({}, '', '/dashboard/accounts-payable');
+        }
+    }, []);
+
+    const mappedSuppliers = useMemo<UiSupplier[]>(
+        () =>
+            suppliers.map((supplier) => ({
+                id: String(supplier.id),
+                name: supplier.name,
+                email: supplier.email ?? '',
+                phone: supplier.phone ?? '',
+                document: supplier.document ?? '',
+                city: '',
+                state: '',
+                address: '',
+                createdAt: new Date().toISOString().slice(0, 10),
+            })),
+        [suppliers],
+    );
+
+    const dialogSupplierOptions = useMemo(
+        () => [...dialogSuppliers, ...mappedSuppliers],
+        [dialogSuppliers, mappedSuppliers],
+    );
 
     const rows: PayableRow[] = payables.map((payable) => ({
         id: String(payable.id),
@@ -75,13 +113,28 @@ export function AccountsPayableModule() {
         .filter((row) => selectedIds.has(row.id))
         .reduce((sum, row) => sum + row.amount, 0);
 
+    const handleCreateSupplier = (supplier: UiSupplier): UiSupplier => {
+        setDialogSuppliers((previous) => [supplier, ...previous]);
+
+        void createSupplier.mutateAsync({
+            name: supplier.name,
+            email: supplier.email,
+            phone: supplier.phone,
+            document: supplier.document,
+        });
+
+        return supplier;
+    };
+
     const columns: Column<PayableRow>[] = [
         {
             key: 'select',
             header: (
                 <input
                     type="checkbox"
-                    checked={selectedIds.size === rows.length && rows.length > 0}
+                    checked={
+                        selectedIds.size === rows.length && rows.length > 0
+                    }
                     ref={(el) => {
                         if (el) {
                             el.indeterminate =
@@ -145,7 +198,9 @@ export function AccountsPayableModule() {
             {totalSelected > 0 && (
                 <div className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
                     <div>
-                        <p className="font-medium">{totalSelected} selecionada(s)</p>
+                        <p className="font-medium">
+                            {totalSelected} selecionada(s)
+                        </p>
                         <p className="text-sm text-muted-foreground">
                             Total: {formatCurrencyBR(totalValue)}
                         </p>
@@ -164,7 +219,28 @@ export function AccountsPayableModule() {
                 filterFields={filterFields}
                 title="Contas a Pagar"
                 clickableRow
-                onRowClick={(row) => handleSelectOne(row.id, !selectedIds.has(row.id))}
+                onRowClick={(row) =>
+                    handleSelectOne(row.id, !selectedIds.has(row.id))
+                }
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
+                createDialog={({ open, onOpenChange }) => (
+                    <AccountsPayableCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        onSubmit={() => {
+                            onOpenChange(false);
+                            toast.info(
+                                'Para gerar contas a pagar, cadastre uma compra no fluxo completo.',
+                            );
+                            router.get('/dashboard/purchases', {
+                                action: 'create-purchase',
+                            });
+                        }}
+                        suppliers={dialogSupplierOptions}
+                        onCreateSupplier={handleCreateSupplier}
+                    />
+                )}
             />
         </div>
     );

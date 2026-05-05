@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
@@ -11,8 +11,11 @@ import {
     formatDateBR,
     translatePaymentMethod,
 } from '@/lib/format';
+import type { UiCustomer, UiProduct } from '@/types/dashboard-entities';
+import type { SalesRecord } from '@/types/sales-dialog';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { SalesHeader } from './sales-header';
 
 type SaleRow = {
@@ -31,9 +34,56 @@ export function SalesModule() {
     const { data: products = [] } = useProducts();
     const createSale = useCreateSale();
     const deleteSale = useDeleteSale();
+    const [dialogCustomers, setDialogCustomers] = useState<UiCustomer[]>([]);
+    const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
+
+    const mappedCustomers = useMemo<UiCustomer[]>(
+        () =>
+            customers.map((customer) => ({
+                id: String(customer.id),
+                name: customer.name,
+                email: customer.email ?? '',
+                phone: customer.phone ?? '',
+                document: customer.document ?? '',
+                city: '',
+                state: '',
+                address: '',
+                createdAt: new Date().toISOString().slice(0, 10),
+            })),
+        [customers],
+    );
+
+    const mappedProducts = useMemo<UiProduct[]>(
+        () =>
+            products.map((product) => ({
+                id: String(product.id),
+                name: product.name,
+                sku: product.sku,
+                barcode: product.barcode ?? undefined,
+                category: String(product.category_id ?? ''),
+                brand: String(product.brand_id ?? ''),
+                price: Number(product.sale_price ?? 0),
+                cost: Number(product.cost ?? 0),
+                stock: Number(product.stock ?? 0),
+                minStock: Number(product.min_stock ?? 0),
+                createdAt: new Date().toISOString().slice(0, 10),
+            })),
+        [products],
+    );
+
+    const salesDialogCustomers = useMemo(
+        () => [...dialogCustomers, ...mappedCustomers],
+        [dialogCustomers, mappedCustomers],
+    );
+
+    const salesDialogProducts = useMemo(
+        () => [...dialogProducts, ...mappedProducts],
+        [dialogProducts, mappedProducts],
+    );
 
     const customerNameById = useMemo(
-        () => new Map(customers.map((customer) => [customer.id, customer.name])),
+        () =>
+            new Map(customers.map((customer) => [customer.id, customer.name])),
         [customers],
     );
 
@@ -43,7 +93,8 @@ export function SalesModule() {
             id: String(sale.id),
             customer_id: sale.customer_id,
             clientName:
-                customerNameById.get(sale.customer_id) || `#${sale.customer_id}`,
+                customerNameById.get(sale.customer_id) ||
+                `#${sale.customer_id}`,
             total: sale.total,
             status: sale.status,
             payment_method: sale.payment_method,
@@ -105,90 +156,61 @@ export function SalesModule() {
         },
     ];
 
-    const createFields = [
-        {
-            name: 'customer_id',
-            label: 'Cliente',
-            type: 'select' as const,
-            options: customers.map((customer) => ({
-                value: String(customer.id),
-                label: customer.name,
-            })),
-            required: true,
-        },
-        {
-            name: 'product_id',
-            label: 'Produto',
-            type: 'select' as const,
-            options: products.map((product) => ({
-                value: String(product.id),
-                label: product.name,
-            })),
-            required: true,
-        },
-        {
-            name: 'quantity',
-            label: 'Quantidade',
-            type: 'number' as const,
-            required: true,
-        },
-        {
-            name: 'unit_price',
-            label: 'Preço unitário',
-            type: 'number' as const,
-            required: true,
-        },
-        {
-            name: 'payment_method',
-            label: 'Método de pagamento',
-            type: 'select' as const,
-            options: [
-                { value: 'cash', label: 'Dinheiro' },
-                { value: 'pix', label: 'PIX' },
-                { value: 'card', label: 'Cartão' },
-                { value: 'installment', label: 'Parcelado' },
-            ],
-            required: true,
-        },
-        {
-            name: 'date',
-            label: 'Data',
-            type: 'date' as const,
-            required: true,
-        },
-    ];
+    const handleCreateFromSalesDialog = async (sale: SalesRecord) => {
+        const customerId = Number(sale.clientId);
 
-    const handleCreate = async (data: Record<string, unknown>) => {
-        const customerId = Number(data.customer_id || 0);
-        const productId = Number(data.product_id || 0);
-        const quantity = Number(data.quantity || 0);
-        const unitPrice = Number(data.unit_price || 0);
-        const paymentMethod = String(data.payment_method || 'pix') as
-            | 'cash'
-            | 'pix'
-            | 'card'
-            | 'installment';
-        const date = String(data.date || '').trim();
+        const items = sale.lineItems
+            .map((item) => ({
+                product_id: Number(item.productId),
+                quantity: Number(item.quantity),
+                unit_price: Number(item.unitPrice),
+            }))
+            .filter(
+                (item) =>
+                    Number.isFinite(item.product_id) &&
+                    item.product_id > 0 &&
+                    Number.isFinite(item.quantity) &&
+                    item.quantity > 0 &&
+                    Number.isFinite(item.unit_price) &&
+                    item.unit_price >= 0,
+            );
 
-        if (!customerId || !productId || quantity <= 0 || unitPrice < 0) {
-            throw new Error('Preencha os dados obrigatórios da venda.');
+        if (!Number.isFinite(customerId) || customerId <= 0) {
+            throw new Error('Selecione um cliente válido para continuar.');
         }
+
+        if (items.length === 0) {
+            throw new Error('Adicione ao menos um item válido na venda.');
+        }
+
+        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' =
+            sale.paymentMethod === 'money'
+                ? 'cash'
+                : sale.paymentMethod === 'other'
+                  ? 'installment'
+                  : sale.paymentMethod;
 
         await createSale.mutateAsync({
             customer_id: customerId,
-            date: date || new Date().toISOString().slice(0, 10),
+            date: sale.createdAt || new Date().toISOString().slice(0, 10),
             payment_method: paymentMethod,
             status: 'pending',
-            items: [
-                {
-                    product_id: productId,
-                    quantity,
-                    unit_price: unitPrice,
-                },
-            ],
+            items,
         });
 
         toast.success('Venda criada com sucesso.');
+    };
+
+    const handleCreateClient = (client: UiCustomer): UiCustomer => {
+        setDialogCustomers((previous) => [client, ...previous]);
+
+        return client;
+    };
+
+    const handleCreateProduct = (product: UiProduct): UiProduct => {
+        setDialogProducts((previous) => [product, ...previous]);
+
+        return product;
     };
 
     return (
@@ -200,11 +222,33 @@ export function SalesModule() {
                 columns={columns}
                 title="Vendas"
                 filterFields={filterFields}
-                onCreate={handleCreate as (data: SaleRow) => Promise<void>}
                 onDelete={async (row) => {
                     await deleteSale.mutateAsync(Number(row.id));
                 }}
-                createFields={createFields}
+                createDialog={({ open, onOpenChange }) => (
+                    <SalesDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        onSubmit={(sale) => {
+                            void handleCreateFromSalesDialog(sale)
+                                .then(() => {
+                                    onOpenChange(false);
+                                })
+                                .catch((error: unknown) => {
+                                    const message =
+                                        error instanceof Error && error.message
+                                            ? error.message
+                                            : 'Erro ao criar a venda.';
+
+                                    toast.error(message);
+                                });
+                        }}
+                        clients={salesDialogCustomers}
+                        products={salesDialogProducts}
+                        onCreateClient={handleCreateClient}
+                        onCreateProduct={handleCreateProduct}
+                    />
+                )}
             />
         </div>
     );

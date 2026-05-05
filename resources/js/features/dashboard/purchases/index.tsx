@@ -1,8 +1,10 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
 import { STATUS_OPTIONS } from '@/constants/status';
 import { useProducts } from '@/hooks/use-products';
+import { useCreateSupplier } from '@/hooks/use-suppliers';
 import {
     useCreatePurchase,
     useDeletePurchase,
@@ -14,8 +16,15 @@ import {
     formatCurrencyBR,
     translatePaymentMethod,
 } from '@/lib/format';
+import type {
+    UiProduct,
+    UiPurchase,
+    UiSupplier,
+} from '@/types/dashboard-entities';
+import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { PurchaseCreateDialog } from './purchase-create-dialog';
 
 type PurchaseRow = {
     id: string;
@@ -33,7 +42,59 @@ export function PurchasesModule() {
     const { data: suppliers = [] } = useSuppliers();
     const { data: products = [] } = useProducts();
     const createPurchase = useCreatePurchase();
+    const createSupplier = useCreateSupplier();
     const deletePurchase = useDeletePurchase();
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
+    const draftItemsRef = useRef<PurchaseLineItem[]>([]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('action') === 'create-purchase') {
+            setIsCreateOpen(true);
+            window.history.replaceState({}, '', '/dashboard/purchases');
+        }
+    }, []);
+
+    const mappedSuppliers = useMemo<UiSupplier[]>(
+        () =>
+            suppliers.map((supplier) => ({
+                id: String(supplier.id),
+                name: supplier.name,
+                email: supplier.email ?? '',
+                phone: supplier.phone ?? '',
+                document: supplier.document ?? '',
+                city: '',
+                state: '',
+                address: '',
+                createdAt: new Date().toISOString().slice(0, 10),
+            })),
+        [suppliers],
+    );
+
+    const mappedProducts = useMemo<UiProduct[]>(
+        () =>
+            products.map((product) => ({
+                id: String(product.id),
+                name: product.name,
+                sku: product.sku,
+                barcode: product.barcode ?? undefined,
+                category: String(product.category_id ?? ''),
+                brand: String(product.brand_id ?? ''),
+                price: Number(product.sale_price ?? 0),
+                cost: Number(product.cost ?? 0),
+                stock: Number(product.stock ?? 0),
+                minStock: Number(product.min_stock ?? 0),
+                createdAt: new Date().toISOString().slice(0, 10),
+            })),
+        [products],
+    );
+
+    const dialogSupplierOptions = useMemo(
+        () => [...dialogSuppliers, ...mappedSuppliers],
+        [dialogSuppliers, mappedSuppliers],
+    );
 
     const suppliersById = new Map(
         suppliers.map((supplier) => [supplier.id, supplier.name]),
@@ -98,96 +159,75 @@ export function PurchasesModule() {
         },
     ];
 
-    const createFields = [
-        {
-            name: 'supplier_id',
-            label: 'Fornecedor',
-            type: 'select' as const,
-            options: suppliers.map((supplier) => ({
-                value: String(supplier.id),
-                label: supplier.name,
-            })),
-            required: true,
-        },
-        {
-            name: 'product_id',
-            label: 'Produto',
-            type: 'select' as const,
-            options: products.map((product) => ({
-                value: String(product.id),
-                label: product.name,
-            })),
-            required: true,
-        },
-        {
-            name: 'quantity',
-            label: 'Quantidade',
-            type: 'number' as const,
-            required: true,
-        },
-        {
-            name: 'unit_cost',
-            label: 'Custo unitário',
-            type: 'number' as const,
-            required: true,
-        },
-        {
-            name: 'payment_method',
-            label: 'Método de pagamento',
-            type: 'select' as const,
-            options: [
-                { value: 'cash', label: 'Dinheiro' },
-                { value: 'pix', label: 'PIX' },
-                { value: 'card', label: 'Cartão' },
-                { value: 'installment', label: 'Parcelado' },
-            ],
-            required: true,
-        },
-        {
-            name: 'date',
-            label: 'Data',
-            type: 'date' as const,
-            required: true,
-        },
-        {
-            name: 'due_date',
-            label: 'Vencimento',
-            type: 'date' as const,
-        },
-    ];
+    const handleCreateSupplier = (supplier: UiSupplier): UiSupplier => {
+        setDialogSuppliers((previous) => [supplier, ...previous]);
 
-    const handleCreate = async (data: Record<string, unknown>) => {
-        const supplierId = Number(data.supplier_id || 0);
-        const productId = Number(data.product_id || 0);
-        const quantity = Number(data.quantity || 0);
-        const unitCost = Number(data.unit_cost || 0);
-        const paymentMethod = String(data.payment_method || 'pix') as
-            | 'cash'
-            | 'pix'
-            | 'card'
-            | 'installment';
-        const date = String(data.date || '').trim();
-        const dueDate = String(data.due_date || '').trim();
+        void createSupplier.mutateAsync({
+            name: supplier.name,
+            email: supplier.email,
+            phone: supplier.phone,
+            document: supplier.document,
+        });
 
-        if (!supplierId || !productId || quantity <= 0 || unitCost < 0) {
-            throw new Error('Preencha os dados obrigatórios da compra.');
+        return supplier;
+    };
+
+    const handleCreateFromDialog = async (purchase: UiPurchase) => {
+        const supplier = dialogSupplierOptions.find(
+            (entry) => entry.name === purchase.supplierName,
+        );
+        const supplierId = Number(supplier?.id ?? 0);
+
+        if (!supplierId || Number.isNaN(supplierId)) {
+            throw new Error('Selecione um fornecedor válido para continuar.');
         }
+
+        const items = draftItemsRef.current
+            .map((item) => {
+                const product = mappedProducts.find(
+                    (entry) => entry.id === item.productId,
+                );
+
+                return {
+                    product_id: Number(item.productId),
+                    quantity: Number(item.quantity),
+                    unit_cost: Number(product?.cost ?? 0),
+                };
+            })
+            .filter(
+                (item) =>
+                    Number.isFinite(item.product_id) &&
+                    item.product_id > 0 &&
+                    Number.isFinite(item.quantity) &&
+                    item.quantity > 0 &&
+                    Number.isFinite(item.unit_cost) &&
+                    item.unit_cost >= 0,
+            );
+
+        if (items.length === 0) {
+            throw new Error('Adicione ao menos um produto na compra.');
+        }
+
+        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' =
+            purchase.paymentMethod === 'money'
+                ? 'cash'
+                : purchase.paymentMethod === 'debit' ||
+                    purchase.paymentMethod === 'credit'
+                  ? 'card'
+                  : purchase.paymentMethod === 'installment'
+                    ? 'installment'
+                    : 'pix';
 
         await createPurchase.mutateAsync({
             supplier_id: supplierId,
-            date: date || new Date().toISOString().slice(0, 10),
-            due_date: dueDate || undefined,
+            date: purchase.createdAt || new Date().toISOString().slice(0, 10),
+            due_date: purchase.dueDate || undefined,
             payment_method: paymentMethod,
             status: 'pending',
-            items: [
-                {
-                    product_id: productId,
-                    quantity,
-                    unit_cost: unitCost,
-                },
-            ],
+            items,
         });
 
+        draftItemsRef.current = [];
         toast.success('Compra criada com sucesso.');
     };
 
@@ -197,11 +237,37 @@ export function PurchasesModule() {
             columns={columns}
             title="Compras"
             filterFields={filterFields}
-            onCreate={handleCreate as (data: PurchaseRow) => Promise<void>}
             onDelete={async (row) => {
                 await deletePurchase.mutateAsync(Number(row.id));
             }}
-            createFields={createFields}
+            isCreateOpen={isCreateOpen}
+            onCreateOpenChange={setIsCreateOpen}
+            createDialog={({ open, onOpenChange }) => (
+                <PurchaseCreateDialog
+                    open={open}
+                    onOpenChange={onOpenChange}
+                    onSubmit={(purchase) => {
+                        void handleCreateFromDialog(purchase)
+                            .then(() => {
+                                onOpenChange(false);
+                            })
+                            .catch((error: unknown) => {
+                                const message =
+                                    error instanceof Error && error.message
+                                        ? error.message
+                                        : 'Erro ao criar a compra.';
+
+                                toast.error(message);
+                            });
+                    }}
+                    products={mappedProducts}
+                    suppliers={dialogSupplierOptions}
+                    onCreateSupplier={handleCreateSupplier}
+                    onApplyStock={(items) => {
+                        draftItemsRef.current = items;
+                    }}
+                />
+            )}
         />
     );
 }
