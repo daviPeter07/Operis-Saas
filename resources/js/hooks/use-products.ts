@@ -16,6 +16,10 @@ type CreateProductInput = {
     brand_id: number | null;
 };
 
+type UpdateProductInput = CreateProductInput & {
+    id: number;
+};
+
 export function useProducts() {
     return useQuery({
         queryKey: productsQueryKey,
@@ -47,6 +51,21 @@ export function useDeleteProduct() {
 
     return useMutation({
         mutationFn: async (id: number) => productService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+        },
+    });
+}
+
+export function useUpdateProduct() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, ...payload }: UpdateProductInput) =>
+            productService.update(id, {
+                ...payload,
+                status: 'active',
+            }),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: productsQueryKey });
         },

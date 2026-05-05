@@ -1,20 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
 import {
     useCreateProduct,
     useDeleteProduct,
     useProducts,
+    useUpdateProduct,
 } from '@/hooks/use-products';
 import { formatCurrencyBR, formatQuantityWithUnit } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { ProductDialog } from './product-dialog';
 
 type ProductRow = {
     id: string;
     name: string;
     sku: string;
     barcode: string | null;
+    description: string | null;
+    cost: number;
     sale_price: number;
     stock: number;
     min_stock: number;
@@ -28,7 +32,13 @@ export function InventoryModule() {
     const { data: brands = [] } = useBrands();
     const { data: categories = [] } = useCategories();
     const createProduct = useCreateProduct();
+    const updateProduct = useUpdateProduct();
     const deleteProduct = useDeleteProduct();
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(
+        null,
+    );
 
     const rows: ProductRow[] = products
         .filter((product) => product.status === 'active')
@@ -37,6 +47,8 @@ export function InventoryModule() {
             name: product.name,
             sku: product.sku,
             barcode: product.barcode,
+            description: product.description,
+            cost: product.cost,
             sale_price: product.sale_price,
             stock: product.stock,
             min_stock: product.min_stock,
@@ -54,6 +66,24 @@ export function InventoryModule() {
     const brandNameById = useMemo(
         () => new Map(brands.map((brand) => [brand.id, brand.name])),
         [brands],
+    );
+
+    const brandOptions = useMemo(
+        () =>
+            brands.map((brand) => ({
+                value: String(brand.id),
+                label: brand.name,
+            })),
+        [brands],
+    );
+
+    const categoryOptions = useMemo(
+        () =>
+            categories.map((category) => ({
+                value: String(category.id),
+                label: category.name,
+            })),
+        [categories],
     );
 
     const columns: Column<ProductRow>[] = [
@@ -88,7 +118,7 @@ export function InventoryModule() {
         },
         {
             key: 'min_stock',
-            header: 'Estoque Mínimo',
+            header: 'Estoque mínimo',
             render: (value: unknown) => formatQuantityWithUnit(Number(value)),
         },
     ];
@@ -99,130 +129,104 @@ export function InventoryModule() {
             key: 'category_id',
             label: 'Categoria',
             type: 'select' as const,
-            options: categories.map((category) => ({
-                value: String(category.id),
-                label: category.name,
-            })),
+            options: categoryOptions,
         },
         {
             key: 'brand_id',
             label: 'Marca',
             type: 'select' as const,
-            options: brands.map((brand) => ({
-                value: String(brand.id),
-                label: brand.name,
-            })),
+            options: brandOptions,
         },
     ];
 
-    const handleCreate = async (data: Record<string, unknown>) => {
-        const name = String(data.name || '').trim();
-        const sku = String(data.sku || '').trim();
-        const categoryId = Number(data.category_id || 0);
-
-        if (!name) {
-            throw new Error('Informe o nome do produto');
-        }
-
-        if (!sku) {
-            throw new Error('Informe o código do produto');
-        }
-
-        if (!categoryId) {
-            throw new Error('Selecione uma categoria');
-        }
-
-        await createProduct.mutateAsync({
-            name,
-            sku,
-            barcode: String(data.barcode || '').trim() || null,
-            description: String(data.description || '').trim() || null,
-            sale_price: Number(data.sale_price || 0),
-            cost: Number(data.cost || 0),
-            stock: Number(data.stock || 0),
-            min_stock: Number(data.min_stock || 0),
-            category_id: categoryId,
-            brand_id: data.brand_id ? Number(data.brand_id) : null,
-        });
-    };
-
     return (
-        <GenericTable
-            data={rows}
-            columns={columns}
-            title="Estoque"
-            filterFields={filterFields}
-            onCreate={handleCreate as (data: ProductRow) => Promise<void>}
-            onDelete={async (row) => {
-                await deleteProduct.mutateAsync(Number(row.id));
-            }}
-            createFields={[
-                {
-                    name: 'name',
-                    label: 'Nome do produto',
-                    type: 'text',
-                    required: true,
-                },
-                {
-                    name: 'sku',
-                    label: 'Código interno',
-                    type: 'text',
-                    required: true,
-                },
-                {
-                    name: 'barcode',
-                    label: 'Código de barras',
-                    type: 'text',
-                },
-                {
-                    name: 'cost',
-                    label: 'Preço de custo',
-                    type: 'number',
-                    required: true,
-                },
-                {
-                    name: 'sale_price',
-                    label: 'Preço de venda',
-                    type: 'number',
-                    required: true,
-                },
-                {
-                    name: 'stock',
-                    label: 'Estoque inicial',
-                    type: 'number',
-                    required: true,
-                },
-                {
-                    name: 'min_stock',
-                    label: 'Estoque mínimo',
-                    type: 'number',
-                    required: true,
-                },
-                {
-                    name: 'brand_id',
-                    label: 'Marca',
-                    type: 'select',
-                    options: brands.map((brand) => ({
-                        value: String(brand.id),
-                        label: brand.name,
-                    })),
-                },
-                {
-                    name: 'category_id',
-                    label: 'Categoria',
-                    type: 'select',
-                    required: true,
-                    options: categories.map((category) => ({
-                        value: String(category.id),
-                        label: category.name,
-                    })),
-                },
-                {
-                    name: 'description',
-                    label: 'Descrição',
-                    type: 'textarea',
-                },
-            ]}
-        />
+        <>
+            <GenericTable
+                data={rows}
+                columns={columns}
+                title="Estoque"
+                filterFields={filterFields}
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
+                createDialog={({ open, onOpenChange }) => (
+                    <ProductDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        mode="create"
+                        brands={brandOptions}
+                        categories={categoryOptions}
+                        onSubmit={async (data) => {
+                            await createProduct.mutateAsync({
+                                name: data.name,
+                                sku: data.sku,
+                                barcode: data.barcode,
+                                description: data.description,
+                                sale_price: data.sale_price,
+                                cost: data.cost,
+                                stock: data.stock,
+                                min_stock: data.min_stock,
+                                category_id: data.category_id,
+                                brand_id: data.brand_id,
+                            });
+                        }}
+                    />
+                )}
+                onEdit={(row) => {
+                    setSelectedProduct(row);
+                    setIsEditOpen(true);
+                }}
+                onDelete={async (row) => {
+                    await deleteProduct.mutateAsync(Number(row.id));
+                }}
+            />
+
+            {selectedProduct ? (
+                <ProductDialog
+                    open={isEditOpen}
+                    onOpenChange={(open) => {
+                        setIsEditOpen(open);
+
+                        if (!open) {
+                            setSelectedProduct(null);
+                        }
+                    }}
+                    mode="edit"
+                    initialData={{
+                        id: Number(selectedProduct.id),
+                        name: selectedProduct.name,
+                        sku: selectedProduct.sku,
+                        barcode: selectedProduct.barcode ?? '',
+                        description: selectedProduct.description ?? '',
+                        cost: formatCurrencyBR(selectedProduct.cost),
+                        sale_price: formatCurrencyBR(
+                            selectedProduct.sale_price,
+                        ),
+                        stock: String(selectedProduct.stock),
+                        min_stock: String(selectedProduct.min_stock),
+                        category_id: String(selectedProduct.category_id),
+                        brand_id: selectedProduct.brand_id
+                            ? String(selectedProduct.brand_id)
+                            : '',
+                    }}
+                    brands={brandOptions}
+                    categories={categoryOptions}
+                    onSubmit={async (data) => {
+                        await updateProduct.mutateAsync({
+                            id: Number(selectedProduct.id),
+                            name: data.name,
+                            sku: data.sku,
+                            barcode: data.barcode,
+                            description: data.description,
+                            sale_price: data.sale_price,
+                            cost: data.cost,
+                            stock: data.stock,
+                            min_stock: data.min_stock,
+                            category_id: data.category_id,
+                            brand_id: data.brand_id,
+                        });
+                    }}
+                />
+            ) : null}
+        </>
     );
 }
