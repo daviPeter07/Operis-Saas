@@ -32,7 +32,7 @@ export const initialAccountsPayableForm: FinancialEntryForm = {
 
 export const initialSupplierForm: SupplierForm = {
     name: '',
-    personType: 'pf',
+    personType: 'pj',
     email: '',
     phone: '',
     document: '',
