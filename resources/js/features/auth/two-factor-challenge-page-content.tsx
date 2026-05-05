@@ -100,7 +100,7 @@ export default function TwoFactorChallengePageContent() {
 
                         <Button
                             type="submit"
-                            className="w-full"
+                            className="h-11 w-full rounded-lg bg-accent font-semibold text-black hover:bg-accent/90 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-70"
                             disabled={processing}
                         >
                             Continue

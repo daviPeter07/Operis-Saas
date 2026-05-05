@@ -24,11 +24,10 @@ class BypassAuth
             return $next($request);
         }
 
-        if (! app()->environment('local', 'development')) {
-            return $next($request);
-        }
-
-        if (! config('app.debug')) {
+        // Only enable bypass auto-login when explicitly allowed via
+        // the BYPASS_AUTH env var. This avoids silently re-authenticating
+        // users in local/dev environments unless the developer opts-in.
+        if (filter_var(env('BYPASS_AUTH', false), FILTER_VALIDATE_BOOLEAN) === false) {
             return $next($request);
         }
 

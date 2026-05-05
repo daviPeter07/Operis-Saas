@@ -12,13 +12,19 @@ export default function ConfirmPasswordPageContent() {
             {({ processing, errors }) => (
                 <div className="space-y-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label
+                            htmlFor="password"
+                            className="text-sm font-medium text-white"
+                        >
+                            Senha
+                        </Label>
                         <PasswordInput
                             id="password"
                             name="password"
-                            placeholder="Password"
+                            placeholder="Senha"
                             autoComplete="current-password"
                             autoFocus
+                            className="h-11 border-zinc-800 bg-black text-white placeholder:text-zinc-500 focus-visible:border-accent focus-visible:ring-accent/30"
                         />
 
                         <InputError message={errors.password} />
@@ -26,12 +32,12 @@ export default function ConfirmPasswordPageContent() {
 
                     <div className="flex items-center">
                         <Button
-                            className="w-full"
+                            className="h-11 w-full rounded-lg bg-accent font-semibold text-black hover:bg-accent/90 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-70"
                             disabled={processing}
                             data-test="confirm-password-button"
                         >
                             {processing && <Spinner />}
-                            Confirm password
+                            Confirmar senha
                         </Button>
                     </div>
                 </div>
