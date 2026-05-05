@@ -1,45 +1,45 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import { PersonTypeBadge } from '@/components/common/person-type-badge';
-import { STATUS_OPTIONS } from '@/constants/status';
 import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { useCreateSale, useDeleteSale, useSales } from '@/hooks/use-sales';
+import { STATUS_OPTIONS } from '@/constants/status';
+import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
-import { UiCustomer, UiProduct } from '@/types/dashboard-entities';
-import { formatCurrencyBR, translatePaymentMethod } from '@/lib/format';
-import { formatDateBR } from '@/lib/format';
-import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
-import { SalesHeader } from './sales-header';
-import { GenericTable } from '../generic-table';
+import {
+    useCreateSale,
+    useDeleteSale,
+    type SaleMutationInput,
+    useUpdateSale,
+    useSales,
+} from '@/hooks/use-sales';
+import { saleService } from '@/services/sales';
 import type { Column } from '../generic-table';
-
-type SalesRecord = {
-    id: string;
-    clientId: string;
-    clientName: string;
-    createdAt?: string;
-    lineItems: {
-        productId: string;
-        quantity: number;
-        unitPrice: number;
-    }[];
-    paymentMethod: string;
-    cardType?: 'debit' | 'credit';
-    total: number;
-    status: 'pending' | 'completed' | 'cancelled';
-    date?: string;
-};
+import { GenericTable } from '../generic-table';
+import {
+    formatCurrencyBR,
+    formatDateBR,
+    translatePaymentMethod,
+} from '@/lib/format';
+import type {
+    UiCustomer,
+    UiPaymentMethod,
+    UiProduct,
+} from '@/types/dashboard-entities';
+import { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
+import { SalesHeader } from './sales-header';
 
 type SaleRow = {
     id: string;
+    customer_id: number;
     clientName: string;
     total: number;
     payment_method: string;
     status: string;
     date: string;
 };
+
+type SaleMutationPayload = SaleMutationInput;
 
 export function SalesModule() {
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
@@ -58,6 +58,9 @@ export function SalesModule() {
     const { data: products = [] } = useProducts();
     const createSale = useCreateSale();
     const deleteSale = useDeleteSale();
+    const updateSale = useUpdateSale();
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editSale, setEditSale] = useState<DialogSalesRecord | null>(null);
     const [dialogCustomers, setDialogCustomers] = useState<UiCustomer[]>([]);
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
 
@@ -103,6 +106,14 @@ export function SalesModule() {
     const salesDialogProducts = useMemo(
         () => [...dialogProducts, ...mappedProducts],
         [dialogProducts, mappedProducts],
+    );
+
+    const productById = useMemo(
+        () =>
+            new Map(
+                salesDialogProducts.map((product) => [product.id, product]),
+            ),
+        [salesDialogProducts],
     );
 
     const customerNameById = useMemo(
@@ -180,11 +191,11 @@ export function SalesModule() {
         },
     ];
 
-    const handleCreateFromSalesDialog = async (sale: SalesRecord) => {
+    const handleCreateFromSalesDialog = async (sale: DialogSalesRecord) => {
         const customerId = Number(sale.clientId);
 
         const items = sale.lineItems
-            .map((item) => ({
+            .map((item: DialogSalesRecord['lineItems'][number]) => ({
                 product_id: Number(item.productId),
                 quantity: Number(item.quantity),
                 unit_price: Number(item.unitPrice),
@@ -214,13 +225,19 @@ export function SalesModule() {
                   ? 'installment'
                   : sale.paymentMethod;
 
-        await createSale.mutateAsync({
+        const payload: SaleMutationPayload = {
             customer_id: customerId,
             date: sale.createdAt || new Date().toISOString().slice(0, 10),
-            payment_method: paymentMethod as 'cash' | 'pix' | 'card' | 'installment',
+            payment_method: paymentMethod as
+                | 'cash'
+                | 'pix'
+                | 'card'
+                | 'installment',
             status: 'pending',
             items,
-        });
+        };
+
+        await createSale.mutateAsync(payload);
 
         toast.success('Venda criada com sucesso.');
     };
@@ -251,6 +268,54 @@ export function SalesModule() {
                 onDelete={async (row) => {
                     await deleteSale.mutateAsync(Number(row.id));
                 }}
+                onEdit={async (row) => {
+                    try {
+                        const full = await saleService.get(Number(row.id));
+                        const mappedPaymentMethod: UiPaymentMethod =
+                            full.payment_method === 'cash'
+                                ? 'money'
+                                : full.payment_method === 'installment'
+                                  ? 'other'
+                                  : full.payment_method === 'pix'
+                                    ? 'pix'
+                                    : 'card';
+
+                        const mappedSale: DialogSalesRecord = {
+                            id: String(full.id),
+                            clientId: String(full.customer_id),
+                            clientName: '',
+                            createdAt: full.date,
+                            lineItems: (full.items ?? []).map((item) => {
+                                const product = productById.get(
+                                    String(item.product_id),
+                                );
+
+                                return {
+                                    id: crypto.randomUUID(),
+                                    productId: String(item.product_id),
+                                    productName: product?.name ?? `#${item.product_id}`,
+                                    sku: product?.sku ?? '',
+                                    quantity: item.quantity,
+                                    unitPrice: item.unit_price,
+                                    unitCost: product?.cost ?? 0,
+                                    subtotal: item.subtotal,
+                                };
+                            }),
+                            paymentMethod: mappedPaymentMethod,
+                            total: full.total,
+                            status:
+                                full.status === 'completed'
+                                    ? 'completed'
+                                    : full.status === 'cancelled'
+                                      ? 'cancelled'
+                                      : 'pending',
+                        };
+                        setEditSale(mappedSale);
+                        setIsEditOpen(true);
+                    } catch (e) {
+                        toast.error('Erro ao carregar a venda para edição.');
+                    }
+                }}
                 createDialog={({ open, onOpenChange }) => (
                     <SalesDialog
                         open={open}
@@ -276,6 +341,97 @@ export function SalesModule() {
                     />
                 )}
             />
+            {/* Edit Sale Dialog */}
+            {editSale && (
+                <SalesDialog
+                    open={isEditOpen}
+                    onOpenChange={(open) => {
+                        setIsEditOpen(open);
+                        if (!open) setEditSale(null);
+                    }}
+                    onSubmit={async (sale) => {
+                        const customerId = Number(sale.clientId);
+                        const items = sale.lineItems
+                            .map(
+                                (
+                                    item: DialogSalesRecord['lineItems'][number],
+                                ) => ({
+                                    product_id: Number(item.productId),
+                                    quantity: Number(item.quantity),
+                                    unit_price: Number(item.unitPrice),
+                                    subtotal: Number(
+                                        (
+                                            Number(item.unitPrice) *
+                                            Number(item.quantity)
+                                        ).toFixed(2),
+                                    ),
+                                }),
+                            )
+                            .filter(
+                                (item) =>
+                                    Number.isFinite(item.product_id) &&
+                                    item.product_id > 0 &&
+                                    Number.isFinite(item.quantity) &&
+                                    item.quantity > 0 &&
+                                    Number.isFinite(item.unit_price) &&
+                                    item.unit_price >= 0,
+                            );
+
+                        if (!Number.isFinite(customerId) || customerId <= 0) {
+                            toast.error(
+                                'Selecione um cliente válido para continuar.',
+                            );
+                            return;
+                        }
+                        if (items.length === 0) {
+                            toast.error(
+                                'Adicione ao menos um item válido na venda.',
+                            );
+                            return;
+                        }
+                        const paymentMethod =
+                            sale.paymentMethod === 'money'
+                                ? 'cash'
+                                : sale.paymentMethod === 'other'
+                                  ? 'installment'
+                                  : sale.paymentMethod;
+                        try {
+                            const payload: SaleMutationPayload = {
+                                customer_id: customerId,
+                                date:
+                                    sale.createdAt ||
+                                    new Date().toISOString().slice(0, 10),
+                                payment_method: paymentMethod as
+                                    | 'cash'
+                                    | 'pix'
+                                    | 'card'
+                                    | 'installment',
+                                status: 'pending',
+                                items,
+                            };
+
+                            await updateSale.mutateAsync({
+                                id: Number(editSale.id),
+                                data: payload,
+                            });
+                            toast.success('Venda atualizada com sucesso.');
+                            setIsEditOpen(false);
+                            setEditSale(null);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error && error.message
+                                    ? error.message
+                                    : 'Erro ao atualizar a venda.';
+                            toast.error(message);
+                        }
+                    }}
+                    clients={salesDialogCustomers}
+                    products={salesDialogProducts}
+                    onCreateClient={handleCreateClient}
+                    onCreateProduct={handleCreateProduct}
+                    sale={editSale}
+                />
+            )}
         </div>
     );
 }

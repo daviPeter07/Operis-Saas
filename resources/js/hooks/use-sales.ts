@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Sale } from '@/schemas/sale';
 import { saleService } from '@/services/sales';
 
 export const salesQueryKey = ['sales'] as const;
 
-type CreateSaleInput = {
+export type SaleMutationInput = {
     customer_id: number | null;
     date: string;
     status?: 'pending' | 'completed';
@@ -31,8 +30,20 @@ export function useCreateSale() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (payload: CreateSaleInput) =>
-            saleService.create(payload as unknown as Partial<Sale>),
+        mutationFn: async (payload: SaleMutationInput) =>
+            saleService.create(payload),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: salesQueryKey });
+        },
+    });
+}
+
+export function useUpdateSale() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: number; data: SaleMutationInput }) =>
+            saleService.update(id, data),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
         },

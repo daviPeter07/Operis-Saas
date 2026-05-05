@@ -2,6 +2,7 @@ import type { UiCustomer, UiProduct } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 
 export interface SalesDialogProps {
+    sale?: SalesRecord;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSubmit: (sale: SalesRecord) => void;

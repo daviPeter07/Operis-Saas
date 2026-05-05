@@ -12,6 +12,7 @@ import { CheckoutPanel } from './checkout-panel';
 import { AddProductDialog, DiscountDialog } from './dialogs';
 
 export function SalesDialog({
+    sale,
     open,
     onOpenChange,
     onSubmit,
@@ -63,6 +64,7 @@ export function SalesDialog({
         setFirstInstallmentDate,
         setProductCreateOpen,
         setProductSearch,
+        setLineItems,
         setSaleDate,
         total,
     } = useSalesDialog({ open, clients, products });
@@ -84,6 +86,34 @@ export function SalesDialog({
             checkoutRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [open, defaultTab]);
+
+    // Prefill dialog when editing an existing sale
+    React.useEffect(() => {
+        if (open && sale) {
+            // Populate client
+            selectClientById(String(sale.clientId));
+            // Populate line items
+            setLineItems(sale.lineItems ?? []);
+            // Dates
+            setSaleDate(sale.createdAt ?? saleDate);
+            // Payment details
+            setPaymentMethod(sale.paymentMethod);
+            if (sale.paymentMethod === 'card') {
+                setCardType(sale.cardType ?? 'debit');
+                setInstallments(String(sale.installments ?? 1));
+                setFirstInstallmentDate(sale.firstInstallmentDate ?? firstInstallmentDate);
+            }
+            // Notes
+            setNotes(sale.notes ?? '');
+            // Discount
+            if (sale.discountType) {
+                setDiscountType(sale.discountType);
+                setDiscountValue(String(sale.discountValue ?? 0));
+                // Apply discount to update totals
+                applyDiscount();
+            }
+        }
+    }, [open, sale]);
 
     const visibleProducts = React.useMemo(
         () => filterProductsByQuery(products, productSearch),
