@@ -1,5 +1,6 @@
 import { DollarSign, ShoppingCart, Users, Package, Truck } from 'lucide-react';
 import { EmptyState } from '@/components/table/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Activity {
     id: string;
@@ -12,6 +13,7 @@ interface Activity {
 
 interface RecentActivityProps {
     activities: Activity[];
+    isPending?: boolean;
 }
 
 const iconMap = {
@@ -30,7 +32,32 @@ const colorMap = {
     supplier: 'text-cyan-600 bg-cyan-600/10',
 };
 
-export function RecentActivity({ activities }: RecentActivityProps) {
+export function RecentActivity({ activities, isPending }: RecentActivityProps) {
+    if (isPending) {
+        return (
+            <div className="rounded-xl border bg-card">
+                <div className="p-6 pb-4">
+                    <h3 className="font-semibold">Últimas Atividades</h3>
+                </div>
+                <div className="space-y-3 px-6 pb-6">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center gap-4 rounded-xl border border-border/70 px-4 py-4"
+                        >
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <div className="flex-1 space-y-2">
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-3 w-1/2" />
+                            </div>
+                            <Skeleton className="h-4 w-20" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     if (activities.length === 0) {
         return (
             <div className="rounded-xl border bg-card">

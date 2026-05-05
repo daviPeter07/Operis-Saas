@@ -27,10 +27,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkspace } from '@/features/dashboard/workspace-context';
 
 export function SettingsModule() {
-    const { canAccessSettings, currentCompany } = useWorkspace();
+    const { canAccessSettings, currentCompany, isLoading } = useWorkspace();
     const [primaryColor, setPrimaryColor] = useState(
         currentCompany.primaryColor || '#f97316',
     );
@@ -61,22 +62,34 @@ export function SettingsModule() {
             <div className="pointer-events-none opacity-40">
                 <div className="space-y-8">
                     <div className="flex items-center gap-4">
-                        <div
-                            className="flex h-14 w-14 items-center justify-center rounded-xl text-white"
-                            style={{
-                                backgroundColor: currentCompany.primaryColor,
-                            }}
-                        >
-                            <Building2 className="h-7 w-7" />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold">
-                                {currentCompany.name}
-                            </h2>
-                            <p className="text-muted-foreground">
-                                {currentCompany.description}
-                            </p>
-                        </div>
+                        {isLoading ? (
+                            <>
+                                <Skeleton className="h-14 w-14 rounded-xl" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-7 w-48" />
+                                    <Skeleton className="h-4 w-64" />
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div
+                                    className="flex h-14 w-14 items-center justify-center rounded-xl text-white"
+                                    style={{
+                                        backgroundColor: currentCompany.primaryColor,
+                                    }}
+                                >
+                                    <Building2 className="h-7 w-7" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold">
+                                        {currentCompany.name}
+                                    </h2>
+                                    <p className="text-muted-foreground">
+                                        {currentCompany.description}
+                                    </p>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-2">

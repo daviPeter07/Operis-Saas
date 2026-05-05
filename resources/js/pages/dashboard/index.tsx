@@ -56,13 +56,22 @@ export default function DashboardPage() {
         };
     };
 
-    const { data: sales = [] } = useSales();
-    const { data: purchases = [] } = usePurchases();
-    const { data: receivables = [] } = useAccountReceivables();
-    const { data: payables = [] } = useAccountPayables();
-    const { data: customers = [] } = useCustomers();
-    const { data: products = [] } = useProducts();
-    const { data: suppliers = [] } = useSuppliers();
+    const { data: sales = [], isPending: isSalesPending } = useSales();
+    const { data: purchases = [], isPending: isPurchasesPending } = usePurchases();
+    const { data: receivables = [], isPending: isReceivablesPending } = useAccountReceivables();
+    const { data: payables = [], isPending: isPayablesPending } = useAccountPayables();
+    const { data: customers = [], isPending: isCustomersPending } = useCustomers();
+    const { data: products = [], isPending: isProductsPending } = useProducts();
+    const { data: suppliers = [], isPending: isSuppliersPending } = useSuppliers();
+
+    const isActivitiesPending =
+        isSalesPending ||
+        isPurchasesPending ||
+        isReceivablesPending ||
+        isPayablesPending ||
+        isCustomersPending ||
+        isProductsPending ||
+        isSuppliersPending;
 
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
     const [period, setPeriod] = useState<Period>('30d');
@@ -304,7 +313,7 @@ export default function DashboardPage() {
                         <MetricsGrid metrics={metrics} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
-                                <RecentActivity activities={activities} />
+                                <RecentActivity activities={activities} isPending={isActivitiesPending} />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
                                 <h3 className="mb-4 font-semibold">
@@ -343,7 +352,7 @@ export default function DashboardPage() {
                         <ChartsPanel charts={charts} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
-                                <RecentActivity activities={activities} />
+                                <RecentActivity activities={activities} isPending={isActivitiesPending} />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
                                 <h3 className="mb-4 font-semibold">

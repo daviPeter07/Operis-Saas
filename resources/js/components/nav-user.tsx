@@ -13,6 +13,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { CompanySwitcherModal } from '@/features/dashboard/layout/company-switcher-modal';
@@ -22,7 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 export function NavUser() {
     const { auth } = usePage().props;
     const isMobile = useIsMobile();
-    const { currentCompany } = useWorkspace();
+    const { currentCompany, isLoading } = useWorkspace();
     const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
 
     if (!auth.user) {
@@ -50,15 +51,24 @@ export function NavUser() {
                             side={isMobile ? 'bottom' : 'right'}
                         >
                             <div className="flex items-center gap-2 px-2 py-1.5">
-                                <Building2 className="h-4 w-4 text-muted-foreground" />
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-medium">
-                                        {currentCompany.name}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground capitalize">
-                                        {currentCompany.role}
-                                    </span>
-                                </div>
+                                {isLoading ? (
+                                    <div className="flex flex-col gap-1">
+                                        <Skeleton className="h-3 w-24" />
+                                        <Skeleton className="h-2 w-16" />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-medium">
+                                                {currentCompany.name}
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground capitalize">
+                                                {currentCompany.role}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem

@@ -1,8 +1,21 @@
 import { Building2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkspace } from '@/features/dashboard/workspace-context';
 
 export default function AppLogo() {
-    const { currentCompany } = useWorkspace();
+    const { currentCompany, isLoading } = useWorkspace();
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center gap-2">
+                <Skeleton className="size-9 rounded-xl" />
+                <div className="flex flex-col gap-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>

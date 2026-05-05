@@ -25,6 +25,7 @@ interface WorkspaceContextValue extends WorkspaceState {
     canAccessSettings: boolean;
     canManageTeam: boolean;
     teamAccessMode: WorkspaceTeamAccessMode;
+    isLoading: boolean;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -124,6 +125,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
                 canAccessSettings,
                 canManageTeam,
                 teamAccessMode,
+                isLoading,
             }}
         >
             {children}
