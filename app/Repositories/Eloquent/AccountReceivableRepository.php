@@ -12,7 +12,11 @@ class AccountReceivableRepository implements AccountReceivableRepositoryInterfac
 {
     public function paginateByCompany(int $companyId): LengthAwarePaginator
     {
-        return AccountReceivable::query()->forCompany($companyId)->latest()->paginate();
+        return AccountReceivable::query()
+            ->forCompany($companyId)
+            ->where('status', '!=', 'cancelled')
+            ->latest()
+            ->paginate();
     }
 
     public function forSale(Sale $sale): Collection
