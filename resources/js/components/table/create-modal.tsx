@@ -36,7 +36,8 @@ import type { FieldMask, FieldOption } from '@/utils/form-fields';
 
 export interface FormField {
     name: string;
-    label: string;
+    label: string | ((formData: Record<string, unknown>) => string);
+    placeholder?: string | ((formData: Record<string, unknown>) => string);
     type:
         | 'text'
         | 'number'
@@ -45,7 +46,6 @@ export interface FormField {
         | 'select'
         | 'date'
         | 'textarea';
-    placeholder?: string;
     required?: boolean;
     options?: FieldOption[];
     section?: string;
@@ -110,6 +110,26 @@ export function CreateModal<T extends Record<string, unknown>>({
 
         return '!w-[calc(100vw-2rem)] sm:!max-w-[520px]';
     }, [fields.length]);
+
+    const getFieldLabel = React.useCallback(
+        (field: FormField): string => {
+            if (typeof field.label === 'function') {
+                return field.label(formData as Record<string, unknown>);
+            }
+            return field.label;
+        },
+        [formData],
+    );
+
+    const getFieldPlaceholder = React.useCallback(
+        (field: FormField): string => {
+            if (typeof field.placeholder === 'function') {
+                return field.placeholder(formData as Record<string, unknown>);
+            }
+            return field.placeholder || '';
+        },
+        [formData],
+    );
 
     const getFieldSpanClass = (field: FormField) => {
         if (field.span === 'full') {
@@ -255,8 +275,10 @@ export function CreateModal<T extends Record<string, unknown>>({
     };
 
     const renderInputActions = (field: FormField) => {
-        const barcodeField = isBarcodeField(field.name, field.label);
-        const codeField = !barcodeField && isCodeField(field.name, field.label);
+        const resolvedLabel = getFieldLabel(field);
+        const barcodeField = isBarcodeField(field.name, resolvedLabel);
+        const codeField =
+            !barcodeField && isCodeField(field.name, resolvedLabel);
 
         return (
             <>
@@ -302,8 +324,9 @@ export function CreateModal<T extends Record<string, unknown>>({
 
     const renderFieldControl = (field: FormField) => {
         const value = String(formData[field.name] ?? '');
-        const barcodeField = isBarcodeField(field.name, field.label);
-        const codeField = !barcodeField && isCodeField(field.name, field.label);
+        const resolvedLabel = getFieldLabel(field);
+        const barcodeField = isBarcodeField(field.name, resolvedLabel);
+        const codeField = !barcodeField && isCodeField(field.name, resolvedLabel);
 
         if (field.searchable) {
             return (
@@ -313,8 +336,8 @@ export function CreateModal<T extends Record<string, unknown>>({
                         onChange={(nextValue) => handleChange(field, nextValue)}
                         options={field.options || []}
                         placeholder={
-                            field.placeholder ||
-                            `Digite ou selecione ${field.label.toLowerCase()}`
+                            getFieldPlaceholder(field) ||
+                            `Digite ou selecione ${getFieldLabel(field).toLowerCase()}`
                         }
                         emptyMessage="Nenhum resultado encontrado."
                         allowCustomValue={field.allowCustomValue}
@@ -351,8 +374,8 @@ export function CreateModal<T extends Record<string, unknown>>({
                         >
                             <SelectValue
                                 placeholder={
-                                    field.placeholder ||
-                                    `Selecione ${field.label.toLowerCase()}`
+                                    getFieldPlaceholder(field) ||
+                                    `Selecione ${getFieldLabel(field).toLowerCase()}`
                                 }
                             />
                         </SelectTrigger>
@@ -386,7 +409,7 @@ export function CreateModal<T extends Record<string, unknown>>({
             return (
                 <Textarea
                     id={field.name}
-                    placeholder={field.placeholder}
+                    placeholder={getFieldPlaceholder(field)}
                     value={value}
                     onChange={(event) =>
                         handleChange(field, event.target.value)
@@ -402,7 +425,7 @@ export function CreateModal<T extends Record<string, unknown>>({
                 <DatePickerInput
                     value={value}
                     onChange={(nextValue) => handleChange(field, nextValue)}
-                    placeholder={field.placeholder}
+                    placeholder={getFieldPlaceholder(field)}
                 />
             );
         }
@@ -419,7 +442,7 @@ export function CreateModal<T extends Record<string, unknown>>({
                         inputMode={
                             field.mask === 'currency' ? 'numeric' : undefined
                         }
-                        placeholder={field.placeholder}
+                        placeholder={getFieldPlaceholder(field)}
                         value={value}
                         onChange={(event) =>
                             handleChange(field, event.target.value)
@@ -444,7 +467,7 @@ export function CreateModal<T extends Record<string, unknown>>({
                         inputMode={
                             field.mask === 'currency' ? 'numeric' : undefined
                         }
-                        placeholder={field.placeholder}
+                        placeholder={getFieldPlaceholder(field)}
                         value={value}
                         onChange={(event) =>
                             handleChange(field, event.target.value)
@@ -468,7 +491,7 @@ export function CreateModal<T extends Record<string, unknown>>({
                     inputMode={
                         field.mask === 'currency' ? 'numeric' : undefined
                     }
-                    placeholder={field.placeholder}
+                    placeholder={getFieldPlaceholder(field)}
                     value={value}
                     onChange={(event) =>
                         handleChange(field, event.target.value)
@@ -513,7 +536,7 @@ export function CreateModal<T extends Record<string, unknown>>({
                                         )}
                                     >
                                         <Label htmlFor={field.name}>
-                                            {field.label}
+                                            {getFieldLabel(field)}
                                             {field.required && (
                                                 <span className="text-destructive">
                                                     {' '}

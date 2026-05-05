@@ -38,33 +38,56 @@ const restrictedModulesByRole: Partial<
 };
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-    const { data: currentUser } = useCurrentUser();
-    const [state, setState] = useState<WorkspaceState>(() => ({
-        companies: [
-            {
-                id: String(currentUser?.current_company?.id || 1),
-                name: currentUser?.current_company?.name || 'Minha empresa',
-                slug: 'minha-empresa',
-                role: defaultWorkspaceRole,
-                initials: 'ME',
-                description: 'Empresa ativa no ambiente atual',
-                primaryColor: '#f97316',
-                secondaryColor: '#fb923c',
-            },
-        ],
+    const { data: currentUser, isLoading } = useCurrentUser();
+    const [state, setState] = useState<WorkspaceState>({
+        companies: [],
         currentCompany: {
-            id: String(currentUser?.current_company?.id || 1),
-            name: currentUser?.current_company?.name || 'Minha empresa',
-            slug: 'minha-empresa',
+            id: '',
+            name: '',
+            slug: '',
             role: defaultWorkspaceRole,
-            initials: 'ME',
-            description: 'Empresa ativa no ambiente atual',
-            primaryColor: '#f97316',
-            secondaryColor: '#fb923c',
+            initials: '',
+            description: '',
+            primaryColor: '',
+            secondaryColor: '',
         },
         navigation: defaultWorkspaceNavigation,
         quickActions: defaultWorkspaceQuickActions,
-    }));
+    });
+
+    useMemo(() => {
+        if (isLoading) {
+            return;
+        }
+
+        const companyId = String(currentUser?.current_company?.id || 1);
+        const companyName =
+            currentUser?.current_company?.name || 'Minha empresa';
+        const initials = companyName
+            .split(' ')
+            .slice(0, 2)
+            .map((w) => w[0])
+            .join('')
+            .toUpperCase();
+
+        const company = {
+            id: companyId,
+            name: companyName,
+            slug: 'minha-empresa',
+            role: defaultWorkspaceRole,
+            initials,
+            description: 'Empresa ativa no ambiente atual',
+            primaryColor: '#f97316',
+            secondaryColor: '#fb923c',
+        };
+
+        setState({
+            companies: [company],
+            currentCompany: company,
+            navigation: defaultWorkspaceNavigation,
+            quickActions: defaultWorkspaceQuickActions,
+        });
+    }, [currentUser, isLoading]);
 
     const switchCompany = useCallback(
         (companyId: string) => {

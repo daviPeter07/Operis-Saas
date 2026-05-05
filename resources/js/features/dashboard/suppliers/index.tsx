@@ -76,17 +76,10 @@ export function SuppliersModule() {
             onDelete={async (row) => {
                 await deleteSupplier.mutateAsync(Number(row.id));
             }}
-            createDialog={({ open, onOpenChange, onSubmit }) => (
+            createDialog={({ open, onOpenChange }) => (
                 <SupplierCreateDialog
                     open={open}
                     onOpenChange={onOpenChange}
-                    onSubmit={(payload) => {
-                        void onSubmit({
-                            id: '',
-                            status: 'active',
-                            ...payload,
-                        });
-                    }}
                 />
             )}
         />

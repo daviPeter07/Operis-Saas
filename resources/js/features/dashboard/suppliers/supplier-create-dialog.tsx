@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useCreateSupplier } from '@/hooks/use-suppliers';
 import { initialSupplierForm } from '@/constants/dashboard-form-initials';
 import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
 import { useFormState } from '@/hooks/use-form-state';
@@ -42,6 +42,8 @@ export function SupplierCreateDialog({
     onSubmit,
 }: SupplierCreateDialogProps) {
     const { form, setField } = useFormState(initialSupplierForm, open);
+    const createSupplier = useCreateSupplier();
+    const isSubmitting = createSupplier.isPending;
     const documentLabel = form.personType === 'pj' ? 'CNPJ' : 'CPF';
 
     return (
@@ -59,12 +61,20 @@ export function SupplierCreateDialog({
                     onSubmit={(event) => {
                         event.preventDefault();
 
-                        onSubmit({
-                            name: form.name,
-                            email: form.email,
-                            phone: form.phone,
-                            document: form.document,
-                        });
+                        createSupplier.mutate(
+                            {
+                                name: form.name,
+                                email: form.email,
+                                phone: form.phone,
+                                document: form.document,
+                                person_type: form.personType,
+                            },
+                            {
+                                onSuccess: () => {
+                                    onOpenChange(false);
+                                },
+                            },
+                        );
                     }}
                 >
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -240,7 +250,9 @@ export function SupplierCreateDialog({
                         >
                             Cancelar
                         </Button>
-                        <Button type="submit">Salvar fornecedor</Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Criando...' : 'Criar'}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

@@ -8,6 +8,7 @@ import { inferClientPersonType } from '@/utils/clients';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { ClientCreateDialog } from './client-create-dialog';
 
 type ClientRow = {
     id: string;
@@ -89,47 +90,12 @@ export function ClientsModule() {
             onDelete={async (row) => {
                 await deleteCustomer.mutateAsync(Number(row.id));
             }}
-            createFields={[
-                {
-                    name: 'name',
-                    label: 'Nome',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Digite o nome do cliente',
-                },
-                {
-                    name: 'person_type',
-                    label: 'Tipo',
-                    type: 'select',
-                    options: [
-                        { value: 'pf', label: 'Pessoa Física' },
-                        { value: 'pj', label: 'Pessoa Jurídica' },
-                    ],
-                    required: true,
-                    placeholder: 'Selecione o tipo',
-                },
-                {
-                    name: 'email',
-                    label: 'Email',
-                    type: 'email',
-                    placeholder: 'cliente@email.com',
-                },
-                {
-                    name: 'phone',
-                    label: 'Telefone',
-                    type: 'text',
-                    mask: 'phone',
-                    placeholder: '(00) 00000-0000',
-                },
-                {
-                    name: 'document',
-                    label: 'CPF',
-                    type: 'text',
-                    mask: 'document',
-                    maskOptions: { dependsOn: 'person_type' },
-                    placeholder: '000.000.000-00',
-                },
-            ]}
+            createDialog={({ open, onOpenChange }) => (
+                <ClientCreateDialog
+                    open={open}
+                    onOpenChange={onOpenChange}
+                />
+            )}
         />
     );
 }

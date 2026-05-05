@@ -28,7 +28,6 @@ export type ClientCreateDialogPayload = UiCustomer & {
 export type ClientCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: ClientCreateDialogPayload) => void;
 };
 
 export type FinancialEntryForm = {
@@ -83,5 +82,4 @@ export type SupplierForm = {
 export type SupplierCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: UiSupplier) => void;
 };
