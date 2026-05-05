@@ -31,6 +31,11 @@ export function AccountsPayableCreateDialog({
             onChange={setField}
             suppliers={suppliers}
             onCreateSupplier={handleQuickCreateSupplier}
+            catalogSection={
+                <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+                    Nenhum item adicional para listar.
+                </div>
+            }
             onSubmit={() => {
                 onSubmit(mapFinancialFormToAccountsPayable(form));
             }}
