@@ -22,7 +22,7 @@ import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
 import { useFormState } from '@/hooks/use-form-state';
 import type { ClientCreateDialogProps } from '@/types/dashboard-forms';
 import { mapClientFormToPayload } from '@/utils/clients';
-import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
+import { formatDocumentInputByType, formatPhoneInput } from '@/utils/form-fields';
 
 export function ClientCreateDialog({
     open,
@@ -130,13 +130,19 @@ export function ClientCreateDialog({
                                 onChange={(event) =>
                                     setField(
                                         'document',
-                                        formatDocumentInput(event.target.value),
+                                        formatDocumentInputByType(
+                                            event.target.value,
+                                            form.personType,
+                                        ),
                                     )
                                 }
                                 placeholder={
                                     form.personType === 'pj'
                                         ? '00.000.000/0000-00'
                                         : '000.000.000-00'
+                                }
+                                maxLength={
+                                    form.personType === 'pj' ? 18 : 14
                                 }
                             />
                         </div>

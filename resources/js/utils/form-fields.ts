@@ -94,6 +94,27 @@ export function formatDocumentInput(value: string): string {
         .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
+export function formatDocumentInputByType(
+    value: string,
+    personType: 'pf' | 'pj',
+): string {
+    const maxDigits = personType === 'pf' ? 11 : 14;
+    const digits = onlyDigits(value).slice(0, maxDigits);
+
+    if (personType === 'pf') {
+        return digits
+            .replace(/^(\d{3})(\d)/, '$1.$2')
+            .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1-$2');
+    }
+
+    return digits
+        .replace(/^(\d{2})(\d)/, '$1.$2')
+        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/\.(\d{3})(\d)/, '.$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
+}
+
 export function applyFieldMask(value: string, mask?: FieldMask): string {
     if (mask === 'currency') {
         return formatCurrencyInput(value);

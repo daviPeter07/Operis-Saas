@@ -21,7 +21,7 @@ import {
 import { initialSupplierForm } from '@/constants/dashboard-form-initials';
 import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
 import { useFormState } from '@/hooks/use-form-state';
-import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
+import { formatDocumentInputByType, formatPhoneInput } from '@/utils/form-fields';
 
 type SupplierCreatePayload = {
     name: string;
@@ -148,13 +148,19 @@ export function SupplierCreateDialog({
                                 onChange={(event) =>
                                     setField(
                                         'document',
-                                        formatDocumentInput(event.target.value),
+                                        formatDocumentInputByType(
+                                            event.target.value,
+                                            form.personType,
+                                        ),
                                     )
                                 }
                                 placeholder={
                                     form.personType === 'pj'
                                         ? '00.000.000/0000-00'
                                         : '000.000.000-00'
+                                }
+                                maxLength={
+                                    form.personType === 'pj' ? 18 : 14
                                 }
                             />
                         </div>
