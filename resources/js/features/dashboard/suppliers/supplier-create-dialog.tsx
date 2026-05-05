@@ -33,13 +33,11 @@ type SupplierCreatePayload = {
 type SupplierCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: SupplierCreatePayload) => void;
 };
 
 export function SupplierCreateDialog({
     open,
     onOpenChange,
-    onSubmit,
 }: SupplierCreateDialogProps) {
     const { form, setField } = useFormState(initialSupplierForm, open);
     const createSupplier = useCreateSupplier();

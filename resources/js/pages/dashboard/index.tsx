@@ -26,6 +26,12 @@ import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
 import { todayString } from '@/utils/sales-dialog';
 
+function dateToLabel(date: string): string {
+    const [year, month, day] = date.split('-');
+
+    return `${day}/${month}/${year.slice(2)}`;
+}
+
 function formatDateTimeManaus(dateTime: string | undefined): string {
     if (!dateTime) return '';
 
