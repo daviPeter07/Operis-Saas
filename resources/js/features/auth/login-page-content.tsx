@@ -32,31 +32,31 @@ export default function LoginPageContent({
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">E-mail</Label>
+                            <Input
+                                id="email"
+                                type="email"
                                     name="email"
                                     required
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="email@example.com"
+                                    placeholder="voce@empresa.com"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password">Senha</Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
                                             className="ml-auto text-sm"
                                             tabIndex={5}
                                         >
-                                            Forgot password?
+                                            Esqueceu a senha?
                                         </TextLink>
                                     )}
                                 </div>
@@ -66,7 +66,7 @@ export default function LoginPageContent({
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Password"
+                                    placeholder="Digite sua senha"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -77,7 +77,7 @@ export default function LoginPageContent({
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember">Lembrar de mim</Label>
                             </div>
 
                             <Button
@@ -88,15 +88,15 @@ export default function LoginPageContent({
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Log in
+                                Entrar
                             </Button>
                         </div>
 
                         {canRegister && (
                             <div className="text-center text-sm text-muted-foreground">
-                                Don't have an account?{' '}
+                                Ainda não tem conta?{' '}
                                 <TextLink href={register()} tabIndex={5}>
-                                    Sign up
+                                    Criar conta
                                 </TextLink>
                             </div>
                         )}

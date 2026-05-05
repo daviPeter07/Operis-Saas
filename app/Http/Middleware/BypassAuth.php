@@ -12,6 +12,14 @@ class BypassAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->is('logout') || $request->routeIs('logout')) {
+            return $next($request);
+        }
+
+        if ($request->is('login') || $request->routeIs('login')) {
+            return $next($request);
+        }
+
         if (! app()->environment('local', 'development')) {
             return $next($request);
         }
