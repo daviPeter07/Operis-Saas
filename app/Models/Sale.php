@@ -9,7 +9,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'customer_id', 'date', 'subtotal', 'total', 'status', 'payment_method'])]
+#[Fillable([
+    'company_id',
+    'customer_id',
+    'date',
+    'subtotal',
+    'total',
+    'status',
+    'payment_method',
+    'installments',
+    'first_installment_date',
+    'installment_value',
+])]
 class Sale extends Model
 {
     use BelongsToCompany, HasFactory;
@@ -20,6 +31,9 @@ class Sale extends Model
             'date' => 'date',
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',
+            'installments' => 'integer',
+            'first_installment_date' => 'date',
+            'installment_value' => 'decimal:2',
         ];
     }
 

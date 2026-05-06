@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Finance\StoreAccountReceivableRequest;
 use App\Http\Resources\Finance\AccountReceivableResource;
 use App\Models\AccountReceivable;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
@@ -16,6 +17,19 @@ class AccountReceivableController extends Controller
         private readonly AccountReceivableRepositoryInterface $receivables,
         private readonly ReceivableService $receivableService,
     ) {}
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreAccountReceivableRequest $request): JsonResponse
+    {
+        $this->receivableService->createManual(
+            auth()->user()->current_company_id,
+            $request->validated()
+        );
+
+        return response()->json(['data' => true], 201);
+    }
 
     /**
      * Display a listing of the resource.

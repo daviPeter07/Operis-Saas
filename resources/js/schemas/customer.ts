@@ -5,6 +5,9 @@ export interface Customer {
     phone: string;
     document: string;
     status: 'active' | 'inactive';
+    credit_enabled: boolean;
+    credit_limit: number;
+    credit_term_days: number;
 }
 
 export interface CreateCustomerInput {
@@ -12,4 +15,7 @@ export interface CreateCustomerInput {
     email: string;
     phone?: string;
     document?: string;
+    credit_enabled?: boolean;
+    credit_limit?: number;
+    credit_term_days?: number;
 }

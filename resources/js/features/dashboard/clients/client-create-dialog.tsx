@@ -16,28 +16,52 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useCreateCustomer } from '@/hooks/use-customers';
+import { useCreateCustomer, useUpdateCustomer } from '@/hooks/use-customers';
 import { initialClientForm } from '@/constants/dashboard-form-initials';
 import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
 import { useFormState } from '@/hooks/use-form-state';
 import type { ClientCreateDialogProps } from '@/types/dashboard-forms';
-import { formatDocumentInputByType, formatPhoneInput } from '@/utils/form-fields';
+import {
+    formatDocumentInputByType,
+    formatPhoneInput,
+    parseMaskedFieldValue,
+} from '@/utils/form-fields';
 
-export function ClientCreateDialog({
-    open,
-    onOpenChange,
-    onSuccess,
-}: ClientCreateDialogProps) {
-    const { form, setField } = useFormState(initialClientForm, open);
+function buildInitialValues(props: ClientCreateDialogProps) {
+    if (!props.initialData) {
+        return initialClientForm;
+    }
+
+    return {
+        ...initialClientForm,
+        name: props.initialData.name,
+        personType: props.initialData.personType,
+        email: props.initialData.email,
+        phone: props.initialData.phone,
+        document: props.initialData.document,
+        creditEnabled: props.initialData.creditEnabled ? 'yes' : 'no',
+        creditLimit: String(props.initialData.creditLimit ?? 0),
+        creditTermDays: String(props.initialData.creditTermDays ?? 30),
+    };
+}
+
+export function ClientCreateDialog(props: ClientCreateDialogProps) {
+    const { open, onOpenChange, onSuccess, initialData } = props;
+    const { form, setField } = useFormState(buildInitialValues(props), open);
     const createCustomer = useCreateCustomer();
-    const isSubmitting = createCustomer.isPending;
+    const updateCustomer = useUpdateCustomer();
+    const isEditing = Boolean(initialData?.id);
+    const isSubmitting =
+        createCustomer.isPending || updateCustomer.isPending;
     const documentLabel = form.personType === 'pj' ? 'CNPJ' : 'CPF';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="!w-[calc(100vw-2rem)] sm:!max-w-[920px]">
                 <DialogHeader>
-                    <DialogTitle>Novo Cliente</DialogTitle>
+                    <DialogTitle>
+                        {isEditing ? 'Editar Cliente' : 'Novo Cliente'}
+                    </DialogTitle>
                     <DialogDescription>
                         Preencha os dados principais do cliente.
                     </DialogDescription>
@@ -48,23 +72,48 @@ export function ClientCreateDialog({
                     onSubmit={(event) => {
                         event.preventDefault();
 
-                        createCustomer.mutate(
-                            {
-                                name: form.name,
-                                email: form.email,
-                                phone: form.phone,
-                                document: form.document,
-                                person_type: form.personType,
-                            },
-                            {
-                                onSuccess: (data) => {
-                                    onOpenChange(false);
-                                    if (onSuccess) {
-                                        onSuccess({ id: data.id, name: data.name });
-                                    }
+                        const payload = {
+                            name: form.name,
+                            email: form.email,
+                            phone: form.phone,
+                            document: form.document,
+                            person_type: form.personType,
+                            credit_enabled: form.creditEnabled === 'yes',
+                            credit_limit: Number(
+                                parseMaskedFieldValue(
+                                    form.creditLimit,
+                                    'currency',
+                                ) || 0,
+                            ),
+                            credit_term_days: Number(form.creditTermDays || 30),
+                        };
+
+                        if (isEditing && initialData?.id) {
+                            updateCustomer.mutate(
+                                {
+                                    id: initialData.id,
+                                    data: payload,
                                 },
+                                {
+                                    onSuccess: (data) => {
+                                        onOpenChange(false);
+                                        onSuccess?.({
+                                            id: data.id,
+                                            name: data.name,
+                                        });
+                                    },
+                                },
+                            );
+
+                            return;
+                        }
+
+                        createCustomer.mutate(payload, {
+                            onSuccess: (data) => {
+                                onOpenChange(false);
+                                onSuccess?.({ id: data.id, name: data.name });
                             },
-                        );
+                        });
                     }}
                 >
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -162,6 +211,62 @@ export function ClientCreateDialog({
                                 maxLength={form.personType === 'pj' ? 18 : 14}
                             />
                         </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="client-credit-enabled">
+                                Crediario
+                            </Label>
+                            <Select
+                                value={form.creditEnabled}
+                                onValueChange={(value) => {
+                                    if (value === 'yes' || value === 'no') {
+                                        setField('creditEnabled', value);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger id="client-credit-enabled">
+                                    <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="yes">Habilitado</SelectItem>
+                                    <SelectItem value="no">Desabilitado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="client-credit-limit">
+                                Limite do crediario
+                            </Label>
+                            <Input
+                                id="client-credit-limit"
+                                value={form.creditLimit}
+                                onChange={(event) =>
+                                    setField('creditLimit', event.target.value)
+                                }
+                                placeholder="0,00"
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="client-credit-term">
+                                Prazo do crediario (dias)
+                            </Label>
+                            <Input
+                                id="client-credit-term"
+                                type="number"
+                                min="1"
+                                max="365"
+                                value={form.creditTermDays}
+                                onChange={(event) =>
+                                    setField(
+                                        'creditTermDays',
+                                        event.target.value,
+                                    )
+                                }
+                                placeholder="30"
+                            />
+                        </div>
                     </div>
 
                     <DialogFooter>
@@ -173,7 +278,13 @@ export function ClientCreateDialog({
                             Cancelar
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? 'Criando...' : 'Criar'}
+                            {isSubmitting
+                                ? isEditing
+                                    ? 'Salvando...'
+                                    : 'Criando...'
+                                : isEditing
+                                  ? 'Salvar'
+                                  : 'Criar'}
                         </Button>
                     </DialogFooter>
                 </form>

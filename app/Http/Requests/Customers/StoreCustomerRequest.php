@@ -28,6 +28,9 @@ class StoreCustomerRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'document' => ['nullable', 'string', 'max:20'],
             'person_type' => ['nullable', 'string', 'in:pf,pj'],
+            'credit_enabled' => ['sometimes', 'boolean'],
+            'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'credit_term_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ];
     }
 }

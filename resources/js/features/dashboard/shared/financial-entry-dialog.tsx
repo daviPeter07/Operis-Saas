@@ -377,7 +377,8 @@ export function FinancialEntryDialog({
                                                 if (
                                                     value === 'money' ||
                                                     value === 'pix' ||
-                                                    value === 'card'
+                                                    value === 'card' ||
+                                                    value === 'boleto'
                                                 ) {
                                                     onChange(
                                                         'paymentMethod',
@@ -391,7 +392,8 @@ export function FinancialEntryDialog({
                                                 (option) =>
                                                     option.value === 'money' ||
                                                     option.value === 'pix' ||
-                                                    option.value === 'card',
+                                                    option.value === 'card' ||
+                                                    option.value === 'boleto',
                                             ).map((option) => (
                                                 <ToggleGroupItem
                                                     key={option.value}
@@ -441,6 +443,48 @@ export function FinancialEntryDialog({
                                                     form.total || 0,
                                                 )}
                                             />
+                                        </CardContent>
+                                    </Card>
+                                ) : null}
+
+                                {form.paymentMethod === 'boleto' ? (
+                                    <Card className="border-border/70 shadow-none">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm">
+                                                Prazo do boleto
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="grid gap-2">
+                                            <Label htmlFor="boleto-term-days">
+                                                Prazo *
+                                            </Label>
+                                            <Select
+                                                value={form.boletoTermDays}
+                                                onValueChange={(value) =>
+                                                    onChange(
+                                                        'boletoTermDays',
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger id="boleto-term-days">
+                                                    <SelectValue placeholder="Selecione o prazo" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {[30, 60, 90, 120].map(
+                                                        (days) => (
+                                                            <SelectItem
+                                                                key={days}
+                                                                value={String(
+                                                                    days,
+                                                                )}
+                                                            >
+                                                                {days} dias
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
                                         </CardContent>
                                     </Card>
                                 ) : null}

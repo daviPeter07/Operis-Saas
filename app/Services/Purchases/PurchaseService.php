@@ -10,6 +10,7 @@ use App\Repositories\Contracts\PurchaseRepositoryInterface;
 use App\Services\Finance\PayableService;
 use App\Services\Products\StockMovementService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -35,10 +36,11 @@ class PurchaseService
             $purchase = $this->purchases->createForCompany($companyId, [
                 'supplier_id' => $data['supplier_id'] ?? null,
                 'date' => $data['date'],
-                'due_date' => $data['due_date'] ?? null,
+                'due_date' => $this->resolveDueDate($data),
                 'total' => $total,
                 'status' => $status,
                 'payment_method' => $data['payment_method'],
+                'boleto_term_days' => $data['boleto_term_days'] ?? null,
             ]);
 
             $this->syncItems($purchase, $data['items']);
@@ -69,9 +71,10 @@ class PurchaseService
             $purchase = $this->purchases->update($purchase, [
                 'supplier_id' => $data['supplier_id'] ?? null,
                 'date' => $data['date'],
-                'due_date' => $data['due_date'] ?? null,
+                'due_date' => $this->resolveDueDate($data),
                 'total' => $total,
                 'payment_method' => $data['payment_method'],
+                'boleto_term_days' => $data['boleto_term_days'] ?? null,
             ]);
 
             $purchase->items()->delete();
@@ -208,5 +211,16 @@ class PurchaseService
         foreach ($purchase->items as $item) {
             Product::query()->whereKey($item->product_id)->update(['cost' => $item->unit_cost]);
         }
+    }
+
+    private function resolveDueDate(array $data): ?string
+    {
+        if (($data['payment_method'] ?? null) === 'boleto') {
+            return Carbon::parse($data['date'])
+                ->addDays((int) ($data['boleto_term_days'] ?? 30))
+                ->toDateString();
+        }
+
+        return $data['due_date'] ?? null;
     }
 }

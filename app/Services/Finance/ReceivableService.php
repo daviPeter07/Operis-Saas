@@ -6,6 +6,7 @@ use App\Enums\FinancialStatus;
 use App\Enums\SaleStatus;
 use App\Models\Sale;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class ReceivableService
@@ -35,9 +36,13 @@ class ReceivableService
 
             $this->receivables->create([
                 'company_id' => $sale->company_id,
+                'customer_id' => $sale->customer_id,
                 'sale_id' => $sale->id,
                 'installment_number' => $i + 1,
+                'entry_date' => $sale->date,
                 'due_date' => $dueDate->format('Y-m-d'),
+                'item' => null,
+                'description' => null,
                 'amount' => $installmentAmount,
                 'status' => FinancialStatus::Pending->value,
                 'received_at' => null,
@@ -64,5 +69,32 @@ class ReceivableService
             ->doesntHave('receivables')
             ->get()
             ->each(fn (Sale $sale) => $this->regenerateFromSale($sale));
+    }
+
+    public function createManual(int $companyId, array $data): void
+    {
+        $this->receivables->create([
+            'company_id' => $companyId,
+            'customer_id' => $data['customer_id'],
+            'sale_id' => null,
+            'installment_number' => null,
+            'entry_date' => $data['entry_date'],
+            'due_date' => null,
+            'item' => $data['item'],
+            'description' => $data['description'] ?? null,
+            'amount' => $data['amount'],
+            'status' => FinancialStatus::Pending->value,
+            'received_at' => null,
+        ]);
+    }
+
+    public function customerOpenBalance(int $companyId, int $customerId): float
+    {
+        return $this->receivables->openBalanceForCustomer($companyId, $customerId);
+    }
+
+    public function resolveCrediarioDueDate(string $date, int $termDays): string
+    {
+        return Carbon::parse($date)->addDays(max(1, $termDays))->toDateString();
     }
 }

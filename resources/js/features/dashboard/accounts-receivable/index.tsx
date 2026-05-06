@@ -1,32 +1,57 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { STATUS_OPTIONS } from '@/constants/status';
-import { useAccountReceivables } from '@/hooks/use-account-receivables';
+import {
+    useAccountReceivables,
+    useCreateManualAccountReceivable,
+} from '@/hooks/use-account-receivables';
+import { useCustomers } from '@/hooks/use-customers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { ManualAccountReceivableDialog } from './manual-account-receivable-dialog';
 
 type ReceivableRow = {
     id: string;
-    sale_id: number;
-    installment_number: number;
+    customer_id: number | null;
+    customer_name: string;
+    sale_id: number | null;
+    installment_number: number | null;
+    item: string | null;
+    description: string | null;
     amount: number;
-    due_date: string;
+    due_date: string | null;
+    entry_date: string | null;
     status: string;
     received_at: string | null;
 };
 
 export function AccountsReceivableModule() {
     const { data: receivables = [] } = useAccountReceivables();
+    const { data: customers = [] } = useCustomers();
+    const createManualReceivable = useCreateManualAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    const customerNameById = useMemo(
+        () => new Map(customers.map((customer) => [customer.id, customer.name])),
+        [customers],
+    );
 
     const rows: ReceivableRow[] = receivables.map((receivable) => ({
         id: String(receivable.id),
+        customer_id: receivable.customer_id,
+        customer_name: receivable.customer_id
+            ? (customerNameById.get(receivable.customer_id) ?? `#${receivable.customer_id}`)
+            : 'Sem cliente',
         sale_id: receivable.sale_id,
         installment_number: receivable.installment_number,
+        item: receivable.item,
+        description: receivable.description,
         amount: receivable.amount,
         due_date: receivable.due_date,
+        entry_date: receivable.entry_date,
         status: receivable.status,
         received_at: receivable.received_at,
     }));
@@ -89,11 +114,20 @@ export function AccountsReceivableModule() {
             ),
         },
         {
-            key: 'sale_id',
-            header: 'Venda',
-            render: (val: unknown) => `#${String(val)}`,
+            key: 'customer_name',
+            header: 'Cliente',
         },
-        { key: 'installment_number', header: 'Parcela' },
+        {
+            key: 'item',
+            header: 'Item',
+            render: (val: unknown) => String(val || '-'),
+        },
+        {
+            key: 'sale_id',
+            header: 'Origem',
+            render: (_, row: ReceivableRow) =>
+                row.sale_id ? `Venda #${row.sale_id}` : 'Manual',
+        },
         {
             key: 'amount',
             header: 'Valor',
@@ -105,9 +139,12 @@ export function AccountsReceivableModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'due_date',
-            header: 'Vencimento',
-            render: (val: unknown) => formatDateBR(String(val)),
+            key: 'entry_date',
+            header: 'Data',
+            render: (_, row: ReceivableRow) =>
+                row.entry_date || row.due_date
+                    ? formatDateBR(String(row.entry_date || row.due_date))
+                    : '-',
         },
     ];
 
@@ -145,6 +182,32 @@ export function AccountsReceivableModule() {
                 title="Contas a Receber"
                 clickableRow
                 onRowClick={(row) => handleSelectOne(row.id, !selectedIds.has(row.id))}
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
+                createDialog={({ open, onOpenChange }) => (
+                    <ManualAccountReceivableDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        customers={customers.map((customer) => ({
+                            id: String(customer.id),
+                            name: customer.name,
+                            email: customer.email ?? '',
+                            phone: customer.phone ?? '',
+                            document: customer.document ?? '',
+                            city: '',
+                            state: '',
+                            address: '',
+                            createdAt: new Date().toISOString().slice(0, 10),
+                            creditEnabled: customer.credit_enabled,
+                            creditLimit: Number(customer.credit_limit ?? 0),
+                            creditTermDays: Number(customer.credit_term_days ?? 30),
+                        }))}
+                        onSubmit={async (payload) => {
+                            await createManualReceivable.mutateAsync(payload);
+                            toast.success('Conta a receber criada com sucesso.');
+                        }}
+                    />
+                )}
             />
         </div>
     );

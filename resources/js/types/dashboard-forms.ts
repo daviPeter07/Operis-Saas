@@ -13,6 +13,9 @@ export type ClientForm = {
     email: string;
     phone: string;
     document: string;
+    creditEnabled: 'yes' | 'no';
+    creditLimit: string;
+    creditTermDays: string;
     state: string;
     city: string;
     street: string;
@@ -29,6 +32,18 @@ export type ClientCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: (client: { id: number; name: string }) => void;
+    initialData?: {
+        id?: number;
+        name: string;
+        email: string;
+        phone: string;
+        document: string;
+        personType: ClientPersonType;
+        creditEnabled: boolean;
+        creditLimit: number;
+        creditTermDays: number;
+        status?: 'active' | 'inactive';
+    };
 };
 
 export type FinancialEntryForm = {
@@ -36,6 +51,7 @@ export type FinancialEntryForm = {
     items: string;
     total: string;
     paymentMethod: string;
+    boletoTermDays: string;
     cardType: 'debit' | 'credit';
     installments: string;
     firstInstallmentDate: string;

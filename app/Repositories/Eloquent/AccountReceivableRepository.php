@@ -28,4 +28,13 @@ class AccountReceivableRepository implements AccountReceivableRepositoryInterfac
     {
         return AccountReceivable::query()->create($data);
     }
+
+    public function openBalanceForCustomer(int $companyId, int $customerId): float
+    {
+        return (float) AccountReceivable::query()
+            ->forCompany($companyId)
+            ->where('customer_id', $customerId)
+            ->whereNotIn('status', ['received', 'cancelled'])
+            ->sum('amount');
+    }
 }

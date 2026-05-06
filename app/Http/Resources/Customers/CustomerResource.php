@@ -21,6 +21,9 @@ class CustomerResource extends ApiResource
             'phone' => $this->phone,
             'document' => $this->document,
             'status' => $this->status,
+            'credit_enabled' => $this->credit_enabled,
+            'credit_limit' => $this->credit_limit,
+            'credit_term_days' => $this->credit_term_days,
             'createdAt' => $this->created_at?->format('Y-m-d H:i:s'),
         ];
     }

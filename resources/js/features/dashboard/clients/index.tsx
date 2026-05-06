@@ -19,16 +19,21 @@ type ClientRow = {
     document: string;
     status: 'active' | 'inactive';
     personType: 'pf' | 'pj';
+    credit_enabled: boolean;
+    credit_limit: number;
+    credit_term_days: number;
 };
 
 export function ClientsModule() {
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
+
         return params.get('action') === 'create-client';
     });
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (params.get('action') === 'create-client') {
             window.history.replaceState({}, '', '/dashboard/clients');
         }
@@ -36,6 +41,8 @@ export function ClientsModule() {
     const { data: customers = [] } = useCustomers();
     const createCustomer = useCreateCustomer();
     const deleteCustomer = useDeleteCustomer();
+    const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const rows: ClientRow[] = customers.map((customer) => ({
         id: String(customer.id),
@@ -45,6 +52,9 @@ export function ClientsModule() {
         document: customer.document,
         status: customer.status,
         personType: inferClientPersonType(customer.document || ''),
+        credit_enabled: customer.credit_enabled,
+        credit_limit: customer.credit_limit,
+        credit_term_days: customer.credit_term_days,
     }));
 
     const columns: Column<ClientRow>[] = [
@@ -68,6 +78,11 @@ export function ClientsModule() {
             render: (value: unknown) =>
                 formatDocumentInput(String(value ?? '')),
         },
+        {
+            key: 'credit_enabled',
+            header: 'Crediario',
+            render: (value: unknown) => (value ? 'Habilitado' : 'Desabilitado'),
+        },
     ];
 
     const handleCreate = async (data: {
@@ -89,27 +104,60 @@ export function ClientsModule() {
             phone: String(data.phone || '').trim(),
             document: String(data.document || '').trim(),
             person_type: data.person_type || 'pf',
+            credit_enabled: Boolean((data as Partial<ClientRow>).credit_enabled),
+            credit_limit: Number((data as Partial<ClientRow>).credit_limit || 0),
+            credit_term_days: Number((data as Partial<ClientRow>).credit_term_days || 30),
         });
     };
 
     return (
-        <GenericTable
-            data={rows}
-            columns={columns}
-            title="Clientes"
-            routeUrl="/dashboard/clients"
-            onCreate={handleCreate as (data: ClientRow) => Promise<void>}
-            onDelete={async (row) => {
-                await deleteCustomer.mutateAsync(Number(row.id));
-            }}
-            isCreateOpen={isCreateOpen}
-            onCreateOpenChange={setIsCreateOpen}
-            createDialog={({ open, onOpenChange }) => (
+        <>
+            <GenericTable
+                data={rows}
+                columns={columns}
+                title="Clientes"
+                routeUrl="/dashboard/clients"
+                onCreate={handleCreate as (data: ClientRow) => Promise<void>}
+                onDelete={async (row) => {
+                    await deleteCustomer.mutateAsync(Number(row.id));
+                }}
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
+                onEdit={(row) => {
+                    setEditingClient(row);
+                    setIsEditOpen(true);
+                }}
+                createDialog={({ open, onOpenChange }) => (
+                    <ClientCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                    />
+                )}
+            />
+            {editingClient ? (
                 <ClientCreateDialog
-                    open={open}
-                    onOpenChange={onOpenChange}
+                    open={isEditOpen}
+                    onOpenChange={(open) => {
+                        setIsEditOpen(open);
+
+                        if (!open) {
+                            setEditingClient(null);
+                        }
+                    }}
+                    initialData={{
+                        id: Number(editingClient.id),
+                        name: editingClient.name,
+                        email: editingClient.email,
+                        phone: editingClient.phone,
+                        document: editingClient.document,
+                        personType: editingClient.personType,
+                        creditEnabled: editingClient.credit_enabled,
+                        creditLimit: editingClient.credit_limit,
+                        creditTermDays: editingClient.credit_term_days,
+                        status: editingClient.status,
+                    }}
                 />
-            )}
-        />
+            ) : null}
+        </>
     );
 }

@@ -3,6 +3,14 @@ import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
 import { toNumber } from './normalizers';
 
+type CreateManualAccountReceivableInput = {
+    customer_id: number;
+    item: string;
+    description?: string;
+    amount: number;
+    entry_date: string;
+};
+
 function normalizeAccountReceivable(
     accountReceivable: AccountReceivable,
 ): AccountReceivable {
@@ -30,6 +38,12 @@ class AccountReceivableService extends ApiService<AccountReceivable> {
         const accountReceivable = await super.get(id);
 
         return normalizeAccountReceivable(accountReceivable);
+    }
+
+    async createManual(
+        payload: CreateManualAccountReceivableInput,
+    ): Promise<void> {
+        await super.create(payload as unknown as Partial<AccountReceivable>);
     }
 }
 

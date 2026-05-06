@@ -8,7 +8,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['company_id', 'sale_id', 'installment_number', 'due_date', 'amount', 'status', 'received_at'])]
+#[Fillable([
+    'company_id',
+    'customer_id',
+    'sale_id',
+    'installment_number',
+    'entry_date',
+    'due_date',
+    'item',
+    'description',
+    'amount',
+    'status',
+    'received_at',
+])]
 class AccountReceivable extends Model
 {
     use BelongsToCompany, HasFactory;
@@ -16,10 +28,16 @@ class AccountReceivable extends Model
     protected function casts(): array
     {
         return [
+            'entry_date' => 'date',
             'due_date' => 'date',
             'amount' => 'decimal:2',
             'received_at' => 'datetime',
         ];
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function sale(): BelongsTo

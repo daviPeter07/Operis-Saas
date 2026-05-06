@@ -10,7 +10,11 @@ class SaleRepository implements SaleRepositoryInterface
 {
     public function paginateByCompany(int $companyId): LengthAwarePaginator
     {
-        return Sale::query()->forCompany($companyId)->latest()->paginate();
+        return Sale::query()
+            ->forCompany($companyId)
+            ->with(['customer', 'items'])
+            ->latest()
+            ->paginate();
     }
 
     public function createForCompany(int $companyId, array $data): Sale

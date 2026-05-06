@@ -11,6 +11,10 @@ function resolvePurchasePaymentMethod(
         return form.cardType;
     }
 
+    if (form.paymentMethod === 'boleto') {
+        return 'boleto';
+    }
+
     if (
         form.paymentMethod === 'money' ||
         form.paymentMethod === 'pix' ||
@@ -26,6 +30,13 @@ function resolvePurchasePaymentMethod(
 function resolveDueDate(form: FinancialEntryForm): string {
     if (form.paymentMethod === 'card' && form.cardType === 'credit') {
         return form.firstInstallmentDate || form.createdAt;
+    }
+
+    if (form.paymentMethod === 'boleto') {
+        const baseDate = new Date(`${form.createdAt}T12:00:00`);
+        baseDate.setDate(baseDate.getDate() + Number(form.boletoTermDays || 30));
+
+        return baseDate.toISOString().slice(0, 10);
     }
 
     return form.createdAt;
@@ -60,6 +71,7 @@ export function mapFinancialFormToPurchase(
         total: Number(form.total || 0) || fallback.total,
         status: form.status as UiPurchase['status'],
         paymentMethod: resolvePurchasePaymentMethod(form),
+        boletoTermDays: form.paymentMethod === 'boleto' ? form.boletoTermDays : undefined,
         items: Number(form.items || 0) || fallback.items,
         dueDate: resolveDueDate(form),
         createdAt: form.createdAt,
@@ -76,6 +88,7 @@ export function mapFinancialFormToAccountsPayable(
         total: Number(form.total || 0),
         status: form.status as UiPurchase['status'],
         paymentMethod: resolvePurchasePaymentMethod(form),
+        boletoTermDays: form.paymentMethod === 'boleto' ? form.boletoTermDays : undefined,
         items: Number(form.items || 1),
         dueDate: resolveDueDate(form),
         createdAt: form.createdAt,

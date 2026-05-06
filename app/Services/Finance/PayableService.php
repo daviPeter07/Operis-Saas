@@ -26,15 +26,20 @@ class PayableService
             $payable->delete();
         }
 
+        $isImmediatePayment = $purchase->payment_method === 'cash';
+        $dueDate = $purchase->payment_method === 'boleto'
+            ? $purchase->date?->copy()->addDays((int) ($purchase->boleto_term_days ?? 30))->toDateString()
+            : ($purchase->due_date?->toDateString() ?? $purchase->date?->toDateString());
+
         $this->payables->create([
             'company_id' => $purchase->company_id,
             'purchase_id' => $purchase->id,
             'installment_number' => 1,
-            'due_date' => $purchase->due_date ?? $purchase->date,
+            'due_date' => $dueDate,
             'amount' => $purchase->total,
-            'status' => $purchase->payment_method === 'cash' ? 'paid' : 'pending',
-            'paid_at' => $purchase->payment_method === 'cash' ? now() : null,
-            'paid_method' => $purchase->payment_method === 'cash' ? 'cash' : null,
+            'status' => $isImmediatePayment ? 'paid' : 'pending',
+            'paid_at' => $isImmediatePayment ? now() : null,
+            'paid_method' => $isImmediatePayment ? 'cash' : null,
         ]);
     }
 

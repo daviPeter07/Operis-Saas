@@ -43,8 +43,8 @@ interface CheckoutPanelProps {
     increaseLineItemQuantity: (id: string) => void;
     decreaseLineItemQuantity: (id: string) => void;
     removeLineItem: (id: string) => void;
-    paymentMethod: 'money' | 'pix' | 'card' | 'other';
-    setPaymentMethod: (value: 'money' | 'pix' | 'card' | 'other') => void;
+    paymentMethod: 'money' | 'pix' | 'card' | 'crediario';
+    setPaymentMethod: (value: 'money' | 'pix' | 'card' | 'crediario') => void;
     cardType: 'debit' | 'credit';
     setCardType: (value: 'debit' | 'credit') => void;
     installments: string;
@@ -61,6 +61,8 @@ interface CheckoutPanelProps {
     calendarOpen: boolean;
     setCalendarOpen: (open: boolean) => void;
     setSaleDate: (value: string) => void;
+    availableCredit?: number;
+    crediarioExceeded: boolean;
     canSubmit: boolean;
     onSubmit: () => void;
 }
@@ -94,6 +96,8 @@ export function CheckoutPanel({
     calendarOpen,
     setCalendarOpen,
     setSaleDate,
+    availableCredit,
+    crediarioExceeded,
     canSubmit,
     onSubmit,
 }: CheckoutPanelProps) {
@@ -271,7 +275,7 @@ export function CheckoutPanel({
                                         value === 'money' ||
                                         value === 'pix' ||
                                         value === 'card' ||
-                                        value === 'other'
+                                        value === 'crediario'
                                     ) {
                                         setPaymentMethod(value);
                                     }
@@ -311,6 +315,42 @@ export function CheckoutPanel({
                                     }
                                     totalAmount={finalTotal}
                                 />
+                            </CardContent>
+                        </Card>
+                    ) : null}
+
+                    {paymentMethod === 'crediario' ? (
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm">
+                                    Crediario do cliente
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground">
+                                        Limite disponivel
+                                    </span>
+                                    <span className="font-semibold">
+                                        {formatCurrencyBR(
+                                            Math.max(
+                                                0,
+                                                Number(availableCredit ?? 0),
+                                            ),
+                                        )}
+                                    </span>
+                                </div>
+                                {crediarioExceeded ? (
+                                    <p className="text-sm text-destructive">
+                                        O valor desta venda excede o limite
+                                        disponivel do crediario.
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">
+                                        A venda sera registrada como pendente e
+                                        gerara conta a receber.
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
                     ) : null}
@@ -412,7 +452,7 @@ export function CheckoutPanel({
                         type="button"
                         className="w-full"
                         size="lg"
-                        disabled={!canSubmit}
+                        disabled={!canSubmit || crediarioExceeded}
                         onClick={onSubmit}
                     >
                         Finalizar venda

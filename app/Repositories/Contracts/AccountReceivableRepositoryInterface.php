@@ -14,4 +14,6 @@ interface AccountReceivableRepositoryInterface
     public function forSale(Sale $sale): Collection;
 
     public function create(array $data): AccountReceivable;
+
+    public function openBalanceForCustomer(int $companyId, int $customerId): float;
 }

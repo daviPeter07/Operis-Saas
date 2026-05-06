@@ -16,9 +16,13 @@ class AccountReceivableResource extends ApiResource
     {
         return [
             'id' => $this->id,
+            'customer_id' => $this->customer_id,
             'sale_id' => $this->sale_id,
             'installment_number' => $this->installment_number,
+            'entry_date' => $this->entry_date?->toDateString(),
             'due_date' => $this->due_date?->toDateString(),
+            'item' => $this->item,
+            'description' => $this->description,
             'amount' => $this->amount,
             'status' => $this->status,
             'received_at' => $this->received_at,

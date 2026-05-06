@@ -8,6 +8,10 @@ export type UiCustomer = {
     state: string;
     address: string;
     createdAt: string;
+    creditEnabled?: boolean;
+    creditLimit?: number;
+    creditTermDays?: number;
+    availableCredit?: number;
 };
 
 export type UiSupplier = {
@@ -41,7 +45,7 @@ export type UiPaymentMethod =
     | 'money'
     | 'pix'
     | 'card'
-    | 'other';
+    | 'crediario';
 
 export type UiSale = {
     id: string;
@@ -61,6 +65,7 @@ export type UiPurchase = {
     total: number;
     status: 'pending' | 'completed' | 'cancelled';
     paymentMethod: string;
+    boletoTermDays?: string;
     dueDate?: string;
     createdAt: string;
     items?: number;

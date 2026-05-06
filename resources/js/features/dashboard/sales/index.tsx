@@ -1,37 +1,39 @@
+import { FileDown, Printer } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS } from '@/constants/status';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
+import { Button } from '@/components/ui/button';
+import { STATUS_OPTIONS } from '@/constants/status';
+import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
+import type { SaleMutationInput } from '@/hooks/use-sales';
 import {
     useCreateSale,
     useDeleteSale,
-    type SaleMutationInput,
-    useUpdateSale,
     useSales,
+    useUpdateSale,
 } from '@/hooks/use-sales';
+import { formatCurrencyBR, formatDateBR, translatePaymentMethod } from '@/lib/format';
 import { saleService } from '@/services/sales';
-import type { Column } from '../generic-table';
-import { GenericTable } from '../generic-table';
-import {
-    formatCurrencyBR,
-    formatDateBR,
-    translatePaymentMethod,
-} from '@/lib/format';
 import type {
     UiCustomer,
     UiPaymentMethod,
     UiProduct,
 } from '@/types/dashboard-entities';
-import { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
+import type { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
+import {
+    downloadSaleInvoicePdf,
+    printSaleThermalReceipt,
+} from '@/utils/sale-documents';
+import type { Column } from '../generic-table';
+import { GenericTable } from '../generic-table';
 import { SalesHeader } from './sales-header';
 
 type SaleRow = {
     id: string;
-    customer_id: number;
+    customer_id: number | null;
     clientName: string;
     total: number;
     payment_method: string;
@@ -44,16 +46,20 @@ type SaleMutationPayload = SaleMutationInput;
 export function SalesModule() {
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
+
         return params.get('action') === 'create-sale';
     });
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+
         if (params.get('action') === 'create-sale') {
             window.history.replaceState({}, '', '/dashboard/sales');
         }
     }, []);
+
     const { data: sales = [] } = useSales();
+    const { data: receivables = [] } = useAccountReceivables();
     const { data: customers = [] } = useCustomers();
     const { data: products = [] } = useProducts();
     const createSale = useCreateSale();
@@ -75,9 +81,21 @@ export function SalesModule() {
                 city: '',
                 state: '',
                 address: '',
+                creditEnabled: customer.credit_enabled,
+                creditLimit: Number(customer.credit_limit ?? 0),
+                creditTermDays: Number(customer.credit_term_days ?? 30),
+                availableCredit:
+                    Number(customer.credit_limit ?? 0) -
+                    receivables
+                        .filter(
+                            (receivable) =>
+                                receivable.customer_id === customer.id &&
+                                receivable.status !== 'received',
+                        )
+                        .reduce((sum, receivable) => sum + receivable.amount, 0),
                 createdAt: new Date().toISOString().slice(0, 10),
             })),
-        [customers],
+        [customers, receivables],
     );
 
     const mappedProducts = useMemo<UiProduct[]>(
@@ -102,23 +120,17 @@ export function SalesModule() {
         () => [...dialogCustomers, ...mappedCustomers],
         [dialogCustomers, mappedCustomers],
     );
-
     const salesDialogProducts = useMemo(
         () => [...dialogProducts, ...mappedProducts],
         [dialogProducts, mappedProducts],
     );
 
     const productById = useMemo(
-        () =>
-            new Map(
-                salesDialogProducts.map((product) => [product.id, product]),
-            ),
+        () => new Map(salesDialogProducts.map((product) => [product.id, product])),
         [salesDialogProducts],
     );
-
     const customerNameById = useMemo(
-        () =>
-            new Map(customers.map((customer) => [customer.id, customer.name])),
+        () => new Map(customers.map((customer) => [customer.id, customer.name])),
         [customers],
     );
 
@@ -128,8 +140,10 @@ export function SalesModule() {
             id: String(sale.id),
             customer_id: sale.customer_id,
             clientName:
-                customerNameById.get(sale.customer_id) ||
-                `#${sale.customer_id}`,
+                sale.customer_id === null
+                    ? 'Sem cliente'
+                    : (customerNameById.get(sale.customer_id) ||
+                          `#${sale.customer_id}`),
             total: sale.total,
             status: sale.status,
             payment_method: sale.payment_method,
@@ -141,28 +155,83 @@ export function SalesModule() {
         {
             key: 'total',
             header: 'Total',
-            render: (val: unknown) => formatCurrencyBR(Number(val)),
+            render: (value: unknown) => formatCurrencyBR(Number(value)),
         },
         {
             key: 'status',
             header: 'Status',
-            render: (val: unknown) => <StatusBadge status={String(val)} />,
+            render: (value: unknown) => <StatusBadge status={String(value)} />,
         },
         {
             key: 'payment_method',
-            header: 'Método',
-            render: (val: unknown) => translatePaymentMethod(String(val)),
+            header: 'Metodo',
+            render: (value: unknown) => translatePaymentMethod(String(value)),
         },
         {
             key: 'date',
             header: 'Data',
-            render: (val: unknown) => formatDateBR(String(val)),
+            render: (value: unknown) => formatDateBR(String(value)),
+        },
+        {
+            key: 'documents',
+            header: 'Comprovantes',
+            render: (_, row: SaleRow) => (
+                <div
+                    className="flex items-center justify-end gap-2"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            void saleService
+                                .get(Number(row.id))
+                                .then(downloadSaleInvoicePdf)
+                                .catch(() => {
+                                    toast.error('Erro ao gerar a fatura da venda.');
+                                });
+                        }}
+                    >
+                        <FileDown className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            void saleService
+                                .get(Number(row.id))
+                                .then(printSaleThermalReceipt)
+                                .catch(() => {
+                                    toast.error(
+                                        'Erro ao gerar o comprovante termico.',
+                                    );
+                                });
+                        }}
+                    >
+                        <Printer className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
         },
     ];
 
     const metrics = useMemo(() => {
         const salesCount = rows.length;
         const salesTotal = rows.reduce((sum, sale) => sum + sale.total, 0);
+        const profit = sales.reduce(
+            (sum, sale) =>
+                sum +
+                (sale.items ?? []).reduce(
+                    (itemSum, item) =>
+                        itemSum +
+                        (Number(item.unit_price) - Number(item.unit_cost)) *
+                            Number(item.quantity),
+                    0,
+                ),
+            0,
+        );
         const receivable = rows
             .filter((sale) => sale.status === 'pending')
             .reduce((sum, sale) => sum + sale.total, 0);
@@ -170,10 +239,10 @@ export function SalesModule() {
         return {
             salesCount,
             salesTotal,
-            profit: 0,
+            profit,
             receivable,
         };
-    }, [rows]);
+    }, [rows, sales]);
 
     const filterFields = [
         { key: 'clientName', label: 'Cliente', type: 'text' as const },
@@ -185,15 +254,20 @@ export function SalesModule() {
         },
         {
             key: 'payment_method',
-            label: 'Método de Pagamento',
+            label: 'Metodo de Pagamento',
             type: 'select' as const,
-            options: [...PAYMENT_METHOD_OPTIONS],
+            options: [
+                { value: 'cash', label: 'Dinheiro' },
+                { value: 'pix', label: 'PIX' },
+                { value: 'card_debit', label: 'Cartao debito' },
+                { value: 'card_credit', label: 'Cartao credito' },
+                { value: 'crediario', label: 'Crediario' },
+            ],
         },
     ];
 
     const handleCreateFromSalesDialog = async (sale: DialogSalesRecord) => {
         const customerId = Number(sale.clientId);
-
         const items = sale.lineItems
             .map((item: DialogSalesRecord['lineItems'][number]) => ({
                 product_id: Number(item.productId),
@@ -211,19 +285,23 @@ export function SalesModule() {
             );
 
         if (!Number.isFinite(customerId) || customerId <= 0) {
-            throw new Error('Selecione um cliente válido para continuar.');
+            throw new Error('Selecione um cliente valido para continuar.');
         }
 
         if (items.length === 0) {
-            throw new Error('Adicione ao menos um item válido na venda.');
+            throw new Error('Adicione ao menos um item valido na venda.');
         }
 
         const paymentMethod =
             sale.paymentMethod === 'money'
                 ? 'cash'
-                : sale.paymentMethod === 'other'
-                  ? 'installment'
-                  : sale.paymentMethod;
+                : sale.paymentMethod === 'crediario'
+                  ? 'crediario'
+                  : sale.paymentMethod === 'card'
+                    ? sale.cardType === 'credit'
+                        ? 'card_credit'
+                        : 'card_debit'
+                    : 'pix';
 
         const payload: SaleMutationPayload = {
             customer_id: customerId,
@@ -231,14 +309,21 @@ export function SalesModule() {
             payment_method: paymentMethod as
                 | 'cash'
                 | 'pix'
-                | 'card'
-                | 'installment',
+                | 'card_debit'
+                | 'card_credit'
+                | 'crediario',
             status: 'pending',
+            installments: sale.cardType === 'credit' ? sale.installments : undefined,
+            first_installment_date:
+                sale.cardType === 'credit'
+                    ? sale.firstInstallmentDate
+                    : undefined,
+            installment_value:
+                sale.cardType === 'credit' ? sale.installmentValue : undefined,
             items,
         };
 
         await createSale.mutateAsync(payload);
-
         toast.success('Venda criada com sucesso.');
     };
 
@@ -274,8 +359,8 @@ export function SalesModule() {
                         const mappedPaymentMethod: UiPaymentMethod =
                             full.payment_method === 'cash'
                                 ? 'money'
-                                : full.payment_method === 'installment'
-                                  ? 'other'
+                                : full.payment_method === 'crediario'
+                                  ? 'crediario'
                                   : full.payment_method === 'pix'
                                     ? 'pix'
                                     : 'card';
@@ -293,16 +378,29 @@ export function SalesModule() {
                                 return {
                                     id: crypto.randomUUID(),
                                     productId: String(item.product_id),
-                                    productName: product?.name ?? `#${item.product_id}`,
+                                    productName:
+                                        product?.name ?? `#${item.product_id}`,
                                     sku: product?.sku ?? '',
                                     quantity: item.quantity,
                                     unitPrice: item.unit_price,
-                                    unitCost: product?.cost ?? 0,
+                                    unitCost: item.unit_cost ?? product?.cost ?? 0,
                                     subtotal: item.subtotal,
                                 };
                             }),
                             paymentMethod: mappedPaymentMethod,
                             total: full.total,
+                            cardType:
+                                full.payment_method === 'card_credit'
+                                    ? 'credit'
+                                    : 'debit',
+                            installments: full.installments ?? 1,
+                            firstInstallmentDate:
+                                full.first_installment_date ?? undefined,
+                            installmentValue: full.installment_value ?? undefined,
+                            availableCredit: salesDialogCustomers.find(
+                                (customer) =>
+                                    customer.id === String(full.customer_id),
+                            )?.availableCredit,
                             status:
                                 full.status === 'completed'
                                     ? 'completed'
@@ -310,10 +408,11 @@ export function SalesModule() {
                                       ? 'cancelled'
                                       : 'pending',
                         };
+
                         setEditSale(mappedSale);
                         setIsEditOpen(true);
-                    } catch (e) {
-                        toast.error('Erro ao carregar a venda para edição.');
+                    } catch {
+                        toast.error('Erro ao carregar a venda para edicao.');
                     }
                 }}
                 createDialog={({ open, onOpenChange }) => (
@@ -341,13 +440,16 @@ export function SalesModule() {
                     />
                 )}
             />
-            {/* Edit Sale Dialog */}
-            {editSale && (
+
+            {editSale ? (
                 <SalesDialog
                     open={isEditOpen}
                     onOpenChange={(open) => {
                         setIsEditOpen(open);
-                        if (!open) setEditSale(null);
+
+                        if (!open) {
+                            setEditSale(null);
+                        }
                     }}
                     onSubmit={async (sale) => {
                         const customerId = Number(sale.clientId);
@@ -359,12 +461,6 @@ export function SalesModule() {
                                     product_id: Number(item.productId),
                                     quantity: Number(item.quantity),
                                     unit_price: Number(item.unitPrice),
-                                    subtotal: Number(
-                                        (
-                                            Number(item.unitPrice) *
-                                            Number(item.quantity)
-                                        ).toFixed(2),
-                                    ),
                                 }),
                             )
                             .filter(
@@ -379,22 +475,31 @@ export function SalesModule() {
 
                         if (!Number.isFinite(customerId) || customerId <= 0) {
                             toast.error(
-                                'Selecione um cliente válido para continuar.',
+                                'Selecione um cliente valido para continuar.',
                             );
+
                             return;
                         }
+
                         if (items.length === 0) {
                             toast.error(
-                                'Adicione ao menos um item válido na venda.',
+                                'Adicione ao menos um item valido na venda.',
                             );
+
                             return;
                         }
+
                         const paymentMethod =
                             sale.paymentMethod === 'money'
                                 ? 'cash'
-                                : sale.paymentMethod === 'other'
-                                  ? 'installment'
-                                  : sale.paymentMethod;
+                                : sale.paymentMethod === 'crediario'
+                                  ? 'crediario'
+                                  : sale.paymentMethod === 'card'
+                                    ? sale.cardType === 'credit'
+                                        ? 'card_credit'
+                                        : 'card_debit'
+                                    : 'pix';
+
                         try {
                             const payload: SaleMutationPayload = {
                                 customer_id: customerId,
@@ -404,9 +509,22 @@ export function SalesModule() {
                                 payment_method: paymentMethod as
                                     | 'cash'
                                     | 'pix'
-                                    | 'card'
-                                    | 'installment',
+                                    | 'card_debit'
+                                    | 'card_credit'
+                                    | 'crediario',
                                 status: 'pending',
+                                installments:
+                                    sale.cardType === 'credit'
+                                        ? sale.installments
+                                        : undefined,
+                                first_installment_date:
+                                    sale.cardType === 'credit'
+                                        ? sale.firstInstallmentDate
+                                        : undefined,
+                                installment_value:
+                                    sale.cardType === 'credit'
+                                        ? sale.installmentValue
+                                        : undefined,
                                 items,
                             };
 
@@ -414,6 +532,7 @@ export function SalesModule() {
                                 id: Number(editSale.id),
                                 data: payload,
                             });
+
                             toast.success('Venda atualizada com sucesso.');
                             setIsEditOpen(false);
                             setEditSale(null);
@@ -422,6 +541,7 @@ export function SalesModule() {
                                 error instanceof Error && error.message
                                     ? error.message
                                     : 'Erro ao atualizar a venda.';
+
                             toast.error(message);
                         }
                     }}
@@ -431,7 +551,7 @@ export function SalesModule() {
                     onCreateProduct={handleCreateProduct}
                     sale={editSale}
                 />
-            )}
+            ) : null}
         </div>
     );
 }

@@ -39,7 +39,7 @@ test('pending sale creates receivable without decreasing stock', function () {
     $this->actingAs($user)->postJson('/api/sales', [
         'date' => now()->toDateString(),
         'status' => 'pending',
-        'payment_method' => 'installment',
+        'payment_method' => 'card_credit',
         'items' => [[
             'product_id' => $product->id,
             'quantity' => 3,

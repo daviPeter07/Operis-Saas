@@ -17,9 +17,9 @@ import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
 import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
-import { useSuppliers } from '@/hooks/use-suppliers';
 import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
+import { useSuppliers } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
 import { formatCurrencyBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
@@ -33,7 +33,9 @@ function dateToLabel(date: string): string {
 }
 
 function formatDateTimeManaus(dateTime: string | undefined): string {
-    if (!dateTime) return '';
+    if (!dateTime) {
+        return '';
+    }
 
     const date = new Date(dateTime + 'Z');
 
@@ -58,8 +60,8 @@ export default function DashboardPage() {
 
     const { data: sales = [], isPending: isSalesPending } = useSales();
     const { data: purchases = [], isPending: isPurchasesPending } = usePurchases();
-    const { data: receivables = [], isPending: isReceivablesPending } = useAccountReceivables();
-    const { data: payables = [], isPending: isPayablesPending } = useAccountPayables();
+    const { data: receivables = [] } = useAccountReceivables();
+    const { data: payables = [] } = useAccountPayables();
     const { data: customers = [], isPending: isCustomersPending } = useCustomers();
     const { data: products = [], isPending: isProductsPending } = useProducts();
     const { data: suppliers = [], isPending: isSuppliersPending } = useSuppliers();
@@ -67,8 +69,6 @@ export default function DashboardPage() {
     const isActivitiesPending =
         isSalesPending ||
         isPurchasesPending ||
-        isReceivablesPending ||
-        isPayablesPending ||
         isCustomersPending ||
         isProductsPending ||
         isSuppliersPending;
@@ -106,14 +106,27 @@ export default function DashboardPage() {
         () => purchases.filter((purchase) => purchase.status !== 'cancelled'),
         [purchases],
     );
+    const totalProfit = useMemo(
+        () =>
+            activeSales.reduce(
+                (sum, sale) =>
+                    sum +
+                    (sale.items ?? []).reduce(
+                        (itemSum, item) =>
+                            itemSum +
+                            (toNumber(item.unit_price) -
+                                toNumber(item.unit_cost)) *
+                                toNumber(item.quantity),
+                        0,
+                    ),
+                0,
+            ),
+        [activeSales],
+    );
 
     const metrics = useMemo(() => {
         const salesTotal = activeSales.reduce(
             (sum, sale) => sum + toNumber(sale.total),
-            0,
-        );
-        const purchasesTotal = activePurchases.reduce(
-            (sum, purchase) => sum + toNumber(purchase.total),
             0,
         );
         const receivableTotal = receivables
@@ -136,7 +149,7 @@ export default function DashboardPage() {
             {
                 id: 'lucro',
                 label: 'Lucro',
-                value: formatCurrencyBR(salesTotal - purchasesTotal),
+                value: formatCurrencyBR(totalProfit),
                 icon: 'TrendingUp',
                 color: 'text-green-600',
                 iconBackground: 'bg-green-600/12',
@@ -161,7 +174,7 @@ export default function DashboardPage() {
                 iconRing: 'ring-red-600/20',
             },
         ];
-    }, [activeSales, activePurchases, receivables, payables]);
+    }, [activeSales, payables, receivables, totalProfit]);
 
     const activities = useMemo(() => {
         const userName = auth.user?.name ?? 'Usuário';
@@ -242,7 +255,13 @@ export default function DashboardPage() {
             .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
         const profitSeries = activeSales.slice(-12).map((sale) => ({
             date: sale.date,
-            value: toNumber(sale.total) * 0.3,
+            value: (sale.items ?? []).reduce(
+                (sum, item) =>
+                    sum +
+                    (toNumber(item.unit_price) - toNumber(item.unit_cost)) *
+                        toNumber(item.quantity),
+                0,
+            ),
         }));
 
         return [
@@ -266,7 +285,7 @@ export default function DashboardPage() {
                 summary: formatCurrencyBR(
                     profitSeries.reduce((sum, point) => sum + point.value, 0),
                 ),
-                description: 'Estimativa de lucro com base nas vendas.',
+                description: 'Lucro real calculado a partir do custo dos itens vendidos.',
                 color: '#22c55e',
                 series: profitSeries.map((point) => ({
                     date: point.date,

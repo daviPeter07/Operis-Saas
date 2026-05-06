@@ -4,6 +4,7 @@ namespace App\Services\Sales;
 
 use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Repositories\Contracts\SaleRepositoryInterface;
@@ -30,7 +31,13 @@ class SaleService
     {
         return DB::transaction(function () use ($companyId, $userId, $data): Sale {
             $totals = $this->calculateTotals($data['items']);
-            $status = $data['status'] ?? SaleStatus::Pending->value;
+            $paymentMethod = $data['payment_method'];
+            $customer = isset($data['customer_id'])
+                ? Customer::query()->find($data['customer_id'])
+                : null;
+            $status = $paymentMethod === 'crediario'
+                ? SaleStatus::Pending->value
+                : ($data['status'] ?? SaleStatus::Pending->value);
 
             $sale = $this->sales->createForCompany($companyId, [
                 'customer_id' => $data['customer_id'] ?? null,
@@ -38,13 +45,15 @@ class SaleService
                 'subtotal' => $totals,
                 'total' => $totals,
                 'status' => $status,
-                'payment_method' => $data['payment_method'],
-                'installments' => $data['installments'] ?? 1,
-                'first_installment_date' => $data['first_installment_date'] ?? $data['date'],
+                'payment_method' => $paymentMethod,
+                'installments' => $this->resolveInstallments($paymentMethod, $data),
+                'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
                 'installment_value' => $data['installment_value'] ?? null,
             ]);
 
             $this->syncItems($sale, $data['items']);
+            $sale->load('customer');
+            $this->ensureCrediarioIsAllowed($sale);
 
             $this->receivableService->regenerateFromSale($sale);
 
@@ -52,7 +61,7 @@ class SaleService
                 $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
             }
 
-            return $sale->refresh()->load('items');
+            return $sale->refresh()->load(['items', 'customer']);
         });
     }
 
@@ -67,17 +76,26 @@ class SaleService
 
             $previousItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
             $totals = $this->calculateTotals($data['items']);
+            $paymentMethod = $data['payment_method'];
+            $customer = isset($data['customer_id'])
+                ? Customer::query()->find($data['customer_id'])
+                : null;
 
             $sale = $this->sales->update($sale, [
                 'customer_id' => $data['customer_id'] ?? null,
                 'date' => $data['date'],
                 'subtotal' => $totals,
                 'total' => $totals,
-                'payment_method' => $data['payment_method'],
+                'payment_method' => $paymentMethod,
+                'installments' => $this->resolveInstallments($paymentMethod, $data),
+                'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
+                'installment_value' => $data['installment_value'] ?? null,
             ]);
 
             $sale->items()->delete();
             $this->syncItems($sale, $data['items']);
+            $sale->load('customer');
+            $this->ensureCrediarioIsAllowed($sale);
 
             $this->receivableService->regenerateFromSale($sale);
 
@@ -86,7 +104,7 @@ class SaleService
                 $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
             }
 
-            return $sale->refresh()->load('items');
+            return $sale->refresh()->load(['items', 'customer']);
         });
     }
 
@@ -134,9 +152,68 @@ class SaleService
                 'product_id' => $item['product_id'],
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
+                'unit_cost' => Product::query()->findOrFail($item['product_id'])->cost,
                 'subtotal' => (float) $item['quantity'] * (float) $item['unit_price'],
             ]);
         }
+    }
+
+    private function ensureCrediarioIsAllowed(Sale $sale): void
+    {
+        if ($sale->payment_method !== 'crediario') {
+            return;
+        }
+
+        $customer = $sale->customer;
+
+        if (! $customer) {
+            throw ValidationException::withMessages([
+                'customer_id' => 'Venda em crediario exige um cliente vinculado.',
+            ]);
+        }
+
+        if (! $customer->credit_enabled) {
+            throw ValidationException::withMessages([
+                'payment_method' => 'Cliente selecionado nao possui crediario habilitado.',
+            ]);
+        }
+
+        $currentBalance = $this->receivableService->customerOpenBalance(
+            $sale->company_id,
+            $customer->id
+        );
+        $saleCurrentBalance = (float) $sale->receivables()->sum('amount');
+
+        if ((($currentBalance - $saleCurrentBalance) + (float) $sale->total) > (float) $customer->credit_limit) {
+            throw ValidationException::withMessages([
+                'payment_method' => 'Limite de crediario do cliente excedido.',
+            ]);
+        }
+    }
+
+    private function resolveInstallments(string $paymentMethod, array $data): int
+    {
+        if ($paymentMethod === 'card_credit') {
+            return max(1, (int) ($data['installments'] ?? 1));
+        }
+
+        return 1;
+    }
+
+    private function resolveFirstInstallmentDate(string $paymentMethod, array $data, ?Customer $customer): string
+    {
+        if ($paymentMethod === 'card_credit') {
+            return $data['first_installment_date'] ?? $data['date'];
+        }
+
+        if ($paymentMethod === 'crediario') {
+            return $this->receivableService->resolveCrediarioDueDate(
+                $data['date'],
+                (int) ($customer?->credit_term_days ?? 30),
+            );
+        }
+
+        return $data['date'];
     }
 
     private function applyStock(Sale $sale, array $oldItems, array $newItems, StockMovementType $type, int $userId, bool $reverse = false): void

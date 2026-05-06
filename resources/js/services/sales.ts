@@ -13,6 +13,7 @@ function normalizeSale(sale: Sale): Sale {
             ...item,
             quantity: toNumber(item.quantity),
             unit_price: toNumber(item.unit_price),
+            unit_cost: toNumber(item.unit_cost),
             subtotal: toNumber(item.subtotal),
         })),
     };

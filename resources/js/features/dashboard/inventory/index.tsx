@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
 import {
@@ -107,6 +108,11 @@ export function InventoryModule() {
                 categoryNameById.get(Number(value)) || '-',
         },
         {
+            key: 'cost',
+            header: 'Preço de custo',
+            render: (value: unknown) => formatCurrencyBR(Number(value || 0)),
+        },
+        {
             key: 'sale_price',
             header: 'Preço de venda',
             render: (value: unknown) => formatCurrencyBR(Number(value || 0)),
@@ -139,8 +145,57 @@ export function InventoryModule() {
         },
     ];
 
+    const metrics = useMemo(() => {
+        const totalCostValue = rows.reduce(
+            (sum, product) => sum + product.cost * product.stock,
+            0,
+        );
+        const totalSaleValue = rows.reduce(
+            (sum, product) => sum + product.sale_price * product.stock,
+            0,
+        );
+        const totalStock = rows.reduce((sum, product) => sum + product.stock, 0);
+        const lowStockProducts = rows.filter(
+            (product) =>
+                product.stock <= product.min_stock || product.stock <= 0,
+        ).length;
+
+        return [
+            {
+                label: 'Valor total em custo',
+                value: formatCurrencyBR(totalCostValue),
+            },
+            {
+                label: 'Valor total em venda',
+                value: formatCurrencyBR(totalSaleValue),
+            },
+            {
+                label: 'Quantidade total em estoque',
+                value: formatQuantityWithUnit(totalStock),
+            },
+            {
+                label: 'Produtos com baixo estoque',
+                value: String(lowStockProducts),
+            },
+        ];
+    }, [rows]);
+
     return (
         <>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {metrics.map((metric) => (
+                    <Card key={metric.label} className="border-border bg-card shadow-sm">
+                        <CardContent className="space-y-2 px-5 py-4">
+                            <p className="text-sm font-medium text-muted-foreground">
+                                {metric.label}
+                            </p>
+                            <p className="text-2xl font-black tracking-tight text-foreground">
+                                {metric.value}
+                            </p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
             <GenericTable
                 data={rows}
                 columns={columns}

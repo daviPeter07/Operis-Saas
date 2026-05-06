@@ -22,7 +22,7 @@ export const paymentMethodOptions: Array<{
     { value: 'money', label: 'Dinheiro' },
     { value: 'pix', label: 'PIX' },
     { value: 'card', label: 'Cartao' },
-    { value: 'other', label: 'Outros' },
+    { value: 'crediario', label: 'Crediario' },
 ];
 
 export function todayString(daysAgo = 0): string {

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['company_id', 'supplier_id', 'date', 'due_date', 'total', 'status', 'payment_method'])]
+#[Fillable(['company_id', 'supplier_id', 'date', 'due_date', 'total', 'status', 'payment_method', 'boleto_term_days'])]
 class Purchase extends Model
 {
     use BelongsToCompany, HasFactory;
@@ -20,6 +20,7 @@ class Purchase extends Model
             'date' => 'date',
             'due_date' => 'date',
             'total' => 'decimal:2',
+            'boleto_term_days' => 'integer',
         ];
     }
 

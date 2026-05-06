@@ -137,6 +137,10 @@ export function ReportPage({ slug }: ReportPageProps) {
             const spendByCustomer = new Map<number, number>();
 
             for (const sale of sales) {
+                if (sale.customer_id === null) {
+                    continue;
+                }
+
                 spendByCustomer.set(
                     sale.customer_id,
                     (spendByCustomer.get(sale.customer_id) ?? 0) + sale.total,

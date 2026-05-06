@@ -119,6 +119,15 @@ export function SalesDialog({
         () => filterProductsByQuery(products, productSearch),
         [products, productSearch],
     );
+    const availableCredit = React.useMemo(() => {
+        if (!selectedClient?.creditEnabled) {
+            return 0;
+        }
+
+        return Number(selectedClient.availableCredit ?? 0);
+    }, [selectedClient]);
+    const crediarioExceeded =
+        paymentMethod === 'crediario' && finalTotal > availableCredit;
     const filteredClients = React.useMemo(() => {
         const normalizedQuery = clientSearch.trim().toLowerCase();
 
@@ -154,6 +163,10 @@ export function SalesDialog({
 
     const handleSubmit = () => {
         if (!selectedClient || lineItems.length === 0) {
+            return;
+        }
+
+        if (crediarioExceeded) {
             return;
         }
 
@@ -193,6 +206,8 @@ export function SalesDialog({
                           ).toFixed(2),
                       )
                     : undefined,
+            availableCredit:
+                paymentMethod === 'crediario' ? availableCredit : undefined,
         };
         onSubmit(payload);
         onOpenChange(false);
@@ -246,6 +261,8 @@ export function SalesDialog({
                             calendarOpen={calendarOpen}
                             setCalendarOpen={setCalendarOpen}
                             setSaleDate={setSaleDate}
+                            availableCredit={availableCredit}
+                            crediarioExceeded={crediarioExceeded}
                             canSubmit={canSubmit}
                             onSubmit={handleSubmit}
                         />

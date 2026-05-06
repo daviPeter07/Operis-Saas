@@ -8,6 +8,11 @@ function normalizePurchase(purchase: Purchase): Purchase {
     return {
         ...purchase,
         total: toNumber(purchase.total),
+        boleto_term_days:
+            purchase.boleto_term_days === null ||
+            purchase.boleto_term_days === undefined
+                ? purchase.boleto_term_days
+                : toNumber(purchase.boleto_term_days),
         items: purchase.items?.map((item) => ({
             ...item,
             quantity: toNumber(item.quantity),

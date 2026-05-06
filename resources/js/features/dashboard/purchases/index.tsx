@@ -298,9 +298,11 @@ export function PurchasesModule() {
             throw new Error('Adicione ao menos um produto na compra.');
         }
 
-        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' =
+        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' | 'boleto' =
             purchase.paymentMethod === 'money'
                 ? 'cash'
+                : purchase.paymentMethod === 'boleto'
+                  ? 'boleto'
                 : purchase.paymentMethod === 'debit' ||
                     purchase.paymentMethod === 'credit'
                   ? 'card'
@@ -311,8 +313,17 @@ export function PurchasesModule() {
         await createPurchase.mutateAsync({
             supplier_id: supplierId,
             date: purchase.createdAt || new Date().toISOString().slice(0, 10),
-            due_date: purchase.dueDate || undefined,
+            due_date:
+                paymentMethod === 'boleto'
+                    ? undefined
+                    : purchase.dueDate || undefined,
             payment_method: paymentMethod,
+            boleto_term_days:
+                paymentMethod === 'boleto'
+                    ? ((Number(
+                          purchase.boletoTermDays ?? 30,
+                      ) as 30 | 60 | 90 | 120))
+                    : undefined,
             status: 'pending',
             items,
         });

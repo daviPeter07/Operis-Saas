@@ -22,6 +22,7 @@ class PurchaseResource extends ApiResource
             'total' => $this->total,
             'status' => $this->status,
             'payment_method' => $this->payment_method,
+            'boleto_term_days' => $this->boleto_term_days,
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item): array => [
                 'id' => $item->id,
                 'product_id' => $item->product_id,

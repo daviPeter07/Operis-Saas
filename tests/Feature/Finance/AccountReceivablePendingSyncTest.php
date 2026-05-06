@@ -43,7 +43,7 @@ test('account receivables index backfills missing pending sale receivable', func
         'subtotal' => 30,
         'total' => 30,
         'status' => 'pending',
-        'payment_method' => 'installment',
+        'payment_method' => 'card_credit',
         'installments' => 1,
         'first_installment_date' => now()->toDateString(),
     ]);
