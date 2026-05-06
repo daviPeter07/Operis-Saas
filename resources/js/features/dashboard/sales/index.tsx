@@ -1,4 +1,4 @@
-import { FileDown, Printer } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
@@ -15,7 +15,11 @@ import {
     useSales,
     useUpdateSale,
 } from '@/hooks/use-sales';
-import { formatCurrencyBR, formatDateBR, translatePaymentMethod } from '@/lib/format';
+import {
+    formatCurrencyBR,
+    formatDateBR,
+    translatePaymentMethod,
+} from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
 import { saleService } from '@/services/sales';
 import type {
@@ -24,6 +28,7 @@ import type {
     UiProduct,
 } from '@/types/dashboard-entities';
 import type { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
+import { calculateSaleProfit, calculateSalesProfit } from '@/utils/sale-profit';
 import type { Column } from '../generic-table';
 import { GenericTable } from '../generic-table';
 import { SaleDocumentPreviewDialog } from './sale-document-preview-dialog';
@@ -36,6 +41,7 @@ type SaleRow = {
     productNames: string;
     categoryNames: string;
     total: number;
+    profit: number;
     payment_method: string;
     status: string;
     date: string;
@@ -97,7 +103,10 @@ export function SalesModule() {
                                 receivable.customer_id === customer.id &&
                                 receivable.status !== 'received',
                         )
-                        .reduce((sum, receivable) => sum + receivable.amount, 0),
+                        .reduce(
+                            (sum, receivable) => sum + receivable.amount,
+                            0,
+                        ),
                 createdAt: new Date().toISOString().slice(0, 10),
             })),
         [customers, receivables],
@@ -131,11 +140,15 @@ export function SalesModule() {
     );
 
     const productById = useMemo(
-        () => new Map(salesDialogProducts.map((product) => [product.id, product])),
+        () =>
+            new Map(
+                salesDialogProducts.map((product) => [product.id, product]),
+            ),
         [salesDialogProducts],
     );
     const customerNameById = useMemo(
-        () => new Map(customers.map((customer) => [customer.id, customer.name])),
+        () =>
+            new Map(customers.map((customer) => [customer.id, customer.name])),
         [customers],
     );
 
@@ -163,11 +176,12 @@ export function SalesModule() {
                 clientName:
                     sale.customer_id === null
                         ? 'Sem cliente'
-                        : (customerNameById.get(sale.customer_id) ||
-                              `#${sale.customer_id}`),
+                        : customerNameById.get(sale.customer_id) ||
+                          `#${sale.customer_id}`,
                 productNames: productNames.join(', ') || '-',
                 categoryNames: categoryNames.join(', ') || '-',
                 total: sale.total,
+                profit: calculateSaleProfit(sale),
                 status: sale.status,
                 payment_method: sale.payment_method,
                 date: sale.date,
@@ -181,6 +195,11 @@ export function SalesModule() {
         {
             key: 'total',
             header: 'Total',
+            render: (value: unknown) => formatCurrencyBR(Number(value)),
+        },
+        {
+            key: 'profit',
+            header: 'Lucro',
             render: (value: unknown) => formatCurrencyBR(Number(value)),
         },
         {
@@ -203,28 +222,9 @@ export function SalesModule() {
             header: 'Comprovantes',
             render: (_, row: SaleRow) => (
                 <div
-                    className="flex items-center justify-start gap-2"
+                    className="flex h-10 w-full items-center justify-center gap-2"
                     onClick={(event) => event.stopPropagation()}
                 >
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            void saleService
-                                .get(Number(row.id))
-                                .then((sale) => {
-                                    setPreviewMode('digital');
-                                    setPreviewSale(sale);
-                                    setIsPreviewOpen(true);
-                                })
-                                .catch(() => {
-                                    toast.error('Erro ao abrir preview da fatura.');
-                                });
-                        }}
-                    >
-                        <FileDown className="h-4 w-4" />
-                    </Button>
                     <Button
                         type="button"
                         variant="outline"
@@ -238,7 +238,9 @@ export function SalesModule() {
                                     setIsPreviewOpen(true);
                                 })
                                 .catch(() => {
-                                    toast.error('Erro ao abrir preview termico.');
+                                    toast.error(
+                                        'Erro ao abrir preview termico.',
+                                    );
                                 });
                         }}
                     >
@@ -252,18 +254,8 @@ export function SalesModule() {
     const metrics = useMemo(() => {
         const salesCount = rows.length;
         const salesTotal = rows.reduce((sum, sale) => sum + sale.total, 0);
-        const profit = sales.reduce(
-            (sum, sale) =>
-                sum +
-                (sale.items ?? []).reduce(
-                    (itemSum, item) =>
-                        itemSum +
-                        (Number(item.unit_price) - Number(item.unit_cost)) *
-                            Number(item.quantity),
-                    0,
-                ),
-            0,
-        );
+        const activeSales = sales.filter((sale) => sale.status !== 'cancelled');
+        const profit = calculateSalesProfit(activeSales);
         const receivable = rows
             .filter((sale) => sale.status === 'pending')
             .reduce((sum, sale) => sum + sale.total, 0);
@@ -345,7 +337,8 @@ export function SalesModule() {
                 | 'card_credit'
                 | 'crediario',
             status: 'pending',
-            installments: sale.cardType === 'credit' ? sale.installments : undefined,
+            installments:
+                sale.cardType === 'credit' ? sale.installments : undefined,
             first_installment_date:
                 sale.cardType === 'credit'
                     ? sale.firstInstallmentDate
@@ -417,7 +410,8 @@ export function SalesModule() {
                                     sku: product?.sku ?? '',
                                     quantity: item.quantity,
                                     unitPrice: item.unit_price,
-                                    unitCost: item.unit_cost ?? product?.cost ?? 0,
+                                    unitCost:
+                                        item.unit_cost ?? product?.cost ?? 0,
                                     subtotal: item.subtotal,
                                 };
                             }),
@@ -430,7 +424,8 @@ export function SalesModule() {
                             installments: full.installments ?? 1,
                             firstInstallmentDate:
                                 full.first_installment_date ?? undefined,
-                            installmentValue: full.installment_value ?? undefined,
+                            installmentValue:
+                                full.installment_value ?? undefined,
                             availableCredit: salesDialogCustomers.find(
                                 (customer) =>
                                     customer.id === String(full.customer_id),

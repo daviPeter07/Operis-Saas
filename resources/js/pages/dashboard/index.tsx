@@ -24,6 +24,7 @@ import AppLayout from '@/layouts/app-layout';
 import { formatCurrencyBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
+import { calculateSalesProfit } from '@/utils/sale-profit';
 import { todayString } from '@/utils/sales-dialog';
 
 function dateToLabel(date: string): string {
@@ -107,20 +108,7 @@ export default function DashboardPage() {
         [purchases],
     );
     const totalProfit = useMemo(
-        () =>
-            activeSales.reduce(
-                (sum, sale) =>
-                    sum +
-                    (sale.items ?? []).reduce(
-                        (itemSum, item) =>
-                            itemSum +
-                            (toNumber(item.unit_price) -
-                                toNumber(item.unit_cost)) *
-                                toNumber(item.quantity),
-                        0,
-                    ),
-                0,
-            ),
+        () => calculateSalesProfit(activeSales),
         [activeSales],
     );
 
@@ -255,13 +243,7 @@ export default function DashboardPage() {
             .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
         const profitSeries = activeSales.slice(-12).map((sale) => ({
             date: sale.date,
-            value: (sale.items ?? []).reduce(
-                (sum, item) =>
-                    sum +
-                    (toNumber(item.unit_price) - toNumber(item.unit_cost)) *
-                        toNumber(item.quantity),
-                0,
-            ),
+            value: calculateSalesProfit([sale]),
         }));
 
         return [
