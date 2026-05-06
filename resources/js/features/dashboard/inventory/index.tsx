@@ -1,7 +1,8 @@
+import { AlertTriangle, Boxes, DollarSign } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useBrands } from '@/hooks/use-brands';
-import { useCategories } from '@/hooks/use-categories';
+import { useBrands, useCreateBrand } from '@/hooks/use-brands';
+import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import {
     useCreateProduct,
     useDeleteProduct,
@@ -9,6 +10,7 @@ import {
     useUpdateProduct,
 } from '@/hooks/use-products';
 import { formatCurrencyBR, formatQuantityWithUnit } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { ProductDialog } from './product-dialog';
@@ -33,6 +35,8 @@ export function InventoryModule() {
     const { data: brands = [] } = useBrands();
     const { data: categories = [] } = useCategories();
     const createProduct = useCreateProduct();
+    const createBrand = useCreateBrand();
+    const createCategory = useCreateCategory();
     const updateProduct = useUpdateProduct();
     const deleteProduct = useDeleteProduct();
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -162,39 +166,63 @@ export function InventoryModule() {
 
         return [
             {
+                key: 'totalCostValue',
                 label: 'Valor total em custo',
                 value: formatCurrencyBR(totalCostValue),
+                icon: DollarSign,
             },
             {
+                key: 'totalSaleValue',
                 label: 'Valor total em venda',
                 value: formatCurrencyBR(totalSaleValue),
+                icon: DollarSign,
             },
             {
+                key: 'totalStock',
                 label: 'Quantidade total em estoque',
                 value: formatQuantityWithUnit(totalStock),
+                icon: Boxes,
             },
             {
+                key: 'lowStockProducts',
                 label: 'Produtos com baixo estoque',
                 value: String(lowStockProducts),
+                icon: AlertTriangle,
             },
         ];
     }, [rows]);
 
     return (
         <>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {metrics.map((metric) => (
-                    <Card key={metric.label} className="border-border bg-card shadow-sm">
-                        <CardContent className="space-y-2 px-5 py-4">
-                            <p className="text-sm font-medium text-muted-foreground">
-                                {metric.label}
-                            </p>
-                            <p className="text-2xl font-black tracking-tight text-foreground">
-                                {metric.value}
-                            </p>
-                        </CardContent>
-                    </Card>
-                ))}
+            <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {metrics.map((metric) => {
+                    const Icon = metric.icon;
+
+                    return (
+                        <Card
+                            key={metric.key}
+                            className={cn(
+                                'overflow-hidden border-border bg-card shadow-sm',
+                                'transition-shadow hover:shadow-md',
+                            )}
+                        >
+                            <CardContent className="flex items-center justify-between gap-4 px-5 py-4">
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium text-muted-foreground">
+                                        {metric.label}
+                                    </p>
+                                    <p className="text-2xl leading-none font-black tracking-tight text-foreground">
+                                        {metric.value}
+                                    </p>
+                                </div>
+
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/15 text-orange-500 ring-1 ring-orange-500/25">
+                                    <Icon className="h-6 w-6" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
             <GenericTable
                 data={rows}
@@ -210,6 +238,18 @@ export function InventoryModule() {
                         mode="create"
                         brands={brandOptions}
                         categories={categoryOptions}
+                        onCreateBrand={async (name) =>
+                            createBrand.mutateAsync({
+                                name: name.trim(),
+                                status: 'active',
+                            })
+                        }
+                        onCreateCategory={async (name) =>
+                            createCategory.mutateAsync({
+                                name: name.trim(),
+                                status: 'active',
+                            })
+                        }
                         onSubmit={async (data) => {
                             await createProduct.mutateAsync({
                                 name: data.name,
@@ -265,6 +305,18 @@ export function InventoryModule() {
                     }}
                     brands={brandOptions}
                     categories={categoryOptions}
+                    onCreateBrand={async (name) =>
+                        createBrand.mutateAsync({
+                            name: name.trim(),
+                            status: 'active',
+                        })
+                    }
+                    onCreateCategory={async (name) =>
+                        createCategory.mutateAsync({
+                            name: name.trim(),
+                            status: 'active',
+                        })
+                    }
                     onSubmit={async (data) => {
                         await updateProduct.mutateAsync({
                             id: Number(selectedProduct.id),

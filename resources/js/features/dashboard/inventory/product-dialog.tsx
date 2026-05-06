@@ -1,4 +1,4 @@
-import { Barcode, Sparkles } from 'lucide-react';
+import { Barcode, Plus, Sparkles } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { SearchableSelect } from '@/components/searchable-select';
@@ -14,7 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
 import { cn } from '@/lib/utils';
+import type { Brand } from '@/schemas/brand';
+import type { Category } from '@/schemas/category';
 import {
     applyFieldMask,
     generateEan13Code,
@@ -45,6 +48,8 @@ type ProductDialogProps = {
     initialData?: Partial<ProductDialogForm>;
     brands: Array<{ value: string; label: string }>;
     categories: Array<{ value: string; label: string }>;
+    onCreateBrand: (name: string) => Promise<Brand>;
+    onCreateCategory: (name: string) => Promise<Category>;
     onSubmit: (data: {
         id?: number;
         name: string;
@@ -96,12 +101,16 @@ export function ProductDialog({
     initialData,
     brands,
     categories,
+    onCreateBrand,
+    onCreateCategory,
     onSubmit,
 }: ProductDialogProps) {
     const [formData, setFormData] = React.useState<ProductDialogForm>(
         normalizeInitialData(initialData),
     );
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isBrandCreateOpen, setIsBrandCreateOpen] = React.useState(false);
+    const [isCategoryCreateOpen, setIsCategoryCreateOpen] = React.useState(false);
     const barcodeInputRef = React.useRef<HTMLInputElement | null>(null);
 
     React.useEffect(() => {
@@ -197,14 +206,24 @@ export function ProductDialog({
 
                         <div className="grid gap-2">
                             <Label htmlFor="product-category">Categoria</Label>
-                            <SearchableSelect
-                                value={formData.category_id}
-                                onChange={(value) =>
-                                    setField('category_id', value)
-                                }
-                                options={categories}
-                                placeholder="Selecione uma categoria"
-                            />
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                                <SearchableSelect
+                                    value={formData.category_id}
+                                    onChange={(value) =>
+                                        setField('category_id', value)
+                                    }
+                                    options={categories}
+                                    placeholder="Selecione uma categoria"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsCategoryCreateOpen(true)}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Criar
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="grid gap-2">
@@ -247,12 +266,24 @@ export function ProductDialog({
 
                         <div className="grid gap-2">
                             <Label htmlFor="product-brand">Marca</Label>
-                            <SearchableSelect
-                                value={formData.brand_id}
-                                onChange={(value) => setField('brand_id', value)}
-                                options={brands}
-                                placeholder="Selecione uma marca"
-                            />
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                                <SearchableSelect
+                                    value={formData.brand_id}
+                                    onChange={(value) =>
+                                        setField('brand_id', value)
+                                    }
+                                    options={brands}
+                                    placeholder="Selecione uma marca"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsBrandCreateOpen(true)}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Criar
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="grid gap-2 sm:col-span-2">
@@ -449,6 +480,52 @@ export function ProductDialog({
                         </Button>
                     </DialogFooter>
                 </form>
+
+                <QuickCreateDialog<Brand>
+                    open={isBrandCreateOpen}
+                    onOpenChange={setIsBrandCreateOpen}
+                    title="Nova marca"
+                    description="Cadastre uma nova marca sem sair do produto."
+                    submitLabel="Criar marca"
+                    keepOpenAfterSubmit={false}
+                    fields={[
+                        {
+                            name: 'name',
+                            label: 'Nome',
+                            type: 'text',
+                            required: true,
+                            placeholder: 'Digite o nome da marca',
+                        },
+                    ]}
+                    onSubmit={async (data) => onCreateBrand(data.name)}
+                    onCreated={(brand) => {
+                        setField('brand_id', String(brand.id));
+                        toast.success('Marca criada com sucesso.');
+                    }}
+                />
+
+                <QuickCreateDialog<Category>
+                    open={isCategoryCreateOpen}
+                    onOpenChange={setIsCategoryCreateOpen}
+                    title="Nova categoria"
+                    description="Cadastre uma nova categoria sem sair do produto."
+                    submitLabel="Criar categoria"
+                    keepOpenAfterSubmit={false}
+                    fields={[
+                        {
+                            name: 'name',
+                            label: 'Nome',
+                            type: 'text',
+                            required: true,
+                            placeholder: 'Digite o nome da categoria',
+                        },
+                    ]}
+                    onSubmit={async (data) => onCreateCategory(data.name)}
+                    onCreated={(category) => {
+                        setField('category_id', String(category.id));
+                        toast.success('Categoria criada com sucesso.');
+                    }}
+                />
             </DialogContent>
         </Dialog>
     );
