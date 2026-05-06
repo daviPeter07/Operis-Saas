@@ -44,6 +44,17 @@ function resolveCategorySummary(sale: Sale): string {
     return categories.join(', ') || '-';
 }
 
+function buildInvoiceFileName(sale: Sale): string {
+    const customerName = resolveCustomerName(sale)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase();
+
+    return `comprovante-venda-${sale.id}-${customerName || 'cliente'}-${sale.date}.pdf`;
+}
+
 function renderDigitalDocumentMarkup(sale: Sale): string {
     const customerName = resolveCustomerName(sale);
     const installmentSummary = renderInstallmentSummary(sale);
@@ -595,140 +606,186 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
     const installmentSummary = renderInstallmentSummary(sale);
     const items = sale.items ?? [];
     const translatedStatus = translateStatus(sale.status);
+    const paymentStatus = sale.status === 'pending' ? 'Pendente' : 'Liquidado';
+    const pageWidth = 210;
+    const contentLeft = 16;
+    const contentRight = 194;
+    const contentWidth = contentRight - contentLeft;
+    const cardGap = 10;
+    const cardWidth = (contentWidth - cardGap) / 2;
+
+    const drawMutedText = (text: string, x: number, y: number): void => {
+        document.setFont('helvetica', 'normal');
+        document.setFontSize(10);
+        document.setTextColor(113, 113, 122);
+        document.text(text, x, y);
+    };
+
+    const drawStrongText = (
+        text: string,
+        x: number,
+        y: number,
+        options?: Parameters<typeof document.text>[3],
+    ): void => {
+        document.setFont('helvetica', 'bold');
+        document.setFontSize(11);
+        document.setTextColor(17, 24, 39);
+        document.text(text, x, y, options);
+    };
 
     document.setFillColor(244, 244, 245);
-    document.rect(0, 0, 210, 34, 'F');
+    document.rect(0, 0, pageWidth, 34, 'F');
     document.setFont('helvetica', 'bold');
     document.setFontSize(18);
     document.setTextColor(24, 24, 27);
-    document.text('Resumo da venda', 16, 14);
+    document.text('Resumo da venda', contentLeft, 14);
     document.setFontSize(11);
     document.setFont('helvetica', 'normal');
     document.setTextColor(113, 113, 122);
     document.text(
         `Emitido em ${formatDateBR(sale.date)} - Venda #${sale.id}`,
-        16,
+        contentLeft,
         24,
     );
 
-    document.setTextColor(17, 24, 39);
     document.setDrawColor(229, 231, 235);
-    document.roundedRect(16, 44, 84, 34, 3, 3);
-    document.roundedRect(110, 44, 84, 34, 3, 3);
-    document.setFont('helvetica', 'bold');
-    document.setFontSize(9);
-    document.text('Cliente', 20, 53);
-    document.text('Data da venda', 114, 53);
-    document.setFontSize(10);
-    document.setFont('helvetica', 'normal');
-    document.text(customerName, 20, 62);
-    document.text(formatDateBR(sale.date), 114, 62);
-    document.setFont('helvetica', 'bold');
-    document.setFontSize(9);
-    document.text('Valor total', 20, 71);
-    document.text('Situacao', 114, 71);
-    document.setFontSize(12);
-    document.text(formatCurrencyBR(sale.total), 20, 77);
-    document.text(translatedStatus, 114, 77);
+    document.setFillColor(255, 255, 255);
+    document.roundedRect(contentLeft, 44, cardWidth, 36, 3, 3, 'FD');
+    document.roundedRect(
+        contentLeft + cardWidth + cardGap,
+        44,
+        cardWidth,
+        36,
+        3,
+        3,
+        'FD',
+    );
 
-    let y = 92;
+    drawMutedText('Cliente', 20, 53);
+    drawStrongText(customerName, 20, 62);
+    drawMutedText('Valor total', 20, 72);
+    document.setFont('helvetica', 'bold');
+    document.setFontSize(13);
+    document.setTextColor(17, 24, 39);
+    document.text(formatCurrencyBR(sale.total), 20, 78);
+
+    const rightCardX = contentLeft + cardWidth + cardGap + 4;
+    drawMutedText('Data da venda', rightCardX, 53);
+    drawStrongText(formatDateBR(sale.date), rightCardX, 62);
+    drawMutedText('Situacao', rightCardX, 72);
+    document.setFont('helvetica', 'bold');
+    document.setFontSize(13);
+    document.setTextColor(17, 24, 39);
+    document.text(translatedStatus, rightCardX, 78);
+
+    let y = 94;
 
     document.setFont('helvetica', 'bold');
-    document.setFontSize(12);
-    document.text('Produtos', 16, y);
-    y += 7;
-    document.setFont('helvetica', 'normal');
-    document.setFontSize(10);
+    document.setFontSize(14);
+    document.setTextColor(24, 24, 27);
+    document.text('Produtos', contentLeft, y);
+    y += 8;
 
     if (items.length === 0) {
-        document.text('Nenhum item encontrado para esta venda.', 16, y);
+        drawMutedText('Nenhum item encontrado.', contentLeft, y);
         y += 8;
     } else {
         items.forEach((item) => {
             const productLabel = resolveProductLabel(item);
-            document.setFont('helvetica', 'bold');
-            document.text(productLabel, 16, y);
-            document.setFont('helvetica', 'normal');
-            y += 6;
-            document.text(
-                `${item.quantity}x - ${formatCurrencyBR(item.unit_price)} cada`,
-                16,
-                y,
+            const productMeta = `${item.quantity}x ${formatCurrencyBR(item.unit_price)} cada`;
+            const productLines = document.splitTextToSize(
+                productLabel,
+                contentWidth - 36,
             );
+            const metaLines = document.splitTextToSize(
+                productMeta,
+                contentWidth - 36,
+            );
+
+            document.setDrawColor(241, 245, 249);
+            document.line(contentLeft, y - 2, contentRight, y - 2);
+            drawStrongText(productLines, contentLeft, y);
             document.setFont('helvetica', 'bold');
-            document.text(formatCurrencyBR(item.subtotal), 176, y, {
+            document.setFontSize(11);
+            document.setTextColor(17, 24, 39);
+            document.text(formatCurrencyBR(item.subtotal), contentRight, y, {
                 align: 'right',
             });
+            y += productLines.length * 5;
             document.setFont('helvetica', 'normal');
-            y += 9;
+            document.setFontSize(10);
+            document.setTextColor(113, 113, 122);
+            document.text(metaLines, contentLeft, y);
+            y += metaLines.length * 4 + 5;
         });
     }
 
+    y += 6;
+
     document.setFont('helvetica', 'bold');
-    document.setFontSize(12);
-    document.text('Pagamento', 16, y + 4);
-    y += 12;
+    document.setFontSize(14);
+    document.setTextColor(24, 24, 27);
+    document.text('Pagamento', contentLeft, y);
+    document.setFillColor(254, 243, 199);
+    document.setTextColor(180, 83, 9);
+    document.roundedRect(contentRight - 28, y - 5, 28, 8, 4, 4, 'F');
+    document.setFont('helvetica', 'bold');
+    document.setFontSize(9);
+    document.text(paymentStatus, contentRight - 14, y, {
+        align: 'center',
+    });
+    y += 10;
+
     document.setFont('helvetica', 'normal');
     document.setFontSize(10);
-    document.text(translatePaymentMethod(sale.payment_method), 16, y);
-    document.text(
-        sale.status === 'pending' ? 'Pendente' : 'Liquidado',
-        176,
-        y,
-        {
-            align: 'right',
-        },
-    );
-    y += 7;
+    document.setTextColor(17, 24, 39);
+    document.text(translatePaymentMethod(sale.payment_method), contentLeft, y);
+    drawStrongText(formatCurrencyBR(sale.total), contentRight, y, {
+        align: 'right',
+    });
+    y += 8;
 
     if (installmentSummary) {
-        document.text(installmentSummary, 16, y);
+        drawMutedText(installmentSummary, contentLeft, y);
         y += 7;
     }
 
-    document.text(`Categorias: ${resolveCategorySummary(sale)}`, 16, y);
-    y += 10;
+    drawMutedText(
+        `Categorias: ${resolveCategorySummary(sale)}`,
+        contentLeft,
+        y,
+    );
+    y += 12;
 
     document.setFillColor(249, 250, 251);
-    document.rect(0, y, 210, 40, 'F');
-    y += 10;
+    document.rect(0, y, pageWidth, 50, 'F');
+    y += 12;
 
-    document.setFont('helvetica', 'bold');
-    document.setFontSize(12);
-    document.text('Valor original', 16, y);
-    document.text(formatCurrencyBR(sale.subtotal), 176, y, { align: 'right' });
-    y += 8;
-    document.text('Desconto', 16, y);
-    document.text(formatCurrencyBR(0), 176, y, { align: 'right' });
-    y += 8;
-    document.text('Valor final', 16, y);
-    document.text(formatCurrencyBR(sale.total), 176, y, { align: 'right' });
-    y += 8;
-    document.text('Valor pago', 16, y);
-    document.text(
-        formatCurrencyBR(sale.status === 'completed' ? sale.total : 0),
-        176,
-        y,
-        { align: 'right' },
-    );
-    y += 8;
-    document.text('Valor restante', 16, y);
-    document.text(
-        formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total),
-        176,
-        y,
-        { align: 'right' },
-    );
-    y += 18;
+    const summaryRows: Array<[string, string]> = [
+        ['Valor original', formatCurrencyBR(sale.subtotal)],
+        ['Desconto', formatCurrencyBR(0)],
+        ['Valor final', formatCurrencyBR(sale.total)],
+        [
+            'Valor pago',
+            formatCurrencyBR(sale.status === 'completed' ? sale.total : 0),
+        ],
+        [
+            'Valor restante',
+            formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total),
+        ],
+    ];
 
-    document.setFont('helvetica', 'normal');
-    document.setFontSize(10);
-    document.text('Chave Pix para pagamento', 176, y, { align: 'right' });
-    y += 7;
-    document.setFont('helvetica', 'bold');
-    document.text('Telefone: (92) 99114-0294', 176, y, { align: 'right' });
+    summaryRows.forEach(([label, value], index) => {
+        document.setFont('helvetica', 'normal');
+        document.setFontSize(11);
+        document.setTextColor(24, 24, 27);
+        document.text(label, contentLeft, y);
+        document.setFont('helvetica', 'bold');
+        document.text(value, contentRight, y, { align: 'right' });
+        y += index === 1 ? 9 : 8;
+    });
 
-    document.save(`fatura-venda-${sale.id}.pdf`);
+    document.save(buildInvoiceFileName(sale));
 }
 
 export function printSaleThermalReceipt(
