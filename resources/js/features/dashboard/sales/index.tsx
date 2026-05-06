@@ -16,6 +16,7 @@ import {
     useUpdateSale,
 } from '@/hooks/use-sales';
 import { formatCurrencyBR, formatDateBR, translatePaymentMethod } from '@/lib/format';
+import type { Sale } from '@/schemas/sale';
 import { saleService } from '@/services/sales';
 import type {
     UiCustomer,
@@ -23,12 +24,9 @@ import type {
     UiProduct,
 } from '@/types/dashboard-entities';
 import type { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
-import {
-    downloadSaleInvoicePdf,
-    printSaleThermalReceipt,
-} from '@/utils/sale-documents';
 import type { Column } from '../generic-table';
 import { GenericTable } from '../generic-table';
+import { SaleDocumentPreviewDialog } from './sale-document-preview-dialog';
 import { SalesHeader } from './sales-header';
 
 type SaleRow = {
@@ -69,6 +67,11 @@ export function SalesModule() {
     const updateSale = useUpdateSale();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editSale, setEditSale] = useState<DialogSalesRecord | null>(null);
+    const [previewSale, setPreviewSale] = useState<Sale | null>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewMode, setPreviewMode] = useState<'digital' | 'thermal'>(
+        'digital',
+    );
     const [dialogCustomers, setDialogCustomers] = useState<UiCustomer[]>([]);
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
 
@@ -210,9 +213,13 @@ export function SalesModule() {
                         onClick={() => {
                             void saleService
                                 .get(Number(row.id))
-                                .then(downloadSaleInvoicePdf)
+                                .then((sale) => {
+                                    setPreviewMode('digital');
+                                    setPreviewSale(sale);
+                                    setIsPreviewOpen(true);
+                                })
                                 .catch(() => {
-                                    toast.error('Erro ao gerar a fatura da venda.');
+                                    toast.error('Erro ao abrir preview da fatura.');
                                 });
                         }}
                     >
@@ -225,11 +232,13 @@ export function SalesModule() {
                         onClick={() => {
                             void saleService
                                 .get(Number(row.id))
-                                .then(printSaleThermalReceipt)
+                                .then((sale) => {
+                                    setPreviewMode('thermal');
+                                    setPreviewSale(sale);
+                                    setIsPreviewOpen(true);
+                                })
                                 .catch(() => {
-                                    toast.error(
-                                        'Erro ao gerar o comprovante termico.',
-                                    );
+                                    toast.error('Erro ao abrir preview termico.');
                                 });
                         }}
                     >
@@ -577,6 +586,13 @@ export function SalesModule() {
                     sale={editSale}
                 />
             ) : null}
+
+            <SaleDocumentPreviewDialog
+                open={isPreviewOpen}
+                onOpenChange={setIsPreviewOpen}
+                sale={previewSale}
+                initialMode={previewMode}
+            />
         </div>
     );
 }

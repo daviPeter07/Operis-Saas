@@ -7,6 +7,8 @@ import {
 } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
 
+export type ThermalPaperWidth = '58mm' | '80mm';
+
 function resolveCustomerName(sale: Sale): string {
     return sale.customer_name?.trim() || `Cliente #${sale.customer_id}`;
 }
@@ -16,7 +18,9 @@ function renderInstallmentSummary(sale: Sale): string | null {
         return null;
     }
 
-    const amount = formatCurrencyBR(Number(sale.installment_value ?? sale.total));
+    const amount = formatCurrencyBR(
+        Number(sale.installment_value ?? sale.total),
+    );
     const firstDate = sale.first_installment_date
         ? formatDateBR(sale.first_installment_date)
         : formatDateBR(sale.date);
@@ -40,6 +44,375 @@ function resolveCategorySummary(sale: Sale): string {
     return categories.join(', ') || '-';
 }
 
+function renderDigitalDocumentMarkup(sale: Sale): string {
+    const customerName = resolveCustomerName(sale);
+    const installmentSummary = renderInstallmentSummary(sale);
+    const translatedStatus = translateStatus(sale.status);
+    const itemsMarkup = (sale.items ?? [])
+        .map(
+            (item) => `
+                <div class="product-row">
+                    <div class="product-row__content">
+                        <div class="product-row__title">${resolveProductLabel(item)}</div>
+                        <div class="product-row__meta">${item.quantity}x ${formatCurrencyBR(item.unit_price)} cada</div>
+                    </div>
+                    <div class="product-row__total">${formatCurrencyBR(item.subtotal)}</div>
+                </div>
+            `,
+        )
+        .join('');
+
+    return `
+        <section class="digital-sheet">
+            <header class="digital-sheet__hero">
+                <h1>Resumo da venda</h1>
+                <p>Emitido em ${formatDateBR(sale.date)} - Venda #${sale.id}</p>
+            </header>
+
+            <section class="digital-sheet__grid">
+                <div class="info-card">
+                    <span class="info-card__label">Cliente</span>
+                    <strong>${customerName}</strong>
+                    <span class="info-card__label">Valor total</span>
+                    <strong>${formatCurrencyBR(sale.total)}</strong>
+                </div>
+                <div class="info-card">
+                    <span class="info-card__label">Data da venda</span>
+                    <strong>${formatDateBR(sale.date)}</strong>
+                    <span class="info-card__label">Situacao</span>
+                    <strong>${translatedStatus}</strong>
+                </div>
+            </section>
+
+            <section class="digital-block">
+                <h2>Produtos</h2>
+                ${itemsMarkup || '<p class="muted">Nenhum item encontrado.</p>'}
+            </section>
+
+            <section class="digital-block">
+                <div class="block-header">
+                    <h2>Pagamento</h2>
+                    <span class="status-pill">${sale.status === 'pending' ? 'Pendente' : 'Liquidado'}</span>
+                </div>
+                <div class="payment-row">
+                    <span>${translatePaymentMethod(sale.payment_method)}</span>
+                    <strong>${formatCurrencyBR(sale.total)}</strong>
+                </div>
+                ${
+                    installmentSummary
+                        ? `<p class="muted">${installmentSummary}</p>`
+                        : ''
+                }
+                <p class="muted">Categorias: ${resolveCategorySummary(sale)}</p>
+            </section>
+
+            <section class="digital-summary">
+                <div><span>Valor original</span><strong>${formatCurrencyBR(sale.subtotal)}</strong></div>
+                <div><span>Desconto</span><strong>${formatCurrencyBR(0)}</strong></div>
+                <div><span>Valor final</span><strong>${formatCurrencyBR(sale.total)}</strong></div>
+                <div><span>Valor pago</span><strong>${formatCurrencyBR(sale.status === 'completed' ? sale.total : 0)}</strong></div>
+                <div><span>Valor restante</span><strong>${formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total)}</strong></div>
+            </section>
+        </section>
+    `;
+}
+
+function renderThermalDocumentMarkup(
+    sale: Sale,
+    paperWidth: ThermalPaperWidth,
+): string {
+    const customerName = resolveCustomerName(sale);
+    const installmentSummary = renderInstallmentSummary(sale);
+    const translatedStatus = translateStatus(sale.status);
+    const separator =
+        paperWidth === '58mm'
+            ? '======================'
+            : '================================';
+    const itemsMarkup = (sale.items ?? [])
+        .map(
+            (item) => `
+                <div class="line-item">
+                    <div class="line-item__name">${resolveProductLabel(item)}</div>
+                    <div class="line-item__meta">${item.quantity}x ${formatCurrencyBR(item.unit_price)}</div>
+                    <div class="line-item__total">${formatCurrencyBR(item.subtotal)}</div>
+                </div>
+            `,
+        )
+        .join('');
+
+    return `
+        <main class="receipt receipt--${paperWidth}">
+            <section class="header">
+                <div class="muted receipt__separator">${separator}</div>
+                <div class="muted">Data: ${formatDateBR(sale.date)}</div>
+                <div class="muted">Venda: #${sale.id}</div>
+                <div class="muted">Cliente: ${customerName}</div>
+            </section>
+
+            <section class="section">
+                <div class="section-title">Produtos</div>
+                ${itemsMarkup || '<div class="muted">Nenhum item encontrado.</div>'}
+            </section>
+
+            <section class="section">
+                <div class="section-title">Pagamento</div>
+                <div>${translatePaymentMethod(sale.payment_method)}</div>
+                <div class="muted">Status: ${translatedStatus}</div>
+                ${
+                    installmentSummary
+                        ? `<div class="muted">${installmentSummary}</div>`
+                        : ''
+                }
+                <div class="muted">Categorias: ${resolveCategorySummary(sale)}</div>
+            </section>
+
+            <section class="totals">
+                <div>Subtotal: ${formatCurrencyBR(sale.subtotal)}</div>
+                <strong>Total: ${formatCurrencyBR(sale.total)}</strong>
+                <div>Pago: ${formatCurrencyBR(sale.status === 'completed' ? sale.total : 0)}</div>
+                <div>Restante: ${formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total)}</div>
+                <div class="totals__status">STATUS: ${translatedStatus.toUpperCase()}</div>
+            </section>
+
+            <section class="footer">
+                <div class="muted">Obrigado pela preferencia!</div>
+                <div class="muted">${new Date().toLocaleString('pt-BR')}</div>
+            </section>
+        </main>
+    `;
+}
+
+function buildDocumentStyles(paperWidth: ThermalPaperWidth): string {
+    return `
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            color: #111827;
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        .preview-shell {
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+        }
+        .digital-sheet {
+            width: 100%;
+            max-width: 760px;
+            background: #ffffff;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, .12);
+        }
+        .digital-sheet__hero {
+            padding: 20px 24px;
+            background: #f4f4f5;
+        }
+        .digital-sheet__hero h1 {
+            margin: 0 0 8px;
+            font-size: 20px;
+        }
+        .digital-sheet__hero p {
+            margin: 0;
+            color: #71717a;
+            font-size: 14px;
+        }
+        .digital-sheet__grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            padding: 24px;
+        }
+        .info-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            display: grid;
+            gap: 8px;
+        }
+        .info-card__label {
+            color: #71717a;
+            font-size: 13px;
+        }
+        .digital-block {
+            padding: 0 24px 24px;
+        }
+        .digital-block h2 {
+            margin: 0 0 14px;
+            font-size: 16px;
+        }
+        .block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .status-pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #fef3c7;
+            color: #b45309;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .product-row,
+        .payment-row,
+        .digital-summary div {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .product-row__content {
+            min-width: 0;
+        }
+        .product-row__title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .product-row__meta,
+        .muted {
+            color: #71717a;
+            font-size: 13px;
+        }
+        .product-row__total {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .digital-summary {
+            background: #f8fafc;
+            padding: 16px 24px 24px;
+        }
+        .receipt {
+            width: ${paperWidth};
+            max-width: ${paperWidth};
+            margin: 0 auto;
+            padding: 12px;
+            background: #fff;
+            font-family: "Courier New", monospace;
+            color: #111827;
+        }
+        .header,
+        .footer {
+            text-align: center;
+            border-bottom: 1px dashed #9ca3af;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .footer {
+            border-bottom: 0;
+            border-top: 1px dashed #9ca3af;
+            padding-top: 10px;
+            margin-top: 12px;
+            margin-bottom: 0;
+        }
+        .section {
+            margin-bottom: 12px;
+        }
+        .section-title {
+            margin-bottom: 6px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: .06em;
+        }
+        .line-item {
+            padding: 8px 0;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+        .line-item__name {
+            font-size: 13px;
+            font-weight: 700;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+        .line-item__meta,
+        .line-item__total {
+            font-size: 12px;
+        }
+        .receipt__separator {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .receipt--58mm {
+            padding: 10px 8px;
+        }
+        .receipt--58mm .muted,
+        .receipt--58mm .line-item__meta,
+        .receipt--58mm .line-item__total,
+        .receipt--58mm .section,
+        .receipt--58mm .totals {
+            font-size: 11px;
+        }
+        .receipt--58mm .line-item__name {
+            font-size: 12px;
+        }
+        .receipt--58mm .section-title {
+            font-size: 11px;
+        }
+        .totals {
+            border-top: 1px dashed #9ca3af;
+            padding-top: 10px;
+            font-size: 13px;
+        }
+        .totals strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 15px;
+        }
+        .totals__status {
+            margin-top: 12px;
+            text-align: center;
+            font-weight: 700;
+        }
+        @media print {
+            @page {
+                size: ${paperWidth} auto;
+                margin: 0;
+            }
+            body {
+                background: #fff;
+            }
+            .preview-shell {
+                padding: 0;
+            }
+            .digital-sheet,
+            .receipt {
+                box-shadow: none;
+            }
+        }
+    `;
+}
+
+export function buildSaleDocumentPreviewHtml(
+    sale: Sale,
+    mode: 'digital' | 'thermal',
+    paperWidth: ThermalPaperWidth = '58mm',
+): string {
+    const markup =
+        mode === 'digital'
+            ? renderDigitalDocumentMarkup(sale)
+            : renderThermalDocumentMarkup(sale, paperWidth);
+
+    return `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+            <head>
+                <meta charset="utf-8" />
+                <title></title>
+                <style>${buildDocumentStyles(paperWidth)}</style>
+            </head>
+            <body>
+                <div class="preview-shell">
+                    ${markup}
+                </div>
+            </body>
+        </html>
+    `;
+}
+
 export function downloadSaleInvoicePdf(sale: Sale): void {
     const document = new jsPDF({
         orientation: 'portrait',
@@ -60,7 +433,11 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
     document.setFontSize(11);
     document.setFont('helvetica', 'normal');
     document.setTextColor(113, 113, 122);
-    document.text(`Emitido em ${formatDateBR(sale.date)} - Venda #${sale.id}`, 16, 24);
+    document.text(
+        `Emitido em ${formatDateBR(sale.date)} - Venda #${sale.id}`,
+        16,
+        24,
+    );
 
     document.setTextColor(17, 24, 39);
     document.setDrawColor(229, 231, 235);
@@ -107,7 +484,9 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
                 y,
             );
             document.setFont('helvetica', 'bold');
-            document.text(formatCurrencyBR(item.subtotal), 176, y, { align: 'right' });
+            document.text(formatCurrencyBR(item.subtotal), 176, y, {
+                align: 'right',
+            });
             document.setFont('helvetica', 'normal');
             y += 9;
         });
@@ -120,9 +499,14 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
     document.setFont('helvetica', 'normal');
     document.setFontSize(10);
     document.text(translatePaymentMethod(sale.payment_method), 16, y);
-    document.text(sale.status === 'pending' ? 'Pendente' : 'Liquidado', 176, y, {
-        align: 'right',
-    });
+    document.text(
+        sale.status === 'pending' ? 'Pendente' : 'Liquidado',
+        176,
+        y,
+        {
+            align: 'right',
+        },
+    );
     y += 7;
 
     if (installmentSummary) {
@@ -175,147 +559,26 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
     document.save(`fatura-venda-${sale.id}.pdf`);
 }
 
-export function printSaleThermalReceipt(sale: Sale): void {
+export function printSaleThermalReceipt(
+    sale: Sale,
+    paperWidth: ThermalPaperWidth = '58mm',
+): void {
     const receiptWindow = window.open('', '_blank', 'width=420,height=760');
 
     if (!receiptWindow) {
         return;
     }
 
-    const customerName = resolveCustomerName(sale);
-    const installmentSummary = renderInstallmentSummary(sale);
-    const translatedStatus = translateStatus(sale.status);
-    const itemsMarkup = (sale.items ?? [])
-        .map(
-            (item) => `
-                <div class="line-item">
-                    <div class="line-item__name">${resolveProductLabel(item)}</div>
-                    <div class="line-item__meta">${item.quantity}x ${formatCurrencyBR(item.unit_price)}</div>
-                    <div class="line-item__total">${formatCurrencyBR(item.subtotal)}</div>
-                </div>
-            `,
-        )
-        .join('');
-
+    receiptWindow.document.write(
+        buildSaleDocumentPreviewHtml(sale, 'thermal', paperWidth),
+    );
     receiptWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-            <head>
-                <meta charset="utf-8" />
-                <title>Comprovante</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 0;
-                        padding: 16px;
-                        color: #111827;
-                    }
-                    .receipt {
-                        width: 80mm;
-                        margin: 0 auto;
-                    }
-                    .header {
-                        text-align: center;
-                        border-bottom: 1px dashed #9ca3af;
-                        padding-bottom: 12px;
-                        margin-bottom: 12px;
-                    }
-                    .header h1 {
-                        font-size: 24px;
-                        margin: 0 0 6px;
-                        font-family: "Courier New", monospace;
-                    }
-                    .muted {
-                        font-size: 12px;
-                        color: #4b5563;
-                        font-family: "Courier New", monospace;
-                    }
-                    .section {
-                        margin-bottom: 12px;
-                        font-family: "Courier New", monospace;
-                    }
-                    .section-title {
-                        font-size: 12px;
-                        text-transform: uppercase;
-                        letter-spacing: .06em;
-                        color: #6b7280;
-                        margin-bottom: 6px;
-                        font-family: "Courier New", monospace;
-                    }
-                    .line-item {
-                        border-bottom: 1px dashed #e5e7eb;
-                        padding: 8px 0;
-                        font-family: "Courier New", monospace;
-                    }
-                    .line-item__name {
-                        font-size: 13px;
-                        font-weight: 700;
-                    }
-                    .line-item__meta,
-                    .line-item__total {
-                        font-size: 12px;
-                    }
-                    .totals {
-                        border-top: 1px dashed #9ca3af;
-                        padding-top: 10px;
-                        margin-top: 12px;
-                        font-size: 13px;
-                        font-family: "Courier New", monospace;
-                    }
-                    .totals strong {
-                        display: block;
-                        margin-top: 4px;
-                        font-size: 15px;
-                    }
-                    @media print {
-                        body {
-                            padding: 0;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                <main class="receipt">
-                    <section class="header">
-                        <div class="muted">================================</div>
-                        <h1>COMPROVANTE DE VENDA</h1>
-                        <div class="muted">Data: ${formatDateBR(sale.date)}</div>
-                        <div class="muted">Venda: #${sale.id}</div>
-                        <div class="muted">Cliente: ${customerName}</div>
-                    </section>
-
-                    <section class="section">
-                        <div class="section-title">Produtos</div>
-                        ${itemsMarkup || '<div class="muted">Nenhum item encontrado.</div>'}
-                    </section>
-
-                    <section class="section">
-                        <div class="section-title">Pagamento</div>
-                        <div>${translatePaymentMethod(sale.payment_method)}</div>
-                        <div class="muted">Status: ${translatedStatus}</div>
-                        ${installmentSummary ? `<div class="muted">${installmentSummary}</div>` : ''}
-                        <div class="muted">Pendente - ${sale.first_installment_date ? formatDateBR(sale.first_installment_date) : formatDateBR(sale.date)}</div>
-                    </section>
-
-                    <section class="totals">
-                        <div>Subtotal: ${formatCurrencyBR(sale.subtotal)}</div>
-                        <strong>Total: ${formatCurrencyBR(sale.total)}</strong>
-                        <div>Pago: ${formatCurrencyBR(sale.status === 'completed' ? sale.total : 0)}</div>
-                        <div>Restante: ${formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total)}</div>
-                        <div style="margin-top: 12px; text-align:center; font-weight:700;">STATUS: ${translatedStatus.toUpperCase()}</div>
-                    </section>
-                    <section class="header" style="border-bottom:0;border-top:1px dashed #9ca3af;padding-top:12px;margin-top:16px;">
-                        <div class="muted">Obrigado pela preferencia!</div>
-                        <div class="muted">${new Date().toLocaleString('pt-BR')}</div>
-                    </section>
-                </main>
-                <script>
-                    window.addEventListener('load', function () {
-                        window.print();
-                    });
-                </script>
-            </body>
-        </html>
+        <script>
+            window.addEventListener('load', function () {
+                document.title = '';
+                window.print();
+            });
+        </script>
     `);
     receiptWindow.document.close();
 }
