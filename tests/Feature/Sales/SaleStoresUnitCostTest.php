@@ -67,4 +67,9 @@ test('sale items persist the current product cost', function () {
         'product_id' => $product->id,
         'unit_cost' => 11.5,
     ]);
+
+    $this->actingAs($user)->getJson('/api/sales')
+        ->assertOk()
+        ->assertJsonPath('data.0.items.0.product_name', 'Produto')
+        ->assertJsonPath('data.0.items.0.category_name', 'Cat');
 });

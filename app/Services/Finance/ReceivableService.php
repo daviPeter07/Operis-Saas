@@ -41,7 +41,7 @@ class ReceivableService
                 'installment_number' => $i + 1,
                 'entry_date' => $sale->date,
                 'due_date' => $dueDate->format('Y-m-d'),
-                'item' => null,
+                'item' => $this->resolveSaleItemSummary($sale),
                 'description' => null,
                 'amount' => $installmentAmount,
                 'status' => FinancialStatus::Pending->value,
@@ -96,5 +96,26 @@ class ReceivableService
     public function resolveCrediarioDueDate(string $date, int $termDays): string
     {
         return Carbon::parse($date)->addDays(max(1, $termDays))->toDateString();
+    }
+
+    private function resolveSaleItemSummary(Sale $sale): ?string
+    {
+        $items = $sale->items()
+            ->with('product')
+            ->get()
+            ->pluck('product.name')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        if ($items->count() === 1) {
+            return $items->first();
+        }
+
+        return sprintf('%s +%d item(ns)', $items->first(), $items->count() - 1);
     }
 }

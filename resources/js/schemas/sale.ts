@@ -1,6 +1,8 @@
 export interface SaleItem {
     id: number;
     product_id: number;
+    product_name?: string | null;
+    category_name?: string | null;
     quantity: number;
     unit_price: number;
     unit_cost: number;

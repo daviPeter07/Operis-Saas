@@ -12,7 +12,7 @@ class SaleRepository implements SaleRepositoryInterface
     {
         return Sale::query()
             ->forCompany($companyId)
-            ->with(['customer', 'items'])
+            ->with(['customer', 'items.product.category'])
             ->latest()
             ->paginate();
     }

@@ -61,6 +61,7 @@ test('account receivables index backfills missing pending sale receivable', func
     $this->actingAs($user)->getJson('/api/account-receivables')
         ->assertOk()
         ->assertJsonPath('data.0.sale_id', $sale->id)
+        ->assertJsonPath('data.0.item', 'Produto')
         ->assertJsonPath('data.0.status', 'pending');
 
     $this->assertDatabaseCount('account_receivables', 1);

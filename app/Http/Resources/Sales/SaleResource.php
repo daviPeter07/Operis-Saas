@@ -29,6 +29,8 @@ class SaleResource extends ApiResource
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item): array => [
                 'id' => $item->id,
                 'product_id' => $item->product_id,
+                'product_name' => $item->product?->name,
+                'category_name' => $item->product?->category?->name,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'unit_cost' => $item->unit_cost,

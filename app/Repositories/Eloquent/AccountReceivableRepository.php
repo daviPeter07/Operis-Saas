@@ -14,6 +14,7 @@ class AccountReceivableRepository implements AccountReceivableRepositoryInterfac
     {
         return AccountReceivable::query()
             ->forCompany($companyId)
+            ->with(['customer', 'sale.items.product.category'])
             ->where('status', '!=', 'cancelled')
             ->latest()
             ->paginate();

@@ -35,6 +35,8 @@ type SaleRow = {
     id: string;
     customer_id: number | null;
     clientName: string;
+    productNames: string;
+    categoryNames: string;
     total: number;
     payment_method: string;
     status: string;
@@ -136,22 +138,43 @@ export function SalesModule() {
 
     const rows: SaleRow[] = sales
         .filter((sale) => sale.status !== 'cancelled')
-        .map((sale) => ({
-            id: String(sale.id),
-            customer_id: sale.customer_id,
-            clientName:
-                sale.customer_id === null
-                    ? 'Sem cliente'
-                    : (customerNameById.get(sale.customer_id) ||
-                          `#${sale.customer_id}`),
-            total: sale.total,
-            status: sale.status,
-            payment_method: sale.payment_method,
-            date: sale.date,
-        }));
+        .map((sale) => {
+            const productNames = Array.from(
+                new Set(
+                    (sale.items ?? [])
+                        .map((item) => item.product_name?.trim())
+                        .filter((value): value is string => Boolean(value)),
+                ),
+            );
+            const categoryNames = Array.from(
+                new Set(
+                    (sale.items ?? [])
+                        .map((item) => item.category_name?.trim())
+                        .filter((value): value is string => Boolean(value)),
+                ),
+            );
+
+            return {
+                id: String(sale.id),
+                customer_id: sale.customer_id,
+                clientName:
+                    sale.customer_id === null
+                        ? 'Sem cliente'
+                        : (customerNameById.get(sale.customer_id) ||
+                              `#${sale.customer_id}`),
+                productNames: productNames.join(', ') || '-',
+                categoryNames: categoryNames.join(', ') || '-',
+                total: sale.total,
+                status: sale.status,
+                payment_method: sale.payment_method,
+                date: sale.date,
+            };
+        });
 
     const columns: Column<SaleRow>[] = [
         { key: 'clientName', header: 'Cliente' },
+        { key: 'productNames', header: 'Produto' },
+        { key: 'categoryNames', header: 'Categoria' },
         {
             key: 'total',
             header: 'Total',
@@ -177,7 +200,7 @@ export function SalesModule() {
             header: 'Comprovantes',
             render: (_, row: SaleRow) => (
                 <div
-                    className="flex items-center justify-end gap-2"
+                    className="flex items-center justify-start gap-2"
                     onClick={(event) => event.stopPropagation()}
                 >
                     <Button
@@ -379,7 +402,9 @@ export function SalesModule() {
                                     id: crypto.randomUUID(),
                                     productId: String(item.product_id),
                                     productName:
-                                        product?.name ?? `#${item.product_id}`,
+                                        item.product_name ??
+                                        product?.name ??
+                                        `#${item.product_id}`,
                                     sku: product?.sku ?? '',
                                     quantity: item.quantity,
                                     unitPrice: item.unit_price,

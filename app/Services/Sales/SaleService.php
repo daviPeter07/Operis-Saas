@@ -61,7 +61,7 @@ class SaleService
                 $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
             }
 
-            return $sale->refresh()->load(['items', 'customer']);
+            return $sale->refresh()->load(['items.product.category', 'customer']);
         });
     }
 
@@ -104,7 +104,7 @@ class SaleService
                 $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
             }
 
-            return $sale->refresh()->load(['items', 'customer']);
+            return $sale->refresh()->load(['items.product.category', 'customer']);
         });
     }
 
