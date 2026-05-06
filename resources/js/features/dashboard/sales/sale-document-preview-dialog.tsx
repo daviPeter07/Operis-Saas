@@ -1,5 +1,6 @@
 import { Download, Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,12 +11,15 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+    isWebSerialSupported,
+    printSaleThermalReceiptWithWebSerial,
+} from '@/lib/web-serial-printer';
 import type { Sale } from '@/schemas/sale';
 import type { ThermalPaperWidth } from '@/utils/sale-documents';
 import {
     buildSaleDocumentPreviewHtml,
     downloadSaleInvoicePdf,
-    printSaleThermalReceipt,
 } from '@/utils/sale-documents';
 
 type PreviewMode = 'digital' | 'thermal';
@@ -173,12 +177,31 @@ export function SaleDocumentPreviewDialog({
                             ) : (
                                 <Button
                                     type="button"
-                                    onClick={() => {
+                                    onClick={async () => {
                                         if (sale) {
-                                            printSaleThermalReceipt(
-                                                sale,
-                                                paperWidth,
-                                            );
+                                            try {
+                                                if (!isWebSerialSupported()) {
+                                                    throw new Error(
+                                                        'Seu navegador nao suporta Web Serial. Use Chrome ou Edge para imprimir na termica sem software auxiliar.',
+                                                    );
+                                                }
+
+                                                await printSaleThermalReceiptWithWebSerial(
+                                                    sale,
+                                                    paperWidth,
+                                                );
+
+                                                toast.success(
+                                                    'Comprovante enviado para a impressora.',
+                                                );
+                                            } catch (error) {
+                                                const message =
+                                                    error instanceof Error
+                                                        ? error.message
+                                                        : 'Falha ao imprimir na termica.';
+
+                                                toast.error(message);
+                                            }
                                         }
                                     }}
                                 >

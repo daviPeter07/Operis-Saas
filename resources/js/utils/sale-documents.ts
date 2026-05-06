@@ -132,9 +132,18 @@ function renderThermalDocumentMarkup(
         .map(
             (item) => `
                 <div class="line-item">
-                    <div class="line-item__name">${resolveProductLabel(item)}</div>
-                    <div class="line-item__meta">${item.quantity}x ${formatCurrencyBR(item.unit_price)}</div>
-                    <div class="line-item__total">${formatCurrencyBR(item.subtotal)}</div>
+                    <div class="line-item__header">
+                        <div class="line-item__name">${resolveProductLabel(item)}</div>
+                        <div class="line-item__price">${formatCurrencyBR(item.subtotal)}</div>
+                    </div>
+                    <div class="line-item__details">
+                        <span>${item.quantity}x ${formatCurrencyBR(item.unit_price)}</span>
+                        ${
+                            item.category_name
+                                ? `<span>${item.category_name}</span>`
+                                : '<span>-</span>'
+                        }
+                    </div>
                 </div>
             `,
         )
@@ -143,10 +152,16 @@ function renderThermalDocumentMarkup(
     return `
         <main class="receipt receipt--${paperWidth}">
             <section class="header">
-                <div class="muted receipt__separator">${separator}</div>
-                <div class="muted">Data: ${formatDateBR(sale.date)}</div>
-                <div class="muted">Venda: #${sale.id}</div>
-                <div class="muted">Cliente: ${customerName}</div>
+                <div class="receipt-subtitle">Comprovante de venda</div>
+                <div class="receipt__separator">${separator}</div>
+                <div class="receipt-meta">
+                    <div class="receipt-row receipt-row--inline">Data: ${formatDateBR(sale.date)}</div>
+                    <div class="receipt-row receipt-row--inline">Venda: #${sale.id}</div>
+                </div>
+                <div class="receipt-customer">
+                    <div class="receipt-customer__label">Cliente</div>
+                    <div class="receipt-customer__name">${customerName}</div>
+                </div>
             </section>
 
             <section class="section">
@@ -155,34 +170,52 @@ function renderThermalDocumentMarkup(
             </section>
 
             <section class="section">
+                <div class="receipt__separator">${separator}</div>
                 <div class="section-title">Pagamento</div>
-                <div>${translatePaymentMethod(sale.payment_method)}</div>
-                <div class="muted">Status: ${translatedStatus}</div>
+                <div class="receipt-row">${translatePaymentMethod(sale.payment_method)}</div>
+                <div class="receipt-row">Status: ${translatedStatus}</div>
                 ${
                     installmentSummary
-                        ? `<div class="muted">${installmentSummary}</div>`
+                        ? `<div class="receipt-row">${installmentSummary}</div>`
                         : ''
                 }
-                <div class="muted">Categorias: ${resolveCategorySummary(sale)}</div>
+                <div class="receipt-row">Categorias: ${resolveCategorySummary(sale)}</div>
             </section>
 
             <section class="totals">
-                <div>Subtotal: ${formatCurrencyBR(sale.subtotal)}</div>
-                <strong>Total: ${formatCurrencyBR(sale.total)}</strong>
-                <div>Pago: ${formatCurrencyBR(sale.status === 'completed' ? sale.total : 0)}</div>
-                <div>Restante: ${formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total)}</div>
-                <div class="totals__status">STATUS: ${translatedStatus.toUpperCase()}</div>
+                <div class="receipt__separator">${separator}</div>
+                <div class="section-title">Resumo</div>
+                <div class="receipt-summary-row">
+                    <span>Subtotal</span>
+                    <strong>${formatCurrencyBR(sale.subtotal)}</strong>
+                </div>
+                <div class="receipt-summary-row receipt-summary-row--highlight">
+                    <span>Total</span>
+                    <strong>${formatCurrencyBR(sale.total)}</strong>
+                </div>
+                <div class="receipt-summary-row">
+                    <span>Pago</span>
+                    <strong>${formatCurrencyBR(sale.status === 'completed' ? sale.total : 0)}</strong>
+                </div>
+                <div class="receipt-summary-row">
+                    <span>Restante</span>
+                    <strong>${formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total)}</strong>
+                </div>
+                <div class="totals__status">Status final: ${translatedStatus}</div>
             </section>
 
             <section class="footer">
-                <div class="muted">Obrigado pela preferencia!</div>
-                <div class="muted">${new Date().toLocaleString('pt-BR')}</div>
+                <div class="receipt__separator">${separator}</div>
+                <div class="receipt-footer__thanks">Obrigado pela preferencia</div>
+                <div class="receipt-row">Emitido em ${new Date().toLocaleString('pt-BR')}</div>
             </section>
         </main>
     `;
 }
 
 function buildDocumentStyles(paperWidth: ThermalPaperWidth): string {
+    const thermalContentWidth = paperWidth === '58mm' ? '48mm' : '72mm';
+
     return `
         * { box-sizing: border-box; }
         body {
@@ -286,59 +319,158 @@ function buildDocumentStyles(paperWidth: ThermalPaperWidth): string {
             padding: 16px 24px 24px;
         }
         .receipt {
-            width: ${paperWidth};
-            max-width: ${paperWidth};
+            width: ${thermalContentWidth};
+            max-width: ${thermalContentWidth};
             margin: 0 auto;
-            padding: 12px;
+            padding: 10px 8px;
             background: #fff;
             font-family: "Courier New", monospace;
-            color: #111827;
+            color: #000;
+            font-weight: 700;
+            line-height: 1.45;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            border: 1px solid #e5e7eb;
         }
         .header,
         .footer {
-            text-align: center;
-            border-bottom: 1px dashed #9ca3af;
-            padding-bottom: 10px;
+            text-align: left;
+            padding-bottom: 0;
             margin-bottom: 10px;
         }
+        .receipt-subtitle {
+            text-align: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #444;
+            margin-bottom: 4px;
+        }
         .footer {
-            border-bottom: 0;
-            border-top: 1px dashed #9ca3af;
-            padding-top: 10px;
-            margin-top: 12px;
+            padding-top: 0;
+            margin-top: 10px;
             margin-bottom: 0;
         }
+        .receipt-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        .receipt-row {
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 3px;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .receipt-row--inline {
+            white-space: nowrap;
+            word-break: normal;
+            overflow-wrap: normal;
+            margin-bottom: 0;
+        }
+        .receipt-row--strong {
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .receipt__separator {
+            color: #000;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            margin: 6px 0 8px;
+            text-align: center;
+        }
+        .receipt-customer {
+            margin-top: 6px;
+            text-align: left;
+            padding: 6px 0 0;
+        }
+        .receipt-customer__label {
+            color: #000;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: 3px;
+        }
+        .receipt-customer__name {
+            color: #000;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.3;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            margin-bottom: 2px;
+        }
         .section {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         .section-title {
             margin-bottom: 6px;
             font-size: 12px;
             text-transform: uppercase;
-            color: #6b7280;
+            color: #000;
             letter-spacing: .06em;
+            font-weight: 700;
+            text-align: center;
         }
         .line-item {
-            padding: 8px 0;
-            border-bottom: 1px dashed #e5e7eb;
+            padding: 8px 0 6px;
+            border-bottom: 1px dashed #d4d4d8;
+        }
+        .line-item:last-child {
+            border-bottom: 0;
+        }
+        .line-item__header,
+        .receipt-summary-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
         }
         .line-item__name {
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 800;
             white-space: normal;
             overflow-wrap: anywhere;
+            margin-bottom: 2px;
+            flex: 1;
+        }
+        .line-item__price {
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .line-item__details {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 11px;
+            color: #52525b;
+            margin-top: 2px;
         }
         .line-item__meta,
         .line-item__total {
             font-size: 12px;
-        }
-        .receipt__separator {
-            white-space: nowrap;
-            overflow: hidden;
+            color: #000;
+            font-weight: 700;
+            margin-bottom: 2px;
         }
         .receipt--58mm {
-            padding: 10px 8px;
+            padding: 8px 6px;
         }
+        .receipt--58mm .receipt-meta {
+            gap: 6px;
+        }
+        .receipt--58mm .receipt-row,
         .receipt--58mm .muted,
         .receipt--58mm .line-item__meta,
         .receipt--58mm .line-item__total,
@@ -346,25 +478,64 @@ function buildDocumentStyles(paperWidth: ThermalPaperWidth): string {
         .receipt--58mm .totals {
             font-size: 11px;
         }
+        .receipt--58mm .receipt-row--inline {
+            font-size: 10px;
+        }
         .receipt--58mm .line-item__name {
             font-size: 12px;
         }
         .receipt--58mm .section-title {
             font-size: 11px;
         }
+        .receipt--58mm .receipt-customer__label {
+            font-size: 10px;
+        }
+        .receipt--58mm .receipt__separator {
+            font-size: 10px;
+        }
+        .receipt--58mm .receipt-customer__name {
+            font-size: 12px;
+        }
+        .receipt--58mm .receipt-brand {
+            font-size: 14px;
+        }
+        .receipt--58mm .receipt-subtitle,
+        .receipt--58mm .line-item__details {
+            font-size: 10px;
+        }
         .totals {
-            border-top: 1px dashed #9ca3af;
-            padding-top: 10px;
+            padding-top: 0;
             font-size: 13px;
         }
-        .totals strong {
-            display: block;
-            margin-top: 4px;
-            font-size: 15px;
+        .receipt-summary-row {
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .receipt-summary-row strong {
+            white-space: nowrap;
+        }
+        .receipt-summary-row--highlight {
+            font-size: 13px;
+            padding: 4px 0;
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            margin: 6px 0;
         }
         .totals__status {
-            margin-top: 12px;
+            margin-top: 8px;
+            text-align: left;
+            font-weight: 800;
+            color: #000;
+        }
+        .receipt-footer__thanks {
             text-align: center;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .receipt .muted,
+        .receipt .header .muted,
+        .receipt .footer .muted {
+            color: #000;
             font-weight: 700;
         }
         @media print {
@@ -381,6 +552,7 @@ function buildDocumentStyles(paperWidth: ThermalPaperWidth): string {
             .digital-sheet,
             .receipt {
                 box-shadow: none;
+                border: 0;
             }
         }
     `;
