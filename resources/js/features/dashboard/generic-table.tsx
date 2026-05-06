@@ -1,3 +1,10 @@
+import {
+    ArrowDown,
+    ArrowDownAZ,
+    ArrowUp,
+    ArrowUpZA,
+    ArrowUpDown,
+} from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { CreateModal } from '@/components/table/create-modal';
@@ -12,14 +19,17 @@ import { DeleteConfirmDialog } from '@/components/table/delete-confirm-dialog';
 import { EditDialog } from '@/components/table/edit-dialog';
 import type { EditField } from '@/components/table/edit-dialog';
 import { TableEmptyState } from '@/components/table/empty-state';
-import { FilterSidebar } from '@/components/table/filter-sidebar';
 import { ImportDialog } from '@/components/table/import-dialog';
 import { Pagination, PaginationInfo } from '@/components/table/pagination';
 import { TableActions } from '@/components/table/table-actions';
 import { TableToolbar } from '@/components/table/table-toolbar';
 import { ViewDialog } from '@/components/table/view-dialog';
 import type { ViewField } from '@/components/table/view-dialog';
-import type { FilterOperator } from '@/hooks/use-table-filters';
+import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
+import type {
+    CustomRange,
+    Period,
+} from '@/features/dashboard/overview/period-filter';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
@@ -36,12 +46,11 @@ export interface GenericTableProps<T extends { id: string }> {
     columns: Column<T>[];
     title: string;
     searchPlaceholder?: string;
-    filterFields?: {
+    sortableColumns?: Array<{
         key: string;
-        label: string;
-        type: 'text' | 'number' | 'select' | 'date';
-        options?: { value: string; label: string }[];
-    }[];
+        type: 'text' | 'date';
+    }>;
+    dateFilterKey?: string;
     onView?: (row: T) => void;
     onEdit?: (row: T) => void;
     onDelete?: (row: T) => void | Promise<void>;
@@ -68,7 +77,9 @@ export function GenericTable<T extends { id: string }>({
     data,
     columns,
     title,
-    filterFields = [],
+    searchPlaceholder,
+    sortableColumns = [],
+    dateFilterKey,
     onView,
     onEdit,
     onDelete,
@@ -86,11 +97,6 @@ export function GenericTable<T extends { id: string }>({
 }: GenericTableProps<T>) {
     const [internalIsCreateOpen, setInternalIsCreateOpen] =
         React.useState(false);
-
-    const [isFilterOpen, setIsFilterOpen] = React.useState(false);
-    const [filterOperators, setFilterOperators] = React.useState<
-        Record<string, FilterOperator>
-    >({});
     const [isImportOpen, setIsImportOpen] = React.useState(false);
     const [selectedRow, setSelectedRow] = React.useState<T | null>(null);
     const [isViewOpen, setIsViewOpen] = React.useState(false);
@@ -101,91 +107,43 @@ export function GenericTable<T extends { id: string }>({
         search,
         currentPage,
         perPage,
-        filters,
         sortBy,
         sortDirection,
+        period,
+        customRange,
         setSearch,
         setCurrentPage,
-        setFilters,
         setSortBy,
         setSortDirection,
+        setPeriod,
+        setCustomRange,
         updateUrl,
     } = useTableQueryState(routeUrl);
-
-    const allFilterFields = React.useMemo(() => {
-        const configuredFields = new Map(
-            filterFields.map((field) => [field.key, field]),
-        );
-
-        return columns.map((column) => {
-            const configuredField = configuredFields.get(column.key);
-
-            if (configuredField) {
-                return configuredField;
-            }
-
-            if (typeof column.header !== 'string') {
-                return null;
-            }
-
-            const values = data
-                .map((item) => (item as Record<string, unknown>)[column.key])
-                .filter((value) => value !== null && value !== undefined);
-            const firstValue = values[0];
-
-            if (typeof firstValue === 'number') {
-                return {
-                    key: column.key,
-                    label: String(column.header),
-                    type: 'number' as const,
-                };
-            }
-
-            const uniqueOptions = Array.from(
-                new Set(values.map((value) => String(value))),
-            ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-            if (uniqueOptions.length > 0 && uniqueOptions.length <= 30) {
-                return {
-                    key: column.key,
-                    label: String(column.header),
-                    type: 'select' as const,
-                    options: uniqueOptions.map((value) => ({
-                        value,
-                        label: value,
-                    })),
-                };
-            }
-
-            return {
-                key: column.key,
-                label: String(column.header),
-                type: 'text' as const,
-            };
-        });
-    }, [columns, data, filterFields]);
-
-    const activeFilterFields = React.useMemo(
-        () =>
-            allFilterFields.filter(
-                (
-                    field,
-                ): field is {
-                    key: string;
-                    label: string;
-                    type: 'text' | 'number' | 'select' | 'date';
-                    options?: { value: string; label: string }[];
-                } => field !== null,
-            ),
-        [allFilterFields],
-    );
 
     const resolvedCreateFields = React.useMemo<FormField[]>(() => {
         if (createFields && createFields.length > 0) {
             return createFields;
         }
 
-        return activeFilterFields
+        return columns
+            .map((column) => {
+                if (typeof column.header !== 'string') {
+                    return null;
+                }
+
+                return {
+                    key: column.key,
+                    label: column.header,
+                };
+            })
+            .filter(
+                (
+                    field,
+                ): field is {
+                    key: string;
+                    label: string;
+                } => field !== null,
+            )
             .filter(
                 (field) =>
                     !['id', 'createdAt', 'updatedAt', 'deletedAt'].includes(
@@ -198,16 +156,14 @@ export function GenericTable<T extends { id: string }>({
                     ? 'email'
                     : key.includes('password')
                       ? 'password'
-                      : field.type;
+                      : key.includes('date')
+                        ? 'date'
+                        : 'text';
 
                 const placeholder =
-                    inferredType === 'select'
-                        ? `Selecione ${field.label.toLowerCase()}`
-                        : inferredType === 'number'
-                          ? 'Digite um valor'
-                          : inferredType === 'date'
-                            ? 'Selecione uma data'
-                            : `Digite ${field.label.toLowerCase()}`;
+                    inferredType === 'date'
+                        ? 'Selecione uma data'
+                        : `Digite ${field.label.toLowerCase()}`;
 
                 return {
                     name: field.key,
@@ -215,11 +171,9 @@ export function GenericTable<T extends { id: string }>({
                     type: inferredType,
                     placeholder,
                     required: true,
-                    options:
-                        inferredType === 'select' ? field.options : undefined,
                 };
             });
-    }, [activeFilterFields, createFields]);
+    }, [columns, createFields]);
 
     const handleSearchChange = (value: string) => {
         setSearch(value);
@@ -231,17 +185,39 @@ export function GenericTable<T extends { id: string }>({
         updateUrl({ page });
     };
 
-    const handleClearFilters = () => {
-        setFilters({});
-        setFilterOperators({});
-        updateUrl({ filters: {}, page: 1 });
-    };
-
     const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
         setSortBy(field);
         setSortDirection(direction);
         updateUrl({ sortBy: field, sortDirection: direction, page: 1 });
     };
+
+    const handlePeriodChange = (
+        nextPeriod: Period,
+        nextCustomRange?: CustomRange,
+    ) => {
+        setPeriod(nextPeriod);
+
+        const nextRange =
+            nextPeriod === 'custom' && nextCustomRange
+                ? nextCustomRange
+                : customRange;
+
+        if (nextPeriod === 'custom' && nextCustomRange) {
+            setCustomRange(nextCustomRange);
+        }
+
+        updateUrl({
+            period: nextPeriod,
+            dateFrom: nextPeriod === 'custom' ? nextRange.from : undefined,
+            dateTo: nextPeriod === 'custom' ? nextRange.to : undefined,
+            page: 1,
+        });
+    };
+
+    const sortableMap = React.useMemo(
+        () => new Map(sortableColumns.map((column) => [column.key, column])),
+        [sortableColumns],
+    );
 
     const filteredData = React.useMemo(() => {
         let result = data;
@@ -255,63 +231,30 @@ export function GenericTable<T extends { id: string }>({
             );
         }
 
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value && value !== '') {
-                const field = activeFilterFields.find(
-                    (item) => item.key === key,
-                );
-                const operator =
-                    filterOperators[key] ||
-                    (field?.type === 'text' ? 'contains' : 'eq');
+        if (dateFilterKey && period !== 'all') {
+            const range = resolveDateRange(period, customRange);
 
+            if (range) {
                 result = result.filter((item) => {
-                    const rawValue = (item as Record<string, unknown>)[key];
+                    const rawValue = (item as Record<string, unknown>)[
+                        dateFilterKey
+                    ];
+                    const normalizedDate = normalizeDateString(rawValue);
 
-                    if (operator === 'contains') {
-                        return String(rawValue)
-                            .toLowerCase()
-                            .includes(value.toLowerCase());
+                    if (!normalizedDate) {
+                        return false;
                     }
 
-                    if (operator === 'neq') {
-                        return String(rawValue) !== value;
-                    }
-
-                    if (['gt', 'gte', 'lt', 'lte'].includes(operator)) {
-                        const numericValue = Number(rawValue);
-                        const numericFilter = Number(value);
-
-                        if (
-                            Number.isNaN(numericValue) ||
-                            Number.isNaN(numericFilter)
-                        ) {
-                            return false;
-                        }
-
-                        if (operator === 'gt') {
-                            return numericValue > numericFilter;
-                        }
-
-                        if (operator === 'gte') {
-                            return numericValue >= numericFilter;
-                        }
-
-                        if (operator === 'lt') {
-                            return numericValue < numericFilter;
-                        }
-
-                        if (operator === 'lte') {
-                            return numericValue <= numericFilter;
-                        }
-                    }
-
-                    return String(rawValue) === value;
+                    return (
+                        normalizedDate >= range.from &&
+                        normalizedDate <= range.to
+                    );
                 });
             }
-        });
+        }
 
         return result;
-    }, [activeFilterFields, data, filterOperators, filters, search]);
+    }, [customRange, data, dateFilterKey, period, search]);
 
     const sortedData = React.useMemo(() => {
         if (!sortBy) {
@@ -321,6 +264,15 @@ export function GenericTable<T extends { id: string }>({
         return [...filteredData].sort((first, second) => {
             const firstValue = (first as Record<string, unknown>)[sortBy];
             const secondValue = (second as Record<string, unknown>)[sortBy];
+            const sortableColumn = sortableMap.get(sortBy);
+
+            if (sortableColumn?.type === 'date') {
+                const firstDate = normalizeDateString(firstValue) || '';
+                const secondDate = normalizeDateString(secondValue) || '';
+                const comparison = firstDate.localeCompare(secondDate);
+
+                return sortDirection === 'asc' ? comparison : comparison * -1;
+            }
 
             const comparison =
                 typeof firstValue === 'number' &&
@@ -334,7 +286,7 @@ export function GenericTable<T extends { id: string }>({
 
             return sortDirection === 'asc' ? comparison : comparison * -1;
         });
-    }, [filteredData, sortBy, sortDirection]);
+    }, [filteredData, sortBy, sortDirection, sortableMap]);
 
     const paginatedData = React.useMemo(() => {
         const start = (currentPage - 1) * perPage;
@@ -374,8 +326,10 @@ export function GenericTable<T extends { id: string }>({
     const handleEdit = (row: T) => {
         if (onEdit) {
             onEdit(row);
+
             return;
         }
+
         setSelectedRow(row);
         setIsEditOpen(true);
     };
@@ -431,10 +385,54 @@ export function GenericTable<T extends { id: string }>({
         }
     };
 
+    const renderSortHeader = (column: Column<T>) => {
+        const sortableColumn = sortableMap.get(column.key);
+
+        if (!sortableColumn || typeof column.header !== 'string') {
+            return column.header;
+        }
+
+        const isActive = sortBy === column.key;
+        const nextDirection =
+            sortableColumn.type === 'date'
+                ? isActive && sortDirection === 'desc'
+                    ? 'asc'
+                    : 'desc'
+                : isActive && sortDirection === 'asc'
+                  ? 'desc'
+                  : 'asc';
+
+        return (
+            <button
+                type="button"
+                onClick={() => handleSortChange(column.key, nextDirection)}
+                className="inline-flex items-center gap-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+                <span>{column.header}</span>
+                {isActive ? (
+                    sortableColumn.type === 'date' ? (
+                        sortDirection === 'asc' ? (
+                            <ArrowUp className="h-4 w-4" />
+                        ) : (
+                            <ArrowDown className="h-4 w-4" />
+                        )
+                    ) : sortDirection === 'asc' ? (
+                        <ArrowDownAZ className="h-4 w-4" />
+                    ) : (
+                        <ArrowUpZA className="h-4 w-4" />
+                    )
+                ) : (
+                    <ArrowUpDown className="h-4 w-4 opacity-60" />
+                )}
+            </button>
+        );
+    };
+
     return (
         <div className={cn('space-y-4', className)}>
             <TableToolbar
                 searchValue={search}
+                searchPlaceholder={searchPlaceholder}
                 onSearchChange={handleSearchChange}
                 showCreate={!!onCreate || !!createDialog}
                 onCreate={() => handleCreateOpenChange(true)}
@@ -442,8 +440,15 @@ export function GenericTable<T extends { id: string }>({
                 onImport={() => setIsImportOpen(true)}
                 onExportExcel={handleExportExcel}
                 onExportPDF={handleExportPDF}
-                onOpenFilters={() => setIsFilterOpen(true)}
-                hasActiveFilters={Object.values(filters).some((v) => v !== '')}
+                extraContent={
+                    dateFilterKey ? (
+                        <PeriodFilter
+                            period={period}
+                            customRange={customRange}
+                            onPeriodChange={handlePeriodChange}
+                        />
+                    ) : null
+                }
             />
 
             <div className="hidden md:block">
@@ -455,7 +460,7 @@ export function GenericTable<T extends { id: string }>({
                         <tr>
                             {columns.map((col: Column<T>) => (
                                 <DataTableHeadCell key={col.key}>
-                                    {col.header}
+                                    {renderSortHeader(col)}
                                 </DataTableHeadCell>
                             ))}
                             {showActions && (
@@ -601,54 +606,6 @@ export function GenericTable<T extends { id: string }>({
                 />
             </div>
 
-            <FilterSidebar
-                open={isFilterOpen}
-                onOpenChange={setIsFilterOpen}
-                fields={activeFilterFields}
-                activeFilters={Object.entries(filters).map(
-                    ([field, value]) => ({
-                        id: field,
-                        field,
-                        operator: filterOperators[field] || 'eq',
-                        value,
-                    }),
-                )}
-                onAddFilter={(filter) => {
-                    const nextFilters = {
-                        ...filters,
-                        [filter.field]: String(filter.value),
-                    };
-
-                    setFilters(nextFilters);
-                    setFilterOperators((prev) => ({
-                        ...prev,
-                        [filter.field]: filter.operator,
-                    }));
-                    updateUrl({ filters: nextFilters, page: 1 });
-                }}
-                onRemoveFilter={(id) => {
-                    const nextFilters = { ...filters };
-                    delete nextFilters[id];
-
-                    setFilters(nextFilters);
-                    setFilterOperators((prev) => {
-                        const nextOperators = { ...prev };
-                        delete nextOperators[id];
-
-                        return nextOperators;
-                    });
-                    updateUrl({ filters: nextFilters, page: 1 });
-                }}
-                onClearFilters={handleClearFilters}
-                sortFields={columns.map((column) => ({
-                    key: column.key,
-                    label: String(column.header),
-                }))}
-                sortBy={sortBy}
-                sortDirection={sortDirection}
-                onSortChange={handleSortChange}
-            />
-
             <ImportDialog
                 open={isImportOpen}
                 onOpenChange={setIsImportOpen}
@@ -778,4 +735,58 @@ export function GenericTable<T extends { id: string }>({
             )}
         </div>
     );
+}
+
+function normalizeDateString(value: unknown): string | null {
+    if (typeof value !== 'string' || !value) {
+        return null;
+    }
+
+    const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+
+    return match ? match[1] : null;
+}
+
+function formatDateOffset(days: number): string {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - days);
+
+    return date.toISOString().slice(0, 10);
+}
+
+function resolveDateRange(
+    period: Period,
+    customRange: CustomRange,
+): { from: string; to: string } | null {
+    const today = formatDateOffset(0);
+
+    if (period === '7d') {
+        return { from: formatDateOffset(6), to: today };
+    }
+
+    if (period === '30d') {
+        return { from: formatDateOffset(29), to: today };
+    }
+
+    if (period === '90d') {
+        return { from: formatDateOffset(89), to: today };
+    }
+
+    if (period === '12m') {
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        date.setMonth(date.getMonth() - 12);
+
+        return { from: date.toISOString().slice(0, 10), to: today };
+    }
+
+    if (period === 'custom' && customRange.from && customRange.to) {
+        return {
+            from: customRange.from,
+            to: customRange.to,
+        };
+    }
+
+    return null;
 }

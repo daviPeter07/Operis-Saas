@@ -27,6 +27,8 @@ type ProductRow = {
     min_stock: number;
     category_id: number;
     brand_id: number | null;
+    categoryName: string;
+    brandName: string;
     status: 'active' | 'inactive';
 };
 
@@ -44,23 +46,6 @@ export function InventoryModule() {
     const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(
         null,
     );
-
-    const rows: ProductRow[] = products
-        .filter((product) => product.status === 'active')
-        .map((product) => ({
-            id: String(product.id),
-            name: product.name,
-            sku: product.sku,
-            barcode: product.barcode,
-            description: product.description,
-            cost: product.cost,
-            sale_price: product.sale_price,
-            stock: product.stock,
-            min_stock: product.min_stock,
-            category_id: product.category_id,
-            brand_id: product.brand_id,
-            status: product.status,
-        }));
 
     const categoryNameById = useMemo(
         () =>
@@ -91,6 +76,25 @@ export function InventoryModule() {
         [categories],
     );
 
+    const rows: ProductRow[] = products
+        .filter((product) => product.status === 'active')
+        .map((product) => ({
+            id: String(product.id),
+            name: product.name,
+            sku: product.sku,
+            barcode: product.barcode,
+            description: product.description,
+            cost: product.cost,
+            sale_price: product.sale_price,
+            stock: product.stock,
+            min_stock: product.min_stock,
+            category_id: product.category_id,
+            brand_id: product.brand_id,
+            categoryName: categoryNameById.get(product.category_id) || '-',
+            brandName: brandNameById.get(product.brand_id ?? 0) || 'Sem marca',
+            status: product.status,
+        }));
+
     const columns: Column<ProductRow>[] = [
         { key: 'name', header: 'Produto' },
         { key: 'sku', header: 'Código' },
@@ -100,16 +104,12 @@ export function InventoryModule() {
             render: (value: unknown) => String(value || 'Sem código'),
         },
         {
-            key: 'brand_id',
+            key: 'brandName',
             header: 'Marca',
-            render: (value: unknown) =>
-                brandNameById.get(Number(value)) || 'Sem marca',
         },
         {
-            key: 'category_id',
+            key: 'categoryName',
             header: 'Categoria',
-            render: (value: unknown) =>
-                categoryNameById.get(Number(value)) || '-',
         },
         {
             key: 'cost',
@@ -130,22 +130,6 @@ export function InventoryModule() {
             key: 'min_stock',
             header: 'Estoque mínimo',
             render: (value: unknown) => formatQuantityWithUnit(Number(value)),
-        },
-    ];
-
-    const filterFields = [
-        { key: 'name', label: 'Produto', type: 'text' as const },
-        {
-            key: 'category_id',
-            label: 'Categoria',
-            type: 'select' as const,
-            options: categoryOptions,
-        },
-        {
-            key: 'brand_id',
-            label: 'Marca',
-            type: 'select' as const,
-            options: brandOptions,
         },
     ];
 
@@ -228,7 +212,12 @@ export function InventoryModule() {
                 data={rows}
                 columns={columns}
                 title="Estoque"
-                filterFields={filterFields}
+                sortableColumns={[
+                    { key: 'name', type: 'text' },
+                    { key: 'sku', type: 'text' },
+                    { key: 'brandName', type: 'text' },
+                    { key: 'categoryName', type: 'text' },
+                ]}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 createDialog={({ open, onOpenChange }) => (

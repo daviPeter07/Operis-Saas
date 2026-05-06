@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import { PAYMENT_METHOD_OPTIONS } from '@/constants/payment-methods';
-import { STATUS_OPTIONS } from '@/constants/status';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
 import { useProducts } from '@/hooks/use-products';
@@ -181,21 +179,6 @@ export function PurchasesModule() {
         },
     ];
 
-    const filterFields = [
-        {
-            key: 'status',
-            label: 'Status',
-            type: 'select' as const,
-            options: [...STATUS_OPTIONS],
-        },
-        {
-            key: 'payment_method',
-            label: 'Método de Pagamento',
-            type: 'select' as const,
-            options: [...PAYMENT_METHOD_OPTIONS],
-        },
-    ];
-
     const handleCreateSupplier = async (
         supplier: UiSupplier,
     ): Promise<UiSupplier> => {
@@ -337,7 +320,13 @@ export function PurchasesModule() {
             data={rows}
             columns={columns}
             title="Compras"
-            filterFields={filterFields}
+            sortableColumns={[
+                { key: 'productNames', type: 'text' },
+                { key: 'categoryNames', type: 'text' },
+                { key: 'brandNames', type: 'text' },
+                { key: 'date', type: 'date' },
+            ]}
+            dateFilterKey="date"
             onDelete={async (row) => {
                 await deletePurchase.mutateAsync(Number(row.id));
             }}

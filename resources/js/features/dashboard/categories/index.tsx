@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useUpdateCategory } from '@/hooks/use-update-category';
-import { CategoryEditDialog } from './category-edit-dialog';
+import { StatusBadge } from '@/components/common/status-badge';
+import { ENTITY_STATUS_OPTIONS } from '@/constants/entity-status';
 import {
     useCategories,
     useCreateCategory,
     useDeleteCategory,
 } from '@/hooks/use-categories';
-import { ENTITY_STATUS_OPTIONS } from '@/constants/entity-status';
-import { StatusBadge } from '@/components/common/status-badge';
+import { useUpdateCategory } from '@/hooks/use-update-category';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
+import { CategoryEditDialog } from './category-edit-dialog';
 
 export type CategoryRow = {
     id: string;
@@ -73,6 +73,7 @@ export function CategoriesModule() {
                 data={rows}
                 columns={columns}
                 title="Categorias"
+                sortableColumns={[{ key: 'name', type: 'text' }]}
                 onCreate={handleCreate}
                 onEdit={(row) => {
                     setEditingCategory(row);
@@ -105,7 +106,10 @@ export function CategoriesModule() {
                 onOpenChange={setIsEditOpen}
                 category={editingCategory}
                 onSubmit={async ({ name, status }) => {
-                    if (!editingCategory) return;
+                    if (!editingCategory) {
+                        return;
+                    }
+
                     await updateCategory.mutateAsync({
                         id: Number(editingCategory.id),
                         name,

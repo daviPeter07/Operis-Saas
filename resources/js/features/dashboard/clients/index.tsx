@@ -117,6 +117,11 @@ export function ClientsModule() {
                 columns={columns}
                 title="Clientes"
                 routeUrl="/dashboard/clients"
+                sortableColumns={[
+                    { key: 'name', type: 'text' },
+                    { key: 'email', type: 'text' },
+                    { key: 'document', type: 'text' },
+                ]}
                 onCreate={handleCreate as (data: ClientRow) => Promise<void>}
                 onDelete={async (row) => {
                     await deleteCustomer.mutateAsync(Number(row.id));

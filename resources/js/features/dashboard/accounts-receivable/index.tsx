@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import { STATUS_OPTIONS } from '@/constants/status';
 import {
     useAccountReceivables,
     useCreateManualAccountReceivable,
@@ -23,6 +22,7 @@ type ReceivableRow = {
     amount: number;
     due_date: string | null;
     entry_date: string | null;
+    date: string | null;
     status: string;
     received_at: string | null;
 };
@@ -52,6 +52,7 @@ export function AccountsReceivableModule() {
         amount: receivable.amount,
         due_date: receivable.due_date,
         entry_date: receivable.entry_date,
+        date: receivable.entry_date || receivable.due_date,
         status: receivable.status,
         received_at: receivable.received_at,
     }));
@@ -139,21 +140,10 @@ export function AccountsReceivableModule() {
             render: (val: unknown) => <StatusBadge status={String(val)} />,
         },
         {
-            key: 'entry_date',
+            key: 'date',
             header: 'Data',
-            render: (_, row: ReceivableRow) =>
-                row.entry_date || row.due_date
-                    ? formatDateBR(String(row.entry_date || row.due_date))
-                    : '-',
-        },
-    ];
-
-    const filterFields = [
-        {
-            key: 'status',
-            label: 'Status',
-            type: 'select' as const,
-            options: [...STATUS_OPTIONS],
+            render: (value: unknown) =>
+                value ? formatDateBR(String(value)) : '-',
         },
     ];
 
@@ -178,8 +168,13 @@ export function AccountsReceivableModule() {
             <GenericTable
                 data={rows}
                 columns={columns}
-                filterFields={filterFields}
                 title="Contas a Receber"
+                sortableColumns={[
+                    { key: 'customer_name', type: 'text' },
+                    { key: 'item', type: 'text' },
+                    { key: 'date', type: 'date' },
+                ]}
+                dateFilterKey="date"
                 clickableRow
                 onRowClick={(row) => handleSelectOne(row.id, !selectedIds.has(row.id))}
                 isCreateOpen={isCreateOpen}

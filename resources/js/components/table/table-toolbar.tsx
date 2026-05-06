@@ -1,4 +1,4 @@
-import { Search, Filter, Plus, Upload, Download, X } from 'lucide-react';
+import { Search, Plus, Upload, Download, X } from 'lucide-react';
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 export interface TableToolbarProps {
     searchValue?: string;
+    searchPlaceholder?: string;
     onSearchChange?: (value: string) => void;
     onOpenFilters?: () => void;
     hasActiveFilters?: boolean;
@@ -29,13 +30,13 @@ export interface TableToolbarProps {
     showImport?: boolean;
     showExport?: boolean;
     className?: string;
+    extraContent?: React.ReactNode;
 }
 
 export function TableToolbar({
     searchValue = '',
+    searchPlaceholder = 'Buscar...',
     onSearchChange,
-    onOpenFilters,
-    hasActiveFilters = false,
     onCreate,
     onImport,
     onExportExcel,
@@ -44,6 +45,7 @@ export function TableToolbar({
     showImport = true,
     showExport = true,
     className,
+    extraContent,
 }: TableToolbarProps) {
     const [localSearch, setLocalSearch] = React.useState(searchValue);
 
@@ -97,7 +99,7 @@ export function TableToolbar({
                 <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Buscar..."
+                    placeholder={searchPlaceholder}
                     value={localSearch}
                     onChange={handleSearchChange}
                     className="pr-9 pl-9"
@@ -115,20 +117,7 @@ export function TableToolbar({
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2 sm:ml-auto sm:flex-nowrap">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onOpenFilters}
-                    className="gap-2"
-                >
-                    <Filter className="h-4 w-4" />
-                    Filtros
-                    {hasActiveFilters && (
-                        <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                            !
-                        </span>
-                    )}
-                </Button>
+                {extraContent}
 
                 {showCreate && onCreate && (
                     <Button size="sm" onClick={onCreate} className="gap-2">

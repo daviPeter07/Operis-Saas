@@ -2,7 +2,6 @@ import { router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import { STATUS_OPTIONS } from '@/constants/status';
 import {
     useAccountPayables,
     useSettleAccountPayable,
@@ -199,15 +198,6 @@ export function AccountsPayableModule() {
         },
     ];
 
-    const filterFields = [
-        {
-            key: 'status',
-            label: 'Status',
-            type: 'select' as const,
-            options: [...STATUS_OPTIONS],
-        },
-    ];
-
     return (
         <div className="space-y-4">
             {totalSelected > 0 && (
@@ -231,8 +221,9 @@ export function AccountsPayableModule() {
             <GenericTable
                 data={rows}
                 columns={columns}
-                filterFields={filterFields}
                 title="Contas a Pagar"
+                sortableColumns={[{ key: 'due_date', type: 'date' }]}
+                dateFilterKey="due_date"
                 clickableRow
                 onRowClick={(row) =>
                     handleSelectOne(row.id, !selectedIds.has(row.id))

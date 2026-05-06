@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { Button } from '@/components/ui/button';
-import { STATUS_OPTIONS } from '@/constants/status';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
@@ -268,28 +267,6 @@ export function SalesModule() {
         };
     }, [rows, sales]);
 
-    const filterFields = [
-        { key: 'clientName', label: 'Cliente', type: 'text' as const },
-        {
-            key: 'status',
-            label: 'Status',
-            type: 'select' as const,
-            options: [...STATUS_OPTIONS],
-        },
-        {
-            key: 'payment_method',
-            label: 'Metodo de Pagamento',
-            type: 'select' as const,
-            options: [
-                { value: 'cash', label: 'Dinheiro' },
-                { value: 'pix', label: 'PIX' },
-                { value: 'card_debit', label: 'Cartao debito' },
-                { value: 'card_credit', label: 'Cartao credito' },
-                { value: 'crediario', label: 'Crediario' },
-            ],
-        },
-    ];
-
     const handleCreateFromSalesDialog = async (sale: DialogSalesRecord) => {
         const customerId = Number(sale.clientId);
         const items = sale.lineItems
@@ -372,7 +349,13 @@ export function SalesModule() {
                 data={rows}
                 columns={columns}
                 title="Vendas"
-                filterFields={filterFields}
+                sortableColumns={[
+                    { key: 'clientName', type: 'text' },
+                    { key: 'productNames', type: 'text' },
+                    { key: 'categoryNames', type: 'text' },
+                    { key: 'date', type: 'date' },
+                ]}
+                dateFilterKey="date"
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 onDelete={async (row) => {

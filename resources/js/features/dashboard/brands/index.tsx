@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { StatusBadge } from '@/components/common/status-badge';
 import { ENTITY_STATUS_OPTIONS } from '@/constants/entity-status';
-import { useUpdateBrand } from '@/hooks/use-update-brand';
-import { BrandEditDialog } from './brand-edit-dialog';
 import { useBrands, useCreateBrand, useDeleteBrand } from '@/hooks/use-brands';
+import { useUpdateBrand } from '@/hooks/use-update-brand';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { StatusBadge } from '@/components/common/status-badge';
+import { BrandEditDialog } from './brand-edit-dialog';
 
 export type BrandRow = {
     id: string;
@@ -67,6 +67,7 @@ export function BrandsModule() {
                 data={rows}
                 columns={columns}
                 title="Marcas"
+                sortableColumns={[{ key: 'name', type: 'text' }]}
                 onCreate={handleCreate}
                 onEdit={(row) => {
                     setEditingBrand(row);
@@ -99,7 +100,10 @@ export function BrandsModule() {
                 onOpenChange={setIsEditOpen}
                 brand={editingBrand}
                 onSubmit={async ({ name, status }) => {
-                    if (!editingBrand) return;
+                    if (!editingBrand) {
+                        return;
+                    }
+
                     await updateBrand.mutateAsync({
                         id: Number(editingBrand.id),
                         name,

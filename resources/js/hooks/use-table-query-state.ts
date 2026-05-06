@@ -1,31 +1,48 @@
 import { router } from '@inertiajs/react';
 import * as React from 'react';
+import type {
+    CustomRange,
+    Period,
+} from '@/features/dashboard/overview/period-filter';
 
 export type TableQueryState = {
     search: string;
     currentPage: number;
     perPage: number;
-    filters: Record<string, string>;
     sortBy: string;
     sortDirection: 'asc' | 'desc';
+    period: Period;
+    customRange: CustomRange;
     setSearch: React.Dispatch<React.SetStateAction<string>>;
     setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
     setPerPage: React.Dispatch<React.SetStateAction<number>>;
-    setFilters: React.Dispatch<React.SetStateAction<Record<string, string>>>;
     setSortBy: React.Dispatch<React.SetStateAction<string>>;
     setSortDirection: React.Dispatch<React.SetStateAction<'asc' | 'desc'>>;
+    setPeriod: React.Dispatch<React.SetStateAction<Period>>;
+    setCustomRange: React.Dispatch<React.SetStateAction<CustomRange>>;
     updateUrl: (opts: {
         page?: number;
         perPage?: number;
         search?: string;
         sortBy?: string;
         sortDirection?: 'asc' | 'desc';
-        filters?: Record<string, string>;
+        period?: Period;
+        dateFrom?: string;
+        dateTo?: string;
     }) => void;
 };
 
 function parseQueryParams(search: string) {
     const params = new URLSearchParams(search);
+    const periodParam = params.get('period');
+    const period: Period =
+        periodParam === '7d' ||
+        periodParam === '30d' ||
+        periodParam === '90d' ||
+        periodParam === '12m' ||
+        periodParam === 'custom'
+            ? periodParam
+            : 'all';
 
     return {
         page: parseInt(params.get('page') || '1'),
@@ -35,18 +52,11 @@ function parseQueryParams(search: string) {
         sortDirection: (params.get('sort_direction') || 'asc') as
             | 'asc'
             | 'desc',
-        filters: Object.fromEntries(
-            Array.from(params.entries()).filter(
-                ([key]) =>
-                    ![
-                        'page',
-                        'per_page',
-                        'search',
-                        'sort_by',
-                        'sort_direction',
-                    ].includes(key),
-            ),
-        ),
+        period,
+        customRange: {
+            from: params.get('date_from') || '',
+            to: params.get('date_to') || '',
+        },
     };
 }
 
@@ -56,7 +66,9 @@ function buildQueryString(params: {
     search?: string;
     sortBy?: string;
     sortDirection?: 'asc' | 'desc';
-    filters?: Record<string, string>;
+    period?: Period;
+    dateFrom?: string;
+    dateTo?: string;
 }) {
     const paramsObj = new URLSearchParams();
 
@@ -80,11 +92,14 @@ function buildQueryString(params: {
         paramsObj.set('sort_direction', params.sortDirection || 'asc');
     }
 
-    Object.entries(params.filters || {}).forEach(([key, value]) => {
-        if (value) {
-            paramsObj.set(key, value);
-        }
-    });
+    if (params.period && params.period !== 'all') {
+        paramsObj.set('period', params.period);
+    }
+
+    if (params.period === 'custom' && params.dateFrom && params.dateTo) {
+        paramsObj.set('date_from', params.dateFrom);
+        paramsObj.set('date_to', params.dateTo);
+    }
 
     return paramsObj.toString();
 }
@@ -93,11 +108,15 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
     const [search, setSearch] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
     const [perPage, setPerPage] = React.useState(25);
-    const [filters, setFilters] = React.useState<Record<string, string>>({});
     const [sortBy, setSortBy] = React.useState('');
     const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>(
         'asc',
     );
+    const [period, setPeriod] = React.useState<Period>('all');
+    const [customRange, setCustomRange] = React.useState<CustomRange>({
+        from: '',
+        to: '',
+    });
 
     React.useEffect(() => {
         if (typeof window === 'undefined') {
@@ -112,11 +131,13 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
 
         setPerPage(params.perPage);
 
-        setFilters(params.filters);
-
         setSortBy(params.sortBy);
 
         setSortDirection(params.sortDirection === 'desc' ? 'desc' : 'asc');
+
+        setPeriod(params.period);
+
+        setCustomRange(params.customRange);
     }, []);
 
     const updateUrl = React.useCallback(
@@ -126,14 +147,18 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
             search?: string;
             sortBy?: string;
             sortDirection?: 'asc' | 'desc';
-            filters?: Record<string, string>;
+            period?: Period;
+            dateFrom?: string;
+            dateTo?: string;
         }) => {
             const newPage = opts.page ?? currentPage;
             const newPerPage = opts.perPage ?? perPage;
             const newSearch = opts.search ?? search;
             const newSortBy = opts.sortBy ?? sortBy;
             const newSortDirection = opts.sortDirection ?? sortDirection;
-            const newFilters = opts.filters ?? filters;
+            const newPeriod = opts.period ?? period;
+            const newDateFrom = opts.dateFrom ?? customRange.from;
+            const newDateTo = opts.dateTo ?? customRange.to;
 
             const queryString = buildQueryString({
                 page: newPage,
@@ -141,7 +166,9 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
                 search: newSearch,
                 sortBy: newSortBy,
                 sortDirection: newSortDirection,
-                filters: newFilters,
+                period: newPeriod,
+                dateFrom: newDateFrom,
+                dateTo: newDateTo,
             });
 
             const currentPath =
@@ -153,8 +180,10 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
         },
         [
             currentPage,
-            filters,
+            customRange.from,
+            customRange.to,
             perPage,
+            period,
             routeUrl,
             search,
             sortBy,
@@ -166,15 +195,17 @@ export function useTableQueryState(routeUrl?: string): TableQueryState {
         search,
         currentPage,
         perPage,
-        filters,
         sortBy,
         sortDirection,
+        period,
+        customRange,
         setSearch,
         setCurrentPage,
         setPerPage,
-        setFilters,
         setSortBy,
         setSortDirection,
+        setPeriod,
+        setCustomRange,
         updateUrl,
     };
 }

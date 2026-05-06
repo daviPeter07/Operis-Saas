@@ -73,6 +73,11 @@ export function SuppliersModule() {
             data={rows}
             columns={columns}
             title="Fornecedores"
+            sortableColumns={[
+                { key: 'name', type: 'text' },
+                { key: 'email', type: 'text' },
+                { key: 'document', type: 'text' },
+            ]}
             onCreate={handleCreate as (data: SupplierRow) => Promise<void>}
             onDelete={async (row) => {
                 await deleteSupplier.mutateAsync(Number(row.id));
