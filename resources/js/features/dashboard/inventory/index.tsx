@@ -33,9 +33,10 @@ type ProductRow = {
 };
 
 export function InventoryModule() {
-    const { data: products = [] } = useProducts();
-    const { data: brands = [] } = useBrands();
-    const { data: categories = [] } = useCategories();
+    const { data: products = [], isPending: isProductsPending } = useProducts();
+    const { data: brands = [], isPending: isBrandsPending } = useBrands();
+    const { data: categories = [], isPending: isCategoriesPending } =
+        useCategories();
     const createProduct = useCreateProduct();
     const createBrand = useCreateBrand();
     const createCategory = useCreateCategory();
@@ -212,6 +213,9 @@ export function InventoryModule() {
                 data={rows}
                 columns={columns}
                 title="Estoque"
+                loading={
+                    isProductsPending || isBrandsPending || isCategoriesPending
+                }
                 sortableColumns={[
                     { key: 'name', type: 'text' },
                     { key: 'sku', type: 'text' },

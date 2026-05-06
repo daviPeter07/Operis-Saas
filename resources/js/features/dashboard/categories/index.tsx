@@ -19,7 +19,8 @@ export type CategoryRow = {
 };
 
 export function CategoriesModule() {
-    const { data: categories = [] } = useCategories();
+    const { data: categories = [], isPending: isCategoriesPending } =
+        useCategories();
     const createCategory = useCreateCategory();
     const deleteCategory = useDeleteCategory();
     const updateCategory = useUpdateCategory();
@@ -73,6 +74,7 @@ export function CategoriesModule() {
                 data={rows}
                 columns={columns}
                 title="Categorias"
+                loading={isCategoriesPending}
                 sortableColumns={[{ key: 'name', type: 'text' }]}
                 onCreate={handleCreate}
                 onEdit={(row) => {

@@ -28,8 +28,10 @@ type ReceivableRow = {
 };
 
 export function AccountsReceivableModule() {
-    const { data: receivables = [] } = useAccountReceivables();
-    const { data: customers = [] } = useCustomers();
+    const { data: receivables = [], isPending: isReceivablesPending } =
+        useAccountReceivables();
+    const { data: customers = [], isPending: isCustomersPending } =
+        useCustomers();
     const createManualReceivable = useCreateManualAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -169,6 +171,7 @@ export function AccountsReceivableModule() {
                 data={rows}
                 columns={columns}
                 title="Contas a Receber"
+                loading={isReceivablesPending || isCustomersPending}
                 sortableColumns={[
                     { key: 'customer_name', type: 'text' },
                     { key: 'item', type: 'text' },

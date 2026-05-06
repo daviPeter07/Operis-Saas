@@ -65,12 +65,15 @@ export function SalesModule() {
         }
     }, []);
 
-    const { data: sales = [] } = useSales();
+    const { data: sales = [], isPending: isSalesPending } = useSales();
     const { data: receivables = [] } = useAccountReceivables();
-    const { data: brands = [] } = useBrands();
-    const { data: categories = [] } = useCategories();
-    const { data: customers = [] } = useCustomers();
-    const { data: products = [] } = useProducts();
+    const { data: brands = [], isPending: isBrandsPending } = useBrands();
+    const { data: categories = [], isPending: isCategoriesPending } =
+        useCategories();
+    const { data: customers = [], isPending: isCustomersPending } =
+        useCustomers();
+    const { data: products = [], isPending: isProductsPending } =
+        useProducts();
     const createBrand = useCreateBrand();
     const createCategory = useCreateCategory();
     const createProduct = useCreateProduct();
@@ -389,6 +392,13 @@ export function SalesModule() {
                 data={rows}
                 columns={columns}
                 title="Vendas"
+                loading={
+                    isSalesPending ||
+                    isCustomersPending ||
+                    isProductsPending ||
+                    isBrandsPending ||
+                    isCategoriesPending
+                }
                 sortableColumns={[
                     { key: 'clientName', type: 'text' },
                     { key: 'productNames', type: 'text' },

@@ -25,7 +25,8 @@ type PayableRow = {
 };
 
 export function AccountsPayableModule() {
-    const { data: payables = [] } = useAccountPayables();
+    const { data: payables = [], isPending: isPayablesPending } =
+        useAccountPayables();
     const { data: suppliers = [] } = useSuppliers();
     const createSupplier = useCreateSupplier();
     const settleAccountPayable = useSettleAccountPayable();
@@ -222,6 +223,7 @@ export function AccountsPayableModule() {
                 data={rows}
                 columns={columns}
                 title="Contas a Pagar"
+                loading={isPayablesPending}
                 sortableColumns={[{ key: 'due_date', type: 'date' }]}
                 dateFilterKey="due_date"
                 clickableRow

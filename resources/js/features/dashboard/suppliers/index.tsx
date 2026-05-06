@@ -20,7 +20,8 @@ type SupplierRow = {
 };
 
 export function SuppliersModule() {
-    const { data: suppliers = [] } = useSuppliers();
+    const { data: suppliers = [], isPending: isSuppliersPending } =
+        useSuppliers();
     const createSupplier = useCreateSupplier();
     const deleteSupplier = useDeleteSupplier();
 
@@ -73,6 +74,7 @@ export function SuppliersModule() {
             data={rows}
             columns={columns}
             title="Fornecedores"
+            loading={isSuppliersPending}
             sortableColumns={[
                 { key: 'name', type: 'text' },
                 { key: 'email', type: 'text' },

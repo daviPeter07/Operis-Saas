@@ -38,7 +38,8 @@ export function ClientsModule() {
             window.history.replaceState({}, '', '/dashboard/clients');
         }
     }, []);
-    const { data: customers = [] } = useCustomers();
+    const { data: customers = [], isPending: isCustomersPending } =
+        useCustomers();
     const createCustomer = useCreateCustomer();
     const deleteCustomer = useDeleteCustomer();
     const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
@@ -116,6 +117,7 @@ export function ClientsModule() {
                 data={rows}
                 columns={columns}
                 title="Clientes"
+                loading={isCustomersPending}
                 routeUrl="/dashboard/clients"
                 sortableColumns={[
                     { key: 'name', type: 'text' },

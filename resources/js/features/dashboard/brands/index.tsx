@@ -17,7 +17,7 @@ export type BrandRow = {
 export function BrandsModule() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editingBrand, setEditingBrand] = useState<BrandRow | null>(null);
-    const { data: brands = [] } = useBrands();
+    const { data: brands = [], isPending: isBrandsPending } = useBrands();
     const createBrand = useCreateBrand();
     const deleteBrand = useDeleteBrand();
     const updateBrand = useUpdateBrand();
@@ -67,6 +67,7 @@ export function BrandsModule() {
                 data={rows}
                 columns={columns}
                 title="Marcas"
+                loading={isBrandsPending}
                 sortableColumns={[{ key: 'name', type: 'text' }]}
                 onCreate={handleCreate}
                 onEdit={(row) => {

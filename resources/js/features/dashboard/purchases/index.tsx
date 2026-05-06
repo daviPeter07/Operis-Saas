@@ -41,11 +41,14 @@ type PurchaseRow = {
 };
 
 export function PurchasesModule() {
-    const { data: purchases = [] } = usePurchases();
-    const { data: suppliers = [] } = useSuppliers();
-    const { data: products = [] } = useProducts();
-    const { data: categories = [] } = useCategories();
-    const { data: brands = [] } = useBrands();
+    const { data: purchases = [], isPending: isPurchasesPending } =
+        usePurchases();
+    const { data: suppliers = [], isPending: isSuppliersPending } =
+        useSuppliers();
+    const { data: products = [], isPending: isProductsPending } = useProducts();
+    const { data: categories = [], isPending: isCategoriesPending } =
+        useCategories();
+    const { data: brands = [], isPending: isBrandsPending } = useBrands();
     const createPurchase = useCreatePurchase();
     const createProduct = useCreateProduct();
     const createSupplier = useCreateSupplier();
@@ -320,6 +323,13 @@ export function PurchasesModule() {
             data={rows}
             columns={columns}
             title="Compras"
+            loading={
+                isPurchasesPending ||
+                isSuppliersPending ||
+                isProductsPending ||
+                isCategoriesPending ||
+                isBrandsPending
+            }
             sortableColumns={[
                 { key: 'productNames', type: 'text' },
                 { key: 'categoryNames', type: 'text' },

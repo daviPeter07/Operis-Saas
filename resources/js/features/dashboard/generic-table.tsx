@@ -25,6 +25,7 @@ import { TableActions } from '@/components/table/table-actions';
 import { TableToolbar } from '@/components/table/table-toolbar';
 import { ViewDialog } from '@/components/table/view-dialog';
 import type { ViewField } from '@/components/table/view-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
 import type {
     CustomRange,
@@ -45,6 +46,7 @@ export interface GenericTableProps<T extends { id: string }> {
     data: T[];
     columns: Column<T>[];
     title: string;
+    loading?: boolean;
     searchPlaceholder?: string;
     sortableColumns?: Array<{
         key: string;
@@ -77,6 +79,7 @@ export function GenericTable<T extends { id: string }>({
     data,
     columns,
     title,
+    loading = false,
     searchPlaceholder,
     sortableColumns = [],
     dateFilterKey,
@@ -428,6 +431,8 @@ export function GenericTable<T extends { id: string }>({
         );
     };
 
+    const skeletonRowCount = 6;
+
     return (
         <div className={cn('space-y-4', className)}>
             <TableToolbar
@@ -452,102 +457,177 @@ export function GenericTable<T extends { id: string }>({
             />
 
             <div className="hidden md:block">
-                <DataTable
-                    data={paginatedData}
-                    emptyMessage="Nenhum registro encontrado"
-                >
-                    <thead>
-                        <tr>
-                            {columns.map((col: Column<T>) => (
-                                <DataTableHeadCell key={col.key}>
-                                    {renderSortHeader(col)}
-                                </DataTableHeadCell>
-                            ))}
-                            {showActions && (
-                                <DataTableHeadCell className="w-36 text-right">
-                                    Ações
-                                </DataTableHeadCell>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedData.length === 0 ? (
-                            <tr>
-                                <td
-                                    colSpan={
-                                        columns.length + (showActions ? 1 : 0)
-                                    }
-                                >
-                                    <TableEmptyState
-                                        searchTerm={search}
-                                        onClearSearch={() =>
-                                            handleSearchChange('')
-                                        }
-                                    />
-                                </td>
-                            </tr>
-                        ) : (
-                            paginatedData.map((row: T, index: number) => (
-                                <DataTableRowZebra
-                                    key={String(
-                                        (row as { id: string }).id || index,
-                                    )}
-                                    index={index}
-                                    onClick={
-                                        clickableRow && onRowClick
-                                            ? () => onRowClick(row)
-                                            : clickableRow && onEdit
-                                              ? () => onEdit(row)
-                                              : undefined
-                                    }
-                                    className={
-                                        clickableRow && (onRowClick || onEdit)
-                                            ? 'cursor-pointer'
-                                            : undefined
-                                    }
-                                >
+                {loading ? (
+                    <div className="rounded-md border">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b">
                                     {columns.map((col: Column<T>) => (
-                                        <DataTableCell key={col.key}>
-                                            {col.render
-                                                ? col.render(
-                                                      (
-                                                          row as Record<
-                                                              string,
-                                                              unknown
-                                                          >
-                                                      )[col.key],
-                                                      row,
-                                                  )
-                                                : String(
-                                                      (
-                                                          row as Record<
-                                                              string,
-                                                              unknown
-                                                          >
-                                                      )[col.key] ?? '',
-                                                  )}
-                                        </DataTableCell>
+                                        <DataTableHeadCell key={col.key}>
+                                            {typeof col.header === 'string'
+                                                ? col.header
+                                                : col.header}
+                                        </DataTableHeadCell>
                                     ))}
                                     {showActions && (
-                                        <DataTableCell className="w-36">
-                                            <TableActions
-                                                onView={() => handleView(row)}
-                                                onEdit={() => handleEdit(row)}
-                                                onDelete={() =>
-                                                    handleDelete(row)
-                                                }
-                                            />
-                                        </DataTableCell>
+                                        <DataTableHeadCell className="w-36 text-right">
+                                            Ações
+                                        </DataTableHeadCell>
                                     )}
-                                </DataTableRowZebra>
-                            ))
-                        )}
-                    </tbody>
-                </DataTable>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Array.from({
+                                    length: skeletonRowCount,
+                                }).map((_, rowIndex) => (
+                                    <tr
+                                        key={`table-skeleton-${rowIndex}`}
+                                        className="border-b last:border-0"
+                                    >
+                                        {columns.map((column) => (
+                                            <DataTableCell key={column.key}>
+                                                <Skeleton className="h-5 w-full max-w-[180px]" />
+                                            </DataTableCell>
+                                        ))}
+                                        {showActions && (
+                                            <DataTableCell className="w-36">
+                                                <div className="flex justify-end gap-2">
+                                                    <Skeleton className="h-8 w-8 rounded-md" />
+                                                    <Skeleton className="h-8 w-8 rounded-md" />
+                                                    <Skeleton className="h-8 w-8 rounded-md" />
+                                                </div>
+                                            </DataTableCell>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <DataTable
+                        data={paginatedData}
+                        emptyMessage="Nenhum registro encontrado"
+                    >
+                        <thead>
+                            <tr>
+                                {columns.map((col: Column<T>) => (
+                                    <DataTableHeadCell key={col.key}>
+                                        {renderSortHeader(col)}
+                                    </DataTableHeadCell>
+                                ))}
+                                {showActions && (
+                                    <DataTableHeadCell className="w-36 text-right">
+                                        Ações
+                                    </DataTableHeadCell>
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paginatedData.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={
+                                            columns.length +
+                                            (showActions ? 1 : 0)
+                                        }
+                                    >
+                                        <TableEmptyState
+                                            searchTerm={search}
+                                            onClearSearch={() =>
+                                                handleSearchChange('')
+                                            }
+                                        />
+                                    </td>
+                                </tr>
+                            ) : (
+                                paginatedData.map((row: T, index: number) => (
+                                    <DataTableRowZebra
+                                        key={String(
+                                            (row as { id: string }).id || index,
+                                        )}
+                                        index={index}
+                                        onClick={
+                                            clickableRow && onRowClick
+                                                ? () => onRowClick(row)
+                                                : clickableRow && onEdit
+                                                  ? () => onEdit(row)
+                                                  : undefined
+                                        }
+                                        className={
+                                            clickableRow &&
+                                            (onRowClick || onEdit)
+                                                ? 'cursor-pointer'
+                                                : undefined
+                                        }
+                                    >
+                                        {columns.map((col: Column<T>) => (
+                                            <DataTableCell key={col.key}>
+                                                {col.render
+                                                    ? col.render(
+                                                          (
+                                                              row as Record<
+                                                                  string,
+                                                                  unknown
+                                                              >
+                                                          )[col.key],
+                                                          row,
+                                                      )
+                                                    : String(
+                                                          (
+                                                              row as Record<
+                                                                  string,
+                                                                  unknown
+                                                              >
+                                                          )[col.key] ?? '',
+                                                      )}
+                                            </DataTableCell>
+                                        ))}
+                                        {showActions && (
+                                            <DataTableCell className="w-36">
+                                                <TableActions
+                                                    onView={() =>
+                                                        handleView(row)
+                                                    }
+                                                    onEdit={() =>
+                                                        handleEdit(row)
+                                                    }
+                                                    onDelete={() =>
+                                                        handleDelete(row)
+                                                    }
+                                                />
+                                            </DataTableCell>
+                                        )}
+                                    </DataTableRowZebra>
+                                ))
+                            )}
+                        </tbody>
+                    </DataTable>
+                )}
             </div>
 
             <div className="block space-y-2 md:hidden">
-                {paginatedData.length === 0 ? (
+                {loading ? (
+                    Array.from({ length: 4 }).map((_, index) => (
+                        <div
+                            key={`mobile-skeleton-${index}`}
+                            className="rounded-lg border bg-card p-3"
+                        >
+                            <div className="space-y-3">
+                                {Array.from({
+                                    length: Math.min(columns.length, 4),
+                                }).map((__, cellIndex) => (
+                                    <div
+                                        key={`mobile-skeleton-cell-${cellIndex}`}
+                                        className="flex justify-between gap-3"
+                                    >
+                                        <Skeleton className="h-4 w-20" />
+                                        <Skeleton className="h-4 w-28" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                ) : paginatedData.length === 0 ? (
                     <div className="py-8 text-center text-muted-foreground">
                         Nenhum registro encontrado
                     </div>
@@ -592,19 +672,30 @@ export function GenericTable<T extends { id: string }>({
                 )}
             </div>
 
-            <div className="flex items-center justify-between">
-                <PaginationInfo
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredData.length}
-                    itemsPerPage={perPage}
-                />
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                />
-            </div>
+            {loading ? (
+                <div className="flex items-center justify-between gap-4">
+                    <Skeleton className="h-5 w-40" />
+                    <div className="flex gap-2">
+                        <Skeleton className="h-9 w-9 rounded-md" />
+                        <Skeleton className="h-9 w-9 rounded-md" />
+                        <Skeleton className="h-9 w-9 rounded-md" />
+                    </div>
+                </div>
+            ) : (
+                <div className="flex items-center justify-between">
+                    <PaginationInfo
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={filteredData.length}
+                        itemsPerPage={perPage}
+                    />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
+            )}
 
             <ImportDialog
                 open={isImportOpen}
