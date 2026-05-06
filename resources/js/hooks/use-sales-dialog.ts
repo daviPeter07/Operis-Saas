@@ -8,7 +8,6 @@ import type { SaleDiscountType, SalesLineItem } from '@/types/sales-dialog';
 import { parseCurrencyInput, parsePercentInput } from '@/utils/form-fields';
 import {
     buildClientFields,
-    buildProductFields,
     calculateCartQuantity,
     calculateCartTotal,
     calculateDiscountAmount,
@@ -124,10 +123,6 @@ export function useSalesDialog({
     const clientQuickFields = useMemo(
         () => buildClientFields(clients),
         [clients],
-    );
-    const productQuickFields = useMemo(
-        () => buildProductFields(products),
-        [products],
     );
 
     const selectClientById = (value: string) => {
@@ -341,7 +336,6 @@ export function useSalesDialog({
         firstInstallmentDate,
         productCreateOpen,
         productId,
-        productQuickFields,
         productSearch,
         quantity,
         saleDate,

@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
 import { ClientCreateDialog } from '@/features/dashboard/clients/client-create-dialog';
+import { ProductDialog } from '@/features/dashboard/inventory/product-dialog';
 import { useSalesDialog } from '@/hooks/use-sales-dialog';
-import type { UiCustomer as Client, UiProduct as Product } from '@/types/dashboard-entities';
+import type { UiProduct as Product } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';
 import { filterProductsByQuery } from '@/utils/sales-dialog';
@@ -18,8 +18,11 @@ export function SalesDialog({
     onSubmit,
     clients,
     products,
-    onCreateClient,
+    brands,
+    categories,
     onCreateProduct,
+    onCreateBrand,
+    onCreateCategory,
     defaultTab = 'catalog',
 }: SalesDialogProps) {
     const {
@@ -29,7 +32,6 @@ export function SalesDialog({
         appliedDiscountValue,
         canSubmit,
         clientCreateOpen,
-        clientQuickFields,
         clientSearch,
         decreaseLineItemQuantity,
         discountAmountApplied,
@@ -45,7 +47,6 @@ export function SalesDialog({
         installments,
         firstInstallmentDate,
         productCreateOpen,
-        productQuickFields,
         productSearch,
         removeLineItem,
         saleDate,
@@ -87,33 +88,43 @@ export function SalesDialog({
         }
     }, [open, defaultTab]);
 
-    // Prefill dialog when editing an existing sale
+    /* eslint-disable react-hooks/exhaustive-deps */
     React.useEffect(() => {
         if (open && sale) {
             // Populate client
             selectClientById(String(sale.clientId));
+
             // Populate line items
             setLineItems(sale.lineItems ?? []);
+
             // Dates
             setSaleDate(sale.createdAt ?? saleDate);
+
             // Payment details
             setPaymentMethod(sale.paymentMethod);
+
             if (sale.paymentMethod === 'card') {
                 setCardType(sale.cardType ?? 'debit');
                 setInstallments(String(sale.installments ?? 1));
-                setFirstInstallmentDate(sale.firstInstallmentDate ?? firstInstallmentDate);
+                setFirstInstallmentDate(
+                    sale.firstInstallmentDate ?? firstInstallmentDate,
+                );
             }
+
             // Notes
             setNotes(sale.notes ?? '');
+
             // Discount
             if (sale.discountType) {
                 setDiscountType(sale.discountType);
                 setDiscountValue(String(sale.discountValue ?? 0));
+
                 // Apply discount to update totals
                 applyDiscount();
             }
         }
     }, [open, sale]);
+    /* eslint-enable react-hooks/exhaustive-deps */
 
     const visibleProducts = React.useMemo(
         () => filterProductsByQuery(products, productSearch),
@@ -303,38 +314,18 @@ export function SalesDialog({
                     }}
                 />
 
-                <QuickCreateDialog<Product>
+                <ProductDialog
                     open={productCreateOpen}
                     onOpenChange={setProductCreateOpen}
-                    title="Novo produto"
-                    description="Cadastre um produto sem sair da venda."
-                    fields={productQuickFields}
-                    initialValues={{
-                        cost: 'R$ 0,00',
-                        price: 'R$ 0,00',
-                        stock: '0',
-                        minStock: '0',
-                    }}
-                    submitLabel="Salvar produto"
-                    keepOpenAfterSubmit
+                    mode="create"
+                    brands={brands}
+                    categories={categories}
+                    onCreateBrand={onCreateBrand}
+                    onCreateCategory={onCreateCategory}
                     onSubmit={async (values) => {
-                        const createdProduct: Product = onCreateProduct({
-                            id: crypto.randomUUID(),
-                            name: String(values.name || '').trim(),
-                            sku: String(values.sku || '').trim(),
-                            price: Number(values.price || 0),
-                            cost: Number(values.cost || 0),
-                            stock: Number(values.stock || 0),
-                            category: String(values.category || '').trim(),
-                            brand: String(values.brand || '').trim(),
-                            minStock: Number(values.minStock || 0),
-                            createdAt:
-                                values.createdAt ||
-                                new Date().toISOString().slice(0, 10),
-                        });
+                        const createdProduct: Product =
+                            await onCreateProduct(values);
                         selectProductById(createdProduct.id);
-
-                        return createdProduct;
                     }}
                 />
             </DialogContent>

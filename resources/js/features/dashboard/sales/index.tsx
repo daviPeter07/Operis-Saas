@@ -5,8 +5,10 @@ import { StatusBadge } from '@/components/common/status-badge';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { Button } from '@/components/ui/button';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
+import { useBrands, useCreateBrand } from '@/hooks/use-brands';
+import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useCustomers } from '@/hooks/use-customers';
-import { useProducts } from '@/hooks/use-products';
+import { useCreateProduct, useProducts } from '@/hooks/use-products';
 import type { SaleMutationInput } from '@/hooks/use-sales';
 import {
     useCreateSale,
@@ -65,8 +67,13 @@ export function SalesModule() {
 
     const { data: sales = [] } = useSales();
     const { data: receivables = [] } = useAccountReceivables();
+    const { data: brands = [] } = useBrands();
+    const { data: categories = [] } = useCategories();
     const { data: customers = [] } = useCustomers();
     const { data: products = [] } = useProducts();
+    const createBrand = useCreateBrand();
+    const createCategory = useCreateCategory();
+    const createProduct = useCreateProduct();
     const createSale = useCreateSale();
     const deleteSale = useDeleteSale();
     const updateSale = useUpdateSale();
@@ -77,7 +84,6 @@ export function SalesModule() {
     const [previewMode, setPreviewMode] = useState<'digital' | 'thermal'>(
         'digital',
     );
-    const [dialogCustomers, setDialogCustomers] = useState<UiCustomer[]>([]);
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
 
     const mappedCustomers = useMemo<UiCustomer[]>(
@@ -129,13 +135,25 @@ export function SalesModule() {
         [products],
     );
 
-    const salesDialogCustomers = useMemo(
-        () => [...dialogCustomers, ...mappedCustomers],
-        [dialogCustomers, mappedCustomers],
-    );
     const salesDialogProducts = useMemo(
         () => [...dialogProducts, ...mappedProducts],
         [dialogProducts, mappedProducts],
+    );
+    const brandOptions = useMemo(
+        () =>
+            brands.map((brand) => ({
+                value: String(brand.id),
+                label: brand.name,
+            })),
+        [brands],
+    );
+    const categoryOptions = useMemo(
+        () =>
+            categories.map((category) => ({
+                value: String(category.id),
+                label: category.name,
+            })),
+        [categories],
     );
 
     const productById = useMemo(
@@ -329,16 +347,38 @@ export function SalesModule() {
         toast.success('Venda criada com sucesso.');
     };
 
-    const handleCreateClient = (client: UiCustomer): UiCustomer => {
-        setDialogCustomers((previous) => [client, ...previous]);
+    const handleCreateProduct = async (data: {
+        name: string;
+        sku: string;
+        barcode: string | null;
+        description: string | null;
+        sale_price: number;
+        cost: number;
+        stock: number;
+        min_stock: number;
+        category_id: number;
+        brand_id: number | null;
+    }): Promise<UiProduct> => {
+        const createdProduct = await createProduct.mutateAsync(data);
 
-        return client;
-    };
+        const mappedProduct: UiProduct = {
+            id: String(createdProduct.id),
+            name: createdProduct.name,
+            sku: createdProduct.sku,
+            barcode: createdProduct.barcode ?? undefined,
+            category: String(createdProduct.category_id ?? ''),
+            brand: String(createdProduct.brand_id ?? ''),
+            price: Number(createdProduct.sale_price ?? 0),
+            cost: Number(createdProduct.cost ?? 0),
+            stock: Number(createdProduct.stock ?? 0),
+            minStock: Number(createdProduct.min_stock ?? 0),
+            createdAt: new Date().toISOString().slice(0, 10),
+        };
 
-    const handleCreateProduct = (product: UiProduct): UiProduct => {
-        setDialogProducts((previous) => [product, ...previous]);
+        setDialogProducts((previous) => [mappedProduct, ...previous]);
+        toast.success('Produto criado com sucesso.');
 
-        return product;
+        return mappedProduct;
     };
 
     return (
@@ -409,7 +449,7 @@ export function SalesModule() {
                                 full.first_installment_date ?? undefined,
                             installmentValue:
                                 full.installment_value ?? undefined,
-                            availableCredit: salesDialogCustomers.find(
+                            availableCredit: mappedCustomers.find(
                                 (customer) =>
                                     customer.id === String(full.customer_id),
                             )?.availableCredit,
@@ -445,10 +485,23 @@ export function SalesModule() {
                                     toast.error(message);
                                 });
                         }}
-                        clients={salesDialogCustomers}
+                        clients={mappedCustomers}
                         products={salesDialogProducts}
-                        onCreateClient={handleCreateClient}
+                        brands={brandOptions}
+                        categories={categoryOptions}
                         onCreateProduct={handleCreateProduct}
+                        onCreateBrand={async (name) =>
+                            createBrand.mutateAsync({
+                                name: name.trim(),
+                                status: 'active',
+                            })
+                        }
+                        onCreateCategory={async (name) =>
+                            createCategory.mutateAsync({
+                                name: name.trim(),
+                                status: 'active',
+                            })
+                        }
                     />
                 )}
             />
@@ -557,10 +610,23 @@ export function SalesModule() {
                             toast.error(message);
                         }
                     }}
-                    clients={salesDialogCustomers}
+                    clients={mappedCustomers}
                     products={salesDialogProducts}
-                    onCreateClient={handleCreateClient}
+                    brands={brandOptions}
+                    categories={categoryOptions}
                     onCreateProduct={handleCreateProduct}
+                    onCreateBrand={async (name) =>
+                        createBrand.mutateAsync({
+                            name: name.trim(),
+                            status: 'active',
+                        })
+                    }
+                    onCreateCategory={async (name) =>
+                        createCategory.mutateAsync({
+                            name: name.trim(),
+                            status: 'active',
+                        })
+                    }
                     sale={editSale}
                 />
             ) : null}

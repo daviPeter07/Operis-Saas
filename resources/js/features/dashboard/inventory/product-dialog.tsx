@@ -14,7 +14,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { Brand } from '@/schemas/brand';
 import type { Category } from '@/schemas/category';
@@ -110,7 +114,13 @@ export function ProductDialog({
     );
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isBrandCreateOpen, setIsBrandCreateOpen] = React.useState(false);
-    const [isCategoryCreateOpen, setIsCategoryCreateOpen] = React.useState(false);
+    const [isCategoryCreateOpen, setIsCategoryCreateOpen] =
+        React.useState(false);
+    const [quickCreateName, setQuickCreateName] = React.useState('');
+    const [quickCreateType, setQuickCreateType] = React.useState<
+        'brand' | 'category' | null
+    >(null);
+    const [isQuickCreating, setIsQuickCreating] = React.useState(false);
     const barcodeInputRef = React.useRef<HTMLInputElement | null>(null);
 
     React.useEffect(() => {
@@ -140,6 +150,56 @@ export function ProductDialog({
             ...current,
             stock: String(Math.max(0, Number(current.stock || 0) + delta)),
         }));
+    };
+
+    const openQuickCreate = (type: 'brand' | 'category') => {
+        setQuickCreateType(type);
+        setQuickCreateName('');
+
+        if (type === 'brand') {
+            setIsBrandCreateOpen(true);
+            setIsCategoryCreateOpen(false);
+
+            return;
+        }
+
+        setIsCategoryCreateOpen(true);
+        setIsBrandCreateOpen(false);
+    };
+
+    const closeQuickCreate = () => {
+        setIsBrandCreateOpen(false);
+        setIsCategoryCreateOpen(false);
+        setQuickCreateName('');
+        setQuickCreateType(null);
+    };
+
+    const handleQuickCreateSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+
+        const name = quickCreateName.trim();
+
+        if (!name || !quickCreateType) {
+            return;
+        }
+
+        setIsQuickCreating(true);
+
+        try {
+            if (quickCreateType === 'brand') {
+                const brand = await onCreateBrand(name);
+                setField('brand_id', String(brand.id));
+                toast.success('Marca criada com sucesso.');
+            } else {
+                const category = await onCreateCategory(name);
+                setField('category_id', String(category.id));
+                toast.success('Categoria criada com sucesso.');
+            }
+
+            closeQuickCreate();
+        } finally {
+            setIsQuickCreating(false);
+        }
     };
 
     const handleSubmit = async (event: React.FormEvent) => {
@@ -205,8 +265,30 @@ export function ProductDialog({
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="product-category">Categoria</Label>
-                            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <Label htmlFor="product-category">
+                                    Categoria
+                                </Label>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                            onClick={() =>
+                                                openQuickCreate('category')
+                                            }
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        Criar categoria
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                            <div>
                                 <SearchableSelect
                                     value={formData.category_id}
                                     onChange={(value) =>
@@ -215,14 +297,6 @@ export function ProductDialog({
                                     options={categories}
                                     placeholder="Selecione uma categoria"
                                 />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsCategoryCreateOpen(true)}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Criar
-                                </Button>
                             </div>
                         </div>
 
@@ -265,8 +339,28 @@ export function ProductDialog({
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="product-brand">Marca</Label>
-                            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <Label htmlFor="product-brand">Marca</Label>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                            onClick={() =>
+                                                openQuickCreate('brand')
+                                            }
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        Criar marca
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                            <div>
                                 <SearchableSelect
                                     value={formData.brand_id}
                                     onChange={(value) =>
@@ -275,14 +369,6 @@ export function ProductDialog({
                                     options={brands}
                                     placeholder="Selecione uma marca"
                                 />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsBrandCreateOpen(true)}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Criar
-                                </Button>
                             </div>
                         </div>
 
@@ -481,51 +567,76 @@ export function ProductDialog({
                     </DialogFooter>
                 </form>
 
-                <QuickCreateDialog<Brand>
-                    open={isBrandCreateOpen}
-                    onOpenChange={setIsBrandCreateOpen}
-                    title="Nova marca"
-                    description="Cadastre uma nova marca sem sair do produto."
-                    submitLabel="Criar marca"
-                    keepOpenAfterSubmit={false}
-                    fields={[
-                        {
-                            name: 'name',
-                            label: 'Nome',
-                            type: 'text',
-                            required: true,
-                            placeholder: 'Digite o nome da marca',
-                        },
-                    ]}
-                    onSubmit={async (data) => onCreateBrand(data.name)}
-                    onCreated={(brand) => {
-                        setField('brand_id', String(brand.id));
-                        toast.success('Marca criada com sucesso.');
+                <Dialog
+                    open={isBrandCreateOpen || isCategoryCreateOpen}
+                    onOpenChange={(nextOpen) => {
+                        if (!nextOpen) {
+                            closeQuickCreate();
+                        }
                     }}
-                />
+                >
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>
+                                {quickCreateType === 'brand'
+                                    ? 'Nova marca'
+                                    : 'Nova categoria'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {quickCreateType === 'brand'
+                                    ? 'Adicione uma marca sem sair do produto.'
+                                    : 'Adicione uma categoria sem sair do produto.'}
+                            </DialogDescription>
+                        </DialogHeader>
 
-                <QuickCreateDialog<Category>
-                    open={isCategoryCreateOpen}
-                    onOpenChange={setIsCategoryCreateOpen}
-                    title="Nova categoria"
-                    description="Cadastre uma nova categoria sem sair do produto."
-                    submitLabel="Criar categoria"
-                    keepOpenAfterSubmit={false}
-                    fields={[
-                        {
-                            name: 'name',
-                            label: 'Nome',
-                            type: 'text',
-                            required: true,
-                            placeholder: 'Digite o nome da categoria',
-                        },
-                    ]}
-                    onSubmit={async (data) => onCreateCategory(data.name)}
-                    onCreated={(category) => {
-                        setField('category_id', String(category.id));
-                        toast.success('Categoria criada com sucesso.');
-                    }}
-                />
+                        <form
+                            onSubmit={handleQuickCreateSubmit}
+                            className="space-y-4"
+                        >
+                            <div className="grid gap-2">
+                                <Label htmlFor="quick-create-name">Nome</Label>
+                                <Input
+                                    id="quick-create-name"
+                                    value={quickCreateName}
+                                    placeholder={
+                                        quickCreateType === 'brand'
+                                            ? 'Digite o nome da marca'
+                                            : 'Digite o nome da categoria'
+                                    }
+                                    onChange={(event) =>
+                                        setQuickCreateName(
+                                            event.currentTarget.value,
+                                        )
+                                    }
+                                    required
+                                />
+                            </div>
+
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={closeQuickCreate}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        !quickCreateName.trim() ||
+                                        isQuickCreating
+                                    }
+                                >
+                                    {isQuickCreating
+                                        ? 'Salvando...'
+                                        : quickCreateType === 'brand'
+                                          ? 'Criar marca'
+                                          : 'Criar categoria'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </DialogContent>
         </Dialog>
     );
