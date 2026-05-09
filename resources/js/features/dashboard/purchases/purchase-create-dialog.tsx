@@ -3,7 +3,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import type { UiPurchase } from '@/types/dashboard-entities';
 import type { SalesLineItem } from '@/types/sales-dialog';
 import { CatalogPanel } from '@/components/sales-dialog/catalog-panel';
-import { AddProductDialog } from '@/components/sales-dialog/dialogs';
 import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
 import { SupplierCreateDialog } from '@/features/dashboard/suppliers/supplier-create-dialog';
 import type {
@@ -14,6 +13,141 @@ import type { QuickCreateField } from '@/types/quick-create';
 import { computePurchaseTotals } from '@/utils/dashboard-financial';
 import { PurchaseConfirmationDialog } from './purchase-confirmation-dialog';
 import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
+
+import { applyFieldMask, onlyDigits, parseMaskedFieldValue } from '@/utils/form-fields';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import type { UiProduct } from '@/types/dashboard-entities';
+
+interface AddPurchaseProductDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    catalogProduct: UiProduct | null;
+    catalogUnitCost: string;
+    setCatalogUnitCost: (value: string) => void;
+    catalogQuantity: string;
+    setCatalogQuantity: (value: string) => void;
+    onConfirm: () => void;
+}
+
+export function AddPurchaseProductDialog({
+    open,
+    onOpenChange,
+    catalogProduct,
+    catalogUnitCost,
+    setCatalogUnitCost,
+    catalogQuantity,
+    setCatalogQuantity,
+    onConfirm,
+}: AddPurchaseProductDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Adicionar produto</DialogTitle>
+                    <DialogDescription>
+                        Confirme o preço de compra e a quantidade.
+                    </DialogDescription>
+                </DialogHeader>
+
+                {catalogProduct && (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-[56px_1fr] items-center gap-3 rounded-lg border p-3">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                                <span className="text-xs font-semibold">
+                                    {catalogProduct.name.slice(0, 2).toUpperCase()}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">
+                                    {catalogProduct.sku}
+                                </p>
+                                <p className="font-medium">
+                                    {catalogProduct.name}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Preço de compra</Label>
+                            <Input
+                                type="text"
+                                value={catalogUnitCost}
+                                onChange={(event) =>
+                                    setCatalogUnitCost(
+                                        applyFieldMask(
+                                            event.currentTarget.value,
+                                            'currency'
+                                        )
+                                    )
+                                }
+                                placeholder="R$ 0,00"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Quantidade</Label>
+                            <div className="flex w-fit items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() =>
+                                        setCatalogQuantity(
+                                            String(
+                                                Math.max(
+                                                    1,
+                                                    (Number(catalogQuantity) || 1) - 1,
+                                                ),
+                                            ),
+                                        )
+                                    }
+                                >
+                                    -
+                                </Button>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={catalogQuantity}
+                                    onChange={(event) =>
+                                        setCatalogQuantity(
+                                            event.currentTarget.value,
+                                        )
+                                    }
+                                    className="w-20 text-center"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() =>
+                                        setCatalogQuantity(
+                                            String(
+                                                Math.max(
+                                                    1,
+                                                    (Number(catalogQuantity) || 1) + 1,
+                                                ),
+                                            ),
+                                        )
+                                    }
+                                >
+                                    +
+                                </Button>
+                            </div>
+                        </div>
+
+                        <Button type="button" className="w-full" onClick={onConfirm}>
+                            Adicionar
+                        </Button>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 type DraftPurchaseLine = {
     productId: string;
@@ -48,13 +182,13 @@ export function PurchaseCreateDialog({
         'money' | 'pix' | 'card' | 'boleto'
     >('pix');
     const [cardType, setCardType] = React.useState<'debit' | 'credit'>('debit');
+    const [boletoTermDays, setBoletoTermDays] = React.useState('30');
     const [notes, setNotes] = React.useState('');
     const [addProductDialogOpen, setAddProductDialogOpen] =
         React.useState(false);
     const [catalogProductId, setCatalogProductId] = React.useState('');
     const [catalogUnitCost, setCatalogUnitCost] = React.useState('0');
     const [catalogQuantity, setCatalogQuantity] = React.useState('1');
-    const [showCostPrice, setShowCostPrice] = React.useState(false);
     const [confirmationOpen, setConfirmationOpen] = React.useState(false);
     const [purchaseDraft, setPurchaseDraft] = React.useState<UiPurchase | null>(
         null,
@@ -72,6 +206,7 @@ export function PurchaseCreateDialog({
             setCalendarOpen(false);
             setPaymentMethod('pix');
             setCardType('debit');
+            setBoletoTermDays('30');
             setNotes('');
         }
     }, [open]);
@@ -120,9 +255,8 @@ export function PurchaseCreateDialog({
         }
 
         setCatalogProductId(productId);
-        setCatalogUnitCost(String(product.cost || 0));
+        setCatalogUnitCost(applyFieldMask(String((product.cost || 0) * 100), 'currency'));
         setCatalogQuantity('1');
-        setShowCostPrice(false);
         setAddProductDialogOpen(true);
     };
 
@@ -133,7 +267,7 @@ export function PurchaseCreateDialog({
         }
 
         const quantityValue = Math.max(1, Number(catalogQuantity || 1));
-        const unitCostValue = Math.max(0, Number(catalogUnitCost || 0));
+        const unitCostValue = Math.max(0, Number(parseMaskedFieldValue(catalogUnitCost, 'currency') || 0));
 
         setItems((previous) => {
             const lineIndex = previous.findIndex(
@@ -370,7 +504,7 @@ export function PurchaseCreateDialog({
             status: 'pending',
             paymentMethod: paymentMethod === 'card' ? cardType : paymentMethod,
             dueDate: paymentMethod === 'boleto' ? undefined : undefined,
-            boletoTermDays: paymentMethod === 'boleto' ? '30' : undefined,
+            boletoTermDays: paymentMethod === 'boleto' ? boletoTermDays : undefined,
             createdAt: purchaseDate,
             items: checkoutLineItems.reduce(
                 (sum, item) => sum + item.quantity,
@@ -426,6 +560,8 @@ export function PurchaseCreateDialog({
                             setPaymentMethod={setPaymentMethod}
                             cardType={cardType}
                             setCardType={setCardType}
+                            boletoTermDays={boletoTermDays}
+                            setBoletoTermDays={setBoletoTermDays}
                             total={computedTotals.total}
                             notes={notes}
                             setNotes={setNotes}
@@ -438,7 +574,7 @@ export function PurchaseCreateDialog({
                         />
                     </div>
 
-                    <AddProductDialog
+                    <AddPurchaseProductDialog
                         open={addProductDialogOpen}
                         onOpenChange={setAddProductDialogOpen}
                         catalogProduct={
@@ -446,12 +582,10 @@ export function PurchaseCreateDialog({
                                 (entry) => entry.id === catalogProductId,
                             ) ?? null
                         }
-                        catalogSalePrice={catalogUnitCost}
-                        setCatalogSalePrice={setCatalogUnitCost}
+                        catalogUnitCost={catalogUnitCost}
+                        setCatalogUnitCost={setCatalogUnitCost}
                         catalogQuantity={catalogQuantity}
                         setCatalogQuantity={setCatalogQuantity}
-                        showCostPrice={showCostPrice}
-                        setShowCostPrice={setShowCostPrice}
                         onConfirm={confirmAddFromCatalog}
                     />
                 </DialogContent>

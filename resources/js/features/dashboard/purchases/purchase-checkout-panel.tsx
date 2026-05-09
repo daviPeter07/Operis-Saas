@@ -41,6 +41,8 @@ interface PurchaseCheckoutPanelProps {
     setPaymentMethod: (value: 'money' | 'pix' | 'card' | 'boleto') => void;
     cardType: 'debit' | 'credit';
     setCardType: (value: 'debit' | 'credit') => void;
+    boletoTermDays: string;
+    setBoletoTermDays: (value: string) => void;
     total: number;
     notes: string;
     setNotes: (value: string) => void;
@@ -67,6 +69,8 @@ export function PurchaseCheckoutPanel({
     setPaymentMethod,
     cardType,
     setCardType,
+    boletoTermDays,
+    setBoletoTermDays,
     total,
     notes,
     setNotes,
@@ -227,6 +231,27 @@ export function PurchaseCheckoutPanel({
                                     showCardTypeToggle
                                     enableInstallments={false}
                                 />
+                            </CardContent>
+                        </Card>
+                    ) : null}
+
+                    {paymentMethod === 'boleto' ? (
+                        <Card>
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">Vencimento do Boleto</CardTitle></CardHeader>
+                            <CardContent>
+                                <ToggleGroup
+                                    type="single"
+                                    value={boletoTermDays}
+                                    onValueChange={(value) => {
+                                        if (value) setBoletoTermDays(value);
+                                    }}
+                                    className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                                >
+                                    <ToggleGroupItem value="30" variant="outline" className="rounded-md border">30 dias</ToggleGroupItem>
+                                    <ToggleGroupItem value="60" variant="outline" className="rounded-md border">60 dias</ToggleGroupItem>
+                                    <ToggleGroupItem value="90" variant="outline" className="rounded-md border">90 dias</ToggleGroupItem>
+                                    <ToggleGroupItem value="120" variant="outline" className="rounded-md border">120 dias</ToggleGroupItem>
+                                </ToggleGroup>
                             </CardContent>
                         </Card>
                     ) : null}
