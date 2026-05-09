@@ -186,17 +186,18 @@ export function AddProductDialog({
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Preco de venda</Label>
+                            <Label>Preço de venda</Label>
                             <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
                                 value={catalogSalePrice}
                                 onChange={(event) =>
                                     setCatalogSalePrice(
-                                        event.currentTarget.value,
+                                        applyFieldMask(
+                                            event.currentTarget.value,
+                                            'currency',
+                                        ),
                                     )
                                 }
+                                placeholder="R$ 0,00"
                             />
                         </div>
 

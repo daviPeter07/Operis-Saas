@@ -7,6 +7,7 @@ import type { UiProduct as Product } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';
 import { filterProductsByQuery } from '@/utils/sales-dialog';
+import { applyFieldMask, parseCurrencyInput } from '@/utils/form-fields';
 import { CatalogPanel } from './catalog-panel';
 import { CheckoutPanel } from './checkout-panel';
 import { AddProductDialog, DiscountDialog } from './dialogs';
@@ -78,7 +79,7 @@ export function SalesDialog({
     const [catalogProduct, setCatalogProduct] = React.useState<Product | null>(
         null,
     );
-    const [catalogSalePrice, setCatalogSalePrice] = React.useState('0');
+    const [catalogSalePrice, setCatalogSalePrice] = React.useState('R$ 0,00');
     const [catalogQuantity, setCatalogQuantity] = React.useState('1');
     const [showCostPrice, setShowCostPrice] = React.useState(false);
     const checkoutRef = React.useRef<HTMLDivElement>(null);
@@ -156,7 +157,7 @@ export function SalesDialog({
 
     const handleAddFromCatalog = (product: Product) => {
         setCatalogProduct(product);
-        setCatalogSalePrice(String(product.price.toFixed(2)));
+        setCatalogSalePrice(applyFieldMask(String((product.price ?? 0) * 100), 'currency'));
         setCatalogQuantity('1');
         setShowCostPrice(false);
         setAddProductDialogOpen(true);
@@ -170,7 +171,7 @@ export function SalesDialog({
         addProductToCart(
             catalogProduct,
             Number(catalogQuantity || 1),
-            Number(catalogSalePrice.replace(',', '.') || 0),
+            parseCurrencyInput(catalogSalePrice),
         );
         setAddProductDialogOpen(false);
     };
