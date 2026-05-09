@@ -3,22 +3,31 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import type { UiPurchase } from '@/types/dashboard-entities';
 import type { SalesLineItem } from '@/types/sales-dialog';
 import { CatalogPanel } from '@/components/sales-dialog/catalog-panel';
-import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
+import { ProductDialog } from '@/features/dashboard/inventory/product-dialog';
 import { SupplierCreateDialog } from '@/features/dashboard/suppliers/supplier-create-dialog';
+import { useCreateBrand } from '@/hooks/use-brands';
+import { useCreateCategory } from '@/hooks/use-categories';
 import type {
     PurchaseCreateDialogProps,
     PurchaseLineItem,
 } from '@/types/dashboard-forms';
-import type { QuickCreateField } from '@/types/quick-create';
 import { computePurchaseTotals } from '@/utils/dashboard-financial';
 import { PurchaseConfirmationDialog } from './purchase-confirmation-dialog';
 import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
 
-import { applyFieldMask, onlyDigits, parseMaskedFieldValue } from '@/utils/form-fields';
+import {
+    applyFieldMask,
+    onlyDigits,
+    parseMaskedFieldValue,
+} from '@/utils/form-fields';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
 import type { UiProduct } from '@/types/dashboard-entities';
 
 interface AddPurchaseProductDialogProps {
@@ -57,7 +66,9 @@ export function AddPurchaseProductDialog({
                         <div className="grid grid-cols-[56px_1fr] items-center gap-3 rounded-lg border p-3">
                             <div className="flex h-14 w-14 items-center justify-center rounded-md bg-muted text-muted-foreground">
                                 <span className="text-xs font-semibold">
-                                    {catalogProduct.name.slice(0, 2).toUpperCase()}
+                                    {catalogProduct.name
+                                        .slice(0, 2)
+                                        .toUpperCase()}
                                 </span>
                             </div>
                             <div>
@@ -79,8 +90,8 @@ export function AddPurchaseProductDialog({
                                     setCatalogUnitCost(
                                         applyFieldMask(
                                             event.currentTarget.value,
-                                            'currency'
-                                        )
+                                            'currency',
+                                        ),
                                     )
                                 }
                                 placeholder="R$ 0,00"
@@ -99,7 +110,8 @@ export function AddPurchaseProductDialog({
                                             String(
                                                 Math.max(
                                                     1,
-                                                    (Number(catalogQuantity) || 1) - 1,
+                                                    (Number(catalogQuantity) ||
+                                                        1) - 1,
                                                 ),
                                             ),
                                         )
@@ -128,7 +140,8 @@ export function AddPurchaseProductDialog({
                                             String(
                                                 Math.max(
                                                     1,
-                                                    (Number(catalogQuantity) || 1) + 1,
+                                                    (Number(catalogQuantity) ||
+                                                        1) + 1,
                                                 ),
                                             ),
                                         )
@@ -139,7 +152,11 @@ export function AddPurchaseProductDialog({
                             </div>
                         </div>
 
-                        <Button type="button" className="w-full" onClick={onConfirm}>
+                        <Button
+                            type="button"
+                            className="w-full"
+                            onClick={onConfirm}
+                        >
                             Adicionar
                         </Button>
                     </div>
@@ -193,6 +210,8 @@ export function PurchaseCreateDialog({
     const [purchaseDraft, setPurchaseDraft] = React.useState<UiPurchase | null>(
         null,
     );
+    const createBrand = useCreateBrand();
+    const createCategory = useCreateCategory();
 
     React.useEffect(() => {
         if (open) {
@@ -255,7 +274,9 @@ export function PurchaseCreateDialog({
         }
 
         setCatalogProductId(productId);
-        setCatalogUnitCost(applyFieldMask(String((product.cost || 0) * 100), 'currency'));
+        setCatalogUnitCost(
+            applyFieldMask(String((product.cost || 0) * 100), 'currency'),
+        );
         setCatalogQuantity('1');
         setAddProductDialogOpen(true);
     };
@@ -267,7 +288,10 @@ export function PurchaseCreateDialog({
         }
 
         const quantityValue = Math.max(1, Number(catalogQuantity || 1));
-        const unitCostValue = Math.max(0, Number(parseMaskedFieldValue(catalogUnitCost, 'currency') || 0));
+        const unitCostValue = Math.max(
+            0,
+            Number(parseMaskedFieldValue(catalogUnitCost, 'currency') || 0),
+        );
 
         setItems((previous) => {
             const lineIndex = previous.findIndex(
@@ -358,12 +382,18 @@ export function PurchaseCreateDialog({
         removeLine(lineIndex);
     };
 
-    const parsedItems: PurchaseLineItem[] = items
-        .map((item) => ({
-            productId: item.productId,
-            quantity: Number(item.quantity || 0),
-            unitCost: Number(item.unitCost || 0),
-        }))
+    const parsedItems: (PurchaseLineItem & { productName?: string })[] = items
+        .map((item) => {
+            const product = products.find(
+                (entry) => entry.id === item.productId,
+            );
+            return {
+                productId: item.productId,
+                quantity: Number(item.quantity || 0),
+                unitCost: Number(item.unitCost || 0),
+                productName: product?.name,
+            };
+        })
         .filter(
             (item) =>
                 item.productId.length > 0 &&
@@ -415,82 +445,6 @@ export function PurchaseCreateDialog({
 
     const canSubmit = Boolean(selectedSupplier && checkoutLineItems.length > 0);
 
-    const productQuickFields = React.useMemo<QuickCreateField[]>(
-        () => [
-            {
-                name: 'name',
-                label: 'Nome do produto',
-                type: 'text',
-                required: true,
-            },
-            {
-                name: 'sku',
-                label: 'Codigo interno',
-                type: 'text',
-                required: true,
-            },
-            {
-                name: 'barcode',
-                label: 'Codigo de barras',
-                type: 'text',
-            },
-            {
-                name: 'category',
-                label: 'Categoria',
-                type: 'select',
-                required: true,
-                searchable: true,
-                options: categories.map((category) => ({
-                    value: String(category.id),
-                    label: category.name,
-                })),
-            },
-            {
-                name: 'brand',
-                label: 'Marca',
-                type: 'select',
-                searchable: true,
-                options: brands.map((brand) => ({
-                    value: String(brand.id),
-                    label: brand.name,
-                })),
-            },
-            {
-                name: 'cost',
-                label: 'Custo',
-                type: 'text',
-                required: true,
-                mask: 'currency',
-            },
-            {
-                name: 'price',
-                label: 'Preco de venda',
-                type: 'text',
-                required: true,
-                mask: 'currency',
-            },
-            {
-                name: 'stock',
-                label: 'Estoque inicial',
-                type: 'number',
-                required: true,
-            },
-            {
-                name: 'minStock',
-                label: 'Estoque minimo',
-                type: 'number',
-                required: true,
-            },
-            {
-                name: 'createdAt',
-                label: 'Data de cadastro',
-                type: 'date',
-                required: true,
-            },
-        ],
-        [brands, categories],
-    );
-
     const handleFinalizePurchase = () => {
         if (!selectedSupplier || checkoutLineItems.length === 0) {
             return;
@@ -501,10 +455,11 @@ export function PurchaseCreateDialog({
             supplierId: selectedSupplier.id,
             supplierName: selectedSupplier.name,
             total: computedTotals.total,
-            status: 'pending',
+            status: 'pending', // será sobrescrito pelo diálogo de confirmação
             paymentMethod: paymentMethod === 'card' ? cardType : paymentMethod,
             dueDate: paymentMethod === 'boleto' ? undefined : undefined,
-            boletoTermDays: paymentMethod === 'boleto' ? boletoTermDays : undefined,
+            boletoTermDays:
+                paymentMethod === 'boleto' ? boletoTermDays : undefined,
             createdAt: purchaseDate,
             items: checkoutLineItems.reduce(
                 (sum, item) => sum + item.quantity,
@@ -603,39 +558,39 @@ export function PurchaseCreateDialog({
                 }}
             />
 
-            <QuickCreateDialog
+            <ProductDialog
                 open={productCreateOpen}
                 onOpenChange={setProductCreateOpen}
-                title="Novo produto"
-                description="Cadastre um produto sem sair da compra."
-                fields={productQuickFields}
-                initialValues={{
-                    cost: 'R$ 0,00',
-                    price: 'R$ 0,00',
-                    stock: '0',
-                    minStock: '0',
-                }}
-                submitLabel="Salvar produto"
-                keepOpenAfterSubmit={false}
-                onSubmit={async (values) => {
-                    const createdProduct = await onCreateProduct({
-                        name: String(values.name || '').trim(),
-                        sku: String(values.sku || '').trim(),
-                        barcode: String(values.barcode || '').trim(),
-                        categoryId: Number(values.category),
-                        brandId: values.brand ? Number(values.brand) : null,
-                        cost: Number(values.cost || 0),
-                        price: Number(values.price || 0),
-                        stock: Number(values.stock || 0),
-                        minStock: Number(values.minStock || 0),
-                        createdAt:
-                            values.createdAt ||
-                            new Date().toISOString().slice(0, 10),
+                mode="create"
+                brands={brands.map((brand) => ({
+                    value: String(brand.id),
+                    label: brand.name,
+                }))}
+                categories={categories.map((category) => ({
+                    value: String(category.id),
+                    label: category.name,
+                }))}
+                onSubmit={async (data) => {
+                    const created = await onCreateProduct({
+                        name: data.name.trim(),
+                        sku: data.sku.trim(),
+                        barcode: data.barcode || '',
+                        categoryId: Number(data.category_id),
+                        brandId: data.brand_id ? Number(data.brand_id) : null,
+                        cost: Number(data.cost || 0),
+                        price: Number(data.sale_price || 0),
+                        stock: Number(data.stock || 0),
+                        minStock: Number(data.min_stock || 0),
+                        createdAt: new Date().toISOString().slice(0, 10),
                     });
 
-                    handleAddFromCatalog(createdProduct.id);
-
-                    return createdProduct;
+                    handleAddFromCatalog(created.id);
+                }}
+                onCreateBrand={async (name) => {
+                    return createBrand.mutateAsync({ name, status: 'active' });
+                }}
+                onCreateCategory={async (name) => {
+                    return createCategory.mutateAsync({ name, status: 'active' });
                 }}
             />
 

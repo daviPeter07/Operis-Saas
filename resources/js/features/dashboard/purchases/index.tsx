@@ -284,17 +284,22 @@ export function PurchasesModule() {
             throw new Error('Adicione ao menos um produto na compra.');
         }
 
-        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' | 'boleto' =
+        const paymentMethod:
+            | 'cash'
+            | 'pix'
+            | 'card'
+            | 'installment'
+            | 'boleto' =
             purchase.paymentMethod === 'money'
                 ? 'cash'
                 : purchase.paymentMethod === 'boleto'
                   ? 'boleto'
-                : purchase.paymentMethod === 'debit' ||
-                    purchase.paymentMethod === 'credit'
-                  ? 'card'
-                  : purchase.paymentMethod === 'installment'
-                    ? 'installment'
-                    : 'pix';
+                  : purchase.paymentMethod === 'debit' ||
+                      purchase.paymentMethod === 'credit'
+                    ? 'card'
+                    : purchase.paymentMethod === 'installment'
+                      ? 'installment'
+                      : 'pix';
 
         await createPurchase.mutateAsync({
             supplier_id: supplierId,
@@ -306,11 +311,13 @@ export function PurchasesModule() {
             payment_method: paymentMethod,
             boleto_term_days:
                 paymentMethod === 'boleto'
-                    ? ((Number(
-                          purchase.boletoTermDays ?? 30,
-                      ) as 30 | 60 | 90 | 120))
+                    ? (Number(purchase.boletoTermDays ?? 30) as
+                          | 30
+                          | 60
+                          | 90
+                          | 120)
                     : undefined,
-            status: 'pending',
+            status: purchase.status === 'completed' ? 'completed' : 'pending',
             items,
         });
 

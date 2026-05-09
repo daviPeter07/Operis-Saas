@@ -96,9 +96,14 @@ export function CatalogPanel({
                                     {product.sku}
                                 </p>
                             </div>
-                            <span className="text-sm font-semibold">
-                                {formatCurrencyBR(product.price)}
-                            </span>
+                            <div className="text-right">
+                                <p className="text-xs text-muted-foreground">
+                                    Estoque: {product.stock}
+                                </p>
+                                <span className="text-sm font-semibold">
+                                    {formatCurrencyBR(product.price)}
+                                </span>
+                            </div>
                         </button>
                     ))}
                     {visibleProducts.length === 0 && (

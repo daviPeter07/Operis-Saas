@@ -14,6 +14,21 @@ import {
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
+function formatPaymentMethod(method: string | undefined): string {
+    if (!method) return '-';
+
+    const methodLower = method.toLowerCase();
+
+    if (methodLower === 'money') return 'Dinheiro';
+    if (methodLower === 'pix') return 'PIX';
+    if (methodLower === 'debit') return 'Cartão Débito';
+    if (methodLower === 'credit') return 'Cartão Crédito';
+    if (methodLower === 'card') return 'Cartão';
+    if (methodLower === 'boleto') return 'Boleto';
+
+    return method;
+}
+
 type PurchaseConfirmationDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -29,7 +44,9 @@ export function PurchaseConfirmationDialog({
     items,
     onConfirm,
 }: PurchaseConfirmationDialogProps) {
-    const [status, setStatus] = React.useState<'pending' | 'completed'>('pending');
+    const [status, setStatus] = React.useState<'pending' | 'completed'>(
+        'pending',
+    );
 
     React.useEffect(() => {
         if (open && purchaseDraft) {
@@ -59,11 +76,14 @@ export function PurchaseConfirmationDialog({
                         </p>
                         <p>
                             <strong>Pagamento:</strong>{' '}
-                            {purchaseDraft.paymentMethod || '-'}
-                            {purchaseDraft.boletoTermDays ? ` (${purchaseDraft.boletoTermDays} dias)` : ''}
+                            {formatPaymentMethod(purchaseDraft.paymentMethod)}
+                            {purchaseDraft.boletoTermDays
+                                ? ` (${purchaseDraft.boletoTermDays} dias)`
+                                : ''}
                         </p>
                         <p>
-                            <strong>Data:</strong> {purchaseDraft.createdAt || '-'}
+                            <strong>Data:</strong>{' '}
+                            {purchaseDraft.createdAt || '-'}
                         </p>
                     </div>
 
@@ -73,19 +93,31 @@ export function PurchaseConfirmationDialog({
                                 Nenhum item na compra.
                             </p>
                         ) : (
-                            items.map((item, index) => (
-                                <div
-                                    key={`${item.productId}-${index}`}
-                                    className="flex items-center justify-between text-sm"
-                                >
-                                    <span>
-                                        Produto #{item.productId} - {item.quantity}x
-                                    </span>
-                                    <strong>
-                                        {formatCurrencyBR(item.unitCost * item.quantity)}
-                                    </strong>
-                                </div>
-                            ))
+                            items.map((item, index) => {
+                                const subtotal = item.quantity * item.unitCost;
+                                return (
+                                    <div
+                                        key={`${item.productId}-${index}`}
+                                        className="flex items-center justify-between rounded-md border p-2"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-medium">
+                                                {item.productName ||
+                                                    `Produto #${item.productId}`}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {item.quantity}x{' '}
+                                                {formatCurrencyBR(
+                                                    item.unitCost,
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="ml-4 font-medium">
+                                            {formatCurrencyBR(subtotal)}
+                                        </div>
+                                    </div>
+                                );
+                            })
                         )}
                     </div>
 
@@ -95,16 +127,27 @@ export function PurchaseConfirmationDialog({
                             type="single"
                             value={status}
                             onValueChange={(value) => {
-                                if (value === 'pending' || value === 'completed') {
+                                if (
+                                    value === 'pending' ||
+                                    value === 'completed'
+                                ) {
                                     setStatus(value);
                                 }
                             }}
                             className="grid grid-cols-2 gap-2"
                         >
-                            <ToggleGroupItem value="pending" variant="outline" className="rounded-md border">
+                            <ToggleGroupItem
+                                value="pending"
+                                variant="outline"
+                                className="rounded-md border"
+                            >
                                 Faturada (A Pagar)
                             </ToggleGroupItem>
-                            <ToggleGroupItem value="completed" variant="outline" className="rounded-md border">
+                            <ToggleGroupItem
+                                value="completed"
+                                variant="outline"
+                                className="rounded-md border"
+                            >
                                 Paga (Finalizada)
                             </ToggleGroupItem>
                         </ToggleGroup>
@@ -126,7 +169,10 @@ export function PurchaseConfirmationDialog({
                     >
                         Voltar
                     </Button>
-                    <Button type="button" onClick={() => onConfirm({ ...purchaseDraft, status })}>
+                    <Button
+                        type="button"
+                        onClick={() => onConfirm({ ...purchaseDraft, status })}
+                    >
                         Confirmar compra
                     </Button>
                 </DialogFooter>

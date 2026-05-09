@@ -63,6 +63,7 @@ export type PurchaseLineItem = {
     productId: string;
     quantity: number;
     unitCost: number;
+    productName?: string;
 };
 
 export type PurchaseCreateDialogProps = {
