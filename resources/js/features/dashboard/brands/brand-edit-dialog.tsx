@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -13,7 +14,6 @@ import {
     SelectContent,
     SelectItem,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { ENTITY_STATUS_OPTIONS } from '@/constants/entity-status';
 import type { BrandRow } from '@/features/dashboard/brands/index';
 
@@ -44,7 +44,10 @@ export function BrandEditDialog({
     }, [brand]);
 
     const handleSave = async () => {
-        if (!brand) return;
+        if (!brand) {
+return;
+}
+
         await onSubmit({
             name: name.trim(),
             status: status as 'active' | 'inactive',

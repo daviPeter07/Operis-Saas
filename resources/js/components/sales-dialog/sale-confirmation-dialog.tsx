@@ -1,3 +1,4 @@
+import { Printer } from 'lucide-react';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,11 +9,10 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { formatCurrencyBR } from '@/lib/format';
-import { Printer } from 'lucide-react';
 import { SaleDocumentPreviewDialog } from '@/features/dashboard/sales/sale-document-preview-dialog';
-import type { SalesRecord } from '@/types/sales-dialog';
+import { formatCurrencyBR } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
+import type { SalesRecord } from '@/types/sales-dialog';
 import { todayString } from '@/utils/sales-dialog';
 
 type Props = {

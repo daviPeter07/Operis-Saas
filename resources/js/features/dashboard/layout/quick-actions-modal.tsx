@@ -1,5 +1,5 @@
-import { Plus, Users, ShoppingCart, Receipt, Tag } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { Plus, Users, ShoppingCart, Receipt, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,

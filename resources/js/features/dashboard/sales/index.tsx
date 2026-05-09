@@ -30,8 +30,8 @@ import type {
     UiProduct,
 } from '@/types/dashboard-entities';
 import type { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
-import { todayString } from '@/utils/sales-dialog';
 import { calculateSaleProfit, calculateSalesProfit } from '@/utils/sale-profit';
+import { todayString } from '@/utils/sales-dialog';
 import type { Column } from '../generic-table';
 import { GenericTable } from '../generic-table';
 import { SaleDocumentPreviewDialog } from './sale-document-preview-dialog';

@@ -116,6 +116,7 @@ export function CreateModal<T extends Record<string, unknown>>({
             if (typeof field.label === 'function') {
                 return field.label(formData as Record<string, unknown>);
             }
+
             return field.label;
         },
         [formData],
@@ -126,6 +127,7 @@ export function CreateModal<T extends Record<string, unknown>>({
             if (typeof field.placeholder === 'function') {
                 return field.placeholder(formData as Record<string, unknown>);
             }
+
             return field.placeholder || '';
         },
         [formData],

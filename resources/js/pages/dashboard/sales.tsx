@@ -1,7 +1,7 @@
+import * as React from 'react';
 import { PageContent } from '@/features/dashboard/page-content';
 import { SalesModule } from '@/features/dashboard/sales';
 import AppLayout from '@/layouts/app-layout';
-import * as React from 'react';
 
 export default function SalesPage() {
     return (

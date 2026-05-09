@@ -27,7 +27,7 @@ class ProductResource extends ApiResource
             'status' => $this->status,
             'category_id' => $this->category_id,
             'brand_id' => $this->brand_id,
-            'createdAt' => $this->created_at?->format('Y-m-d H:i:s'),
+            'createdAt' => $this->created_at?->clone()->setTimezone('America/Sao_Paulo')->format('Y-m-d H:i:s'),
         ];
     }
 }

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { brandService } from '@/services/brands';
 import { brandsQueryKey } from '@/hooks/use-brands';
+import { brandService } from '@/services/brands';
 
 type UpdateBrandInput = {
     id: number;

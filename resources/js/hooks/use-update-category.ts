@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryService } from '@/services/categories';
 import { categoriesQueryKey } from '@/hooks/use-categories';
+import { categoryService } from '@/services/categories';
 
 type UpdateCategoryInput = {
     id: number;

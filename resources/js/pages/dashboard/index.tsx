@@ -21,7 +21,7 @@ import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrencyBR, formatDateBR, formatDateTimeBR } from '@/lib/format';
+import { formatCurrencyBR, formatDateBR, formatDateTimeBR, formatDateTimeManaus } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
 import { calculateSalesProfit } from '@/utils/sale-profit';
@@ -33,25 +33,26 @@ function dateToLabel(date: string): string {
     return `${day}/${month}/${year.slice(2)}`;
 }
 
-function formatDateTimeManaus(dateTime: string | undefined): string {
-    if (!dateTime) {
-        return '';
-    }
-
-    const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateTime);
-
-    if (dateOnlyMatch) {
-        return `${formatDateBR(dateTime)} 00:00`;
-    }
-
-    return formatDateTimeBR(dateTime);
-}
-
 function toActivityTimestamp(dateTime: string | undefined): number {
     if (!dateTime) {
         return 0;
     }
 
+    // Handle "YYYY-MM-DD HH:MM:SS" format from backend
+    const fullDateMatch = /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/.exec(dateTime);
+
+    if (fullDateMatch) {
+        const year = Number(fullDateMatch[1]);
+        const month = Number(fullDateMatch[2]);
+        const day = Number(fullDateMatch[3]);
+        const hour = Number(fullDateMatch[4]);
+        const minute = Number(fullDateMatch[5]);
+        const second = Number(fullDateMatch[6]);
+
+        return new Date(year, month - 1, day, hour, minute, second).getTime();
+    }
+
+    // Handle date-only "YYYY-MM-DD" format
     const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateTime);
 
     if (dateOnlyMatch) {
@@ -81,12 +82,15 @@ export default function DashboardPage() {
     };
 
     const { data: sales = [], isPending: isSalesPending } = useSales();
-    const { data: purchases = [], isPending: isPurchasesPending } = usePurchases();
+    const { data: purchases = [], isPending: isPurchasesPending } =
+        usePurchases();
     const { data: receivables = [] } = useAccountReceivables();
     const { data: payables = [] } = useAccountPayables();
-    const { data: customers = [], isPending: isCustomersPending } = useCustomers();
+    const { data: customers = [], isPending: isCustomersPending } =
+        useCustomers();
     const { data: products = [], isPending: isProductsPending } = useProducts();
-    const { data: suppliers = [], isPending: isSuppliersPending } = useSuppliers();
+    const { data: suppliers = [], isPending: isSuppliersPending } =
+        useSuppliers();
 
     const isActivitiesPending =
         isSalesPending ||
@@ -187,55 +191,134 @@ export default function DashboardPage() {
 
     const activities = useMemo(() => {
         const userName = auth.user?.name ?? 'Usuário';
-        const salesItems = activeSales.slice(0, 3).map((sale) => ({
-            id: `sale-${sale.id}`,
-            type: 'sale' as const,
-            responsible: userName,
-            description: `Nova venda #${sale.id}`,
-            amount: formatCurrencyBR(sale.total),
-            time: formatDateTimeManaus(sale.createdAt ?? sale.date),
-            sortAt: toActivityTimestamp(sale.createdAt ?? sale.date),
-        }));
-        const purchaseItems = activePurchases.slice(0, 3).map((purchase) => ({
-            id: `purchase-${purchase.id}`,
-            type: 'purchase' as const,
-            responsible: userName,
-            description: `Nova compra #${purchase.id}`,
-            amount: formatCurrencyBR(purchase.total),
-            time: formatDateTimeManaus(purchase.createdAt ?? purchase.date),
-            sortAt: toActivityTimestamp(purchase.createdAt ?? purchase.date),
-        }));
-        const customerItems = customers.slice(0, 2).map((customer) => ({
-            id: `client-${customer.id}`,
-            type: 'client' as const,
-            responsible: userName,
-            description: `Novo cliente: ${customer.name}`,
-            time: formatDateTimeManaus((customer as { createdAt?: string }).createdAt),
-            sortAt: toActivityTimestamp((customer as { createdAt?: string }).createdAt),
-        }));
-        const supplierItems = suppliers.slice(0, 2).map((supplier) => ({
-            id: `supplier-${supplier.id}`,
-            type: 'supplier' as const,
-            responsible: userName,
-            description: `Novo fornecedor: ${supplier.name}`,
-            time: formatDateTimeManaus((supplier as { createdAt?: string }).createdAt),
-            sortAt: toActivityTimestamp((supplier as { createdAt?: string }).createdAt),
-        }));
-        const productItems = products.slice(0, 2).map((product) => ({
-            id: `product-${product.id}`,
-            type: 'product' as const,
-            responsible: userName,
-            description: `Novo produto: ${product.name}`,
-            time: formatDateTimeManaus((product as { createdAt?: string }).createdAt),
-            sortAt: toActivityTimestamp((product as { createdAt?: string }).createdAt),
-        }));
 
-        return [...salesItems, ...purchaseItems, ...customerItems, ...supplierItems, ...productItems]
+        const salesItems = [...activeSales]
+            .sort(
+                (a, b) =>
+                    toActivityTimestamp(b.createdAt ?? b.date) -
+                    toActivityTimestamp(a.createdAt ?? a.date),
+            )
+            .slice(0, 5)
+            .map((sale) => ({
+                id: `sale-${sale.id}`,
+                type: 'sale' as const,
+                responsible: userName,
+                description: `Venda #${sale.id} - ${sale.customer_name ?? 'Sem cliente'}`,
+                amount: formatCurrencyBR(sale.total),
+                time: formatDateTimeManaus(sale.createdAt ?? sale.date),
+                sortAt: toActivityTimestamp(sale.createdAt ?? sale.date),
+            }));
+
+        const purchaseItems = [...activePurchases]
+            .sort(
+                (a, b) =>
+                    toActivityTimestamp(b.createdAt ?? b.date) -
+                    toActivityTimestamp(a.createdAt ?? a.date),
+            )
+            .slice(0, 5)
+            .map((purchase) => ({
+                id: `purchase-${purchase.id}`,
+                type: 'purchase' as const,
+                responsible: userName,
+                description: `Compra #${purchase.id}`,
+                amount: formatCurrencyBR(purchase.total),
+                time: formatDateTimeManaus(purchase.createdAt ?? purchase.date),
+                sortAt: toActivityTimestamp(
+                    purchase.createdAt ?? purchase.date,
+                ),
+            }));
+
+        const customerItems = [...customers]
+            .sort(
+                (a, b) =>
+                    toActivityTimestamp(
+                        (b as { createdAt?: string }).createdAt,
+                    ) -
+                    toActivityTimestamp(
+                        (a as { createdAt?: string }).createdAt,
+                    ),
+            )
+            .slice(0, 5)
+            .map((customer) => ({
+                id: `client-${customer.id}`,
+                type: 'client' as const,
+                responsible: userName,
+                description: `Novo cliente: ${customer.name}`,
+                time: formatDateTimeManaus(
+                    (customer as { createdAt?: string }).createdAt,
+                ),
+                sortAt: toActivityTimestamp(
+                    (customer as { createdAt?: string }).createdAt,
+                ),
+            }));
+
+        const supplierItems = [...suppliers]
+            .sort(
+                (a, b) =>
+                    toActivityTimestamp(
+                        (b as { createdAt?: string }).createdAt,
+                    ) -
+                    toActivityTimestamp(
+                        (a as { createdAt?: string }).createdAt,
+                    ),
+            )
+            .slice(0, 5)
+            .map((supplier) => ({
+                id: `supplier-${supplier.id}`,
+                type: 'supplier' as const,
+                responsible: userName,
+                description: `Novo fornecedor: ${supplier.name}`,
+                time: formatDateTimeManaus(
+                    (supplier as { createdAt?: string }).createdAt,
+                ),
+                sortAt: toActivityTimestamp(
+                    (supplier as { createdAt?: string }).createdAt,
+                ),
+            }));
+
+        const productItems = [...products]
+            .sort(
+                (a, b) =>
+                    toActivityTimestamp(
+                        (b as { createdAt?: string }).createdAt,
+                    ) -
+                    toActivityTimestamp(
+                        (a as { createdAt?: string }).createdAt,
+                    ),
+            )
+            .slice(0, 5)
+            .map((product) => ({
+                id: `product-${product.id}`,
+                type: 'product' as const,
+                responsible: userName,
+                description: `Novo produto: ${product.name}`,
+                time: formatDateTimeManaus(
+                    (product as { createdAt?: string }).createdAt,
+                ),
+                sortAt: toActivityTimestamp(
+                    (product as { createdAt?: string }).createdAt,
+                ),
+            }));
+
+        return [
+            ...salesItems,
+            ...purchaseItems,
+            ...customerItems,
+            ...supplierItems,
+            ...productItems,
+        ]
             .filter((item) => item.time)
             .sort((a, b) => b.sortAt - a.sortAt)
             .map(({ sortAt, ...item }) => item)
             .slice(0, 5);
-    }, [activeSales, activePurchases, customers, suppliers, products, auth.user?.name]);
+    }, [
+        activeSales,
+        activePurchases,
+        customers,
+        suppliers,
+        products,
+        auth.user?.name,
+    ]);
 
     const alerts = useMemo(
         () => [
@@ -294,7 +377,8 @@ export default function DashboardPage() {
                 summary: formatCurrencyBR(
                     profitSeries.reduce((sum, point) => sum + point.value, 0),
                 ),
-                description: 'Lucro real calculado a partir do custo dos itens vendidos.',
+                description:
+                    'Lucro real calculado a partir do custo dos itens vendidos.',
                 color: '#22c55e',
                 series: profitSeries.map((point) => ({
                     date: point.date,
@@ -341,7 +425,10 @@ export default function DashboardPage() {
                         <MetricsGrid metrics={metrics} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
-                                <RecentActivity activities={activities} isPending={isActivitiesPending} />
+                                <RecentActivity
+                                    activities={activities}
+                                    isPending={isActivitiesPending}
+                                />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
                                 <h3 className="mb-4 font-semibold">
@@ -380,7 +467,10 @@ export default function DashboardPage() {
                         <ChartsPanel charts={charts} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
-                                <RecentActivity activities={activities} isPending={isActivitiesPending} />
+                                <RecentActivity
+                                    activities={activities}
+                                    isPending={isActivitiesPending}
+                                />
                             </div>
                             <div className="rounded-xl border bg-card p-4">
                                 <h3 className="mb-4 font-semibold">
