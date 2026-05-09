@@ -199,17 +199,20 @@ export function SalesDialog({
             discountValue: appliedDiscountValue,
             discountAmountApplied,
             finalTotal,
-            cardType: paymentMethod === 'card' ? cardType : undefined,
+            cardType:
+                paymentMethod === 'card' || paymentMethod === 'crediario'
+                    ? cardType
+                    : undefined,
             installments:
-                paymentMethod === 'card' && cardType === 'credit'
+                paymentMethod === 'crediario'
                     ? Math.max(1, Math.min(24, Number(installments) || 1))
                     : undefined,
             firstInstallmentDate:
-                paymentMethod === 'card' && cardType === 'credit'
+                paymentMethod === 'crediario'
                     ? firstInstallmentDate
                     : undefined,
             installmentValue:
-                paymentMethod === 'card' && cardType === 'credit'
+                paymentMethod === 'crediario'
                     ? Number(
                           (
                               finalTotal /

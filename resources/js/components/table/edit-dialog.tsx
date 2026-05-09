@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -46,6 +47,11 @@ export function EditDialog<T extends Record<string, unknown>>({
 }: EditDialogProps<T>) {
     const [formData, setFormData] = React.useState<Partial<T>>(initialData);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
     const gridColumnsClass = React.useMemo(() => {
         if (fields.length >= 9) {
@@ -97,10 +103,37 @@ export function EditDialog<T extends Record<string, unknown>>({
 
     const handleChange = (name: string, value: string) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
+        clearErrors(name);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const requiredMissing = fields.some((field) => {
+            if (!field.required) {
+                return false;
+            }
+
+            const value = String(formData[field.name] ?? '').trim();
+
+            if (value.length > 0) {
+                clearErrors(field.name);
+
+                return false;
+            }
+
+            setError(field.name, {
+                type: 'required',
+                message: `${field.label} é obrigatório.`,
+            });
+
+            return true;
+        });
+
+        if (requiredMissing) {
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -208,6 +241,11 @@ export function EditDialog<T extends Record<string, unknown>>({
                                         required={field.required}
                                     />
                                 )}
+                                {errors[field.name]?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors[field.name]?.message)}
+                                    </p>
+                                ) : null}
                             </div>
                         ))}
                     </div>

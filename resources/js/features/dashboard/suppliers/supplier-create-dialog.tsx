@@ -1,3 +1,4 @@
+import { useForm } from 'react-hook-form';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +39,11 @@ export function SupplierCreateDialog({
     const createSupplier = useCreateSupplier();
     const isSubmitting = createSupplier.isPending;
     const documentLabel = form.personType === 'pj' ? 'CNPJ' : 'CPF';
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -53,6 +59,15 @@ export function SupplierCreateDialog({
                     className="space-y-4"
                     onSubmit={(event) => {
                         event.preventDefault();
+
+                        if (!form.name.trim()) {
+                            setError('name', {
+                                type: 'required',
+                                message: 'Nome é obrigatório.',
+                            });
+
+                            return;
+                        }
 
                         createSupplier.mutate(
                             {
@@ -76,16 +91,26 @@ export function SupplierCreateDialog({
                 >
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
-                            <Label htmlFor="supplier-name">Nome</Label>
+                            <Label htmlFor="supplier-name">
+                                Nome <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="supplier-name"
                                 value={form.name}
                                 onChange={(event) =>
-                                    setField('name', event.target.value)
+                                    {
+                                        setField('name', event.target.value);
+                                        clearErrors('name');
+                                    }
                                 }
                                 placeholder="Razao social ou nome fantasia"
                                 required
                             />
+                            {errors.name?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.name.message)}
+                                </p>
+                            ) : null}
                         </div>
 
                         <div className="grid gap-2">

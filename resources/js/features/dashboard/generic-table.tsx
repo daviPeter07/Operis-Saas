@@ -369,6 +369,7 @@ export function GenericTable<T extends { id: string }>({
             columns.map((column) => ({
                 name: column.key,
                 label: String(column.header),
+                required: true,
                 type:
                     typeof (selectedRow as Record<string, unknown> | null)?.[
                         column.key

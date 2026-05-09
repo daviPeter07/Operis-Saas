@@ -16,6 +16,7 @@ type SupplierRow = {
     email: string;
     phone: string;
     document: string;
+    city: string;
     status: 'active' | 'inactive';
 };
 
@@ -34,9 +35,26 @@ export function SuppliersModule() {
                 <PersonTypeBadge personType={inferPersonType(row.document)} />
             ),
         },
-        { key: 'email', header: 'Email' },
-        { key: 'phone', header: 'Telefone' },
-        { key: 'document', header: 'Documento' },
+        {
+            key: 'email',
+            header: 'Email',
+            render: (val: unknown) => String(val || '-'),
+        },
+        {
+            key: 'phone',
+            header: 'Telefone',
+            render: (val: unknown) => String(val || '-'),
+        },
+        {
+            key: 'document',
+            header: 'Documento',
+            render: (val: unknown) => String(val || '-'),
+        },
+        {
+            key: 'city',
+            header: 'Cidade',
+            render: (val: unknown) => String(val || '-'),
+        },
         { key: 'status', header: 'Status', render: (val: unknown) => <StatusBadge status={String(val)} /> },
     ];
 
@@ -46,6 +64,7 @@ export function SuppliersModule() {
         email: supplier.email,
         phone: supplier.phone,
         document: supplier.document,
+        city: '',
         status: supplier.status,
     }));
 

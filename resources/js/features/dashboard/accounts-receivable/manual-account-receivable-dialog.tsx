@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,11 @@ export function ManualAccountReceivableDialog({
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
     const [entryDate, setEntryDate] = useState(today);
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
     const filteredCustomers = useMemo(() => {
         const normalizedQuery = customerSearch.trim().toLowerCase();
@@ -87,6 +93,44 @@ export function ManualAccountReceivableDialog({
                     onSubmit={(event) => {
                         event.preventDefault();
 
+                        let hasError = false;
+
+                        if (!customerId) {
+                            setError('customer_id', {
+                                type: 'required',
+                                message: 'Cliente é obrigatório.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (!item.trim()) {
+                            setError('item', {
+                                type: 'required',
+                                message: 'Item é obrigatório.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (!amount || Number(amount) <= 0) {
+                            setError('amount', {
+                                type: 'required',
+                                message: 'Valor deve ser maior que zero.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (!entryDate) {
+                            setError('entry_date', {
+                                type: 'required',
+                                message: 'Data é obrigatória.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (hasError) {
+                            return;
+                        }
+
                         void onSubmit({
                             customer_id: Number(customerId),
                             item: item.trim(),
@@ -107,6 +151,7 @@ export function ManualAccountReceivableDialog({
                             onSearchChange={setCustomerSearch}
                             onChange={(value) => {
                                 setCustomerId(value);
+                                clearErrors('customer_id');
                                 const selectedCustomer = customers.find(
                                     (customer) => customer.id === value,
                                 );
@@ -120,6 +165,11 @@ export function ManualAccountReceivableDialog({
                             placeholder="Buscar cliente"
                             emptyMessage="Nenhum cliente encontrado."
                         />
+                        {errors.customer_id?.message ? (
+                            <p className="text-xs text-destructive">
+                                {String(errors.customer_id.message)}
+                            </p>
+                        ) : null}
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-2">
@@ -131,11 +181,19 @@ export function ManualAccountReceivableDialog({
                                 id="manual-receivable-item"
                                 value={item}
                                 onChange={(event) =>
-                                    setItem(event.currentTarget.value)
+                                    {
+                                        setItem(event.currentTarget.value);
+                                        clearErrors('item');
+                                    }
                                 }
                                 placeholder="Ex.: ajuste comercial"
                                 required
                             />
+                            {errors.item?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.item.message)}
+                                </p>
+                            ) : null}
                         </div>
 
                         <div className="grid gap-2">
@@ -149,11 +207,19 @@ export function ManualAccountReceivableDialog({
                                 step="0.01"
                                 value={amount}
                                 onChange={(event) =>
-                                    setAmount(event.currentTarget.value)
+                                    {
+                                        setAmount(event.currentTarget.value);
+                                        clearErrors('amount');
+                                    }
                                 }
                                 placeholder="0,00"
                                 required
                             />
+                            {errors.amount?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.amount.message)}
+                                </p>
+                            ) : null}
                         </div>
                     </div>
 
@@ -175,9 +241,17 @@ export function ManualAccountReceivableDialog({
                         <Label>Data *</Label>
                         <DatePickerInput
                             value={entryDate}
-                            onChange={setEntryDate}
+                            onChange={(value) => {
+                                setEntryDate(value);
+                                clearErrors('entry_date');
+                            }}
                             placeholder="Selecionar data"
                         />
+                        {errors.entry_date?.message ? (
+                            <p className="text-xs text-destructive">
+                                {String(errors.entry_date.message)}
+                            </p>
+                        ) : null}
                     </div>
 
                     <DialogFooter>

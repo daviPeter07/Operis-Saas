@@ -101,6 +101,35 @@ export function CheckoutPanel({
     canSubmit,
     onSubmit,
 }: CheckoutPanelProps) {
+    const calendarContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+    React.useEffect(() => {
+        if (!calendarOpen) {
+            return;
+        }
+
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (
+                calendarContainerRef.current &&
+                !calendarContainerRef.current.contains(event.target as Node)
+            ) {
+                setCalendarOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleOutsideClick);
+
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+        };
+    }, [calendarOpen, setCalendarOpen]);
+
+    React.useEffect(() => {
+        if (paymentMethod === 'crediario' && cardType !== 'credit') {
+            setCardType('credit');
+        }
+    }, [paymentMethod, cardType, setCardType]);
+
     return (
         <section className="flex min-h-0 flex-col bg-card">
             <div className="border-b p-4">
@@ -314,6 +343,8 @@ export function CheckoutPanel({
                                         setFirstInstallmentDate
                                     }
                                     totalAmount={finalTotal}
+                                    showCardTypeToggle
+                                    enableInstallments={false}
                                 />
                             </CardContent>
                         </Card>
@@ -327,6 +358,19 @@ export function CheckoutPanel({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2 text-sm">
+                                <CardPaymentFields
+                                    cardType="credit"
+                                    onCardTypeChange={setCardType}
+                                    installments={installments}
+                                    onInstallmentsChange={setInstallments}
+                                    firstInstallmentDate={firstInstallmentDate}
+                                    onFirstInstallmentDateChange={
+                                        setFirstInstallmentDate
+                                    }
+                                    totalAmount={finalTotal}
+                                    showCardTypeToggle={false}
+                                    enableInstallments
+                                />
                                 <div className="flex items-center justify-between">
                                     <span className="text-muted-foreground">
                                         Limite disponivel
@@ -406,7 +450,10 @@ export function CheckoutPanel({
                         className="h-24 resize-none"
                     />
 
-                    <div className="relative space-y-2">
+                    <div
+                        ref={calendarContainerRef}
+                        className="relative space-y-2"
+                    >
                         <Label>Data</Label>
                         <Button
                             type="button"

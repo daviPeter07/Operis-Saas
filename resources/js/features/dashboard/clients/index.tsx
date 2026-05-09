@@ -5,6 +5,7 @@ import {
     useCustomers,
     useDeleteCustomer,
 } from '@/hooks/use-customers';
+import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { inferClientPersonType } from '@/utils/clients';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
@@ -22,6 +23,7 @@ type ClientRow = {
     credit_enabled: boolean;
     credit_limit: number;
     credit_term_days: number;
+    open_crediario_count: number;
 };
 
 export function ClientsModule() {
@@ -40,6 +42,7 @@ export function ClientsModule() {
     }, []);
     const { data: customers = [], isPending: isCustomersPending } =
         useCustomers();
+    const { data: receivables = [] } = useAccountReceivables();
     const createCustomer = useCreateCustomer();
     const deleteCustomer = useDeleteCustomer();
     const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
@@ -56,6 +59,11 @@ export function ClientsModule() {
         credit_enabled: customer.credit_enabled,
         credit_limit: customer.credit_limit,
         credit_term_days: customer.credit_term_days,
+        open_crediario_count: receivables.filter(
+            (receivable) =>
+                receivable.customer_id === customer.id &&
+                receivable.status === 'pending',
+        ).length,
     }));
 
     const columns: Column<ClientRow>[] = [
@@ -67,22 +75,40 @@ export function ClientsModule() {
                 <PersonTypeBadge personType={row.personType} />
             ),
         },
-        { key: 'email', header: 'Email' },
+        {
+            key: 'email',
+            header: 'Email',
+            render: (value: unknown) => String(value || '-'),
+        },
         {
             key: 'phone',
             header: 'Telefone',
-            render: (value: unknown) => formatPhoneInput(String(value ?? '')),
+            render: (value: unknown) =>
+                String(value || '').trim().length > 0
+                    ? formatPhoneInput(String(value))
+                    : '-',
         },
         {
             key: 'document',
             header: 'Documento',
             render: (value: unknown) =>
-                formatDocumentInput(String(value ?? '')),
+                String(value || '').trim().length > 0
+                    ? formatDocumentInput(String(value))
+                    : '-',
         },
         {
             key: 'credit_enabled',
             header: 'Crediario',
             render: (value: unknown) => (value ? 'Habilitado' : 'Desabilitado'),
+        },
+        {
+            key: 'open_crediario_count',
+            header: 'Crediarios em aberto',
+        },
+        {
+            key: 'credit_term_days',
+            header: 'Prazo (dias)',
+            render: (value: unknown) => Number(value || 0) || '-',
         },
     ];
 

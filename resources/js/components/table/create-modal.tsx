@@ -1,5 +1,6 @@
 import { Barcode, Sparkles } from 'lucide-react';
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import { SearchableSelect } from '@/components/searchable-select';
@@ -86,6 +87,11 @@ export function CreateModal<T extends Record<string, unknown>>({
     const [formData, setFormData] = React.useState<Partial<T>>({});
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const inputRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
     const gridColumnsClass = React.useMemo(() => {
         if (fields.length >= 9) {
@@ -216,6 +222,10 @@ export function CreateModal<T extends Record<string, unknown>>({
             ...previous,
             [field.name]: maskedValue,
         }));
+
+        if (field.required && String(maskedValue).trim().length > 0) {
+            clearErrors(field.name);
+        }
     };
 
     const handleGenerateInternalCode = (fieldName: string) => {
@@ -264,6 +274,32 @@ export function CreateModal<T extends Record<string, unknown>>({
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
+
+        const requiredMissing = fields.some((field) => {
+            if (!field.required) {
+                return false;
+            }
+
+            const value = String(formData[field.name] ?? '').trim();
+
+            if (value.length > 0) {
+                clearErrors(field.name);
+
+                return false;
+            }
+
+            setError(field.name, {
+                type: 'required',
+                message: `${getFieldLabel(field)} é obrigatório.`,
+            });
+
+            return true;
+        });
+
+        if (requiredMissing) {
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -547,6 +583,11 @@ export function CreateModal<T extends Record<string, unknown>>({
                                             )}
                                         </Label>
                                         {renderFieldControl(field)}
+                                        {errors[field.name]?.message ? (
+                                            <p className="text-xs text-destructive">
+                                                {String(errors[field.name]?.message)}
+                                            </p>
+                                        ) : null}
                                     </div>
                                 </React.Fragment>
                             );

@@ -1,3 +1,4 @@
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -64,6 +65,11 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
     const isEditing = Boolean(initialData?.id);
     const isSubmitting = createCustomer.isPending || updateCustomer.isPending;
     const documentLabel = form.personType === 'pj' ? 'CNPJ' : 'CPF';
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,6 +87,15 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                     className="space-y-4"
                     onSubmit={(event) => {
                         event.preventDefault();
+
+                        if (!form.name.trim()) {
+                            setError('name', {
+                                type: 'required',
+                                message: 'Nome é obrigatório.',
+                            });
+
+                            return;
+                        }
 
                         const payload = {
                             name: form.name,
@@ -128,16 +143,26 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                 >
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
-                            <Label htmlFor="client-name">Nome</Label>
+                            <Label htmlFor="client-name">
+                                Nome <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="client-name"
                                 value={form.name}
                                 onChange={(event) =>
-                                    setField('name', event.target.value)
+                                    {
+                                        setField('name', event.target.value);
+                                        clearErrors('name');
+                                    }
                                 }
                                 placeholder="Nome completo ou razao social"
                                 required
                             />
+                            {errors.name?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.name.message)}
+                                </p>
+                            ) : null}
                         </div>
 
                         <div className="grid gap-2">

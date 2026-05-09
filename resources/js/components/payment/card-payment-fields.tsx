@@ -20,6 +20,8 @@ type CardPaymentFieldsProps = {
     firstInstallmentDate: string;
     onFirstInstallmentDateChange: (value: string) => void;
     totalAmount: number;
+    showCardTypeToggle?: boolean;
+    enableInstallments?: boolean;
 };
 
 const INSTALLMENT_OPTIONS = Array.from({ length: 24 }, (_, index) => {
@@ -39,6 +41,8 @@ export function CardPaymentFields({
     firstInstallmentDate,
     onFirstInstallmentDateChange,
     totalAmount,
+    showCardTypeToggle = true,
+    enableInstallments = true,
 }: CardPaymentFieldsProps) {
     const safeInstallments = Math.max(
         1,
@@ -57,36 +61,38 @@ export function CardPaymentFields({
 
     return (
         <div className="grid gap-3 rounded-md border p-3">
-            <div className="grid gap-2">
-                <Label>Tipo no cartão</Label>
-                <ToggleGroup
-                    type="single"
-                    value={cardType}
-                    onValueChange={(value) => {
-                        if (value === 'debit' || value === 'credit') {
-                            onCardTypeChange(value);
-                        }
-                    }}
-                    className="grid grid-cols-2 gap-2"
-                >
-                    <ToggleGroupItem
-                        value="debit"
-                        variant="outline"
-                        className="rounded-md border"
+            {showCardTypeToggle ? (
+                <div className="grid gap-2">
+                    <Label>Tipo no cartão</Label>
+                    <ToggleGroup
+                        type="single"
+                        value={cardType}
+                        onValueChange={(value) => {
+                            if (value === 'debit' || value === 'credit') {
+                                onCardTypeChange(value);
+                            }
+                        }}
+                        className="grid grid-cols-2 gap-2"
                     >
-                        Débito
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                        value="credit"
-                        variant="outline"
-                        className="rounded-md border"
-                    >
-                        Crédito
-                    </ToggleGroupItem>
-                </ToggleGroup>
-            </div>
+                        <ToggleGroupItem
+                            value="debit"
+                            variant="outline"
+                            className="rounded-md border"
+                        >
+                            Débito
+                        </ToggleGroupItem>
+                        <ToggleGroupItem
+                            value="credit"
+                            variant="outline"
+                            className="rounded-md border"
+                        >
+                            Crédito
+                        </ToggleGroupItem>
+                    </ToggleGroup>
+                </div>
+            ) : null}
 
-            {cardType === 'credit' ? (
+            {enableInstallments ? (
                 <>
                     <div className="grid gap-2">
                         <Label htmlFor="card-installments">Parcelas</Label>

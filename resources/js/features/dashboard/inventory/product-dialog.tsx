@@ -1,5 +1,6 @@
 import { Barcode, Plus, Sparkles } from 'lucide-react';
 import * as React from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -122,6 +123,11 @@ export function ProductDialog({
     >(null);
     const [isQuickCreating, setIsQuickCreating] = React.useState(false);
     const barcodeInputRef = React.useRef<HTMLInputElement | null>(null);
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
     React.useEffect(() => {
         if (open) {
@@ -149,6 +155,15 @@ export function ProductDialog({
         setFormData((current) => ({
             ...current,
             stock: String(Math.max(0, Number(current.stock || 0) + delta)),
+        }));
+    };
+
+    const adjustMinStock = (delta: number) => {
+        setFormData((current) => ({
+            ...current,
+            min_stock: String(
+                Math.max(0, Number(current.min_stock || 0) + delta),
+            ),
         }));
     };
 
@@ -205,6 +220,37 @@ export function ProductDialog({
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
+        const requiredFields: Array<keyof ProductDialogForm> = [
+            'name',
+            'sku',
+            'cost',
+            'sale_price',
+            'category_id',
+            'stock',
+            'min_stock',
+        ];
+
+        const hasMissingRequired = requiredFields.some((field) => {
+            const value = String(formData[field] ?? '').trim();
+
+            if (value.length > 0) {
+                clearErrors(field);
+
+                return false;
+            }
+
+            setError(field, {
+                type: 'required',
+                message: 'Campo obrigatório.',
+            });
+
+            return true;
+        });
+
+        if (hasMissingRequired) {
+            return;
+        }
+
         if (!isValid) {
             return;
         }
@@ -253,23 +299,31 @@ export function ProductDialog({
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor="product-name">
-                                Nome do produto
+                                Nome do produto{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 id="product-name"
                                 placeholder="Ex.: Monitor gamer 24 polegadas"
                                 value={formData.name}
                                 onChange={(event) =>
-                                    setField('name', event.currentTarget.value)
+                                    {
+                                        setField('name', event.currentTarget.value);
+                                        clearErrors('name');
+                                    }
                                 }
                                 required
                             />
+                            {errors.name?.message ? (
+                                <p className="text-xs text-destructive">{String(errors.name.message)}</p>
+                            ) : null}
                         </div>
 
                         <div className="grid gap-2">
                             <div className="flex items-center justify-between gap-2">
                                 <Label htmlFor="product-category">
-                                    Categoria
+                                    Categoria{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -294,26 +348,35 @@ export function ProductDialog({
                                 <SearchableSelect
                                     value={formData.category_id}
                                     onChange={(value) =>
-                                        setField('category_id', value)
+                                        {
+                                            setField('category_id', value);
+                                            clearErrors('category_id');
+                                        }
                                     }
                                     options={categories}
                                     placeholder="Selecione uma categoria"
                                 />
+                                {errors.category_id?.message ? (
+                                    <p className="text-xs text-destructive">{String(errors.category_id.message)}</p>
+                                ) : null}
                             </div>
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="product-sku">Código interno</Label>
+                            <Label htmlFor="product-sku">
+                                Código interno{' '}
+                                <span className="text-destructive">*</span>
+                            </Label>
                             <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                                 <Input
                                     id="product-sku"
                                     placeholder="Ex.: MON-24-0001"
                                     value={formData.sku}
                                     onChange={(event) =>
-                                        setField(
-                                            'sku',
-                                            event.currentTarget.value,
-                                        )
+                                        {
+                                            setField('sku', event.currentTarget.value);
+                                            clearErrors('sku');
+                                        }
                                     }
                                     required
                                 />
@@ -369,6 +432,9 @@ export function ProductDialog({
                                     options={brands}
                                     placeholder="Selecione uma marca"
                                 />
+                                {errors.sku?.message ? (
+                                    <p className="text-xs text-destructive">{String(errors.sku.message)}</p>
+                                ) : null}
                             </div>
                         </div>
 
@@ -416,7 +482,10 @@ export function ProductDialog({
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="product-cost">Preço de custo</Label>
+                            <Label htmlFor="product-cost">
+                                Preço de custo{' '}
+                                <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="product-cost"
                                 type="text"
@@ -424,21 +493,28 @@ export function ProductDialog({
                                 placeholder="R$ 0,00"
                                 value={formData.cost}
                                 onChange={(event) =>
-                                    setField(
-                                        'cost',
-                                        applyFieldMask(
-                                            event.currentTarget.value,
-                                            'currency',
-                                        ),
-                                    )
+                                    {
+                                        setField(
+                                            'cost',
+                                            applyFieldMask(
+                                                event.currentTarget.value,
+                                                'currency',
+                                            ),
+                                        );
+                                        clearErrors('cost');
+                                    }
                                 }
                                 required
                             />
+                            {errors.cost?.message ? (
+                                <p className="text-xs text-destructive">{String(errors.cost.message)}</p>
+                            ) : null}
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="product-sale-price">
-                                Preço de venda
+                                Preço de venda{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 id="product-sale-price"
@@ -447,21 +523,28 @@ export function ProductDialog({
                                 placeholder="R$ 0,00"
                                 value={formData.sale_price}
                                 onChange={(event) =>
-                                    setField(
-                                        'sale_price',
-                                        applyFieldMask(
-                                            event.currentTarget.value,
-                                            'currency',
-                                        ),
-                                    )
+                                    {
+                                        setField(
+                                            'sale_price',
+                                            applyFieldMask(
+                                                event.currentTarget.value,
+                                                'currency',
+                                            ),
+                                        );
+                                        clearErrors('sale_price');
+                                    }
                                 }
                                 required
                             />
+                            {errors.sale_price?.message ? (
+                                <p className="text-xs text-destructive">{String(errors.sale_price.message)}</p>
+                            ) : null}
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="product-stock">
-                                Estoque inicial
+                                Estoque inicial{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
                             <div className="space-y-2 rounded-lg border p-3">
                                 <Input
@@ -472,21 +555,27 @@ export function ProductDialog({
                                     placeholder="0"
                                     value={formData.stock}
                                     onChange={(event) =>
-                                        setField(
-                                            'stock',
-                                            String(
-                                                Math.max(
-                                                    0,
-                                                    Number(
-                                                        event.currentTarget
-                                                            .value || 0,
+                                        {
+                                            setField(
+                                                'stock',
+                                                String(
+                                                    Math.max(
+                                                        0,
+                                                        Number(
+                                                            event.currentTarget
+                                                                .value || 0,
+                                                        ),
                                                     ),
                                                 ),
-                                            ),
-                                        )
+                                            );
+                                            clearErrors('stock');
+                                        }
                                     }
                                     required
                                 />
+                                {errors.stock?.message ? (
+                                    <p className="text-xs text-destructive">{String(errors.stock.message)}</p>
+                                ) : null}
                                 <div className="grid grid-cols-4 gap-2">
                                     {STOCK_STEPS.map((step) => (
                                         <Button
@@ -510,31 +599,58 @@ export function ProductDialog({
 
                         <div className="grid gap-2">
                             <Label htmlFor="product-min-stock">
-                                Estoque mínimo
+                                Estoque mínimo{' '}
+                                <span className="text-destructive">*</span>
                             </Label>
-                            <Input
-                                id="product-min-stock"
-                                type="number"
-                                min="0"
-                                step="1"
-                                placeholder="0"
-                                value={formData.min_stock}
-                                onChange={(event) =>
-                                    setField(
-                                        'min_stock',
-                                        String(
-                                            Math.max(
-                                                0,
-                                                Number(
-                                                    event.currentTarget.value ||
+                            <div className="space-y-2 rounded-lg border p-3">
+                                <Input
+                                    id="product-min-stock"
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    placeholder="0"
+                                    value={formData.min_stock}
+                                    onChange={(event) =>
+                                        {
+                                            setField(
+                                                'min_stock',
+                                                String(
+                                                    Math.max(
                                                         0,
+                                                        Number(
+                                                            event.currentTarget
+                                                                .value || 0,
+                                                        ),
+                                                    ),
                                                 ),
-                                            ),
-                                        ),
-                                    )
-                                }
-                                required
-                            />
+                                            );
+                                            clearErrors('min_stock');
+                                        }
+                                    }
+                                    required
+                                />
+                                {errors.min_stock?.message ? (
+                                    <p className="text-xs text-destructive">{String(errors.min_stock.message)}</p>
+                                ) : null}
+                                <div className="grid grid-cols-4 gap-2">
+                                    {STOCK_STEPS.map((step) => (
+                                        <Button
+                                            key={`min-${step}`}
+                                            type="button"
+                                            variant="outline"
+                                            className={cn(
+                                                step > 0 &&
+                                                    'border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
+                                                step < 0 &&
+                                                    'border-amber-500/30 text-amber-700 dark:text-amber-300',
+                                            )}
+                                            onClick={() => adjustMinStock(step)}
+                                        >
+                                            {step > 0 ? `+${step}` : step}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid gap-2 sm:col-span-2">
@@ -600,7 +716,10 @@ export function ProductDialog({
                             className="space-y-4"
                         >
                             <div className="grid gap-2">
-                                <Label htmlFor="quick-create-name">Nome</Label>
+                                <Label htmlFor="quick-create-name">
+                                    Nome{' '}
+                                    <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="quick-create-name"
                                     value={quickCreateName}

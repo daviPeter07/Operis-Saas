@@ -152,7 +152,8 @@ export function FinancialEntryDialog({
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-sm">
-                                                Fornecedor
+                                                Fornecedor{' '}
+                                                <span className="text-destructive">*</span>
                                             </CardTitle>
                                             {onOpenCreateSupplier ? (
                                                 <Tooltip>
