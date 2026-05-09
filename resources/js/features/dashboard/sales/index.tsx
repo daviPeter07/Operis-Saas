@@ -19,6 +19,7 @@ import {
 import {
     formatCurrencyBR,
     formatDateBR,
+    formatDateTimeBR,
     translatePaymentMethod,
 } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
@@ -29,6 +30,7 @@ import type {
     UiProduct,
 } from '@/types/dashboard-entities';
 import type { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
+import { todayString } from '@/utils/sales-dialog';
 import { calculateSaleProfit, calculateSalesProfit } from '@/utils/sale-profit';
 import type { Column } from '../generic-table';
 import { GenericTable } from '../generic-table';
@@ -204,7 +206,7 @@ export function SalesModule() {
                 profit: calculateSaleProfit(sale),
                 status: sale.status,
                 payment_method: sale.payment_method,
-                date: sale.date,
+                date: sale.createdAt ?? sale.date,
             };
         });
 
@@ -235,7 +237,7 @@ export function SalesModule() {
         {
             key: 'date',
             header: 'Data',
-            render: (value: unknown) => formatDateBR(String(value)),
+            render: (value: unknown) => formatDateTimeBR(String(value)),
         },
         {
             key: 'documents',
@@ -327,14 +329,14 @@ export function SalesModule() {
 
         const payload: SaleMutationPayload = {
             customer_id: customerId,
-            date: sale.createdAt || new Date().toISOString().slice(0, 10),
+            date: sale.createdAt || todayString(),
             payment_method: paymentMethod as
                 | 'cash'
                 | 'pix'
                 | 'card_debit'
                 | 'card_credit'
                 | 'crediario',
-            status: 'pending',
+            status: sale.status === 'completed' ? 'completed' : 'pending',
             installments:
                 sale.cardType === 'credit' ? sale.installments : undefined,
             first_installment_date:
@@ -580,14 +582,17 @@ export function SalesModule() {
                                 customer_id: customerId,
                                 date:
                                     sale.createdAt ||
-                                    new Date().toISOString().slice(0, 10),
+                                    todayString(),
                                 payment_method: paymentMethod as
                                     | 'cash'
                                     | 'pix'
                                     | 'card_debit'
                                     | 'card_credit'
                                     | 'crediario',
-                                status: 'pending',
+                                status:
+                                    sale.status === 'completed'
+                                        ? 'completed'
+                                        : 'pending',
                                 installments:
                                     sale.cardType === 'credit'
                                         ? sale.installments

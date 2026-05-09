@@ -21,7 +21,7 @@ import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrencyBR } from '@/lib/format';
+import { formatCurrencyBR, formatDateBR, formatDateTimeBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
 import { calculateSalesProfit } from '@/utils/sale-profit';
@@ -38,16 +38,37 @@ function formatDateTimeManaus(dateTime: string | undefined): string {
         return '';
     }
 
-    const date = new Date(dateTime + 'Z');
+    const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateTime);
 
-    return date.toLocaleString('pt-BR', {
-        timeZone: 'America/Manaus',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    if (dateOnlyMatch) {
+        return `${formatDateBR(dateTime)} 00:00`;
+    }
+
+    return formatDateTimeBR(dateTime);
+}
+
+function toActivityTimestamp(dateTime: string | undefined): number {
+    if (!dateTime) {
+        return 0;
+    }
+
+    const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateTime);
+
+    if (dateOnlyMatch) {
+        const year = Number(dateOnlyMatch[1]);
+        const month = Number(dateOnlyMatch[2]);
+        const day = Number(dateOnlyMatch[3]);
+
+        return new Date(year, month - 1, day, 12, 0, 0).getTime();
+    }
+
+    const parsedDate = new Date(dateTime);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+        return 0;
+    }
+
+    return parsedDate.getTime();
 }
 
 export default function DashboardPage() {
@@ -172,7 +193,8 @@ export default function DashboardPage() {
             responsible: userName,
             description: `Nova venda #${sale.id}`,
             amount: formatCurrencyBR(sale.total),
-            time: formatDateTimeManaus(sale.date),
+            time: formatDateTimeManaus(sale.createdAt ?? sale.date),
+            sortAt: toActivityTimestamp(sale.createdAt ?? sale.date),
         }));
         const purchaseItems = activePurchases.slice(0, 3).map((purchase) => ({
             id: `purchase-${purchase.id}`,
@@ -180,7 +202,8 @@ export default function DashboardPage() {
             responsible: userName,
             description: `Nova compra #${purchase.id}`,
             amount: formatCurrencyBR(purchase.total),
-            time: formatDateTimeManaus(purchase.date),
+            time: formatDateTimeManaus(purchase.createdAt ?? purchase.date),
+            sortAt: toActivityTimestamp(purchase.createdAt ?? purchase.date),
         }));
         const customerItems = customers.slice(0, 2).map((customer) => ({
             id: `client-${customer.id}`,
@@ -188,6 +211,7 @@ export default function DashboardPage() {
             responsible: userName,
             description: `Novo cliente: ${customer.name}`,
             time: formatDateTimeManaus((customer as { createdAt?: string }).createdAt),
+            sortAt: toActivityTimestamp((customer as { createdAt?: string }).createdAt),
         }));
         const supplierItems = suppliers.slice(0, 2).map((supplier) => ({
             id: `supplier-${supplier.id}`,
@@ -195,6 +219,7 @@ export default function DashboardPage() {
             responsible: userName,
             description: `Novo fornecedor: ${supplier.name}`,
             time: formatDateTimeManaus((supplier as { createdAt?: string }).createdAt),
+            sortAt: toActivityTimestamp((supplier as { createdAt?: string }).createdAt),
         }));
         const productItems = products.slice(0, 2).map((product) => ({
             id: `product-${product.id}`,
@@ -202,11 +227,13 @@ export default function DashboardPage() {
             responsible: userName,
             description: `Novo produto: ${product.name}`,
             time: formatDateTimeManaus((product as { createdAt?: string }).createdAt),
+            sortAt: toActivityTimestamp((product as { createdAt?: string }).createdAt),
         }));
 
         return [...salesItems, ...purchaseItems, ...customerItems, ...supplierItems, ...productItems]
             .filter((item) => item.time)
-            .sort((a, b) => b.time.localeCompare(a.time))
+            .sort((a, b) => b.sortAt - a.sortAt)
+            .map(({ sortAt, ...item }) => item)
             .slice(0, 5);
     }, [activeSales, activePurchases, customers, suppliers, products, auth.user?.name]);
 

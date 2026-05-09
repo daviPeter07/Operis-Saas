@@ -13,6 +13,7 @@ export interface Purchase {
     id: number;
     supplier_id: number;
     date: string;
+    createdAt?: string;
     due_date: string | null;
     total: number;
     status: 'pending' | 'completed' | 'cancelled';

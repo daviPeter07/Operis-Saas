@@ -13,6 +13,7 @@ export interface Sale {
     id: number;
     customer_id: number | null;
     date: string;
+    createdAt?: string;
     subtotal: number;
     total: number;
     status: 'pending' | 'completed' | 'cancelled';

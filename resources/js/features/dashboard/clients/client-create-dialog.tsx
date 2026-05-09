@@ -48,7 +48,9 @@ function buildInitialValues(props: ClientCreateDialogProps) {
         document: props.initialData.document,
         creditEnabled: props.initialData.creditEnabled ? 'yes' : 'no',
         creditLimit: props.initialData.creditLimit
-            ? String(props.initialData.creditLimit)
+            ? formatCurrencyInput(
+                  String(Math.round(props.initialData.creditLimit * 100)),
+              )
             : '',
         creditTermDays: String(props.initialData.creditTermDays ?? 30),
     };

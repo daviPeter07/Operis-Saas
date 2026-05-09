@@ -74,18 +74,23 @@ class SaleService
                 ]);
             }
 
+            $previousStatus = $sale->status;
             $previousItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
             $totals = $this->calculateTotals($data['items']);
             $paymentMethod = $data['payment_method'];
             $customer = isset($data['customer_id'])
                 ? Customer::query()->find($data['customer_id'])
                 : null;
+            $nextStatus = $paymentMethod === 'crediario'
+                ? SaleStatus::Pending->value
+                : ($data['status'] ?? $sale->status ?? SaleStatus::Pending->value);
 
             $sale = $this->sales->update($sale, [
                 'customer_id' => $data['customer_id'] ?? null,
                 'date' => $data['date'],
                 'subtotal' => $totals,
                 'total' => $totals,
+                'status' => $nextStatus,
                 'payment_method' => $paymentMethod,
                 'installments' => $this->resolveInstallments($paymentMethod, $data),
                 'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
@@ -99,7 +104,11 @@ class SaleService
 
             $this->receivableService->regenerateFromSale($sale);
 
-            if ($sale->status === SaleStatus::Completed->value) {
+            if ($previousStatus !== SaleStatus::Completed->value && $sale->status === SaleStatus::Completed->value) {
+                $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::SaleEdit, $userId);
+            } elseif ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
+                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
+            } elseif ($sale->status === SaleStatus::Completed->value) {
                 $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
                 $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
             }

@@ -18,6 +18,7 @@ class PurchaseResource extends ApiResource
             'id' => $this->id,
             'supplier_id' => $this->supplier_id,
             'date' => $this->date?->toDateString(),
+            'createdAt' => $this->created_at?->clone()->setTimezone('America/Sao_Paulo')->format('Y-m-d H:i:s'),
             'due_date' => $this->due_date?->toDateString(),
             'total' => $this->total,
             'status' => $this->status,

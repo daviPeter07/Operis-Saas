@@ -10,6 +10,7 @@ import { filterProductsByQuery } from '@/utils/sales-dialog';
 import { CatalogPanel } from './catalog-panel';
 import { CheckoutPanel } from './checkout-panel';
 import { AddProductDialog, DiscountDialog } from './dialogs';
+import SaleConfirmationDialog from './sale-confirmation-dialog';
 
 export function SalesDialog({
     sale,
@@ -81,6 +82,8 @@ export function SalesDialog({
     const [catalogQuantity, setCatalogQuantity] = React.useState('1');
     const [showCostPrice, setShowCostPrice] = React.useState(false);
     const checkoutRef = React.useRef<HTMLDivElement>(null);
+    const [confirmationOpen, setConfirmationOpen] = React.useState(false);
+    const [saleDraft, setSaleDraft] = React.useState<SalesRecord | null>(null);
 
     React.useEffect(() => {
         if (open && defaultTab === 'checkout' && checkoutRef.current) {
@@ -220,7 +223,17 @@ export function SalesDialog({
             availableCredit:
                 paymentMethod === 'crediario' ? availableCredit : undefined,
         };
-        onSubmit(payload);
+        // open confirmation dialog instead of submitting immediately
+        setSaleDraft(payload);
+        setConfirmationOpen(true);
+    };
+
+    const handleConfirmAndSubmit = (
+        confirmed: SalesRecord & { delivered?: boolean },
+    ) => {
+        // pass confirmed sale to parent submit handler
+        onSubmit(confirmed);
+        setConfirmationOpen(false);
         onOpenChange(false);
     };
 
@@ -327,6 +340,12 @@ export function SalesDialog({
                             await onCreateProduct(values);
                         selectProductById(createdProduct.id);
                     }}
+                />
+                <SaleConfirmationDialog
+                    open={confirmationOpen}
+                    onOpenChange={setConfirmationOpen}
+                    saleDraft={saleDraft}
+                    onConfirm={handleConfirmAndSubmit}
                 />
             </DialogContent>
         </Dialog>

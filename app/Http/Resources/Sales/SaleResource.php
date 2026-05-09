@@ -19,6 +19,7 @@ class SaleResource extends ApiResource
             'customer_id' => $this->customer_id,
             'customer_name' => $this->customer?->name,
             'date' => $this->date?->toDateString(),
+            'createdAt' => $this->created_at?->clone()->setTimezone('America/Sao_Paulo')->format('Y-m-d H:i:s'),
             'subtotal' => $this->subtotal,
             'total' => $this->total,
             'status' => $this->status,

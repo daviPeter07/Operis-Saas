@@ -22,6 +22,7 @@ class UpdateSaleRequest extends FormRequest
         return [
             'customer_id' => ['nullable', 'integer', Rule::exists('customers', 'id')->where('company_id', $companyId)],
             'date' => ['required', 'date'],
+            'status' => ['sometimes', 'in:pending,completed'],
             'payment_method' => ['required', 'in:cash,pix,card_debit,card_credit,crediario'],
             'installments' => ['nullable', 'integer', 'min:1', 'max:24'],
             'first_installment_date' => ['nullable', 'date'],
