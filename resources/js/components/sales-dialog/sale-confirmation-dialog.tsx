@@ -307,9 +307,17 @@ function SaleConfirmationDialogContent({
 
                     {isCrediario && installments > 1 && (
                         <div className="rounded-md border p-3">
-                            <div className="mb-3 flex items-center gap-2">
-                                <CreditCard className="h-4 w-4" />
-                                <Label>Confirmar parcelas pagas</Label>
+<div className="mb-3 flex items-center gap-2 justify-between">
+                              <CreditCard className="h-4 w-4" />
+                              <Label>Confirmar parcelas pagas</Label>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPaidInstallments(Array.from({ length: installments }, (_, i) => i + 1))}
+                              >
+                                Marcar todas
+                              </Button>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                                 {Array.from({ length: installments }, (_, i) => {
