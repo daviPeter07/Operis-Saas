@@ -51,6 +51,15 @@ type FinancialEntryDialogProps = {
     summaryLabel?: string;
     suppliers?: UiSupplier[];
     onOpenCreateSupplier?: () => void;
+    partyLabel?: string;
+    partySearchPlaceholder?: string;
+    partyEmptyMessage?: string;
+    partyCreateTooltip?: string;
+    primarySectionDescription?: string;
+    showOperationSummary?: boolean;
+    showStatusField?: boolean;
+    hideCatalogHeader?: boolean;
+    cartSection?: React.ReactNode;
 };
 
 export function FinancialEntryDialog({
@@ -67,6 +76,15 @@ export function FinancialEntryDialog({
     summaryLabel = 'Total',
     suppliers = [],
     onOpenCreateSupplier,
+    partyLabel = 'Fornecedor',
+    partySearchPlaceholder = 'Buscar fornecedor',
+    partyEmptyMessage = 'Nenhum fornecedor encontrado.',
+    partyCreateTooltip = 'Criar fornecedor',
+    primarySectionDescription = 'Fornecedor, pagamento e fechamento operacional.',
+    showOperationSummary = true,
+    showStatusField = true,
+    hideCatalogHeader = false,
+    cartSection,
 }: FinancialEntryDialogProps) {
     const hasCatalogSection = Boolean(catalogSection);
     const [supplierSearch, setSupplierSearch] = React.useState('');
@@ -114,16 +132,18 @@ export function FinancialEntryDialog({
                     }}
                 >
                     <section className="flex min-h-0 flex-col border-r bg-background">
-                        <div className="border-b px-5 py-4">
-                            <DialogHeader className="text-left">
-                                <DialogTitle className="text-xl">
-                                    {title}
-                                </DialogTitle>
-                                <DialogDescription>
-                                    {description}
-                                </DialogDescription>
-                            </DialogHeader>
-                        </div>
+                        {hideCatalogHeader ? null : (
+                            <div className="border-b px-5 py-4">
+                                <DialogHeader className="text-left">
+                                    <DialogTitle className="text-xl">
+                                        {title}
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        {description}
+                                    </DialogDescription>
+                                </DialogHeader>
+                            </div>
+                        )}
                         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                             {catalogSection ?? (
                                 <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
@@ -140,8 +160,7 @@ export function FinancialEntryDialog({
                                     {primarySectionTitle}
                                 </DialogTitle>
                                 <DialogDescription>
-                                    Fornecedor, pagamento e fechamento
-                                    operacional.
+                                    {primarySectionDescription}
                                 </DialogDescription>
                             </DialogHeader>
                         </div>
@@ -152,8 +171,10 @@ export function FinancialEntryDialog({
                                     <CardHeader className="pb-2">
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="text-sm">
-                                                Fornecedor{' '}
-                                                <span className="text-destructive">*</span>
+                                                {partyLabel}{' '}
+                                                <span className="text-destructive">
+                                                    *
+                                                </span>
                                             </CardTitle>
                                             {onOpenCreateSupplier ? (
                                                 <Tooltip>
@@ -171,7 +192,7 @@ export function FinancialEntryDialog({
                                                         </Button>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                        Criar fornecedor
+                                                        {partyCreateTooltip}
                                                     </TooltipContent>
                                                 </Tooltip>
                                             ) : null}
@@ -213,156 +234,178 @@ export function FinancialEntryDialog({
                                                     label: supplier.name,
                                                 }),
                                             )}
-                                            placeholder="Buscar fornecedor"
-                                            emptyMessage="Nenhum fornecedor encontrado."
+                                            placeholder={partySearchPlaceholder}
+                                            emptyMessage={partyEmptyMessage}
                                         />
                                     </CardContent>
                                 </Card>
 
-                                <Card className="border-border/70 shadow-none">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-sm">
-                                            Resumo da operacao
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3">
-                                        <div className="grid gap-3 sm:grid-cols-2">
-                                            <div className="rounded-lg border bg-muted/30 p-3">
-                                                <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                                                    Itens
-                                                </p>
-                                                {hasCatalogSection ? (
-                                                    <>
-                                                        <p className="mt-1 text-2xl font-semibold">
-                                                            {form.items || '0'}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Quantidade total no
-                                                            carrinho.
-                                                        </p>
-                                                    </>
-                                                ) : (
-                                                    <div className="mt-2 grid gap-2">
-                                                        <Label htmlFor="financial-items">
-                                                            Itens *
+                                {cartSection}
+
+                                {showOperationSummary ? (
+                                    <Card className="border-border/70 shadow-none">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm">
+                                                Resumo da operacao
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-3">
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <div className="rounded-lg border bg-muted/30 p-3">
+                                                    <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                                                        Itens
+                                                    </p>
+                                                    {hasCatalogSection ? (
+                                                        <>
+                                                            <p className="mt-1 text-2xl font-semibold">
+                                                                {form.items ||
+                                                                    '0'}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Quantidade total
+                                                                no carrinho.
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <div className="mt-2 grid gap-2">
+                                                            <Label htmlFor="financial-items">
+                                                                Itens *
+                                                            </Label>
+                                                            <Input
+                                                                id="financial-items"
+                                                                type="number"
+                                                                min="1"
+                                                                value={
+                                                                    form.items
+                                                                }
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    onChange(
+                                                                        'items',
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                required
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="rounded-lg border bg-muted/30 p-3">
+                                                    <p className="text-xs tracking-wide text-muted-foreground uppercase">
+                                                        Total
+                                                    </p>
+                                                    {hasCatalogSection ? (
+                                                        <>
+                                                            <p className="mt-1 text-2xl font-semibold">
+                                                                {formatCurrencyBR(
+                                                                    Number(
+                                                                        form.total ||
+                                                                            0,
+                                                                    ),
+                                                                )}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Calculado a
+                                                                partir dos
+                                                                custos por
+                                                                linha.
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <div className="mt-2 grid gap-2">
+                                                            <Label htmlFor="financial-total">
+                                                                Total *
+                                                            </Label>
+                                                            <Input
+                                                                id="financial-total"
+                                                                type="number"
+                                                                min="0"
+                                                                step="0.01"
+                                                                value={
+                                                                    form.total
+                                                                }
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
+                                                                    onChange(
+                                                                        'total',
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                required
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                {showStatusField ? (
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="financial-status">
+                                                            Status *
                                                         </Label>
-                                                        <Input
-                                                            id="financial-items"
-                                                            type="number"
-                                                            min="1"
-                                                            value={form.items}
-                                                            onChange={(event) =>
+                                                        <Select
+                                                            value={form.status}
+                                                            onValueChange={(
+                                                                value,
+                                                            ) =>
                                                                 onChange(
-                                                                    'items',
-                                                                    event.target
-                                                                        .value,
+                                                                    'status',
+                                                                    value,
                                                                 )
                                                             }
-                                                            required
-                                                        />
+                                                        >
+                                                            <SelectTrigger id="financial-status">
+                                                                <SelectValue placeholder="Status" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {STATUS_OPTIONS.map(
+                                                                    (
+                                                                        option,
+                                                                    ) => (
+                                                                        <SelectItem
+                                                                            key={
+                                                                                option.value
+                                                                            }
+                                                                            value={
+                                                                                option.value
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                option.label
+                                                                            }
+                                                                        </SelectItem>
+                                                                    ),
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
                                                     </div>
-                                                )}
-                                            </div>
+                                                ) : null}
 
-                                            <div className="rounded-lg border bg-muted/30 p-3">
-                                                <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                                                    Total
-                                                </p>
-                                                {hasCatalogSection ? (
-                                                    <>
-                                                        <p className="mt-1 text-2xl font-semibold">
-                                                            {formatCurrencyBR(
-                                                                Number(
-                                                                    form.total ||
-                                                                        0,
-                                                                ),
-                                                            )}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Calculado a partir
-                                                            dos custos por
-                                                            linha.
-                                                        </p>
-                                                    </>
-                                                ) : (
-                                                    <div className="mt-2 grid gap-2">
-                                                        <Label htmlFor="financial-total">
-                                                            Total *
-                                                        </Label>
-                                                        <Input
-                                                            id="financial-total"
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            value={form.total}
-                                                            onChange={(event) =>
-                                                                onChange(
-                                                                    'total',
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            required
-                                                        />
-                                                    </div>
-                                                )}
+                                                <div className="grid gap-2">
+                                                    <Label>Data *</Label>
+                                                    <DatePickerInput
+                                                        value={form.createdAt}
+                                                        onChange={(value) =>
+                                                            onChange(
+                                                                'createdAt',
+                                                                value,
+                                                            )
+                                                        }
+                                                        placeholder="Selecionar data"
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        <div className="grid gap-3 sm:grid-cols-2">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="financial-status">
-                                                    Status *
-                                                </Label>
-                                                <Select
-                                                    value={form.status}
-                                                    onValueChange={(value) =>
-                                                        onChange(
-                                                            'status',
-                                                            value,
-                                                        )
-                                                    }
-                                                >
-                                                    <SelectTrigger id="financial-status">
-                                                        <SelectValue placeholder="Status" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {STATUS_OPTIONS.map(
-                                                            (option) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        option.value
-                                                                    }
-                                                                    value={
-                                                                        option.value
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        option.label
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label>Data *</Label>
-                                                <DatePickerInput
-                                                    value={form.createdAt}
-                                                    onChange={(value) =>
-                                                        onChange(
-                                                            'createdAt',
-                                                            value,
-                                                        )
-                                                    }
-                                                    placeholder="Selecionar data"
-                                                />
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                ) : null}
 
                                 <Card className="border-border/70 shadow-none">
                                     <CardHeader className="pb-2">

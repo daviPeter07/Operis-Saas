@@ -1,17 +1,23 @@
-import { router } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
+import {
+    useCreatePurchase,
+} from '@/hooks/use-purchases';
+import { useBrands } from '@/hooks/use-brands';
+import { useCategories } from '@/hooks/use-categories';
+import { useCreateProduct, useProducts } from '@/hooks/use-products';
 import {
     useAccountPayables,
     useSettleAccountPayable,
 } from '@/hooks/use-account-payables';
 import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
-import type { UiSupplier } from '@/types/dashboard-entities';
+import type { UiProduct, UiPurchase, UiSupplier } from '@/types/dashboard-entities';
+import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
+import { PurchaseCreateDialog } from '../purchases/purchase-create-dialog';
 
 type PayableRow = {
     id: string;
@@ -27,12 +33,19 @@ type PayableRow = {
 export function AccountsPayableModule() {
     const { data: payables = [], isPending: isPayablesPending } =
         useAccountPayables();
+    const { data: products = [] } = useProducts();
+    const { data: categories = [] } = useCategories();
+    const { data: brands = [] } = useBrands();
+    const createProduct = useCreateProduct();
+    const createPurchase = useCreatePurchase();
     const { data: suppliers = [] } = useSuppliers();
     const createSupplier = useCreateSupplier();
     const settleAccountPayable = useSettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
+    const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
+    const draftItemsRef = useRef<PurchaseLineItem[]>([]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -63,6 +76,27 @@ export function AccountsPayableModule() {
     const dialogSupplierOptions = useMemo(
         () => [...dialogSuppliers, ...mappedSuppliers],
         [dialogSuppliers, mappedSuppliers],
+    );
+    const mappedProducts = useMemo<UiProduct[]>(
+        () =>
+            products.map((product) => ({
+                id: String(product.id),
+                name: product.name,
+                sku: product.sku,
+                barcode: product.barcode ?? undefined,
+                category: String(product.category_id ?? ''),
+                brand: String(product.brand_id ?? ''),
+                price: Number(product.sale_price ?? 0),
+                cost: Number(product.cost ?? 0),
+                stock: Number(product.stock ?? 0),
+                minStock: Number(product.min_stock ?? 0),
+                createdAt: new Date().toISOString().slice(0, 10),
+            })),
+        [products],
+    );
+    const dialogProductOptions = useMemo(
+        () => [...dialogProducts, ...mappedProducts],
+        [dialogProducts, mappedProducts],
     );
 
     const rows: PayableRow[] = payables
@@ -141,6 +175,114 @@ export function AccountsPayableModule() {
         setDialogSuppliers((previous) => [mappedSupplier, ...previous]);
 
         return mappedSupplier;
+    };
+
+    const handleCreateProduct = async (product: {
+        name: string;
+        sku: string;
+        barcode: string;
+        categoryId: number;
+        brandId: number | null;
+        cost: number;
+        price: number;
+        stock: number;
+        minStock: number;
+        createdAt: string;
+    }): Promise<UiProduct> => {
+        const createdProduct = await createProduct.mutateAsync({
+            name: product.name,
+            sku: product.sku,
+            barcode: product.barcode || null,
+            description: null,
+            sale_price: product.price,
+            cost: product.cost,
+            stock: product.stock,
+            min_stock: product.minStock,
+            category_id: product.categoryId,
+            brand_id: product.brandId,
+        });
+
+        const mappedProduct: UiProduct = {
+            id: String(createdProduct.id),
+            name: createdProduct.name,
+            sku: createdProduct.sku,
+            barcode: createdProduct.barcode ?? undefined,
+            category: String(createdProduct.category_id),
+            brand: String(createdProduct.brand_id ?? ''),
+            price: Number(createdProduct.sale_price ?? 0),
+            cost: Number(createdProduct.cost ?? 0),
+            stock: Number(createdProduct.stock ?? 0),
+            minStock: Number(createdProduct.min_stock ?? 0),
+            createdAt: product.createdAt,
+        };
+
+        setDialogProducts((previous) => [mappedProduct, ...previous]);
+
+        return mappedProduct;
+    };
+
+    const handleCreateFromDialog = async (purchase: UiPurchase) => {
+        const supplier = dialogSupplierOptions.find(
+            (entry) => entry.name === purchase.supplierName,
+        );
+        const supplierId = Number(supplier?.id ?? 0);
+
+        if (!supplierId || Number.isNaN(supplierId)) {
+            throw new Error('Selecione um fornecedor válido para continuar.');
+        }
+
+        const items = draftItemsRef.current
+            .map((item) => ({
+                product_id: Number(item.productId),
+                quantity: Number(item.quantity),
+                unit_cost: Number(item.unitCost ?? 0),
+            }))
+            .filter(
+                (item) =>
+                    Number.isFinite(item.product_id) &&
+                    item.product_id > 0 &&
+                    Number.isFinite(item.quantity) &&
+                    item.quantity > 0 &&
+                    Number.isFinite(item.unit_cost) &&
+                    item.unit_cost >= 0,
+            );
+
+        if (items.length === 0) {
+            throw new Error('Adicione ao menos um produto na compra.');
+        }
+
+        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' | 'boleto' =
+            purchase.paymentMethod === 'money'
+                ? 'cash'
+                : purchase.paymentMethod === 'boleto'
+                  ? 'boleto'
+                : purchase.paymentMethod === 'debit' ||
+                    purchase.paymentMethod === 'credit'
+                  ? 'card'
+                  : purchase.paymentMethod === 'installment'
+                    ? 'installment'
+                    : 'pix';
+
+        await createPurchase.mutateAsync({
+            supplier_id: supplierId,
+            date: purchase.createdAt || new Date().toISOString().slice(0, 10),
+            due_date:
+                paymentMethod === 'boleto'
+                    ? undefined
+                    : purchase.dueDate || undefined,
+            payment_method: paymentMethod,
+            boleto_term_days:
+                paymentMethod === 'boleto'
+                    ? ((Number(
+                          purchase.boletoTermDays ?? 30,
+                      ) as 30 | 60 | 90 | 120))
+                    : undefined,
+            status: purchase.status === 'completed' ? 'completed' : 'pending',
+            items,
+        });
+
+        draftItemsRef.current = [];
+        toast.success('Compra criada com sucesso.');
     };
 
     const columns: Column<PayableRow>[] = [
@@ -235,20 +377,37 @@ export function AccountsPayableModule() {
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 createDialog={({ open, onOpenChange }) => (
-                    <AccountsPayableCreateDialog
+                    <PurchaseCreateDialog
                         open={open}
                         onOpenChange={onOpenChange}
-                        onSubmit={() => {
-                            onOpenChange(false);
-                            toast.info(
-                                'Para gerar contas a pagar, cadastre uma compra no fluxo completo.',
-                            );
-                            router.get('/dashboard/purchases', {
-                                action: 'create-purchase',
-                            });
+                        onSubmit={(purchase) => {
+                            void handleCreateFromDialog(purchase)
+                                .then(() => {
+                                    onOpenChange(false);
+                                })
+                                .catch((error: unknown) => {
+                                    const message =
+                                        error instanceof Error && error.message
+                                            ? error.message
+                                            : 'Erro ao criar a compra.';
+                                    toast.error(message);
+                                });
                         }}
+                        products={dialogProductOptions}
                         suppliers={dialogSupplierOptions}
+                        categories={categories.map((category) => ({
+                            id: category.id,
+                            name: category.name,
+                        }))}
+                        brands={brands.map((brand) => ({
+                            id: brand.id,
+                            name: brand.name,
+                        }))}
                         onCreateSupplier={handleCreateSupplier}
+                        onCreateProduct={handleCreateProduct}
+                        onApplyStock={(items) => {
+                            draftItemsRef.current = items;
+                        }}
                     />
                 )}
             />

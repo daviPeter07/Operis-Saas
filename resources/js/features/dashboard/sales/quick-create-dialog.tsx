@@ -143,6 +143,7 @@ export function QuickCreateDialog<TResult>({
         defaultValuesForFields(fields, initialValues),
     );
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [errors, setErrors] = React.useState<Record<string, string>>({});
 
     React.useEffect(() => {
         if (open) {
@@ -159,6 +160,17 @@ export function QuickCreateDialog<TResult>({
             ...current,
             [name]: applyFieldMask(value, field?.mask),
         }));
+
+        setErrors((current) => {
+            if (!current[name]) {
+                return current;
+            }
+
+            const next = { ...current };
+            delete next[name];
+
+            return next;
+        });
     };
 
     const isValid = fields.every((field) => {
@@ -171,6 +183,20 @@ export function QuickCreateDialog<TResult>({
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
+
+        const nextErrors: Record<string, string> = {};
+
+        fields.forEach((field) => {
+            if (field.required && !formData[field.name]?.trim()) {
+                nextErrors[field.name] = `${field.label} é obrigatório.`;
+            }
+        });
+
+        setErrors(nextErrors);
+
+        if (Object.keys(nextErrors).length > 0) {
+            return;
+        }
 
         if (!isValid) {
             return;
@@ -312,6 +338,12 @@ export function QuickCreateDialog<TResult>({
                                         placeholder={field.placeholder}
                                     />
                                 )}
+
+                                {errors[field.name] ? (
+                                    <p className="text-xs text-destructive">
+                                        {errors[field.name]}
+                                    </p>
+                                ) : null}
                             </div>
                         ))}
                     </div>

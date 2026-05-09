@@ -9,7 +9,7 @@ import { useCustomers } from '@/hooks/use-customers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { ManualAccountReceivableDialog } from './manual-account-receivable-dialog';
+import { AccountsReceivableCreateDialog } from './accounts-receivable-create-dialog';
 
 type ReceivableRow = {
     id: string;
@@ -186,7 +186,7 @@ export function AccountsReceivableModule() {
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 createDialog={({ open, onOpenChange }) => (
-                    <ManualAccountReceivableDialog
+                    <AccountsReceivableCreateDialog
                         open={open}
                         onOpenChange={onOpenChange}
                         customers={customers.map((customer) => ({
@@ -201,7 +201,9 @@ export function AccountsReceivableModule() {
                             createdAt: new Date().toISOString().slice(0, 10),
                             creditEnabled: customer.credit_enabled,
                             creditLimit: Number(customer.credit_limit ?? 0),
-                            creditTermDays: Number(customer.credit_term_days ?? 30),
+                            creditTermDays: Number(
+                                customer.credit_term_days ?? 30,
+                            ),
                         }))}
                         onSubmit={async (payload) => {
                             await createManualReceivable.mutateAsync(payload);

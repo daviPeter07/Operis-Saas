@@ -6,9 +6,14 @@ import {
     Search,
 } from 'lucide-react';
 import * as React from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { initialPurchaseForm } from '@/constants/dashboard-form-initials';
+import type { UiPurchase } from '@/types/dashboard-entities';
+import type { SalesLineItem } from '@/types/sales-dialog';
+import { CatalogPanel } from '@/components/sales-dialog/catalog-panel';
+import { AddProductDialog } from '@/components/sales-dialog/dialogs';
 import { QuickCreateDialog } from '@/features/dashboard/sales/quick-create-dialog';
 import { SupplierCreateDialog } from '@/features/dashboard/suppliers/supplier-create-dialog';
 import { useFormState } from '@/hooks/use-form-state';
@@ -22,6 +27,8 @@ import {
     computePurchaseTotals,
     mapFinancialFormToPurchase,
 } from '@/utils/dashboard-financial';
+import { PurchaseConfirmationDialog } from './purchase-confirmation-dialog';
+import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
 import { FinancialEntryDialog } from '../shared/financial-entry-dialog';
 
 type DraftPurchaseLine = {
@@ -48,6 +55,26 @@ export function PurchaseCreateDialog({
     const [isScannerReady, setIsScannerReady] = React.useState(false);
     const [productCreateOpen, setProductCreateOpen] = React.useState(false);
     const [supplierCreateOpen, setSupplierCreateOpen] = React.useState(false);
+    const [supplierSearch, setSupplierSearch] = React.useState('');
+    const [selectedSupplierId, setSelectedSupplierId] = React.useState('');
+    const [purchaseDate, setPurchaseDate] = React.useState(
+        new Date().toISOString().slice(0, 10),
+    );
+    const [calendarOpen, setCalendarOpen] = React.useState(false);
+    const [paymentMethod, setPaymentMethod] = React.useState<
+        'money' | 'pix' | 'card' | 'boleto'
+    >('pix');
+    const [cardType, setCardType] = React.useState<'debit' | 'credit'>('debit');
+    const [notes, setNotes] = React.useState('');
+    const [addProductDialogOpen, setAddProductDialogOpen] = React.useState(false);
+    const [catalogProductId, setCatalogProductId] = React.useState('');
+    const [catalogUnitCost, setCatalogUnitCost] = React.useState('0');
+    const [catalogQuantity, setCatalogQuantity] = React.useState('1');
+    const [showCostPrice, setShowCostPrice] = React.useState(false);
+    const [confirmationOpen, setConfirmationOpen] = React.useState(false);
+    const [purchaseDraft, setPurchaseDraft] = React.useState<UiPurchase | null>(
+        null,
+    );
 
     React.useEffect(() => {
         if (open) {
@@ -55,6 +82,13 @@ export function PurchaseCreateDialog({
             setProductSearch('');
             setItems([]);
             setIsScannerReady(false);
+            setSupplierSearch('');
+            setSelectedSupplierId('');
+            setPurchaseDate(new Date().toISOString().slice(0, 10));
+            setCalendarOpen(false);
+            setPaymentMethod('pix');
+            setCardType('debit');
+            setNotes('');
         }
     }, [open]);
 
@@ -75,6 +109,23 @@ export function PurchaseCreateDialog({
             );
         });
     }, [productSearch, products]);
+
+    const filteredSuppliers = React.useMemo(() => {
+        const normalized = supplierSearch.trim().toLowerCase();
+
+        if (!normalized) {
+            return suppliers;
+        }
+
+        return suppliers.filter((supplier) =>
+            supplier.name.toLowerCase().includes(normalized),
+        );
+    }, [supplierSearch, suppliers]);
+
+    const selectedSupplier = React.useMemo(
+        () => suppliers.find((supplier) => supplier.id === selectedSupplierId) ?? null,
+        [suppliers, selectedSupplierId],
+    );
 
     const addProductToCart = (productId: string) => {
         setItems((previous) => {
@@ -107,6 +158,57 @@ export function PurchaseCreateDialog({
         });
     };
 
+    const handleAddFromCatalog = (productId: string) => {
+        const product = products.find((entry) => entry.id === productId);
+        if (!product) {
+            return;
+        }
+
+        setCatalogProductId(productId);
+        setCatalogUnitCost(String(product.cost || 0));
+        setCatalogQuantity('1');
+        setShowCostPrice(false);
+        setAddProductDialogOpen(true);
+    };
+
+    const confirmAddFromCatalog = () => {
+        const productId = catalogProductId;
+        if (!productId) {
+            return;
+        }
+
+        const quantityValue = Math.max(1, Number(catalogQuantity || 1));
+        const unitCostValue = Math.max(0, Number(catalogUnitCost || 0));
+
+        setItems((previous) => {
+            const lineIndex = previous.findIndex(
+                (item) => item.productId === productId && Number(item.unitCost) === unitCostValue,
+            );
+
+            if (lineIndex === -1) {
+                return [
+                    ...previous,
+                    {
+                        productId,
+                        quantity: String(quantityValue),
+                        unitCost: String(unitCostValue),
+                    },
+                ];
+            }
+
+            const next = [...previous];
+            const currentQty = Number(next[lineIndex].quantity || 0);
+            next[lineIndex] = {
+                ...next[lineIndex],
+                quantity: String(currentQty + quantityValue),
+            };
+
+            return next;
+        });
+
+        setAddProductDialogOpen(false);
+    };
+
     const updateLine = (
         index: number,
         key: keyof DraftPurchaseLine,
@@ -124,6 +226,45 @@ export function PurchaseCreateDialog({
         setItems((previous) =>
             previous.filter((_, itemIndex) => itemIndex !== index),
         );
+    };
+
+    const findLineIndexByCheckoutId = (id: string): number => {
+        return items.findIndex(
+            (item) => `${item.productId}-${Number(item.unitCost || 0)}` === id,
+        );
+    };
+
+    const increaseLineItemQuantity = (id: string) => {
+        const lineIndex = findLineIndexByCheckoutId(id);
+        if (lineIndex === -1) {
+            return;
+        }
+
+        const current = Number(items[lineIndex]?.quantity || 0);
+        updateLine(lineIndex, 'quantity', String(current + 1));
+    };
+
+    const decreaseLineItemQuantity = (id: string) => {
+        const lineIndex = findLineIndexByCheckoutId(id);
+        if (lineIndex === -1) {
+            return;
+        }
+
+        const current = Number(items[lineIndex]?.quantity || 0);
+        if (current <= 1) {
+            removeLine(lineIndex);
+            return;
+        }
+
+        updateLine(lineIndex, 'quantity', String(current - 1));
+    };
+
+    const removeLineItem = (id: string) => {
+        const lineIndex = findLineIndexByCheckoutId(id);
+        if (lineIndex === -1) {
+            return;
+        }
+        removeLine(lineIndex);
     };
 
     const parsedItems: PurchaseLineItem[] = items
@@ -174,6 +315,19 @@ export function PurchaseCreateDialog({
                 subtotal: number;
             } => item !== null,
         );
+
+    const checkoutLineItems: SalesLineItem[] = cartItems.map((item) => ({
+        id: `${item.product.id}-${item.unitCost}`,
+        productId: item.product.id,
+        productName: item.product.name,
+        sku: item.product.sku,
+        quantity: item.quantity,
+        unitPrice: item.unitCost,
+        unitCost: item.unitCost,
+        subtotal: item.subtotal,
+    }));
+
+    const canSubmit = Boolean(selectedSupplier && checkoutLineItems.length > 0);
 
     const productQuickFields = React.useMemo<QuickCreateField[]>(
         () => [
@@ -251,6 +405,169 @@ export function PurchaseCreateDialog({
         [brands, categories],
     );
 
+    const handleFinalizePurchase = () => {
+        if (!selectedSupplier || checkoutLineItems.length === 0) {
+            return;
+        }
+
+        const draft: UiPurchase = {
+            id: crypto.randomUUID(),
+            supplierId: selectedSupplier.id,
+            supplierName: selectedSupplier.name,
+            total: computedTotals.total,
+            status: 'pending',
+            paymentMethod:
+                paymentMethod === 'card' ? cardType : paymentMethod,
+            dueDate: paymentMethod === 'boleto' ? undefined : undefined,
+            boletoTermDays: paymentMethod === 'boleto' ? '30' : undefined,
+            createdAt: purchaseDate,
+            items: checkoutLineItems.reduce((sum, item) => sum + item.quantity, 0),
+        };
+
+        setPurchaseDraft(draft);
+        setConfirmationOpen(true);
+    };
+
+    if (true) {
+        return (
+            <>
+                <Dialog open={open} onOpenChange={onOpenChange}>
+                    <DialogContent className="max-w-[min(1700px,calc(100vw-1rem))] overflow-y-auto p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]">
+                        <div className="grid max-h-[calc(100dvh-1rem)] min-h-[calc(100dvh-1rem)] grid-cols-1 lg:h-[min(90dvh,calc(100dvh-1rem))] lg:grid-cols-[1.35fr_0.65fr]">
+                            <CatalogPanel
+                                productSearch={productSearch}
+                                setProductSearch={setProductSearch}
+                                isScannerReady={isScannerReady}
+                                onToggleScanner={() =>
+                                    setIsScannerReady((current) => !current)
+                                }
+                                onOpenCreateProduct={() =>
+                                    setProductCreateOpen(true)
+                                }
+                                visibleProducts={visibleProducts}
+                                onAddFromCatalog={(product) =>
+                                    handleAddFromCatalog(product.id)
+                                }
+                            />
+
+                            <PurchaseCheckoutPanel
+                                supplierSearch={supplierSearch}
+                                setSupplierSearch={setSupplierSearch}
+                                filteredSuppliers={filteredSuppliers}
+                                selectedSupplier={selectedSupplier}
+                                selectSupplierById={(id) => {
+                                    setSelectedSupplierId(id);
+                                    const supplier = suppliers.find((entry) => entry.id === id);
+                                    setSupplierSearch(supplier?.name || '');
+                                }}
+                                openCreateSupplier={() => setSupplierCreateOpen(true)}
+                                lineItems={checkoutLineItems}
+                                increaseLineItemQuantity={increaseLineItemQuantity}
+                                decreaseLineItemQuantity={decreaseLineItemQuantity}
+                                removeLineItem={removeLineItem}
+                                paymentMethod={paymentMethod}
+                                setPaymentMethod={setPaymentMethod}
+                                cardType={cardType}
+                                setCardType={setCardType}
+                                total={computedTotals.total}
+                                notes={notes}
+                                setNotes={setNotes}
+                                purchaseDate={purchaseDate}
+                                calendarOpen={calendarOpen}
+                                setCalendarOpen={setCalendarOpen}
+                                setPurchaseDate={setPurchaseDate}
+                                canSubmit={canSubmit}
+                                onSubmit={handleFinalizePurchase}
+                            />
+                        </div>
+
+                        <AddProductDialog
+                            open={addProductDialogOpen}
+                            onOpenChange={setAddProductDialogOpen}
+                            catalogProduct={products.find((entry) => entry.id === catalogProductId) ?? null}
+                            catalogSalePrice={catalogUnitCost}
+                            setCatalogSalePrice={setCatalogUnitCost}
+                            catalogQuantity={catalogQuantity}
+                            setCatalogQuantity={setCatalogQuantity}
+                            showCostPrice={showCostPrice}
+                            setShowCostPrice={setShowCostPrice}
+                            onConfirm={confirmAddFromCatalog}
+                        />
+                    </DialogContent>
+                </Dialog>
+
+                <PurchaseConfirmationDialog
+                    open={confirmationOpen}
+                    onOpenChange={setConfirmationOpen}
+                    purchaseDraft={purchaseDraft}
+                    items={parsedItems}
+                    onConfirm={(purchase) => {
+                        onApplyStock(parsedItems);
+                        onSubmit(purchase);
+                        setConfirmationOpen(false);
+                    }}
+                />
+
+                <QuickCreateDialog
+                    open={productCreateOpen}
+                    onOpenChange={setProductCreateOpen}
+                    title="Novo produto"
+                    description="Cadastre um produto sem sair da compra."
+                    fields={productQuickFields}
+                    initialValues={{
+                        cost: 'R$ 0,00',
+                        price: 'R$ 0,00',
+                        stock: '0',
+                        minStock: '0',
+                    }}
+                    submitLabel="Salvar produto"
+                    keepOpenAfterSubmit={false}
+                    onSubmit={async (values) => {
+                        const createdProduct = await onCreateProduct({
+                            name: String(values.name || '').trim(),
+                            sku: String(values.sku || '').trim(),
+                            barcode: String(values.barcode || '').trim(),
+                            categoryId: Number(values.category),
+                            brandId: values.brand ? Number(values.brand) : null,
+                            cost: Number(values.cost || 0),
+                            price: Number(values.price || 0),
+                            stock: Number(values.stock || 0),
+                            minStock: Number(values.minStock || 0),
+                            createdAt:
+                                values.createdAt ||
+                                new Date().toISOString().slice(0, 10),
+                        });
+
+                        handleAddFromCatalog(createdProduct.id);
+
+                        return createdProduct;
+                    }}
+                />
+
+                <SupplierCreateDialog
+                    open={supplierCreateOpen}
+                    onOpenChange={setSupplierCreateOpen}
+                    onSuccess={({ id, name }) => {
+                        void onCreateSupplier({
+                            id: String(id),
+                            name,
+                            email: '',
+                            phone: '',
+                            document: '',
+                            city: '',
+                            state: '',
+                            address: '',
+                            createdAt: new Date().toISOString().slice(0, 10),
+                        }).then((supplier) => {
+                            setSelectedSupplierId(supplier.id);
+                            setSupplierSearch(supplier.name);
+                        });
+                    }}
+                />
+            </>
+        );
+    }
+
     return (
         <>
             <FinancialEntryDialog
@@ -259,12 +576,16 @@ export function PurchaseCreateDialog({
                 title="Nova compra"
                 description="Fluxo operacional de reposicao com leitura de estoque e ajuste de custo por item."
                 primarySectionTitle="Fechamento da compra"
+                primarySectionDescription="Fornecedor, itens, pagamento e fechamento."
                 submitLabel="Salvar compra"
                 form={form}
                 onChange={setField}
                 suppliers={suppliers}
                 onOpenCreateSupplier={() => setSupplierCreateOpen(true)}
                 summaryLabel="Total da compra"
+                showOperationSummary={false}
+                showStatusField={false}
+                hideCatalogHeader
                 catalogSection={
                     <div className="space-y-4">
                         <div className="grid gap-3 rounded-xl border bg-muted/20 p-4 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -655,7 +976,21 @@ export function PurchaseCreateDialog({
                 }
                 onSubmit={() => {
                     onApplyStock(parsedItems);
-                    onSubmit(mapFinancialFormToPurchase(form, computedTotals));
+                    setPurchaseDraft(
+                        mapFinancialFormToPurchase(form, computedTotals),
+                    );
+                    setConfirmationOpen(true);
+                }}
+            />
+
+            <PurchaseConfirmationDialog
+                open={confirmationOpen}
+                onOpenChange={setConfirmationOpen}
+                purchaseDraft={purchaseDraft}
+                items={parsedItems}
+                onConfirm={(purchase) => {
+                    onSubmit(purchase);
+                    setConfirmationOpen(false);
                 }}
             />
 
