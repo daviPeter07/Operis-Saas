@@ -8,6 +8,7 @@ import {
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { inferClientPersonType } from '@/utils/clients';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
+import { formatCurrencyBR } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { ClientCreateDialog } from './client-create-dialog';
@@ -24,6 +25,7 @@ type ClientRow = {
     credit_limit: number;
     credit_term_days: number;
     open_crediario_count: number;
+    open_crediario_value: number;
 };
 
 export function ClientsModule() {
@@ -48,23 +50,30 @@ export function ClientsModule() {
     const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
 
-    const rows: ClientRow[] = customers.map((customer) => ({
-        id: String(customer.id),
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        document: customer.document,
-        status: customer.status,
-        personType: inferClientPersonType(customer.document || ''),
-        credit_enabled: customer.credit_enabled,
-        credit_limit: customer.credit_limit,
-        credit_term_days: customer.credit_term_days,
-        open_crediario_count: receivables.filter(
+    const rows: ClientRow[] = customers.map((customer) => {
+        const openReceivables = receivables.filter(
             (receivable) =>
                 receivable.customer_id === customer.id &&
                 receivable.status === 'pending',
-        ).length,
-    }));
+        );
+        return {
+            id: String(customer.id),
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+            document: customer.document,
+            status: customer.status,
+            personType: inferClientPersonType(customer.document || ''),
+            credit_enabled: customer.credit_enabled,
+            credit_limit: customer.credit_limit,
+            credit_term_days: customer.credit_term_days,
+            open_crediario_count: openReceivables.length,
+            open_crediario_value: openReceivables.reduce(
+                (sum, r) => sum + (r.amount || 0),
+                0,
+            ),
+        };
+    });
 
     const columns: Column<ClientRow>[] = [
         { key: 'name', header: 'Nome' },
@@ -102,8 +111,10 @@ export function ClientsModule() {
             render: (value: unknown) => (value ? 'Habilitado' : 'Desabilitado'),
         },
         {
-            key: 'open_crediario_count',
-            header: 'Crediarios em aberto',
+            key: 'open_crediario_value',
+            header: 'Crediario em aberto',
+            render: (value: unknown) =>
+                formatCurrencyBR(Number(value || 0)),
         },
         {
             key: 'credit_term_days',

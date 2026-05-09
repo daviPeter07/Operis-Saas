@@ -26,6 +26,7 @@ import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { PurchaseCreateDialog } from './purchase-create-dialog';
+import { PurchaseHeader } from './purchase-header';
 
 type PurchaseRow = {
     id: string;
@@ -155,6 +156,20 @@ export function PurchasesModule() {
                 date: purchase.date,
             };
         });
+
+    const metrics = useMemo(() => {
+        const purchaseCount = rows.length;
+        const purchaseTotal = rows.reduce((sum, purchase) => sum + purchase.total, 0);
+        const payable = purchases
+            .filter((purchase) => purchase.status === 'pending')
+            .reduce((sum, purchase) => sum + purchase.total, 0);
+
+        return {
+            purchaseCount,
+            purchaseTotal,
+            payable,
+        };
+    }, [rows, purchases]);
 
     const columns: Column<PurchaseRow>[] = [
         { key: 'productNames', header: 'Produto' },
@@ -326,8 +341,11 @@ export function PurchasesModule() {
     };
 
     return (
-        <GenericTable
-            data={rows}
+        <div className="space-y-5">
+            <PurchaseHeader metrics={metrics} />
+
+            <GenericTable
+                data={rows}
             columns={columns}
             title="Compras"
             loading={
@@ -385,5 +403,6 @@ export function PurchasesModule() {
                 />
             )}
         />
+        </div>
     );
 }

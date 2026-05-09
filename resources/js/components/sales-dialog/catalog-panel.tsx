@@ -97,12 +97,15 @@ export function CatalogPanel({
                                 </p>
                             </div>
                             <div className="text-right">
+                                <p className="text-xs font-semibold text-primary">
+                                    Custo: {formatCurrencyBR(product.cost)}
+                                </p>
+                                <p className="text-sm font-bold text-primary">
+                                    Venda: {formatCurrencyBR(product.price)}
+                                </p>
                                 <p className="text-xs text-muted-foreground">
                                     Estoque: {product.stock}
                                 </p>
-                                <span className="text-sm font-semibold">
-                                    {formatCurrencyBR(product.price)}
-                                </span>
                             </div>
                         </button>
                     ))}
