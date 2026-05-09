@@ -3,6 +3,7 @@ import type { Purchase } from '@/schemas/purchase';
 import { purchaseService } from '@/services/purchases';
 
 export const purchasesQueryKey = ['purchases'] as const;
+export const payablesQueryKey = ['account-payables'] as const;
 
 type CreatePurchaseInput = {
     supplier_id: number | null;
@@ -40,6 +41,9 @@ export function useCreatePurchase() {
             await queryClient.invalidateQueries({
                 queryKey: purchasesQueryKey,
             });
+            await queryClient.invalidateQueries({
+                queryKey: payablesQueryKey,
+            });
         },
     });
 }
@@ -52,6 +56,9 @@ export function useDeletePurchase() {
         onSuccess: async () => {
             await queryClient.invalidateQueries({
                 queryKey: purchasesQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: payablesQueryKey,
             });
         },
     });

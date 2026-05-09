@@ -3,6 +3,7 @@ import type { Sale } from '@/schemas/sale';
 import { saleService } from '@/services/sales';
 
 export const salesQueryKey = ['sales'] as const;
+export const receivablesQueryKey = ['account-receivables'] as const;
 
 export type SaleMutationInput = {
     customer_id: number | null;
@@ -39,10 +40,11 @@ export function useCreateSale() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (payload: SaleMutationInput) =>
-            saleService.create(payload as Partial<Sale>),
+        mutationFn: async (data: SaleMutationInput) =>
+            saleService.create(data as unknown as Partial<Sale>),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
+            await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
         },
     });
 }
@@ -55,6 +57,7 @@ export function useUpdateSale() {
             saleService.update(id, data as Partial<Sale>),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
+            await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
         },
     });
 }
@@ -66,6 +69,7 @@ export function useDeleteSale() {
         mutationFn: async (id: number) => saleService.delete(id),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
+            await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
         },
     });
 }

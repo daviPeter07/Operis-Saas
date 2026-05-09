@@ -202,7 +202,7 @@ class SaleService
 
     private function resolveInstallments(string $paymentMethod, array $data): int
     {
-        if ($paymentMethod === 'card_credit') {
+        if (in_array($paymentMethod, ['card_credit', 'crediario'])) {
             return max(1, (int) ($data['installments'] ?? 1));
         }
 
@@ -211,7 +211,7 @@ class SaleService
 
     private function resolveFirstInstallmentDate(string $paymentMethod, array $data, ?Customer $customer): string
     {
-        if ($paymentMethod === 'card_credit') {
+        if (in_array($paymentMethod, ['card_credit', 'crediario'])) {
             return $data['first_installment_date'] ?? $data['date'];
         }
 

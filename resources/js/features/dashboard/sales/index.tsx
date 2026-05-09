@@ -39,6 +39,7 @@ import { SalesHeader } from './sales-header';
 
 type SaleRow = {
     id: string;
+    sale_id: number;
     customer_id: number | null;
     clientName: string;
     productNames: string;
@@ -48,6 +49,8 @@ type SaleRow = {
     payment_method: string;
     status: string;
     date: string;
+    installments?: number;
+    installment_number?: number;
 };
 
 type SaleMutationPayload = SaleMutationInput;
@@ -174,9 +177,10 @@ export function SalesModule() {
         [customers],
     );
 
-    const rows: SaleRow[] = sales
+    const rows: SaleRow[] = [];
+    sales
         .filter((sale) => sale.status !== 'cancelled')
-        .map((sale) => {
+        .forEach((sale) => {
             const productNames = Array.from(
                 new Set(
                     (sale.items ?? [])
@@ -192,22 +196,39 @@ export function SalesModule() {
                 ),
             );
 
-            return {
-                id: String(sale.id),
-                customer_id: sale.customer_id,
-                clientName:
-                    sale.customer_id === null
-                        ? 'Sem cliente'
-                        : customerNameById.get(sale.customer_id) ||
-                          `#${sale.customer_id}`,
-                productNames: productNames.join(', ') || '-',
-                categoryNames: categoryNames.join(', ') || '-',
-                total: sale.total,
-                profit: calculateSaleProfit(sale),
-                status: sale.status,
-                payment_method: sale.payment_method,
-                date: sale.createdAt ?? sale.date,
-            };
+            const clientName =
+                sale.customer_id === null
+                    ? 'Sem cliente'
+                    : customerNameById.get(sale.customer_id) ||
+                      `#${sale.customer_id}`;
+
+            const installments = sale.installments ?? 1;
+            const installmentValue = sale.total / installments;
+            const baseDate = sale.createdAt ?? sale.date;
+
+            for (let i = 0; i < installments; i++) {
+                const installmentDate = new Date(baseDate);
+                installmentDate.setMonth(installmentDate.getMonth() + i);
+                const installmentDateStr = installmentDate
+                    .toISOString()
+                    .slice(0, 10);
+
+                rows.push({
+                    id: `${sale.id}-${i + 1}`,
+                    sale_id: sale.id,
+                    customer_id: sale.customer_id,
+                    clientName,
+                    productNames: productNames.join(', ') || '-',
+                    categoryNames: categoryNames.join(', ') || '-',
+                    total: installmentValue,
+                    profit: calculateSaleProfit(sale) / installments,
+                    status: sale.status,
+                    payment_method: sale.payment_method,
+                    date: installmentDateStr,
+                    installments,
+                    installment_number: installments > 1 ? i + 1 : undefined,
+                });
+            }
         });
 
     const columns: Column<SaleRow>[] = [
@@ -233,6 +254,14 @@ export function SalesModule() {
             key: 'payment_method',
             header: 'Metodo',
             render: (value: unknown) => translatePaymentMethod(String(value)),
+        },
+        {
+            key: 'installment_number',
+            header: 'Parcela',
+            render: (value: unknown, row: SaleRow) =>
+                row.installments && row.installments > 1
+                    ? `${row.installment_number}/${row.installments}`
+                    : '-',
         },
         {
             key: 'date',
@@ -327,6 +356,10 @@ export function SalesModule() {
                         : 'card_debit'
                     : 'pix';
 
+        const isCrediario = sale.paymentMethod === 'crediario';
+        const isCardCredit = sale.cardType === 'credit';
+        const useInstallments = isCrediario || isCardCredit;
+
         const payload: SaleMutationPayload = {
             customer_id: customerId,
             date: sale.createdAt || todayString(),
@@ -337,14 +370,11 @@ export function SalesModule() {
                 | 'card_credit'
                 | 'crediario',
             status: sale.status === 'completed' ? 'completed' : 'pending',
-            installments:
-                sale.cardType === 'credit' ? sale.installments : undefined,
-            first_installment_date:
-                sale.cardType === 'credit'
-                    ? sale.firstInstallmentDate
-                    : undefined,
-            installment_value:
-                sale.cardType === 'credit' ? sale.installmentValue : undefined,
+            installments: useInstallments ? sale.installments : undefined,
+            first_installment_date: useInstallments
+                ? sale.firstInstallmentDate
+                : undefined,
+            installment_value: useInstallments ? sale.installmentValue : undefined,
             items,
         };
 
@@ -415,7 +445,8 @@ export function SalesModule() {
                 }}
                 onEdit={async (row) => {
                     try {
-                        const full = await saleService.get(Number(row.id));
+                        const saleId = Number(String(row.id).split('-')[0]);
+                        const full = await saleService.get(saleId);
                         const mappedPaymentMethod: UiPaymentMethod =
                             full.payment_method === 'cash'
                                 ? 'money'

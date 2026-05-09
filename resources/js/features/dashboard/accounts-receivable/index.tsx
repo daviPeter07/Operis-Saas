@@ -140,8 +140,14 @@ export function AccountsReceivableModule() {
         },
         {
             key: 'item',
-            header: 'Item',
-            render: (val: unknown) => String(val || '-'),
+            header: 'Descricao',
+            render: (val: unknown, row: ReceivableRow) => {
+                const item = String(val || '-');
+                const installment = row.installment_number
+                    ? ` (Parcela ${row.installment_number})`
+                    : '';
+                return `${item}${installment}`;
+            },
         },
         {
             key: 'sale_id',

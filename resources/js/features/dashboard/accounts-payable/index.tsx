@@ -325,7 +325,11 @@ export function AccountsPayableModule() {
             header: 'Compra',
             render: (val: unknown) => `#${String(val)}`,
         },
-        { key: 'installment_number', header: 'Parcela' },
+        {
+            key: 'installment_number',
+            header: 'Parcela',
+            render: (val: unknown) => `Parcela ${String(val)}`,
+        },
         {
             key: 'amount',
             header: 'Valor',
