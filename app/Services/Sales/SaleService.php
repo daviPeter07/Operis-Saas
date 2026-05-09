@@ -79,13 +79,14 @@ class SaleService
                 }
             }
 
-                // If sale was created with all installments already settled, mark as completed and apply stock
-                $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
-                if ($allSettled) {
-                    $sale->update(['status' => SaleStatus::Completed->value]);
-                    $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
-                } elseif ($status === SaleStatus::Completed->value) {
-                    $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+                // Always deduct stock on creation, regardless of status (including crediário)
+                $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+                // If all crediário installments are already settled, mark the sale as completed (stock already deducted)
+                if ($paymentMethod === 'crediario') {
+                    $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
+                    if ($allSettled) {
+                        $sale->update(['status' => SaleStatus::Completed->value]);
+                    }
                 }
 
             return $sale->refresh()->load(['items.product.category', 'customer']);
@@ -152,18 +153,19 @@ class SaleService
                 }
             }
 
-                // If after settlement all receivables are settled (only for crediario), mark sale as completed and apply stock
+                // If all crediário receivables are settled, update status (stock already deducted on creation)
                 if ($paymentMethod === 'crediario') {
                     $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
                     if ($allSettled) {
                         $sale->update(['status' => SaleStatus::Completed->value]);
-                        $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::SaleEdit, $userId);
                     }
-                } elseif ($previousStatus !== SaleStatus::Completed->value && $sale->status === SaleStatus::Completed->value) {
-                    $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::SaleEdit, $userId);
-                } elseif ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
+                }
+
+                // If a completed sale is set back to pending, revert stock
+                if ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
                     $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
                 } elseif ($sale->status === SaleStatus::Completed->value) {
+                    // Adjust stock diff when items change on a completed sale
                     $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
                     $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
                 }

@@ -128,17 +128,8 @@ class ReceivableService
 
             $sale->update(['status' => SaleStatus::Completed->value]);
 
-            foreach ($sale->items as $item) {
-                $product = Product::query()->findOrFail($item->product_id);
+            // Stock was already deducted on sale creation; no additional movement needed.
 
-                $this->stockMovementService->register(
-                    $product,
-                    -(float) $item->quantity,
-                    StockMovementType::SaleEdit,
-                    $sale->id,
-                    $userId,
-                );
-            }
 
             return $receivable->refresh();
         });

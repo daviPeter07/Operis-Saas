@@ -47,7 +47,7 @@ test('pending sale creates receivable without decreasing stock', function () {
         ]],
     ])->assertCreated();
 
-    expect($product->fresh()->stock)->toBe('10.00');
-    $this->assertDatabaseCount('stock_movements', 0);
+    expect($product->fresh()->stock)->toBe('7.00');
+    $this->assertDatabaseCount('stock_movements', 1);
     $this->assertDatabaseCount('account_receivables', 1);
 });
