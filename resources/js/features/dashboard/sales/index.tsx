@@ -220,6 +220,9 @@ export function SalesModule() {
                 const installmentDateStr = installmentDate
                     .toISOString()
                     .slice(0, 10);
+                    // Determine parcel status (translate "received" to "completed")
+                    const rawParcelStatus = receivableStatusMap.get(`${sale.id}-${i + 1}`);
+                    const parcelStatus = rawParcelStatus === 'received' ? 'completed' : rawParcelStatus;
 
                 rows.push({
                     id: `${sale.id}-${i + 1}`,
@@ -230,7 +233,8 @@ export function SalesModule() {
                     categoryNames: categoryNames.join(', ') || '-',
                     total: installmentValue,
                     profit: calculateSaleProfit(sale) / installments,
-                     status: receivableStatusMap.get(`${sale.id}-${i + 1}`) ?? sale.status,
+                      status: parcelStatus ?? sale.status,
+
                     payment_method: sale.payment_method,
                     date: installmentDateStr,
                     installments,
