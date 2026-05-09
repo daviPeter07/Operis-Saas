@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { PersonTypeBadge } from '@/components/common/person-type-badge';
 import {
     useCreateCustomer,
     useCustomers,
     useDeleteCustomer,
+    customersQueryKey,
 } from '@/hooks/use-customers';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { inferClientPersonType } from '@/utils/clients';
@@ -29,6 +31,7 @@ type ClientRow = {
 };
 
 export function ClientsModule() {
+    const queryClient = useQueryClient();
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -56,6 +59,14 @@ export function ClientsModule() {
                 receivable.customer_id === customer.id &&
                 receivable.status === 'pending',
         );
+        const usedCredit = openReceivables.reduce(
+            (sum, r) => sum + (r.amount || 0),
+            0,
+        );
+        const availableCredit = Math.max(
+            0,
+            (customer.credit_limit || 0) - usedCredit,
+        );
         return {
             id: String(customer.id),
             name: customer.name,
@@ -68,10 +79,7 @@ export function ClientsModule() {
             credit_limit: customer.credit_limit,
             credit_term_days: customer.credit_term_days,
             open_crediario_count: openReceivables.length,
-            open_crediario_value: openReceivables.reduce(
-                (sum, r) => sum + (r.amount || 0),
-                0,
-            ),
+            open_crediario_value: availableCredit,
         };
     });
 
@@ -112,7 +120,7 @@ export function ClientsModule() {
         },
         {
             key: 'open_crediario_value',
-            header: 'Crediario em aberto',
+            header: 'Credito disponivel',
             render: (value: unknown) =>
                 formatCurrencyBR(Number(value || 0)),
         },
@@ -199,6 +207,11 @@ export function ClientsModule() {
                         creditLimit: editingClient.credit_limit,
                         creditTermDays: editingClient.credit_term_days,
                         status: editingClient.status,
+                    }}
+                    onSuccess={() => {
+                        setTimeout(() => {
+                            queryClient.invalidateQueries({ queryKey: customersQueryKey });
+                        }, 100);
                     }}
                 />
             ) : null}

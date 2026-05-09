@@ -42,16 +42,15 @@ function buildInitialValues(props: ClientCreateDialogProps) {
 
     return {
         ...initialClientForm,
-        name: props.initialData.name,
-        personType: props.initialData.personType,
-        email: props.initialData.email,
-        phone: props.initialData.phone,
-        document: props.initialData.document,
+        name: props.initialData.name ?? '',
+        personType: props.initialData.personType ?? 'pf',
+        email: props.initialData.email ?? '',
+        phone: props.initialData.phone ?? '',
+        document: props.initialData.document ?? '',
+        status: props.initialData.status ?? 'active',
         creditEnabled: props.initialData.creditEnabled ? 'yes' : 'no',
         creditLimit: props.initialData.creditLimit
-            ? formatCurrencyInput(
-                  String(Math.round(props.initialData.creditLimit * 100)),
-              )
+            ? formatCurrencyInput(String(props.initialData.creditLimit))
             : '',
         creditTermDays: String(props.initialData.creditTermDays ?? 30),
     };
@@ -103,6 +102,7 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                             phone: form.phone,
                             document: form.document,
                             person_type: form.personType,
+                            status: form.status || 'active',
                             credit_enabled: form.creditEnabled === 'yes',
                             credit_limit: Number(
                                 parseMaskedFieldValue(
@@ -125,6 +125,13 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                                         onSuccess?.({
                                             id: data.id,
                                             name: data.name,
+                                        });
+                                    },
+                                    onError: (error) => {
+                                        console.error('Update error:', error);
+                                        setError('name', {
+                                            type: 'manual',
+                                            message: 'Erro ao atualizar cliente.',
                                         });
                                     },
                                 },

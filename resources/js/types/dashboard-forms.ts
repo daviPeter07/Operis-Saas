@@ -13,6 +13,7 @@ export type ClientForm = {
     email: string;
     phone: string;
     document: string;
+    status: 'active' | 'inactive';
     creditEnabled: 'yes' | 'no';
     creditLimit: string;
     creditTermDays: string;

@@ -52,6 +52,7 @@ export const initialClientForm: ClientForm = {
     email: '',
     phone: '',
     document: '',
+    status: 'active',
     creditEnabled: 'no',
     creditLimit: '',
     creditTermDays: '30',
