@@ -4,10 +4,10 @@ namespace App\Services\Finance;
 
 use App\Enums\FinancialStatus;
 use App\Enums\SaleStatus;
+use App\Models\AccountReceivable;
 use App\Models\Sale;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
 use Illuminate\Support\Carbon;
-use Illuminate\Validation\ValidationException;
 
 class ReceivableService
 {
@@ -17,12 +17,6 @@ class ReceivableService
     {
         $current = $this->receivables->forSale($sale);
 
-        if ($current->contains(fn ($item): bool => $item->status === FinancialStatus::Received->value)) {
-            throw ValidationException::withMessages([
-                'sale' => 'Nao e permitido recalcular financeiro de venda com recebimento ja realizado.',
-            ]);
-        }
-
         foreach ($current as $receivable) {
             $receivable->delete();
         }
@@ -30,6 +24,7 @@ class ReceivableService
         $installments = $sale->installments ?? 1;
         $installmentAmount = $sale->total / $installments;
         $firstInstallmentDate = $sale->first_installment_date ?? $sale->date;
+        $isCompletedSale = $sale->status === SaleStatus::Completed->value;
 
         for ($i = 0; $i < $installments; $i++) {
             $dueDate = (new \DateTime($firstInstallmentDate))->modify("+{$i} month");
@@ -44,8 +39,8 @@ class ReceivableService
                 'item' => $this->resolveSaleItemSummary($sale),
                 'description' => null,
                 'amount' => $installmentAmount,
-                'status' => FinancialStatus::Pending->value,
-                'received_at' => null,
+                'status' => $isCompletedSale ? FinancialStatus::Received->value : FinancialStatus::Pending->value,
+                'received_at' => $isCompletedSale ? now() : null,
             ]);
         }
     }
@@ -91,6 +86,46 @@ class ReceivableService
     public function customerOpenBalance(int $companyId, int $customerId): float
     {
         return $this->receivables->openBalanceForCustomer($companyId, $customerId);
+    }
+
+    public function syncStatusesFromSales(?int $companyId = null): int
+    {
+        $updated = 0;
+
+        AccountReceivable::query()
+            ->whereNotNull('sale_id')
+            ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
+            ->with('sale:id,status')
+            ->chunkById(200, function ($receivables) use (&$updated): void {
+                foreach ($receivables as $receivable) {
+                    $saleStatus = $receivable->sale?->status;
+
+                    if ($saleStatus === null) {
+                        continue;
+                    }
+
+                    $targetStatus = match ($saleStatus) {
+                        SaleStatus::Completed->value => FinancialStatus::Received->value,
+                        SaleStatus::Cancelled->value => FinancialStatus::Cancelled->value,
+                        default => FinancialStatus::Pending->value,
+                    };
+
+                    if ($receivable->status === $targetStatus) {
+                        continue;
+                    }
+
+                    $receivable->update([
+                        'status' => $targetStatus,
+                        'received_at' => $targetStatus === FinancialStatus::Received->value
+                            ? ($receivable->received_at ?? now())
+                            : null,
+                    ]);
+
+                    $updated++;
+                }
+            });
+
+        return $updated;
     }
 
     public function resolveCrediarioDueDate(string $date, int $termDays): string

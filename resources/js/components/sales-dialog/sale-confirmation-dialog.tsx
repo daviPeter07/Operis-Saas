@@ -28,9 +28,41 @@ export function SaleConfirmationDialog({
     saleDraft,
     onConfirm,
 }: Props) {
+    if (!saleDraft) {
+        return null;
+    }
+
+    return (
+        <SaleConfirmationDialogContent
+            key={`${saleDraft.id}-${open ? 'open' : 'closed'}`}
+            open={open}
+            onOpenChange={onOpenChange}
+            saleDraft={saleDraft}
+            onConfirm={onConfirm}
+        />
+    );
+}
+
+type SaleConfirmationDialogContentProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    saleDraft: SalesRecord;
+    onConfirm: (sale: SalesRecord & { delivered?: boolean }) => void;
+};
+
+function SaleConfirmationDialogContent({
+    open,
+    onOpenChange,
+    saleDraft,
+    onConfirm,
+}: SaleConfirmationDialogContentProps) {
     const [showProfit, setShowProfit] = React.useState(false);
     const [status, setStatus] = React.useState<'pending' | 'completed'>(
-        'pending',
+        saleDraft.paymentMethod === 'crediario'
+            ? 'pending'
+            : saleDraft.status === 'completed'
+              ? 'completed'
+              : 'pending',
     );
     const [delivered, setDelivered] = React.useState(false);
     const [previewOpen, setPreviewOpen] = React.useState(false);
@@ -38,34 +70,12 @@ export function SaleConfirmationDialog({
         'thermal',
     );
 
-    React.useEffect(() => {
-        if (saleDraft && saleDraft.status) {
-            setStatus(
-                saleDraft.status === 'completed' ? 'completed' : 'pending',
-            );
-        }
-    }, [saleDraft]);
-
-    React.useEffect(() => {
-        if (saleDraft?.paymentMethod === 'crediario' && status !== 'pending') {
-            setStatus('pending');
-        }
-    }, [saleDraft?.paymentMethod, status]);
-
-    if (!saleDraft) {
-        return null;
-    }
-
     const subtotal = saleDraft.lineItems.reduce(
         (sum, item) => sum + (item.subtotal ?? item.unitPrice * item.quantity),
         0,
     );
 
     const mappedPreviewSale: Sale = React.useMemo(() => {
-        if (!saleDraft) {
-            return {} as Sale;
-        }
-
         const items = (saleDraft.lineItems || []).map((li) => ({
             id: Number(li.id) || 0,
             product_id: Number(li.productId) || 0,
@@ -105,16 +115,16 @@ export function SaleConfirmationDialog({
         );
 
         return {
-            id: Number(saleDraft.id as unknown as number) || 0,
+            id: Number(saleDraft.id) || 0,
             customer_id: saleDraft.clientId ? Number(saleDraft.clientId) : null,
             customer_name: saleDraft.clientName,
             date: saleDraft.createdAt || todayString(),
             subtotal: subtotalCalc,
             total,
-            status: (saleDraft.status as any) || 'pending',
+            status: saleDraft.status,
             payment_method: paymentMethod,
             items,
-        } as Sale;
+        };
     }, [saleDraft]);
 
     const profit = saleDraft.lineItems.reduce(
@@ -313,7 +323,7 @@ export function SaleConfirmationDialog({
                                 delivered,
                             };
 
-                            onConfirm(confirmed as any);
+                            onConfirm(confirmed);
                         }}
                     >
                         Confirmar e registrar
@@ -323,7 +333,7 @@ export function SaleConfirmationDialog({
             <SaleDocumentPreviewDialog
                 open={previewOpen}
                 onOpenChange={setPreviewOpen}
-                sale={mappedPreviewSale as any}
+                sale={mappedPreviewSale}
                 initialMode={previewMode}
             />
         </Dialog>

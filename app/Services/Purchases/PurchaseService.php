@@ -65,14 +65,18 @@ class PurchaseService
                 ]);
             }
 
+            $previousStatus = $purchase->status;
+            $previousItemsSnapshot = $purchase->items()->get()->toArray();
             $previousItems = $purchase->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
             $total = $this->calculateTotal($data['items']);
+            $nextStatus = $data['status'] ?? $purchase->status ?? PurchaseStatus::Pending->value;
 
             $purchase = $this->purchases->update($purchase, [
                 'supplier_id' => $data['supplier_id'] ?? null,
                 'date' => $data['date'],
                 'due_date' => $this->resolveDueDate($data),
                 'total' => $total,
+                'status' => $nextStatus,
                 'payment_method' => $data['payment_method'],
                 'boleto_term_days' => $data['boleto_term_days'] ?? null,
             ]);
@@ -82,7 +86,12 @@ class PurchaseService
 
             $this->payableService->regenerateFromPurchase($purchase);
 
-            if ($purchase->status === PurchaseStatus::Completed->value) {
+            if ($previousStatus !== PurchaseStatus::Completed->value && $purchase->status === PurchaseStatus::Completed->value) {
+                $this->applyStock($purchase, [], $purchase->items->toArray(), $userId);
+                $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
+            } elseif ($previousStatus === PurchaseStatus::Completed->value && $purchase->status !== PurchaseStatus::Completed->value) {
+                $this->revertStock($purchase, $previousItemsSnapshot, $userId);
+            } elseif ($purchase->status === PurchaseStatus::Completed->value) {
                 $newItems = $purchase->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
                 $this->applyStockDiff($purchase, $previousItems, $newItems, $userId);
                 $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
@@ -194,6 +203,21 @@ class PurchaseService
             $this->stockMovementService->register(
                 $product,
                 $diff,
+                StockMovementType::PurchaseEdit,
+                $purchase->id,
+                $userId,
+                'purchase'
+            );
+        }
+    }
+
+    private function revertStock(Purchase $purchase, array $items, int $userId): void
+    {
+        foreach ($items as $item) {
+            $product = Product::query()->findOrFail($item['product_id']);
+            $this->stockMovementService->register(
+                $product,
+                -(float) $item['quantity'],
                 StockMovementType::PurchaseEdit,
                 $purchase->id,
                 $userId,

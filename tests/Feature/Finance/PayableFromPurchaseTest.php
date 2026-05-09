@@ -48,10 +48,13 @@ test('payables are generated and recalculated from purchase updates', function (
         ]],
     ])->json('data.id');
 
-    expect(AccountPayable::query()->where('purchase_id', $purchase)->first()->amount)->toBe('8.00');
+    $firstPayable = AccountPayable::query()->where('purchase_id', $purchase)->first();
+    expect($firstPayable->amount)->toBe('8.00')
+        ->and($firstPayable->status)->toBe('paid');
 
     $this->actingAs($user)->putJson("/api/purchases/{$purchase}", [
         'date' => now()->toDateString(),
+        'status' => 'pending',
         'payment_method' => 'pix',
         'items' => [[
             'product_id' => $product->id,
@@ -60,5 +63,7 @@ test('payables are generated and recalculated from purchase updates', function (
         ]],
     ])->assertOk();
 
-    expect(AccountPayable::query()->where('purchase_id', $purchase)->first()->amount)->toBe('20.00');
+    $updatedPayable = AccountPayable::query()->where('purchase_id', $purchase)->first();
+    expect($updatedPayable->amount)->toBe('20.00')
+        ->and($updatedPayable->status)->toBe('pending');
 });

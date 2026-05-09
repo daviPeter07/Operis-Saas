@@ -65,16 +65,18 @@ export function AccountsPayableModule() {
         [dialogSuppliers, mappedSuppliers],
     );
 
-    const rows: PayableRow[] = payables.map((payable) => ({
-        id: String(payable.id),
-        purchase_id: payable.purchase_id,
-        installment_number: payable.installment_number,
-        amount: payable.amount,
-        due_date: payable.due_date,
-        status: payable.status,
-        paid_at: payable.paid_at,
-        paid_method: payable.paid_method,
-    }));
+    const rows: PayableRow[] = payables
+        .filter((payable) => payable.status === 'pending')
+        .map((payable) => ({
+            id: String(payable.id),
+            purchase_id: payable.purchase_id,
+            installment_number: payable.installment_number,
+            amount: payable.amount,
+            due_date: payable.due_date,
+            status: payable.status,
+            paid_at: payable.paid_at,
+            paid_method: payable.paid_method,
+        }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const next = new Set(selectedIds);

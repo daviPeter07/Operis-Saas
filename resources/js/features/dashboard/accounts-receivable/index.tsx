@@ -41,23 +41,26 @@ export function AccountsReceivableModule() {
         [customers],
     );
 
-    const rows: ReceivableRow[] = receivables.map((receivable) => ({
-        id: String(receivable.id),
-        customer_id: receivable.customer_id,
-        customer_name: receivable.customer_id
-            ? (customerNameById.get(receivable.customer_id) ?? `#${receivable.customer_id}`)
-            : 'Sem cliente',
-        sale_id: receivable.sale_id,
-        installment_number: receivable.installment_number,
-        item: receivable.item,
-        description: receivable.description,
-        amount: receivable.amount,
-        due_date: receivable.due_date,
-        entry_date: receivable.entry_date,
-        date: receivable.entry_date || receivable.due_date,
-        status: receivable.status,
-        received_at: receivable.received_at,
-    }));
+    const rows: ReceivableRow[] = receivables
+        .filter((receivable) => receivable.status === 'pending')
+        .map((receivable) => ({
+            id: String(receivable.id),
+            customer_id: receivable.customer_id,
+            customer_name: receivable.customer_id
+                ? (customerNameById.get(receivable.customer_id) ??
+                  `#${receivable.customer_id}`)
+                : 'Sem cliente',
+            sale_id: receivable.sale_id,
+            installment_number: receivable.installment_number,
+            item: receivable.item,
+            description: receivable.description,
+            amount: receivable.amount,
+            due_date: receivable.due_date,
+            entry_date: receivable.entry_date,
+            date: receivable.entry_date || receivable.due_date,
+            status: receivable.status,
+            received_at: receivable.received_at,
+        }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const next = new Set(selectedIds);

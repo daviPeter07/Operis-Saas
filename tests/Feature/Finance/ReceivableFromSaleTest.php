@@ -48,8 +48,9 @@ test('receivables are generated and recalculated from sale updates', function ()
         ]],
     ])->json('data.id');
 
-    $firstAmount = AccountReceivable::query()->where('sale_id', $sale)->first()->amount;
-    expect($firstAmount)->toBe('20.00');
+    $firstReceivable = AccountReceivable::query()->where('sale_id', $sale)->first();
+    expect($firstReceivable->amount)->toBe('20.00')
+        ->and($firstReceivable->status)->toBe('received');
 
     $this->actingAs($user)->putJson("/api/sales/{$sale}", [
         'date' => now()->toDateString(),
@@ -61,6 +62,7 @@ test('receivables are generated and recalculated from sale updates', function ()
         ]],
     ])->assertOk();
 
-    $updatedAmount = AccountReceivable::query()->where('sale_id', $sale)->first()->amount;
-    expect($updatedAmount)->toBe('40.00');
+    $updatedReceivable = AccountReceivable::query()->where('sale_id', $sale)->first();
+    expect($updatedReceivable->amount)->toBe('40.00')
+        ->and($updatedReceivable->status)->toBe('received');
 });

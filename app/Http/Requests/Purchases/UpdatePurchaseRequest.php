@@ -23,6 +23,7 @@ class UpdatePurchaseRequest extends FormRequest
             'supplier_id' => ['nullable', 'integer', Rule::exists('suppliers', 'id')->where('company_id', $companyId)],
             'date' => ['required', 'date'],
             'due_date' => ['nullable', 'date'],
+            'status' => ['sometimes', 'in:pending,completed'],
             'payment_method' => ['required', 'in:cash,pix,card,installment,boleto'],
             'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120'],
             'update_product_cost' => ['sometimes', 'boolean'],

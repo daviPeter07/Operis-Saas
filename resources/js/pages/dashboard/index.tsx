@@ -21,7 +21,12 @@ import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
-import { formatCurrencyBR, formatDateBR, formatDateTimeBR, formatDateTimeManaus } from '@/lib/format';
+import {
+    formatCurrencyBR,
+    formatDateBR,
+    formatDateTimeBR,
+    formatDateTimeManaus,
+} from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
 import { calculateSalesProfit } from '@/utils/sale-profit';
@@ -39,7 +44,8 @@ function toActivityTimestamp(dateTime: string | undefined): number {
     }
 
     // Handle "YYYY-MM-DD HH:MM:SS" format from backend
-    const fullDateMatch = /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/.exec(dateTime);
+    const fullDateMatch =
+        /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/.exec(dateTime);
 
     if (fullDateMatch) {
         const year = Number(fullDateMatch[1]);
@@ -245,7 +251,7 @@ export default function DashboardPage() {
                 responsible: userName,
                 description: `Novo cliente: ${customer.name}`,
                 time: formatDateTimeManaus(
-                    (customer as { createdAt?: string }).createdAt,
+                    (customer as { createdAt?: string }).createdAt ?? '',
                 ),
                 sortAt: toActivityTimestamp(
                     (customer as { createdAt?: string }).createdAt,
@@ -269,7 +275,7 @@ export default function DashboardPage() {
                 responsible: userName,
                 description: `Novo fornecedor: ${supplier.name}`,
                 time: formatDateTimeManaus(
-                    (supplier as { createdAt?: string }).createdAt,
+                    (supplier as { createdAt?: string }).createdAt ?? '',
                 ),
                 sortAt: toActivityTimestamp(
                     (supplier as { createdAt?: string }).createdAt,
@@ -293,7 +299,7 @@ export default function DashboardPage() {
                 responsible: userName,
                 description: `Novo produto: ${product.name}`,
                 time: formatDateTimeManaus(
-                    (product as { createdAt?: string }).createdAt,
+                    (product as { createdAt?: string }).createdAt ?? '',
                 ),
                 sortAt: toActivityTimestamp(
                     (product as { createdAt?: string }).createdAt,

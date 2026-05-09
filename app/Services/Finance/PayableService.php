@@ -16,17 +16,11 @@ class PayableService
     {
         $current = $this->payables->forPurchase($purchase);
 
-        if ($current->contains(fn (AccountPayable $item): bool => $item->status === 'paid')) {
-            throw ValidationException::withMessages([
-                'purchase' => 'Nao e permitido recalcular financeiro de compra com pagamento ja realizado.',
-            ]);
-        }
-
         foreach ($current as $payable) {
             $payable->delete();
         }
 
-        $isImmediatePayment = $purchase->payment_method === 'cash';
+        $isPaid = $purchase->status === PurchaseStatus::Completed->value || $purchase->payment_method === 'cash';
         $dueDate = $purchase->payment_method === 'boleto'
             ? $purchase->date?->copy()->addDays((int) ($purchase->boleto_term_days ?? 30))->toDateString()
             : ($purchase->due_date?->toDateString() ?? $purchase->date?->toDateString());
@@ -37,9 +31,9 @@ class PayableService
             'installment_number' => 1,
             'due_date' => $dueDate,
             'amount' => $purchase->total,
-            'status' => $isImmediatePayment ? 'paid' : 'pending',
-            'paid_at' => $isImmediatePayment ? now() : null,
-            'paid_method' => $isImmediatePayment ? 'cash' : null,
+            'status' => $isPaid ? 'paid' : 'pending',
+            'paid_at' => $isPaid ? now() : null,
+            'paid_method' => $isPaid ? $purchase->payment_method : null,
         ]);
     }
 
@@ -76,5 +70,44 @@ class PayableService
             ->doesntHave('payables')
             ->get()
             ->each(fn (Purchase $purchase) => $this->regenerateFromPurchase($purchase));
+    }
+
+    public function syncStatusesFromPurchases(?int $companyId = null): int
+    {
+        $updated = 0;
+
+        AccountPayable::query()
+            ->whereNotNull('purchase_id')
+            ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
+            ->with('purchase:id,status,payment_method')
+            ->chunkById(200, function ($payables) use (&$updated): void {
+                foreach ($payables as $payable) {
+                    $purchaseStatus = $payable->purchase?->status;
+
+                    if ($purchaseStatus === null) {
+                        continue;
+                    }
+
+                    $targetStatus = match ($purchaseStatus) {
+                        PurchaseStatus::Completed->value => 'paid',
+                        PurchaseStatus::Cancelled->value => 'cancelled',
+                        default => 'pending',
+                    };
+
+                    if ($payable->status === $targetStatus) {
+                        continue;
+                    }
+
+                    $payable->update([
+                        'status' => $targetStatus,
+                        'paid_at' => $targetStatus === 'paid' ? ($payable->paid_at ?? now()) : null,
+                        'paid_method' => $targetStatus === 'paid' ? ($payable->paid_method ?? $payable->purchase?->payment_method) : null,
+                    ]);
+
+                    $updated++;
+                }
+            });
+
+        return $updated;
     }
 }
