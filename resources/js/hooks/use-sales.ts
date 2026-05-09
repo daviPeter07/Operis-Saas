@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { productsQueryKey } from '@/hooks/use-products';
+import { customersQueryKey } from '@/hooks/use-customers';
 import type { Sale } from '@/schemas/sale';
 import { saleService } from '@/services/sales';
 
@@ -46,6 +48,8 @@ export function useCreateSale() {
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
             await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
+            await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
         },
     });
 }
@@ -59,6 +63,8 @@ export function useUpdateSale() {
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
             await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
+            await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
         },
     });
 }
@@ -71,6 +77,8 @@ export function useDeleteSale() {
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
             await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
+            await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
         },
     });
 }
