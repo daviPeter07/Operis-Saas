@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/common/status-badge';
 import {
     useAccountReceivables,
     useCreateManualAccountReceivable,
+    useSettleAccountReceivable,
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
@@ -33,6 +34,7 @@ export function AccountsReceivableModule() {
     const { data: customers = [], isPending: isCustomersPending } =
         useCustomers();
     const createManualReceivable = useCreateManualAccountReceivable();
+    const settleAccountReceivable = useSettleAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -74,10 +76,23 @@ export function AccountsReceivableModule() {
         setSelectedIds(next);
     };
 
-    const handleConfirmReceipt = () => {
-        toast.info(
-            'Recebimento em lote não disponível no backend atual (apenas listagem de contas a receber).',
+    const handleConfirmReceipt = async () => {
+        const ids = Array.from(selectedIds).map((id) => Number(id));
+
+        if (ids.length === 0) {
+            return;
+        }
+
+        await Promise.all(
+            ids.map((id) =>
+                settleAccountReceivable.mutateAsync({
+                    id,
+                    received_at: new Date().toISOString().slice(0, 10),
+                }),
+            ),
         );
+
+        toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
         setSelectedIds(new Set());
     };
 
@@ -163,7 +178,7 @@ export function AccountsReceivableModule() {
                         </p>
                     </div>
                     <button
-                        onClick={handleConfirmReceipt}
+                        onClick={() => void handleConfirmReceipt()}
                         className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
                     >
                         Marcar como Recebida

@@ -8,6 +8,6 @@ export interface AccountReceivable {
     item: string | null;
     description: string | null;
     amount: number;
-    status: 'pending' | 'received' | 'overdue';
+    status: 'pending' | 'received' | 'overdue' | 'cancelled';
     received_at: string | null;
 }

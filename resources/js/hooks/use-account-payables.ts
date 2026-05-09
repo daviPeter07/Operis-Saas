@@ -1,7 +1,22 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+    QueryClient,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from '@tanstack/react-query';
 import { accountPayableService } from '@/services/account-payables';
+import { productsQueryKey } from './use-products';
+import { purchasesQueryKey } from './use-purchases';
 
 export const accountPayablesQueryKey = ['account-payables'] as const;
+
+async function invalidateRelatedQueries(queryClient: QueryClient): Promise<void> {
+    await Promise.all([
+        queryClient.invalidateQueries({ queryKey: accountPayablesQueryKey }),
+        queryClient.invalidateQueries({ queryKey: purchasesQueryKey }),
+        queryClient.invalidateQueries({ queryKey: productsQueryKey }),
+    ]);
+}
 
 type SettlePayload = {
     id: number;
@@ -32,9 +47,7 @@ export function useSettleAccountPayable() {
                 payment_notes: payload.payment_notes,
             }),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey: accountPayablesQueryKey,
-            });
+            await invalidateRelatedQueries(queryClient);
         },
     });
 }

@@ -1,7 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+    QueryClient,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from '@tanstack/react-query';
 import { accountReceivableService } from '@/services/account-receivables';
+import { productsQueryKey } from './use-products';
+import { salesQueryKey } from './use-sales';
 
 export const accountReceivablesQueryKey = ['account-receivables'] as const;
+
+type SettlePayload = {
+    id: number;
+    received_at: string;
+};
+
+async function invalidateRelatedQueries(queryClient: QueryClient): Promise<void> {
+    await Promise.all([
+        queryClient.invalidateQueries({ queryKey: accountReceivablesQueryKey }),
+        queryClient.invalidateQueries({ queryKey: salesQueryKey }),
+        queryClient.invalidateQueries({ queryKey: productsQueryKey }),
+    ]);
+}
 
 export function useAccountReceivables() {
     return useQuery({
@@ -29,9 +49,21 @@ export function useCreateManualAccountReceivable() {
         mutationFn: async (payload: CreateManualReceivableInput) =>
             accountReceivableService.createManual(payload),
         onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey: accountReceivablesQueryKey,
-            });
+            await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
+export function useSettleAccountReceivable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: SettlePayload) =>
+            accountReceivableService.settle(payload.id, {
+                received_at: payload.received_at,
+            }),
+        onSuccess: async () => {
+            await invalidateRelatedQueries(queryClient);
         },
     });
 }

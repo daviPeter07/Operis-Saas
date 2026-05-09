@@ -3,14 +3,21 @@
 namespace App\Services\Finance;
 
 use App\Enums\PurchaseStatus;
+use App\Enums\StockMovementType;
 use App\Models\AccountPayable;
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
+use App\Services\Products\StockMovementService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PayableService
 {
-    public function __construct(private readonly AccountPayableRepositoryInterface $payables) {}
+    public function __construct(
+        private readonly AccountPayableRepositoryInterface $payables,
+        private readonly StockMovementService $stockMovementService,
+    ) {}
 
     public function regenerateFromPurchase(Purchase $purchase): void
     {
@@ -44,22 +51,53 @@ class PayableService
         }
     }
 
-    public function settle(AccountPayable $payable, array $data): AccountPayable
+    public function settle(AccountPayable $payable, int $userId, array $data): AccountPayable
     {
-        if (in_array($payable->status, ['paid', 'cancelled'], true)) {
-            throw ValidationException::withMessages([
-                'payable' => 'Conta a pagar já foi liquidada ou cancelada.',
+        return DB::transaction(function () use ($payable, $userId, $data): AccountPayable {
+            if (in_array($payable->status, ['paid', 'cancelled'], true)) {
+                throw ValidationException::withMessages([
+                    'payable' => 'Conta a pagar ja foi liquidada ou cancelada.',
+                ]);
+            }
+
+            $payable->update([
+                'status' => 'paid',
+                'paid_at' => $data['paid_at'],
+                'paid_method' => $data['paid_method'],
+                'payment_notes' => $data['payment_notes'] ?? null,
             ]);
-        }
 
-        $payable->update([
-            'status' => 'paid',
-            'paid_at' => $data['paid_at'],
-            'paid_method' => $data['paid_method'],
-            'payment_notes' => $data['payment_notes'] ?? null,
-        ]);
+            $purchase = $payable->purchase()
+                ->with('items:id,purchase_id,product_id,quantity')
+                ->first();
 
-        return $payable->refresh();
+            if (! $purchase || $purchase->status !== PurchaseStatus::Pending->value) {
+                return $payable->refresh();
+            }
+
+            $hasOpenPayables = $purchase->payables()->where('status', 'pending')->exists();
+
+            if ($hasOpenPayables) {
+                return $payable->refresh();
+            }
+
+            $purchase->update(['status' => PurchaseStatus::Completed->value]);
+
+            foreach ($purchase->items as $item) {
+                $product = Product::query()->findOrFail($item->product_id);
+
+                $this->stockMovementService->register(
+                    $product,
+                    (float) $item->quantity,
+                    StockMovementType::PurchaseEdit,
+                    $purchase->id,
+                    $userId,
+                    'purchase'
+                );
+            }
+
+            return $payable->refresh();
+        });
     }
 
     public function syncMissingForCompany(int $companyId): void

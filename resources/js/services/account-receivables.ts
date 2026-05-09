@@ -1,3 +1,4 @@
+import { apiClient } from '@/lib/apiClient';
 import { ApiService } from '@/lib/apiService';
 import type { ListParams, PaginatedData } from '@/lib/apiService';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
@@ -9,6 +10,10 @@ type CreateManualAccountReceivableInput = {
     description?: string;
     amount: number;
     entry_date: string;
+};
+
+type SettleAccountReceivablePayload = {
+    received_at: string;
 };
 
 function normalizeAccountReceivable(
@@ -44,6 +49,18 @@ class AccountReceivableService extends ApiService<AccountReceivable> {
         payload: CreateManualAccountReceivableInput,
     ): Promise<void> {
         await super.create(payload as unknown as Partial<AccountReceivable>);
+    }
+
+    async settle(
+        id: number,
+        payload: SettleAccountReceivablePayload,
+    ): Promise<AccountReceivable> {
+        const response = await apiClient.post<AccountReceivable>(
+            `/account-receivables/${id}/settle`,
+            payload,
+        );
+
+        return normalizeAccountReceivable(response.data);
     }
 }
 

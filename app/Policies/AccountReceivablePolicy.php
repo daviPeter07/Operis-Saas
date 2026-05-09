@@ -36,7 +36,7 @@ class AccountReceivablePolicy
      */
     public function update(User $user, AccountReceivable $accountReceivable): bool
     {
-        return false;
+        return $user->current_company_id === $accountReceivable->company_id;
     }
 
     /**

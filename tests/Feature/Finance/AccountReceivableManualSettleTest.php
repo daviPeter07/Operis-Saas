@@ -1,29 +1,40 @@
 <?php
 
-use App\Models\AccountPayable;
+use App\Models\AccountReceivable;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyUser;
+use App\Models\Customer;
 use App\Models\Product;
-use App\Models\Purchase;
+use App\Models\Sale;
 use App\Models\User;
 
-test('account payable can be manually settled', function () {
+test('account receivable can be settled and complete pending sale', function () {
     $user = User::factory()->create();
     $company = Company::query()->create([
-        'name' => 'Empresa P5',
+        'name' => 'Empresa R5',
         'document_type' => 'cnpj',
-        'document' => '30000000000005',
+        'document' => '40000000000005',
         'address' => 'Rua 5',
         'phone' => '92999999999',
-        'email' => 'p5@test.com',
+        'email' => 'r5@test.com',
         'city' => 'Manaus',
         'state' => 'AM',
         'verified_at' => now(),
     ]);
     CompanyUser::query()->create(['company_id' => $company->id, 'user_id' => $user->id, 'role' => 'owner', 'status' => 'active']);
     $user->update(['current_company_id' => $company->id]);
+
+    $customer = Customer::query()->create([
+        'company_id' => $company->id,
+        'name' => 'Cliente Teste',
+        'status' => 'active',
+        'credit_enabled' => true,
+        'credit_limit' => 1000,
+        'credit_term_days' => 30,
+    ]);
+
     $brand = Brand::query()->create(['company_id' => $company->id, 'name' => 'Marca', 'status' => 'active']);
     $category = Category::query()->create(['company_id' => $company->id, 'name' => 'Cat', 'status' => 'active']);
     $product = Product::query()->create([
@@ -31,33 +42,31 @@ test('account payable can be manually settled', function () {
         'category_id' => $category->id,
         'brand_id' => $brand->id,
         'name' => 'Produto',
-        'sku' => 'P-P5',
+        'sku' => 'P-R5',
         'sale_price' => 10,
         'cost' => 5,
-        'stock' => 2,
+        'stock' => 10,
         'status' => 'active',
     ]);
 
-    $purchaseId = $this->actingAs($user)->postJson('/api/purchases', [
+    $saleId = $this->actingAs($user)->postJson('/api/sales', [
+        'customer_id' => $customer->id,
         'date' => now()->toDateString(),
-        'status' => 'pending',
-        'payment_method' => 'pix',
+        'payment_method' => 'crediario',
         'items' => [[
             'product_id' => $product->id,
             'quantity' => 2,
-            'unit_cost' => 4,
+            'unit_price' => 10,
         ]],
     ])->json('data.id');
 
-    $payable = AccountPayable::query()->where('purchase_id', $purchaseId)->firstOrFail();
+    $receivable = AccountReceivable::query()->where('sale_id', $saleId)->firstOrFail();
 
-    $this->actingAs($user)->postJson("/api/account-payables/{$payable->id}/settle", [
-        'paid_at' => now()->toDateString(),
-        'paid_method' => 'pix',
-        'payment_notes' => 'Pago no prazo',
+    $this->actingAs($user)->postJson("/api/account-receivables/{$receivable->id}/settle", [
+        'received_at' => now()->toDateString(),
     ])->assertOk();
 
-    expect($payable->fresh()->status)->toBe('paid')
-        ->and(Purchase::query()->findOrFail($purchaseId)->status)->toBe('completed')
-        ->and((float) Product::query()->findOrFail($product->id)->stock)->toBe(4.0);
+    expect($receivable->fresh()->status)->toBe('received')
+        ->and(Sale::query()->findOrFail($saleId)->status)->toBe('completed')
+        ->and((float) Product::query()->findOrFail($product->id)->stock)->toBe(8.0);
 });

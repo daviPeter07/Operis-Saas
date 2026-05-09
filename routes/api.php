@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Customers\CustomerImportController;
 use App\Http\Controllers\Api\Finance\AccountPayableController;
 use App\Http\Controllers\Api\Finance\AccountPayablePaymentController;
 use App\Http\Controllers\Api\Finance\AccountReceivableController;
+use App\Http\Controllers\Api\Finance\AccountReceivablePaymentController;
 use App\Http\Controllers\Api\Onboarding\CompanyOnboardingController;
 use App\Http\Controllers\Api\Onboarding\CompanyVerificationCodeController;
 use App\Http\Controllers\Api\Onboarding\CompanyVerificationResendController;
@@ -65,6 +66,7 @@ Route::middleware([
     Route::apiResource('sales', SaleController::class);
     Route::post('sales/{sale}/cancel', SaleCancelController::class)->name('api.sales.cancel');
     Route::apiResource('account-receivables', AccountReceivableController::class)->only(['index', 'show', 'store']);
+    Route::post('account-receivables/{accountReceivable}/settle', AccountReceivablePaymentController::class)->name('api.account-receivables.settle');
     Route::apiResource('purchases', PurchaseController::class);
     Route::post('purchases/{purchase}/cancel', PurchaseCancelController::class)->name('api.purchases.cancel');
     Route::apiResource('account-payables', AccountPayableController::class)->only(['index', 'show']);

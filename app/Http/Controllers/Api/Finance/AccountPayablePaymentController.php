@@ -16,7 +16,11 @@ class AccountPayablePaymentController extends Controller
     public function __invoke(AccountPayableSettleRequest $request, AccountPayable $accountPayable): JsonResponse
     {
         $this->authorize('update', $accountPayable);
-        $payable = $this->payableService->settle($accountPayable, $request->validated());
+        $payable = $this->payableService->settle(
+            $accountPayable,
+            (int) auth()->id(),
+            $request->validated(),
+        );
 
         return response()->json([
             'data' => AccountPayableResource::make($payable),

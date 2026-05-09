@@ -4,14 +4,22 @@ namespace App\Services\Finance;
 
 use App\Enums\FinancialStatus;
 use App\Enums\SaleStatus;
+use App\Enums\StockMovementType;
 use App\Models\AccountReceivable;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
+use App\Services\Products\StockMovementService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ReceivableService
 {
-    public function __construct(private readonly AccountReceivableRepositoryInterface $receivables) {}
+    public function __construct(
+        private readonly AccountReceivableRepositoryInterface $receivables,
+        private readonly StockMovementService $stockMovementService,
+    ) {}
 
     public function regenerateFromSale(Sale $sale): void
     {
@@ -86,6 +94,54 @@ class ReceivableService
     public function customerOpenBalance(int $companyId, int $customerId): float
     {
         return $this->receivables->openBalanceForCustomer($companyId, $customerId);
+    }
+
+    public function settle(AccountReceivable $receivable, int $userId, array $data): AccountReceivable
+    {
+        return DB::transaction(function () use ($receivable, $userId, $data): AccountReceivable {
+            if (in_array($receivable->status, [FinancialStatus::Received->value, FinancialStatus::Cancelled->value], true)) {
+                throw ValidationException::withMessages([
+                    'receivable' => 'Conta a receber ja foi baixada ou cancelada.',
+                ]);
+            }
+
+            $receivable->update([
+                'status' => FinancialStatus::Received->value,
+                'received_at' => $data['received_at'],
+            ]);
+
+            $sale = $receivable->sale()
+                ->with('items:id,sale_id,product_id,quantity')
+                ->first();
+
+            if (! $sale || $sale->status !== SaleStatus::Pending->value) {
+                return $receivable->refresh();
+            }
+
+            $hasOpenReceivables = $sale->receivables()
+                ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
+                ->exists();
+
+            if ($hasOpenReceivables) {
+                return $receivable->refresh();
+            }
+
+            $sale->update(['status' => SaleStatus::Completed->value]);
+
+            foreach ($sale->items as $item) {
+                $product = Product::query()->findOrFail($item->product_id);
+
+                $this->stockMovementService->register(
+                    $product,
+                    -(float) $item->quantity,
+                    StockMovementType::SaleEdit,
+                    $sale->id,
+                    $userId,
+                );
+            }
+
+            return $receivable->refresh();
+        });
     }
 
     public function syncStatusesFromSales(?int $companyId = null): int
