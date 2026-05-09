@@ -252,7 +252,9 @@ export function ProductDialog({
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
-                            <Label htmlFor="product-name">Nome do produto</Label>
+                            <Label htmlFor="product-name">
+                                Nome do produto
+                            </Label>
                             <Input
                                 id="product-name"
                                 placeholder="Ex.: Monitor gamer 24 polegadas"
@@ -355,9 +357,7 @@ export function ProductDialog({
                                             <Plus className="h-4 w-4" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>
-                                        Criar marca
-                                    </TooltipContent>
+                                    <TooltipContent>Criar marca</TooltipContent>
                                 </Tooltip>
                             </div>
                             <div>
@@ -373,7 +373,9 @@ export function ProductDialog({
                         </div>
 
                         <div className="grid gap-2 sm:col-span-2">
-                            <Label htmlFor="product-barcode">Código de barras</Label>
+                            <Label htmlFor="product-barcode">
+                                Código de barras
+                            </Label>
                             <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
                                 <Input
                                     id="product-barcode"
@@ -458,7 +460,9 @@ export function ProductDialog({
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="product-stock">Estoque inicial</Label>
+                            <Label htmlFor="product-stock">
+                                Estoque inicial
+                            </Label>
                             <div className="space-y-2 rounded-lg border p-3">
                                 <Input
                                     id="product-stock"
@@ -534,7 +538,9 @@ export function ProductDialog({
                         </div>
 
                         <div className="grid gap-2 sm:col-span-2">
-                            <Label htmlFor="product-description">Descrição</Label>
+                            <Label htmlFor="product-description">
+                                Descrição
+                            </Label>
                             <Textarea
                                 id="product-description"
                                 placeholder="Descreva o produto, diferenciais ou observações internas"

@@ -16,6 +16,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useCreateCustomer, useUpdateCustomer } from '@/hooks/use-customers';
 import { initialClientForm } from '@/constants/dashboard-form-initials';
 import { PERSON_TYPE_OPTIONS } from '@/constants/person-type';
@@ -24,6 +30,7 @@ import type { ClientCreateDialogProps } from '@/types/dashboard-forms';
 import {
     formatDocumentInputByType,
     formatPhoneInput,
+    formatCurrencyInput,
     parseMaskedFieldValue,
 } from '@/utils/form-fields';
 
@@ -40,7 +47,9 @@ function buildInitialValues(props: ClientCreateDialogProps) {
         phone: props.initialData.phone,
         document: props.initialData.document,
         creditEnabled: props.initialData.creditEnabled ? 'yes' : 'no',
-        creditLimit: String(props.initialData.creditLimit ?? 0),
+        creditLimit: props.initialData.creditLimit
+            ? String(props.initialData.creditLimit)
+            : '',
         creditTermDays: String(props.initialData.creditTermDays ?? 30),
     };
 }
@@ -51,8 +60,7 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
     const createCustomer = useCreateCustomer();
     const updateCustomer = useUpdateCustomer();
     const isEditing = Boolean(initialData?.id);
-    const isSubmitting =
-        createCustomer.isPending || updateCustomer.isPending;
+    const isSubmitting = createCustomer.isPending || updateCustomer.isPending;
     const documentLabel = form.personType === 'pj' ? 'CNPJ' : 'CPF';
 
     return (
@@ -228,8 +236,12 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="yes">Habilitado</SelectItem>
-                                    <SelectItem value="no">Desabilitado</SelectItem>
+                                    <SelectItem value="yes">
+                                        Habilitado
+                                    </SelectItem>
+                                    <SelectItem value="no">
+                                        Desabilitado
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -238,34 +250,108 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                             <Label htmlFor="client-credit-limit">
                                 Limite do crediario
                             </Label>
-                            <Input
-                                id="client-credit-limit"
-                                value={form.creditLimit}
-                                onChange={(event) =>
-                                    setField('creditLimit', event.target.value)
-                                }
-                                placeholder="0,00"
-                            />
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div>
+                                            <Input
+                                                id="client-credit-limit"
+                                                value={form.creditLimit}
+                                                onChange={(event) =>
+                                                    setField(
+                                                        'creditLimit',
+                                                        formatCurrencyInput(
+                                                            event.target.value,
+                                                        ),
+                                                    )
+                                                }
+                                                placeholder="R$ 0,00"
+                                                disabled={
+                                                    form.creditEnabled === 'no'
+                                                }
+                                                className={
+                                                    form.creditEnabled === 'no'
+                                                        ? 'cursor-not-allowed'
+                                                        : ''
+                                                }
+                                            />
+                                        </div>
+                                    </TooltipTrigger>
+                                    {form.creditEnabled === 'no' && (
+                                        <TooltipContent>
+                                            Habilite o crediário para preenchem
+                                            este campo
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="client-credit-term">
                                 Prazo do crediario (dias)
                             </Label>
-                            <Input
-                                id="client-credit-term"
-                                type="number"
-                                min="1"
-                                max="365"
-                                value={form.creditTermDays}
-                                onChange={(event) =>
-                                    setField(
-                                        'creditTermDays',
-                                        event.target.value,
-                                    )
-                                }
-                                placeholder="30"
-                            />
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div>
+                                            <Select
+                                                value={form.creditTermDays}
+                                                onValueChange={(value) => {
+                                                    if (
+                                                        form.creditEnabled ===
+                                                        'yes'
+                                                    ) {
+                                                        setField(
+                                                            'creditTermDays',
+                                                            value,
+                                                        );
+                                                    }
+                                                }}
+                                                disabled={
+                                                    form.creditEnabled === 'no'
+                                                }
+                                            >
+                                                <SelectTrigger
+                                                    id="client-credit-term"
+                                                    disabled={
+                                                        form.creditEnabled ===
+                                                        'no'
+                                                    }
+                                                    className={
+                                                        form.creditEnabled ===
+                                                        'no'
+                                                            ? 'cursor-not-allowed'
+                                                            : ''
+                                                    }
+                                                >
+                                                    <SelectValue placeholder="Selecione" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="15">
+                                                        15 dias
+                                                    </SelectItem>
+                                                    <SelectItem value="30">
+                                                        30 dias
+                                                    </SelectItem>
+                                                    <SelectItem value="60">
+                                                        60 dias
+                                                    </SelectItem>
+                                                    <SelectItem value="90">
+                                                        90 dias
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </TooltipTrigger>
+                                    {form.creditEnabled === 'no' && (
+                                        <TooltipContent>
+                                            Habilite o crediário para preenchem
+                                            este campo
+                                        </TooltipContent>
+                                    )}
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                     </div>
 

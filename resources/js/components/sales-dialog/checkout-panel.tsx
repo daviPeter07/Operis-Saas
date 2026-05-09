@@ -367,7 +367,7 @@ export function CheckoutPanel({
                                 Desconto
                             </span>
                             <div className="flex items-center gap-2">
-                                <span className="text-primary">
+                                <span className="text-green-600">
                                     - {formatCurrencyBR(discountAmountApplied)}
                                 </span>
                                 <Tooltip>

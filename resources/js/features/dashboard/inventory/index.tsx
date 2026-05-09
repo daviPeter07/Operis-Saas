@@ -143,11 +143,10 @@ export function InventoryModule() {
             (sum, product) => sum + product.sale_price * product.stock,
             0,
         );
-        const totalStock = rows.reduce((sum, product) => sum + product.stock, 0);
-        const lowStockProducts = rows.filter(
-            (product) =>
-                product.stock <= product.min_stock || product.stock <= 0,
-        ).length;
+        const totalStock = rows.reduce(
+            (sum, product) => sum + product.stock,
+            0,
+        );
 
         return [
             {
@@ -167,12 +166,6 @@ export function InventoryModule() {
                 label: 'Quantidade total em estoque',
                 value: formatQuantityWithUnit(totalStock),
                 icon: Boxes,
-            },
-            {
-                key: 'lowStockProducts',
-                label: 'Produtos com baixo estoque',
-                value: String(lowStockProducts),
-                icon: AlertTriangle,
             },
         ];
     }, [rows]);
