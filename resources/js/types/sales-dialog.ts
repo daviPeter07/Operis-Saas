@@ -25,4 +25,6 @@ export type SalesRecord = UiSale & {
     firstInstallmentDate?: string;
     installmentValue?: number;
     availableCredit?: number;
+    paidInstallments?: number[];
+    delivered?: boolean;
 };

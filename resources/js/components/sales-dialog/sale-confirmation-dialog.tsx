@@ -1,6 +1,7 @@
-import { Printer } from 'lucide-react';
+import { Printer, CreditCard } from 'lucide-react';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -69,6 +70,17 @@ function SaleConfirmationDialogContent({
     const [previewMode, setPreviewMode] = React.useState<'digital' | 'thermal'>(
         'thermal',
     );
+    const [paidInstallments, setPaidInstallments] = React.useState<number[]>([]);
+
+    const isCrediario = saleDraft.paymentMethod === 'crediario';
+    const installments = saleDraft.installments ?? 1;
+    const installmentValue = (saleDraft.finalTotal ?? saleDraft.total ?? 0) / installments;
+
+    const toggleInstallment = (num: number) => {
+        setPaidInstallments((prev) =>
+            prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num],
+        );
+    };
 
     const subtotal = saleDraft.lineItems.reduce(
         (sum, item) => sum + (item.subtotal ?? item.unitPrice * item.quantity),
@@ -263,7 +275,7 @@ function SaleConfirmationDialogContent({
 
                     <div>
                         <Label>Status da venda</Label>
-                        {saleDraft.paymentMethod === 'crediario' ? (
+                        {isCrediario ? (
                             <p className="mt-1 text-xs text-muted-foreground">
                                 No crediario, a venda permanece pendente ate a quitacao.
                             </p>
@@ -285,13 +297,61 @@ function SaleConfirmationDialogContent({
                                         ? 'default'
                                         : 'outline'
                                 }
-                                disabled={saleDraft.paymentMethod === 'crediario'}
+                                disabled={isCrediario}
                                 onClick={() => setStatus('completed')}
                             >
                                 Pago
                             </Button>
                         </div>
                     </div>
+
+                    {isCrediario && installments > 1 && (
+                        <div className="rounded-md border p-3">
+                            <div className="mb-3 flex items-center gap-2">
+                                <CreditCard className="h-4 w-4" />
+                                <Label>Confirmar parcelas pagas</Label>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                {Array.from({ length: installments }, (_, i) => {
+                                    const num = i + 1;
+                                    const isPaid = paidInstallments.includes(num);
+                                    return (
+                                        <button
+                                            key={num}
+                                            type="button"
+                                            onClick={() => toggleInstallment(num)}
+                                            className={`flex items-center gap-2 rounded-md border p-2 text-left transition-colors ${
+                                                isPaid
+                                                    ? 'border-green-500 bg-green-50'
+                                                    : 'hover:bg-muted'
+                                            }`}
+                                        >
+                                            <Checkbox checked={isPaid} />
+                                            <div>
+                                                <div className="text-sm font-medium">
+                                                    {num}/{installments}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {formatCurrencyBR(
+                                                        installmentValue,
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {paidInstallments.length > 0 && (
+                                <div className="mt-3 text-sm font-medium text-green-600">
+                                    {paidInstallments.length} parcela(s)
+                                    confirmada(s):{' '}
+                                    {formatCurrencyBR(
+                                        paidInstallments.length * installmentValue,
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-2">
                         <input
@@ -321,6 +381,9 @@ function SaleConfirmationDialogContent({
                                 ...saleDraft,
                                 status,
                                 delivered,
+                                paidInstallments: isCrediario
+                                    ? paidInstallments
+                                    : undefined,
                             };
 
                             onConfirm(confirmed);

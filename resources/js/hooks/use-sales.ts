@@ -18,6 +18,7 @@ export type SaleMutationInput = {
     installments?: number;
     first_installment_date?: string;
     installment_value?: number;
+    paid_installments?: number[];
     items: Array<{
         product_id: number;
         quantity: number;

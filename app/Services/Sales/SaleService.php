@@ -3,6 +3,7 @@
 namespace App\Services\Sales;
 
 use App\Enums\SaleStatus;
+use App\Enums\FinancialStatus;
 use App\Enums\StockMovementType;
 use App\Models\Customer;
 use App\Models\Product;
@@ -57,9 +58,35 @@ class SaleService
 
             $this->receivableService->regenerateFromSale($sale);
 
-            if ($status === SaleStatus::Completed->value) {
-                $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+            if ($paymentMethod === 'crediario') {
+                $paidInstallments = collect($data['paid_installments'] ?? [])
+                    ->map(fn ($value) => (int) $value)
+                    ->filter(fn (int $value) => $value > 0)
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                if (! empty($paidInstallments)) {
+                    $receivablesToSettle = $sale->receivables()
+                        ->whereIn('installment_number', $paidInstallments)
+                        ->get();
+
+                    foreach ($receivablesToSettle as $receivable) {
+                        $this->receivableService->settle($receivable, $userId, [
+                            'received_at' => now()->toDateString(),
+                        ]);
+                    }
+                }
             }
+
+                // If sale was created with all installments already settled, mark as completed and apply stock
+                $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
+                if ($allSettled) {
+                    $sale->update(['status' => SaleStatus::Completed->value]);
+                    $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+                } elseif ($status === SaleStatus::Completed->value) {
+                    $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+                }
 
             return $sale->refresh()->load(['items.product.category', 'customer']);
         });
@@ -104,14 +131,42 @@ class SaleService
 
             $this->receivableService->regenerateFromSale($sale);
 
-            if ($previousStatus !== SaleStatus::Completed->value && $sale->status === SaleStatus::Completed->value) {
-                $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::SaleEdit, $userId);
-            } elseif ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
-                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
-            } elseif ($sale->status === SaleStatus::Completed->value) {
-                $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
-                $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
+            if ($paymentMethod === 'crediario') {
+                $paidInstallments = collect($data['paid_installments'] ?? [])
+                    ->map(fn ($value) => (int) $value)
+                    ->filter(fn (int $value) => $value > 0)
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                if (! empty($paidInstallments)) {
+                    $receivablesToSettle = $sale->receivables()
+                        ->whereIn('installment_number', $paidInstallments)
+                        ->get();
+
+                    foreach ($receivablesToSettle as $receivable) {
+                        $this->receivableService->settle($receivable, $userId, [
+                            'received_at' => now()->toDateString(),
+                        ]);
+                    }
+                }
             }
+
+                // If after settlement all receivables are settled (only for crediario), mark sale as completed and apply stock
+                if ($paymentMethod === 'crediario') {
+                    $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
+                    if ($allSettled) {
+                        $sale->update(['status' => SaleStatus::Completed->value]);
+                        $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::SaleEdit, $userId);
+                    }
+                } elseif ($previousStatus !== SaleStatus::Completed->value && $sale->status === SaleStatus::Completed->value) {
+                    $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::SaleEdit, $userId);
+                } elseif ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
+                    $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
+                } elseif ($sale->status === SaleStatus::Completed->value) {
+                    $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
+                    $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
+                }
 
             return $sale->refresh()->load(['items.product.category', 'customer']);
         });
@@ -211,7 +266,7 @@ class SaleService
 
     private function resolveFirstInstallmentDate(string $paymentMethod, array $data, ?Customer $customer): string
     {
-        if (in_array($paymentMethod, ['card_credit', 'crediario'])) {
+        if ($paymentMethod === 'card_credit') {
             return $data['first_installment_date'] ?? $data['date'];
         }
 

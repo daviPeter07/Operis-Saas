@@ -2,6 +2,25 @@
 
 ## Commits de Hoje (Resumo das Implementações)
 
+### Correções realizadas (18/05/2026)
+- **Back‑end (`SaleService.php`)**
+  - Importado `FinancialStatus`.
+  - Após gerar e (possivelmente) quitar os recebíveis, verificado se todas as parcelas estão quitadas usando `whereNotIn('status', [FinancialStatus::Received, FinancialStatus::Cancelled])`.
+  - Quando todas as parcelas estão quitadas, a venda tem seu status atualizado para `completed` e o movimento de estoque é aplicado.
+  - Lógica de `update` reorganizada para lidar corretamente com mudança de status, reversão de estoque e diffs.
+- **Front‑end (`resources/js/features/dashboard/sales/index.tsx`)**
+  - Criado `receivableStatusMap` que mapeia `sale_id‑installment_number` → status do receivable.
+  - No payload de criação, calculado `isAllPaid` e enviado `status: 'completed'` quando todas as parcelas foram marcadas como pagas.
+  - Ao montar a tabela de vendas, o status da linha agora é sobrescrito com o status do receivable obtido do mapa, permitindo que parcelas individuais apareçam como `received` ou `pending`.
+- **Dialog de confirmação (`sale-confirmation-dialog.tsx`)**
+  - Mantida a coleta de `paidInstallments` via check‑boxes; o array é enviado ao backend.
+- **Validação (`StoreSaleRequest.php`)**
+  - Campo `paid_installments` já aceita um array de inteiros; nada a mudar.
+- **Criação de marcas (`StoreBrandRequest.php` / `BrandService.php`)**
+  - `status` passou a ser opcional (`sometimes`) e, se ausente, a marca é criada com `status: 'active'`.
+
+Essas mudanças garantem que, ao marcar parcelas como pagas na UI, o status da parcela na tabela de Vendas refletirá corretamente `Received` (ou `Pending` quando ainda não quitada).
+
 Hoje foi um dia de grandes avanços, principalmente focados nas regras de negócio, integrações de formulários e painéis de checkout. Aqui está o resumo das funcionalidades implementadas nos commits:
 
 1. **Gestão de Compras (Painel de Checkout):**

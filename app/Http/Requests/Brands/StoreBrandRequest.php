@@ -27,7 +27,7 @@ class StoreBrandRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('brands', 'name')->where('company_id', $companyId)],
-            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'status' => ['sometimes', Rule::in(['active', 'inactive'])],
         ];
     }
 }

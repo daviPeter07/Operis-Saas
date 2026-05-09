@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react';
+import { Printer, DollarSign } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
@@ -72,6 +72,14 @@ export function SalesModule() {
 
     const { data: sales = [], isPending: isSalesPending } = useSales();
     const { data: receivables = [] } = useAccountReceivables();
+    // Map para buscar o status da parcela (receivable) por venda+número da parcela
+    const receivableStatusMap = new Map<string, string>();
+    receivables.forEach(r => {
+        if (r.sale_id != null && r.installment_number != null) {
+            const key = `${r.sale_id}-${r.installment_number}`;
+            receivableStatusMap.set(key, r.status);
+        }
+    });
     const { data: brands = [], isPending: isBrandsPending } = useBrands();
     const { data: categories = [], isPending: isCategoriesPending } =
         useCategories();
@@ -222,7 +230,7 @@ export function SalesModule() {
                     categoryNames: categoryNames.join(', ') || '-',
                     total: installmentValue,
                     profit: calculateSaleProfit(sale) / installments,
-                    status: sale.status,
+                     status: receivableStatusMap.get(`${sale.id}-${i + 1}`) ?? sale.status,
                     payment_method: sale.payment_method,
                     date: installmentDateStr,
                     installments,
@@ -266,7 +274,7 @@ export function SalesModule() {
         {
             key: 'date',
             header: 'Data',
-            render: (value: unknown) => formatDateTimeBR(String(value)),
+            render: (value: unknown) => formatDateBR(String(value)),
         },
         {
             key: 'documents',
@@ -360,6 +368,7 @@ export function SalesModule() {
         const isCardCredit = sale.cardType === 'credit';
         const useInstallments = isCrediario || isCardCredit;
 
+        const isAllPaid = isCrediario && (sale.paidInstallments?.length ?? 0) === (sale.installments ?? 1);
         const payload: SaleMutationPayload = {
             customer_id: customerId,
             date: sale.createdAt || todayString(),
@@ -369,12 +378,16 @@ export function SalesModule() {
                 | 'card_debit'
                 | 'card_credit'
                 | 'crediario',
-            status: sale.status === 'completed' ? 'completed' : 'pending',
+            status: isAllPaid ? 'completed' : (sale.status === 'completed' ? 'completed' : 'pending'),
             installments: useInstallments ? sale.installments : undefined,
             first_installment_date: useInstallments
                 ? sale.firstInstallmentDate
                 : undefined,
             installment_value: useInstallments ? sale.installmentValue : undefined,
+            paid_installments:
+                sale.paymentMethod === 'crediario'
+                    ? (sale.paidInstallments ?? undefined)
+                    : undefined,
             items,
         };
 
@@ -441,7 +454,8 @@ export function SalesModule() {
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 onDelete={async (row) => {
-                    await deleteSale.mutateAsync(Number(row.id));
+                    const saleId = Number(String(row.id).split('-')[0]);
+                    await deleteSale.mutateAsync(saleId);
                 }}
                 onEdit={async (row) => {
                     try {
