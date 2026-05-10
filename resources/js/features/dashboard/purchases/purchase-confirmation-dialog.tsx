@@ -1,7 +1,4 @@
 import * as React from 'react';
-import { formatCurrencyBR, formatDateBR } from '@/lib/format';
-import type { UiPurchase } from '@/types/dashboard-entities';
-import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -13,18 +10,40 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
+import type { UiPurchase } from '@/types/dashboard-entities';
+import type { PurchaseLineItem } from '@/types/dashboard-forms';
 
 function formatPaymentMethod(method: string | undefined): string {
-    if (!method) return '-';
+    if (!method) {
+return '-';
+}
 
     const methodLower = method.toLowerCase();
 
-    if (methodLower === 'money') return 'Dinheiro';
-    if (methodLower === 'pix') return 'PIX';
-    if (methodLower === 'debit') return 'Cartão Débito';
-    if (methodLower === 'credit') return 'Cartão Crédito';
-    if (methodLower === 'card') return 'Cartão';
-    if (methodLower === 'boleto') return 'Boleto';
+    if (methodLower === 'money') {
+return 'Dinheiro';
+}
+
+    if (methodLower === 'pix') {
+return 'PIX';
+}
+
+    if (methodLower === 'debit') {
+return 'Cartão Débito';
+}
+
+    if (methodLower === 'credit') {
+return 'Cartão Crédito';
+}
+
+    if (methodLower === 'card') {
+return 'Cartão';
+}
+
+    if (methodLower === 'boleto') {
+return 'Boleto';
+}
 
     return method;
 }
@@ -97,6 +116,7 @@ export function PurchaseConfirmationDialog({
                         ) : (
                             items.map((item, index) => {
                                 const subtotal = item.quantity * item.unitCost;
+
                                 return (
                                     <div
                                         key={`${item.productId}-${index}`}

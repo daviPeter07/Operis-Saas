@@ -1,34 +1,34 @@
 import * as React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import type { UiPurchase } from '@/types/dashboard-entities';
-import type { SalesLineItem } from '@/types/sales-dialog';
 import { CatalogPanel } from '@/components/sales-dialog/catalog-panel';
-import { ProductDialog } from '@/features/dashboard/inventory/product-dialog';
-import { SupplierCreateDialog } from '@/features/dashboard/suppliers/supplier-create-dialog';
-import { useCreateBrand } from '@/hooks/use-brands';
-import { useCreateCategory } from '@/hooks/use-categories';
-import type {
-    PurchaseCreateDialogProps,
-    PurchaseLineItem,
-} from '@/types/dashboard-forms';
-import { computePurchaseTotals } from '@/utils/dashboard-financial';
-import { PurchaseConfirmationDialog } from './purchase-confirmation-dialog';
-import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
-
-import {
-    applyFieldMask,
-    onlyDigits,
-    parseMaskedFieldValue,
-} from '@/utils/form-fields';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
     DialogHeader,
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ProductDialog } from '@/features/dashboard/inventory/product-dialog';
+import { SupplierCreateDialog } from '@/features/dashboard/suppliers/supplier-create-dialog';
+import { useCreateBrand } from '@/hooks/use-brands';
+import { useCreateCategory } from '@/hooks/use-categories';
+import type { UiPurchase } from '@/types/dashboard-entities';
 import type { UiProduct } from '@/types/dashboard-entities';
+import type {
+    PurchaseCreateDialogProps,
+    PurchaseLineItem,
+} from '@/types/dashboard-forms';
+import type { SalesLineItem } from '@/types/sales-dialog';
+import { computePurchaseTotals } from '@/utils/dashboard-financial';
+import {
+    applyFieldMask,
+    onlyDigits,
+    parseMaskedFieldValue,
+} from '@/utils/form-fields';
+import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
+import { PurchaseConfirmationDialog } from './purchase-confirmation-dialog';
+
 
 interface AddPurchaseProductDialogProps {
     open: boolean;
@@ -269,6 +269,7 @@ export function PurchaseCreateDialog({
 
     const handleAddFromCatalog = (productId: string) => {
         const product = products.find((entry) => entry.id === productId);
+
         if (!product) {
             return;
         }
@@ -283,6 +284,7 @@ export function PurchaseCreateDialog({
 
     const confirmAddFromCatalog = () => {
         const productId = catalogProductId;
+
         if (!productId) {
             return;
         }
@@ -351,6 +353,7 @@ export function PurchaseCreateDialog({
 
     const increaseLineItemQuantity = (id: string) => {
         const lineIndex = findLineIndexByCheckoutId(id);
+
         if (lineIndex === -1) {
             return;
         }
@@ -361,13 +364,16 @@ export function PurchaseCreateDialog({
 
     const decreaseLineItemQuantity = (id: string) => {
         const lineIndex = findLineIndexByCheckoutId(id);
+
         if (lineIndex === -1) {
             return;
         }
 
         const current = Number(items[lineIndex]?.quantity || 0);
+
         if (current <= 1) {
             removeLine(lineIndex);
+
             return;
         }
 
@@ -376,9 +382,11 @@ export function PurchaseCreateDialog({
 
     const removeLineItem = (id: string) => {
         const lineIndex = findLineIndexByCheckoutId(id);
+
         if (lineIndex === -1) {
             return;
         }
+
         removeLine(lineIndex);
     };
 
@@ -387,6 +395,7 @@ export function PurchaseCreateDialog({
             const product = products.find(
                 (entry) => entry.id === item.productId,
             );
+
             return {
                 productId: item.productId,
                 quantity: Number(item.quantity || 0),

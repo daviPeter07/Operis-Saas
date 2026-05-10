@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/common/status-badge';
 import {
     useAccountPayables,
     useCreateManualAccountPayable,
+    useDeleteAccountPayable,
     useSettleAccountPayable,
 } from '@/hooks/use-account-payables';
 import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
@@ -34,6 +35,7 @@ export function AccountsPayableModule() {
     const { data: suppliers = [] } = useSuppliers();
     const createSupplier = useCreateSupplier();
     const createManualPayable = useCreateManualAccountPayable();
+    const deleteAccountPayable = useDeleteAccountPayable();
     const settleAccountPayable = useSettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -194,6 +196,7 @@ export function AccountsPayableModule() {
                 const fallback = row.purchase_id
                     ? `Compra #${row.purchase_id}`
                     : '-';
+
                 return String(value || fallback);
             },
         },
@@ -204,11 +207,14 @@ export function AccountsPayableModule() {
                 if (val === null || val === undefined) {
                     return '-';
                 }
+
                 const current = Number(val);
                 const total = row.total_installments;
+
                 if (total && total >= 1) {
                     return `${current}/${total}`;
                 }
+
                 return String(val);
             },
         },
@@ -265,6 +271,10 @@ export function AccountsPayableModule() {
                 }
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
+                onDelete={async (row) => {
+                    await deleteAccountPayable.mutateAsync(Number(row.id));
+                    toast.success('Conta a pagar excluida com sucesso.');
+                }}
                 createDialog={({ open, onOpenChange }) => (
                     <AccountsPayableCreateDialog
                         open={open}

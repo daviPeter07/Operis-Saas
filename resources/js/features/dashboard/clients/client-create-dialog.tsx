@@ -191,8 +191,7 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                             <Input
                                 id="client-name"
                                 value={form.name}
-                                onChange={(event) =>
-                                    {
+                                onChange={(event) => {
                                         setField('name', event.target.value);
                                         clearErrors('name');
                                     }

@@ -44,7 +44,7 @@ class AccountPayablePolicy
      */
     public function delete(User $user, AccountPayable $accountPayable): bool
     {
-        return false;
+        return true;
     }
 
     /**

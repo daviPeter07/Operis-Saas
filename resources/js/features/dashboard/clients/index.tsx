@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { PersonTypeBadge } from '@/components/common/person-type-badge';
+import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import {
     useCreateCustomer,
     useCustomers,
     useDeleteCustomer,
     customersQueryKey,
 } from '@/hooks/use-customers';
-import { useAccountReceivables } from '@/hooks/use-account-receivables';
+import { formatCurrencyBR } from '@/lib/format';
 import { inferClientPersonType } from '@/utils/clients';
 import { formatDocumentInput, formatPhoneInput } from '@/utils/form-fields';
-import { formatCurrencyBR } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { ClientCreateDialog } from './client-create-dialog';
@@ -67,6 +67,7 @@ export function ClientsModule() {
             0,
             (customer.credit_limit || 0) - usedCredit,
         );
+
         return {
             id: String(customer.id),
             name: customer.name,

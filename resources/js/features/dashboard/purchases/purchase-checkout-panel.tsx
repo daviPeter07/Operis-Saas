@@ -143,6 +143,7 @@ export function PurchaseCheckoutPanel({
                                     ) {
                                         selectSupplierById('');
                                     }
+
                                     setSupplierSearch(value);
                                 }}
                                 onChange={(value) => selectSupplierById(value)}
@@ -243,7 +244,9 @@ export function PurchaseCheckoutPanel({
                                     type="single"
                                     value={boletoTermDays}
                                     onValueChange={(value) => {
-                                        if (value) setBoletoTermDays(value);
+                                        if (value) {
+setBoletoTermDays(value);
+}
                                     }}
                                     className="grid grid-cols-2 gap-2 sm:grid-cols-4"
                                 >
@@ -287,6 +290,7 @@ export function PurchaseCheckoutPanel({
                                         if (date) {
                                             setPurchaseDate(format(date, 'yyyy-MM-dd'));
                                         }
+
                                         setCalendarOpen(false);
                                     }}
                                 />

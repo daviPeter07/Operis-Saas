@@ -13,8 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import type { UiCustomer } from '@/types/dashboard-entities';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 
 type ManualAccountReceivableDialogProps = {
     open: boolean;
@@ -181,8 +181,7 @@ export function ManualAccountReceivableDialog({
                             <Input
                                 id="manual-receivable-item"
                                 value={item}
-                                onChange={(event) =>
-                                    {
+                                onChange={(event) => {
                                         setItem(event.currentTarget.value);
                                         clearErrors('item');
                                     }
@@ -205,8 +204,7 @@ export function ManualAccountReceivableDialog({
                                 id="manual-receivable-amount"
                                 type="text"
                                 value={amount}
-                                onChange={(event) =>
-                                    {
+                                onChange={(event) => {
                                         setAmount(formatCurrencyInput(event.currentTarget.value));
                                         clearErrors('amount');
                                     }

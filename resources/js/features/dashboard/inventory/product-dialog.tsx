@@ -306,8 +306,7 @@ export function ProductDialog({
                                 id="product-name"
                                 placeholder="Ex.: Monitor gamer 24 polegadas"
                                 value={formData.name}
-                                onChange={(event) =>
-                                    {
+                                onChange={(event) => {
                                         setField('name', event.currentTarget.value);
                                         clearErrors('name');
                                     }
@@ -347,8 +346,7 @@ export function ProductDialog({
                             <div>
                                 <SearchableSelect
                                     value={formData.category_id}
-                                    onChange={(value) =>
-                                        {
+                                    onChange={(value) => {
                                             setField('category_id', value);
                                             clearErrors('category_id');
                                         }
@@ -372,8 +370,7 @@ export function ProductDialog({
                                     id="product-sku"
                                     placeholder="Ex.: MON-24-0001"
                                     value={formData.sku}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             setField('sku', event.currentTarget.value);
                                             clearErrors('sku');
                                         }
@@ -492,8 +489,7 @@ export function ProductDialog({
                                 inputMode="numeric"
                                 placeholder="R$ 0,00"
                                 value={formData.cost}
-                                onChange={(event) =>
-                                    {
+                                onChange={(event) => {
                                         setField(
                                             'cost',
                                             applyFieldMask(
@@ -522,8 +518,7 @@ export function ProductDialog({
                                 inputMode="numeric"
                                 placeholder="R$ 0,00"
                                 value={formData.sale_price}
-                                onChange={(event) =>
-                                    {
+                                onChange={(event) => {
                                         setField(
                                             'sale_price',
                                             applyFieldMask(
@@ -554,8 +549,7 @@ export function ProductDialog({
                                     step="1"
                                     placeholder="0"
                                     value={formData.stock}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             setField(
                                                 'stock',
                                                 String(
@@ -610,8 +604,7 @@ export function ProductDialog({
                                     step="1"
                                     placeholder="0"
                                     value={formData.min_stock}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             setField(
                                                 'min_stock',
                                                 String(

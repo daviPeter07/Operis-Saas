@@ -97,8 +97,7 @@ export function SupplierCreateDialog({
                             <Input
                                 id="supplier-name"
                                 value={form.name}
-                                onChange={(event) =>
-                                    {
+                                onChange={(event) => {
                                         setField('name', event.target.value);
                                         clearErrors('name');
                                     }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -7,7 +8,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 
 interface CrediarioParcel {
@@ -45,11 +45,13 @@ export function CrediarioConfirmationDialog({
 
     const handleToggle = (installmentNumber: number) => {
         const next = new Set(selectedParcels);
+
         if (next.has(installmentNumber)) {
             next.delete(installmentNumber);
         } else {
             next.add(installmentNumber);
         }
+
         setSelectedParcels(next);
     };
 

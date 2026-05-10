@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { productsQueryKey } from '@/hooks/use-products';
 import { customersQueryKey } from '@/hooks/use-customers';
+import { productsQueryKey } from '@/hooks/use-products';
 import type { Sale } from '@/schemas/sale';
 import { saleService } from '@/services/sales';
 

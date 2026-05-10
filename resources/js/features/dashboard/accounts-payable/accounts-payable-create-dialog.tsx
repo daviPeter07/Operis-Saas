@@ -1,6 +1,6 @@
+import { UserPlus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Truck } from 'lucide-react';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -21,13 +21,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import type { AccountsPayableCreateDialogProps } from '@/types/dashboard-forms';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { todayString } from '@/utils/sales-dialog';
 import { SupplierCreateDialog } from '../suppliers/supplier-create-dialog';
 
@@ -50,8 +51,9 @@ export function AccountsPayableCreateDialog({
     const [dueDate, setDueDate] = useState(today);
     const [status, setStatus] = useState<'pending' | 'paid'>('pending');
     const [paymentMethod, setPaymentMethod] = useState<
-        'cash' | 'pix' | 'card' | 'installment' | 'boleto'
+        'cash' | 'pix' | 'card' | 'boleto'
     >('pix');
+    const [boletoTermDays, setBoletoTermDays] = useState('30');
     const {
         setError,
         clearErrors,
@@ -79,6 +81,7 @@ export function AccountsPayableCreateDialog({
         setDueDate(today);
         setStatus('pending');
         setPaymentMethod('pix');
+        setBoletoTermDays('30');
     };
 
     return (
@@ -153,6 +156,9 @@ export function AccountsPayableCreateDialog({
                                 due_date: dueDate,
                                 payment_method: paymentMethod,
                                 status,
+                                ...(paymentMethod === 'boleto' && {
+                                    boleto_term_days: Number(boletoTermDays),
+                                }),
                             });
 
                             resetForm();
@@ -175,7 +181,7 @@ export function AccountsPayableCreateDialog({
                                                 onClick={() => setSupplierCreateOpen(true)}
                                                 onFocus={(e) => e.preventDefault()}
                                             >
-                                                <Truck className="h-4 w-4" />
+                                                <UserPlus className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>Criar fornecedor</TooltipContent>
@@ -283,7 +289,6 @@ export function AccountsPayableCreateDialog({
                                             value === 'cash' ||
                                             value === 'pix' ||
                                             value === 'card' ||
-                                            value === 'installment' ||
                                             value === 'boleto'
                                         ) {
                                             setPaymentMethod(value);
@@ -297,9 +302,6 @@ export function AccountsPayableCreateDialog({
                                         <SelectItem value="cash">Dinheiro</SelectItem>
                                         <SelectItem value="pix">PIX</SelectItem>
                                         <SelectItem value="card">Cartao</SelectItem>
-                                        <SelectItem value="installment">
-                                            Parcelado
-                                        </SelectItem>
                                         <SelectItem value="boleto">Boleto</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -324,6 +326,31 @@ export function AccountsPayableCreateDialog({
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {paymentMethod === 'boleto' ? (
+                                <div className="col-span-1 sm:col-span-2">
+                                    <Label>Vencimento do Boleto</Label>
+                                    <ToggleGroup
+                                        type="single"
+                                        value={boletoTermDays}
+                                        onValueChange={(value) => {
+                                            if (value) {
+                                                setBoletoTermDays(value);
+                                                const days = Number(value);
+                                                const newDueDate = new Date();
+                                                newDueDate.setDate(newDueDate.getDate() + days);
+                                                setDueDate(newDueDate.toISOString().slice(0, 10));
+                                            }
+                                        }}
+                                        className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                                    >
+                                        <ToggleGroupItem value="30" variant="outline" className="rounded-md border">30 dias</ToggleGroupItem>
+                                        <ToggleGroupItem value="60" variant="outline" className="rounded-md border">60 dias</ToggleGroupItem>
+                                        <ToggleGroupItem value="90" variant="outline" className="rounded-md border">90 dias</ToggleGroupItem>
+                                        <ToggleGroupItem value="120" variant="outline" className="rounded-md border">120 dias</ToggleGroupItem>
+                                    </ToggleGroup>
+                                </div>
+                            ) : null}
 
                             <div className="col-span-1 sm:col-span-2">
                                 <Label htmlFor="payable-description">Descricao</Label>

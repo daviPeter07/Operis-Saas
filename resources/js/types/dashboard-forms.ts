@@ -101,8 +101,9 @@ export type AccountsPayableCreateDialogProps = {
         amount: number;
         entry_date: string;
         due_date: string;
-        payment_method: 'cash' | 'pix' | 'card' | 'installment' | 'boleto';
+        payment_method: 'cash' | 'pix' | 'card' | 'boleto';
         status: 'pending' | 'paid';
+        boleto_term_days?: number;
     }) => void;
     suppliers: UiSupplier[];
     onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;

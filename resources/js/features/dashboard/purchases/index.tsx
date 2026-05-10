@@ -39,6 +39,8 @@ type PurchaseRow = {
     status: string;
     payment_method: string;
     date: string;
+    installments: number | null;
+    total_installments: number | null;
 };
 
 function hasSamePurchaseMetricsRows(
@@ -179,6 +181,12 @@ export function PurchasesModule() {
                 status: purchase.status,
                 payment_method: purchase.payment_method,
                 date: purchase.date,
+                installments: purchase.payment_method === 'boleto' 
+                    ? Math.max(1, Math.floor((purchase.boleto_term_days ?? 30) / 30)) 
+                    : null,
+                total_installments: purchase.payment_method === 'boleto' 
+                    ? Math.max(1, Math.floor((purchase.boleto_term_days ?? 30) / 30)) 
+                    : null,
             };
         });
 
@@ -226,6 +234,23 @@ export function PurchasesModule() {
             key: 'payment_method',
             header: 'Método',
             render: (val: unknown) => translatePaymentMethod(String(val)),
+        },
+        {
+            key: 'installments',
+            header: 'Parcela',
+            render: (val: unknown, row: PurchaseRow) => {
+                if (val === null || val === undefined) {
+                    return '-';
+                }
+
+                const total = row.total_installments;
+
+                if (total && total >= 1) {
+                    return `1/${total}`;
+                }
+
+                return '-';
+            },
         },
         {
             key: 'date',

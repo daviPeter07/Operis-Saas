@@ -52,4 +52,16 @@ class AccountPayableController extends Controller
 
         return response()->json(['data' => AccountPayableResource::make($accountPayable)]);
     }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(AccountPayable $accountPayable): JsonResponse
+    {
+        $this->authorize('delete', $accountPayable);
+
+        $accountPayable->delete();
+
+        return response()->json(['data' => true]);
+    }
 }

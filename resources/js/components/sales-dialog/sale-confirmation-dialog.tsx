@@ -330,6 +330,7 @@ function SaleConfirmationDialogContent({
                                 {Array.from({ length: installments }, (_, i) => {
                                     const num = i + 1;
                                     const isPaid = paidInstallments.includes(num);
+
                                     return (
                                         <button
                                             key={num}

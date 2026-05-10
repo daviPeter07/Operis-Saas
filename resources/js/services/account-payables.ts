@@ -63,6 +63,10 @@ class AccountPayableService extends ApiService<AccountPayable> {
     async create(payload: CreateManualAccountPayablePayload): Promise<void> {
         await apiClient.post('/account-payables', payload);
     }
+
+    async delete(id: number): Promise<void> {
+        await apiClient.delete(`/account-payables/${id}`);
+    }
 }
 
 export const accountPayableService = new AccountPayableService();

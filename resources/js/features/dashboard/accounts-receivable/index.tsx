@@ -150,11 +150,14 @@ export function AccountsReceivableModule() {
                 if (val === null || val === undefined) {
                     return '-';
                 }
+
                 const current = Number(val);
                 const total = row.total_installments;
+
                 if (total && total >= 1) {
                     return `${current}/${total}`;
                 }
+
                 return String(val);
             },
         },

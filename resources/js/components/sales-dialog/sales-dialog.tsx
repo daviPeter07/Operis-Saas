@@ -6,9 +6,9 @@ import { useSalesDialog } from '@/hooks/use-sales-dialog';
 import type { UiProduct as Product } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';
-import { filterProductsByQuery } from '@/utils/sales-dialog';
-import { applyFieldMask, parseCurrencyInput } from '@/utils/form-fields';
 import { inferPersonType } from '@/utils/clients';
+import { applyFieldMask, parseCurrencyInput } from '@/utils/form-fields';
+import { filterProductsByQuery } from '@/utils/sales-dialog';
 import { CatalogPanel } from './catalog-panel';
 import { CheckoutPanel } from './checkout-panel';
 import { AddProductDialog, DiscountDialog } from './dialogs';
@@ -167,6 +167,7 @@ export function SalesDialog({
     const financedTotal = Math.max(0, finalTotal - crediarioEntryValue);
     const maxCrediarioInstallments = React.useMemo(() => {
         const termDays = Number(selectedClient?.creditTermDays ?? 30);
+
         return Math.max(1, Math.floor(termDays / 30));
     }, [selectedClient]);
 
@@ -176,6 +177,7 @@ export function SalesDialog({
         }
 
         const currentInstallments = Number(installments) || 1;
+
         if (currentInstallments > maxCrediarioInstallments) {
             setInstallments(String(maxCrediarioInstallments));
         }

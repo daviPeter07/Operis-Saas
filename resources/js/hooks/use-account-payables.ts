@@ -1,5 +1,6 @@
+import type {
+    QueryClient} from '@tanstack/react-query';
 import {
-    QueryClient,
     useMutation,
     useQuery,
     useQueryClient,
@@ -69,6 +70,18 @@ export function useCreateManualAccountPayable() {
     return useMutation({
         mutationFn: async (payload: CreateManualPayload) =>
             accountPayableService.create(payload),
+        onSuccess: async () => {
+            await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
+export function useDeleteAccountPayable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) =>
+            accountPayableService.delete(id),
         onSuccess: async () => {
             await invalidateRelatedQueries(queryClient);
         },

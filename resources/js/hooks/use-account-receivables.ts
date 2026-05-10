@@ -1,5 +1,6 @@
+import type {
+    QueryClient} from '@tanstack/react-query';
 import {
-    QueryClient,
     useMutation,
     useQuery,
     useQueryClient,

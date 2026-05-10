@@ -80,12 +80,48 @@ class PayableService
     public function createManual(int $companyId, array $data): void
     {
         $isPaid = ($data['status'] ?? 'pending') === 'paid';
+        $paymentMethod = $data['payment_method'] ?? 'pix';
+        $boletoTermDays = $data['boleto_term_days'] ?? null;
+
+        if ($paymentMethod === 'boleto' && $boletoTermDays) {
+            $termDays = max(30, (int) $boletoTermDays);
+            $installments = max(1, (int) floor($termDays / 30));
+            $entryDate = $data['entry_date'];
+            $totalCents = (int) round((float) $data['amount'] * 100);
+            $baseInstallmentCents = intdiv($totalCents, $installments);
+            $remainderCents = $totalCents % $installments;
+
+            $baseDateObj = \Illuminate\Support\Carbon::parse($entryDate);
+
+            for ($index = 1; $index <= $installments; $index++) {
+                $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
+                $dueDate = $baseDateObj->copy()->addDays(30 * $index)->toDateString();
+
+                $this->payables->create([
+                    'company_id' => $companyId,
+                    'supplier_id' => $data['supplier_id'],
+                    'purchase_id' => null,
+                    'installment_number' => $index,
+                    'entry_date' => $entryDate,
+                    'item' => $data['item'],
+                    'description' => $data['description'] ?? null,
+                    'due_date' => $dueDate,
+                    'amount' => $currentCents / 100,
+                    'status' => $isPaid ? 'paid' : 'pending',
+                    'paid_at' => $isPaid ? $entryDate : null,
+                    'paid_method' => $paymentMethod,
+                    'payment_notes' => $data['description'] ?? null,
+                ]);
+            }
+
+            return;
+        }
 
         $this->payables->create([
             'company_id' => $companyId,
             'supplier_id' => $data['supplier_id'],
             'purchase_id' => null,
-            'installment_number' => null,
+            'installment_number' => 1,
             'entry_date' => $data['entry_date'],
             'item' => $data['item'],
             'description' => $data['description'] ?? null,
@@ -93,7 +129,7 @@ class PayableService
             'amount' => $data['amount'],
             'status' => $isPaid ? 'paid' : 'pending',
             'paid_at' => $isPaid ? ($data['entry_date']) : null,
-            'paid_method' => $data['payment_method'] ?? null,
+            'paid_method' => $paymentMethod,
             'payment_notes' => $data['description'] ?? null,
         ]);
     }
