@@ -31,10 +31,12 @@ class PayableService
         $isPaid = $purchase->status === PurchaseStatus::Completed->value || $purchase->payment_method === 'cash';
 
         if ($purchase->payment_method === 'boleto') {
-            $installments = 2;
-        $baseDate = $purchase->date?->copy() ?? now();
-        // Parse the date as a local date in America/Sao_Paulo without shifting the day
-        $baseDate = \Carbon\Carbon::parse($baseDate->toDateString(), 'America/Sao_Paulo');
+            // Determine number of installments based on boleto term days (30 days per installment)
+            $termDays = $purchase->boleto_term_days ?? 60; // default 60 days → 2 installments
+            $installments = (int) ceil($termDays / 30);
+            $baseDate = $purchase->date?->copy() ?? now();
+            // Parse the date as a local date in America/Sao_Paulo without shifting the day
+            $baseDate = \Carbon\Carbon::parse($baseDate->toDateString(), 'America/Sao_Paulo');
             $totalCents = (int) round((float) $purchase->total * 100);
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;

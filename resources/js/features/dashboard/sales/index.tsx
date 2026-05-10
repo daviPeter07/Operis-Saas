@@ -38,6 +38,7 @@ import { SaleDocumentPreviewDialog } from './sale-document-preview-dialog';
 import { SalesHeader } from './sales-header';
 
 type SaleRow = {
+    brandNames?: string;
     id: string;
     sale_id: number;
     customer_id: number | null;
@@ -136,9 +137,24 @@ export function SalesModule() {
     const [editSale, setEditSale] = useState<DialogSalesRecord | null>(null);
     const [previewSale, setPreviewSale] = useState<Sale | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const [previewMode, setPreviewMode] = useState<'digital' | 'thermal'>(
-        'digital',
-    );
+    const [previewMode, setPreviewMode] = useState<'digital' | 'thermal'>('digital');
+
+    // Abre o preview térmico ao clicar no ícone de visualização da linha
+    const handlePreview = async (row: SaleRow) => {
+        const saleId = Number(String(row.id).split('-')[0]);
+        const previewStatus: Sale['status'] =
+            row.status === 'completed' || row.status === 'cancelled'
+                ? row.status
+                : 'pending';
+        try {
+            const sale = await saleService.get(saleId);
+            setPreviewMode('thermal');
+            setPreviewSale({ ...sale, status: previewStatus });
+            setIsPreviewOpen(true);
+        } catch {
+            toast.error('Erro ao abrir preview termico.');
+        }
+    };
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
     const [filteredRows, setFilteredRows] = useState<SaleRow[]>([]);
 
@@ -203,6 +219,8 @@ export function SalesModule() {
             })),
         [brands],
     );
+
+    const brandMap = useMemo(() => new Map(brands.map((b) => [String(b.id), b.name])), [brands]);
     const categoryOptions = useMemo(
         () =>
             categories.map((category) => ({
@@ -240,6 +258,17 @@ export function SalesModule() {
                 new Set(
                     (sale.items ?? [])
                         .map((item) => item.category_name?.trim())
+                        .filter((value): value is string => Boolean(value)),
+                ),
+            );
+
+            const brandNames = Array.from(
+                new Set(
+                    (sale.items ?? [])
+                        .map((item) => {
+                            const prod = productById.get(String(item.product_id));
+                            return prod?.brand ? brandMap.get(prod.brand) ?? '' : '';
+                        })
                         .filter((value): value is string => Boolean(value)),
                 ),
             );
@@ -300,6 +329,7 @@ export function SalesModule() {
                         clientName,
                         productNames: productNames.join(', ') || '-',
                         categoryNames: categoryNames.join(', ') || '-',
+                        brandNames: brandNames.join(', ') || '-',
                         total: amount,
                         profit: saleProfit * ratio,
                         status,
@@ -327,21 +357,22 @@ export function SalesModule() {
                 const installmentDate = new Date(baseDate);
                 installmentDate.setMonth(installmentDate.getMonth() + i);
 
-                rows.push({
-                    id: `${sale.id}-${i + 1}`,
-                    sale_id: sale.id,
-                    customer_id: sale.customer_id,
-                    clientName,
-                    productNames: productNames.join(', ') || '-',
-                    categoryNames: categoryNames.join(', ') || '-',
-                    total: installmentValue,
-                    profit: saleProfit / installments,
-                    status: sale.status,
-                    payment_method: sale.payment_method,
-                    date: installmentDate.toISOString().slice(0, 10),
-                    installments,
-                    installment_number: i + 1,
-                });
+rows.push({
+                        id: `${sale.id}-${i + 1}`,
+                        sale_id: sale.id,
+                        customer_id: sale.customer_id,
+                        clientName,
+                        productNames: productNames.join(', ') || '-',
+                        categoryNames: categoryNames.join(', ') || '-',
+                        brandNames: brandNames.join(', ') || '-',
+                        total: installmentValue,
+                        profit: saleProfit / installments,
+                        status: sale.status,
+                        payment_method: sale.payment_method,
+                        date: installmentDate.toISOString().slice(0, 10),
+                        installments,
+                        installment_number: i + 1,
+                    });
             }
         });
 
@@ -355,6 +386,7 @@ export function SalesModule() {
         { key: 'clientName', header: 'Cliente' },
         { key: 'productNames', header: 'Produto' },
         { key: 'categoryNames', header: 'Categoria' },
+        { key: 'brandNames', header: 'Marca' },
         {
             key: 'total',
             header: 'Total',
@@ -388,48 +420,7 @@ export function SalesModule() {
             header: 'Data',
             render: (value: unknown) => formatDateBR(String(value)),
         },
-        {
-            key: 'documents',
-            header: 'Comprovantes',
-            render: (_, row: SaleRow) => (
-                <div
-                    className="flex h-10 w-full items-center justify-center gap-2"
-                    onClick={(event) => event.stopPropagation()}
-                >
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            const saleId = Number(String(row.id).split('-')[0]);
-                            const previewStatus: Sale['status'] =
-                                row.status === 'completed' ||
-                                row.status === 'cancelled'
-                                    ? row.status
-                                    : 'pending';
 
-                            void saleService
-                                .get(saleId)
-                                .then((sale) => {
-                                    setPreviewMode('thermal');
-                                    setPreviewSale({
-                                        ...sale,
-                                        status: previewStatus,
-                                    });
-                                    setIsPreviewOpen(true);
-                                })
-                                .catch(() => {
-                                    toast.error(
-                                        'Erro ao abrir preview termico.',
-                                    );
-                                });
-                        }}
-                    >
-                        <Printer className="h-4 w-4" />
-                    </Button>
-                </div>
-            ),
-        },
     ];
 
     const metrics = useMemo(() => {
@@ -580,6 +571,7 @@ export function SalesModule() {
                 onFilteredDataChange={handleFilteredDataChange}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
+                onView={handlePreview}
                 onDelete={async (row) => {
                     const saleId = Number(String(row.id).split('-')[0]);
                     await deleteSale.mutateAsync(saleId);
@@ -592,10 +584,10 @@ export function SalesModule() {
                             full.payment_method === 'cash'
                                 ? 'money'
                                 : full.payment_method === 'crediario'
-                                  ? 'crediario'
-                                  : full.payment_method === 'pix'
-                                    ? 'pix'
-                                    : 'card';
+                                ? 'crediario'
+                                : full.payment_method === 'pix'
+                                ? 'pix'
+                                : 'card';
 
                         const mappedSale: DialogSalesRecord = {
                             id: String(full.id),
@@ -643,8 +635,8 @@ export function SalesModule() {
                                 full.status === 'completed'
                                     ? 'completed'
                                     : full.status === 'cancelled'
-                                      ? 'cancelled'
-                                      : 'pending',
+                                    ? 'cancelled'
+                                    : 'pending',
                         };
 
                         setEditSale(mappedSale);

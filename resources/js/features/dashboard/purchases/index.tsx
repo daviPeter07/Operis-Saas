@@ -27,6 +27,7 @@ import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { PurchaseCreateDialog } from './purchase-create-dialog';
 import { PurchaseHeader } from './purchase-header';
+import { StatusBadge } from '@/components/common/status-badge';
 
 type PurchaseRow = {
     id: string; // unique row identifier (may include payable id for boleto rows)
@@ -264,6 +265,11 @@ export function PurchasesModule() {
             key: 'total',
             header: 'Total',
             render: (val: unknown) => formatCurrencyBR(Number(val)),
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (val: unknown) => <StatusBadge status={String(val)} />, // mostra badge de status
         },
         {
             key: 'payment_method',

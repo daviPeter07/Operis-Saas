@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Purchase } from '@/schemas/purchase';
 import { purchaseService } from '@/services/purchases';
+import { productsQueryKey } from '@/hooks/use-products';
 
 export const purchasesQueryKey = ['purchases'] as const;
 export const payablesQueryKey = ['account-payables'] as const;

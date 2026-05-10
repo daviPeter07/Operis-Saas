@@ -47,10 +47,9 @@ class PurchaseService
 
             $this->payableService->regenerateFromPurchase($purchase);
 
-            if ($status === PurchaseStatus::Completed->value) {
-                $this->applyStock($purchase, [], $purchase->items->toArray(), $userId);
-                $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
-            }
+            // Sempre movimentar estoque ao criar a compra, independentemente do status
+            $this->applyStock($purchase, [], $purchase->items->toArray(), $userId);
+            $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
 
             return $purchase->refresh()->load(['items.product.category', 'items.product.brand']);
         });
@@ -95,6 +94,11 @@ class PurchaseService
                 $newItems = $purchase->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
                 $this->applyStockDiff($purchase, $previousItems, $newItems, $userId);
                 $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
+            } else {
+                // Ambas as versões estão pendentes (não completadas) – ainda assim precisamos ajustar o estoque
+                $newItems = $purchase->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
+                $this->applyStockDiff($purchase, $previousItems, $newItems, $userId);
+                $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
             }
 
             return $purchase->refresh()->load(['items.product.category', 'items.product.brand']);
@@ -131,18 +135,17 @@ class PurchaseService
     public function delete(Purchase $purchase, int $userId): void
     {
         DB::transaction(function () use ($purchase, $userId): void {
-            if ($purchase->status === PurchaseStatus::Completed->value) {
-                foreach ($purchase->items as $item) {
-                    $product = Product::query()->findOrFail($item->product_id);
-                    $this->stockMovementService->register(
-                        $product,
-                        -(float) $item->quantity,
-                        StockMovementType::PurchaseCancel,
-                        $purchase->id,
-                        $userId,
-                        'purchase'
-                    );
-                }
+            // Sempre reverter o estoque ao excluir a compra, independentemente do status
+            foreach ($purchase->items as $item) {
+                $product = Product::query()->findOrFail($item->product_id);
+                $this->stockMovementService->register(
+                    $product,
+                    -(float) $item->quantity,
+                    StockMovementType::PurchaseCancel,
+                    $purchase->id,
+                    $userId,
+                    'purchase'
+                );
             }
 
             $purchase->payables()->delete();

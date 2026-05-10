@@ -199,9 +199,8 @@ class SaleService
     public function delete(Sale $sale, int $userId): void
     {
         DB::transaction(function () use ($sale, $userId): void {
-            if ($sale->status === SaleStatus::Completed->value) {
-                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleCancel, $userId, true);
-            }
+            // Sempre reverter o estoque ao excluir a venda, independente do status
+            $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleCancel, $userId, true);
 
             $sale->receivables()->delete();
             $sale->items()->delete();
