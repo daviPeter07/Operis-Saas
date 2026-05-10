@@ -30,7 +30,8 @@ import { PurchaseCreateDialog } from './purchase-create-dialog';
 import { PurchaseHeader } from './purchase-header';
 
 type PurchaseRow = {
-    id: string;
+    id: string; // unique row identifier (may include payable id for boleto rows)
+    purchaseId: number; // actual purchase primary key used for actions like delete
     supplier_id: number;
     supplierName: string;
     productNames: string;
@@ -44,7 +45,7 @@ type PurchaseRow = {
     total_installments: number | null;
     // optional fields for individual installment rows
     payableId?: number;
-    installment_number?: number;
+    installment_number: number | null; // allow null (matches API schema)
     due_date?: string;
     amount?: number;
 };
@@ -178,11 +179,14 @@ export function PurchasesModule() {
 
             if (purchase.payment_method === 'boleto') {
                 // Find related payables for this purchase
-                const related = payables.filter((p) => p.purchase_id === purchase.id);
+                const related = payables.filter(
+                    (p) => p.purchase_id === purchase.id,
+                );
                 const totalInst = related.length || 2; // fallback if not loaded yet
                 related.forEach((pay) => {
                     rows.push({
                         id: `${purchase.id}-${pay.id}`,
+                        purchaseId: purchase.id,
                         supplier_id: purchase.supplier_id,
                         supplierName:
                             suppliersById.get(purchase.supplier_id) ||
@@ -205,6 +209,7 @@ export function PurchasesModule() {
             } else {
                 rows.push({
                     id: String(purchase.id),
+                    purchaseId: purchase.id,
                     supplier_id: purchase.supplier_id,
                     supplierName:
                         suppliersById.get(purchase.supplier_id) ||
@@ -218,6 +223,7 @@ export function PurchasesModule() {
                     date: purchase.date,
                     installments: null,
                     total_installments: null,
+                    installment_number: null,
                 });
             }
         });
@@ -440,64 +446,64 @@ export function PurchasesModule() {
 
             <GenericTable
                 data={rows}
-            columns={columns}
-            title="Compras"
-            loading={
-                isPurchasesPending ||
-                isSuppliersPending ||
-                isProductsPending ||
-                isCategoriesPending ||
-                isBrandsPending
-            }
-            sortableColumns={[
-                { key: 'productNames', type: 'text' },
-                { key: 'categoryNames', type: 'text' },
-                { key: 'brandNames', type: 'text' },
-                { key: 'date', type: 'date' },
-            ]}
-            dateFilterKey="date"
-            onFilteredDataChange={handleFilteredDataChange}
-            onDelete={async (row) => {
-                await deletePurchase.mutateAsync(Number(row.id));
-            }}
-            isCreateOpen={isCreateOpen}
-            onCreateOpenChange={setIsCreateOpen}
-            createDialog={({ open, onOpenChange }) => (
-                <PurchaseCreateDialog
-                    open={open}
-                    onOpenChange={onOpenChange}
-                    onSubmit={(purchase) => {
-                        void handleCreateFromDialog(purchase)
-                            .then(() => {
-                                onOpenChange(false);
-                            })
-                            .catch((error: unknown) => {
-                                const message =
-                                    error instanceof Error && error.message
-                                        ? error.message
-                                        : 'Erro ao criar a compra.';
+                columns={columns}
+                title="Compras"
+                loading={
+                    isPurchasesPending ||
+                    isSuppliersPending ||
+                    isProductsPending ||
+                    isCategoriesPending ||
+                    isBrandsPending
+                }
+                sortableColumns={[
+                    { key: 'productNames', type: 'text' },
+                    { key: 'categoryNames', type: 'text' },
+                    { key: 'brandNames', type: 'text' },
+                    { key: 'date', type: 'date' },
+                ]}
+                dateFilterKey="date"
+                onFilteredDataChange={handleFilteredDataChange}
+                onDelete={async (row) => {
+                    await deletePurchase.mutateAsync(Number(row.purchaseId));
+                }}
+                isCreateOpen={isCreateOpen}
+                onCreateOpenChange={setIsCreateOpen}
+                createDialog={({ open, onOpenChange }) => (
+                    <PurchaseCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        onSubmit={(purchase) => {
+                            void handleCreateFromDialog(purchase)
+                                .then(() => {
+                                    onOpenChange(false);
+                                })
+                                .catch((error: unknown) => {
+                                    const message =
+                                        error instanceof Error && error.message
+                                            ? error.message
+                                            : 'Erro ao criar a compra.';
 
-                                toast.error(message);
-                            });
-                    }}
-                    products={dialogProductOptions}
-                    suppliers={dialogSupplierOptions}
-                    categories={categories.map((category) => ({
-                        id: category.id,
-                        name: category.name,
-                    }))}
-                    brands={brands.map((brand) => ({
-                        id: brand.id,
-                        name: brand.name,
-                    }))}
-                    onCreateSupplier={handleCreateSupplier}
-                    onCreateProduct={handleCreateProduct}
-                    onApplyStock={(items) => {
-                        draftItemsRef.current = items;
-                    }}
-                />
-            )}
-        />
+                                    toast.error(message);
+                                });
+                        }}
+                        products={dialogProductOptions}
+                        suppliers={dialogSupplierOptions}
+                        categories={categories.map((category) => ({
+                            id: category.id,
+                            name: category.name,
+                        }))}
+                        brands={brands.map((brand) => ({
+                            id: brand.id,
+                            name: brand.name,
+                        }))}
+                        onCreateSupplier={handleCreateSupplier}
+                        onCreateProduct={handleCreateProduct}
+                        onApplyStock={(items) => {
+                            draftItemsRef.current = items;
+                        }}
+                    />
+                )}
+            />
         </div>
     );
 }
