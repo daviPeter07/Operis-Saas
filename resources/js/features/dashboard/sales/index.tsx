@@ -298,11 +298,21 @@ export function SalesModule() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
+                            const saleId = Number(String(row.id).split('-')[0]);
+                            const previewStatus: Sale['status'] =
+                                row.status === 'completed' ||
+                                row.status === 'cancelled'
+                                    ? row.status
+                                    : 'pending';
+
                             void saleService
-                                .get(Number(row.id))
+                                .get(saleId)
                                 .then((sale) => {
                                     setPreviewMode('thermal');
-                                    setPreviewSale(sale);
+                                    setPreviewSale({
+                                        ...sale,
+                                        status: previewStatus,
+                                    });
                                     setIsPreviewOpen(true);
                                 })
                                 .catch(() => {

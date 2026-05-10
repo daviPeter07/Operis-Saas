@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { SaleDocumentPreviewDialog } from '@/features/dashboard/sales/sale-document-preview-dialog';
-import { formatCurrencyBR } from '@/lib/format';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
 import type { SalesRecord } from '@/types/sales-dialog';
 import { todayString } from '@/utils/sales-dialog';
@@ -133,11 +133,11 @@ function SaleConfirmationDialogContent({
             date: saleDraft.createdAt || todayString(),
             subtotal: subtotalCalc,
             total,
-            status: saleDraft.status,
+            status,
             payment_method: paymentMethod,
             items,
         };
-    }, [saleDraft]);
+    }, [saleDraft, status]);
 
     const profit = saleDraft.lineItems.reduce(
         (sum, item) =>
@@ -161,6 +161,13 @@ function SaleConfirmationDialogContent({
                                 <Label>Cliente:</Label>
                                 <div className="font-semibold">
                                     {saleDraft.clientName || 'Sem cliente'}
+                                </div>
+                            </div>
+
+                            <div className="mt-2 flex items-center gap-2">
+                                <Label>Data:</Label>
+                                <div className="font-semibold">
+                                    {formatDateBR(saleDraft.createdAt || todayString())}
                                 </div>
                             </div>
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { formatCurrencyBR } from '@/lib/format';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { UiPurchase } from '@/types/dashboard-entities';
 import type { PurchaseLineItem } from '@/types/dashboard-forms';
 import { Button } from '@/components/ui/button';
@@ -83,7 +83,9 @@ export function PurchaseConfirmationDialog({
                         </p>
                         <p>
                             <strong>Data:</strong>{' '}
-                            {purchaseDraft.createdAt || '-'}
+                            {purchaseDraft.createdAt
+                                ? formatDateBR(purchaseDraft.createdAt)
+                                : '-'}
                         </p>
                     </div>
 
