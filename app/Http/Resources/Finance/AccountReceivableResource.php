@@ -44,6 +44,7 @@ class AccountReceivableResource extends ApiResource
             'customer_id' => $this->customer_id,
             'sale_id' => $this->sale_id,
             'installment_number' => $this->installment_number,
+            'total_installments' => $this->sale ? $this->sale->installments : null,
             'entry_date' => $this->entry_date?->toDateString(),
             'due_date' => $this->due_date?->toDateString(),
             'item' => $this->item ?? $this->resolveSaleItemSummary(),

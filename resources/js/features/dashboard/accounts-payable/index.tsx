@@ -18,6 +18,7 @@ type PayableRow = {
     supplier_name: string;
     purchase_id: number | null;
     installment_number: number | null;
+    total_installments: number | null;
     item: string | null;
     description: string | null;
     amount: number;
@@ -74,6 +75,7 @@ export function AccountsPayableModule() {
                 : '-',
             purchase_id: payable.purchase_id,
             installment_number: payable.installment_number,
+            total_installments: payable.total_installments ?? null,
             item: payable.item,
             description: payable.description,
             amount: payable.amount,
@@ -185,25 +187,30 @@ export function AccountsPayableModule() {
             key: 'supplier_name',
             header: 'Fornecedor',
         },
-        {
+{
             key: 'item',
             header: 'Descricao',
             render: (value: unknown, row: PayableRow) => {
                 const fallback = row.purchase_id
                     ? `Compra #${row.purchase_id}`
                     : '-';
-                const item = String(value || fallback);
-                const installment = row.installment_number
-                    ? ` (Parcela ${row.installment_number})`
-                    : '';
-                return `${item}${installment}`;
+                return String(value || fallback);
             },
         },
         {
-            key: 'purchase_id',
-            header: 'Origem',
-            render: (_, row: PayableRow) =>
-                row.purchase_id ? `Compra #${row.purchase_id}` : 'Manual',
+            key: 'installment_number',
+            header: 'Parcela',
+            render: (val: unknown, row: PayableRow) => {
+                if (val === null || val === undefined) {
+                    return '-';
+                }
+                const current = Number(val);
+                const total = row.total_installments;
+                if (total && total >= 1) {
+                    return `${current}/${total}`;
+                }
+                return String(val);
+            },
         },
         {
             key: 'amount',
@@ -247,7 +254,10 @@ export function AccountsPayableModule() {
                 columns={columns}
                 title="Contas a Pagar"
                 loading={isPayablesPending}
-                sortableColumns={[{ key: 'due_date', type: 'date' }]}
+                sortableColumns={[
+                    { key: 'installment_number', type: 'number' },
+                    { key: 'due_date', type: 'date' },
+                ]}
                 dateFilterKey="due_date"
                 clickableRow
                 onRowClick={(row) =>

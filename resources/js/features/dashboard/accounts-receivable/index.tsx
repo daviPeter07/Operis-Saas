@@ -18,6 +18,7 @@ type ReceivableRow = {
     customer_name: string;
     sale_id: number | null;
     installment_number: number | null;
+    total_installments: number | null;
     item: string | null;
     description: string | null;
     amount: number;
@@ -53,6 +54,7 @@ export function AccountsReceivableModule() {
                 : 'Sem cliente',
             sale_id: receivable.sale_id,
             installment_number: receivable.installment_number,
+            total_installments: receivable.total_installments ?? null,
             item: receivable.item,
             description: receivable.description,
             amount: receivable.amount,
@@ -139,12 +141,21 @@ export function AccountsReceivableModule() {
         {
             key: 'item',
             header: 'Descricao',
+            render: (val: unknown) => String(val || '-'),
+        },
+        {
+            key: 'installment_number',
+            header: 'Parcela',
             render: (val: unknown, row: ReceivableRow) => {
-                const item = String(val || '-');
-                const installment = row.installment_number
-                    ? ` (Parcela ${row.installment_number})`
-                    : '';
-                return `${item}${installment}`;
+                if (val === null || val === undefined) {
+                    return '-';
+                }
+                const current = Number(val);
+                const total = row.total_installments;
+                if (total && total >= 1) {
+                    return `${current}/${total}`;
+                }
+                return String(val);
             },
         },
         {
@@ -203,6 +214,7 @@ export function AccountsReceivableModule() {
                 sortableColumns={[
                     { key: 'customer_name', type: 'text' },
                     { key: 'item', type: 'text' },
+                    { key: 'installment_number', type: 'number' },
                     { key: 'due_date', type: 'date' },
                     { key: 'entry_date', type: 'date' },
                 ]}

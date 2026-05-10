@@ -3,6 +3,7 @@ export interface AccountPayable {
     supplier_id: number | null;
     purchase_id: number | null;
     installment_number: number | null;
+    total_installments: number | null;
     entry_date: string | null;
     item: string | null;
     description: string | null;

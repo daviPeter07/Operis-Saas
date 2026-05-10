@@ -3,6 +3,7 @@ export interface AccountReceivable {
     customer_id: number | null;
     sale_id: number | null;
     installment_number: number | null;
+    total_installments: number | null;
     entry_date: string | null;
     due_date: string | null;
     item: string | null;
