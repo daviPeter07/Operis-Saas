@@ -47,7 +47,6 @@ export function AccountsPayableCreateDialog({
     const [item, setItem] = useState('');
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
-    const [entryDate, setEntryDate] = useState(today);
     const [dueDate, setDueDate] = useState(today);
     const [status, setStatus] = useState<'pending' | 'paid'>('pending');
     const [paymentMethod, setPaymentMethod] = useState<
@@ -77,7 +76,6 @@ export function AccountsPayableCreateDialog({
         setItem('');
         setDescription('');
         setAmount('');
-        setEntryDate(today);
         setDueDate(today);
         setStatus('pending');
         setPaymentMethod('pix');
@@ -134,14 +132,6 @@ export function AccountsPayableCreateDialog({
                                 hasError = true;
                             }
 
-                            if (!entryDate) {
-                                setError('entry_date', {
-                                    type: 'required',
-                                    message: 'Data de lancamento e obrigatoria.',
-                                });
-                                hasError = true;
-                            }
-
                             if (!dueDate) {
                                 setError('due_date', {
                                     type: 'required',
@@ -159,7 +149,7 @@ export function AccountsPayableCreateDialog({
                                 item: item.trim(),
                                 description: description.trim() || undefined,
                                 amount: parseCurrencyInput(amount),
-                                entry_date: entryDate,
+                                entry_date: today,
                                 due_date: dueDate,
                                 payment_method: paymentMethod,
                                 status,
@@ -263,23 +253,6 @@ export function AccountsPayableCreateDialog({
                                 {errors.amount?.message ? (
                                     <p className="text-xs text-destructive">
                                         {String(errors.amount.message)}
-                                    </p>
-                                ) : null}
-                            </div>
-
-                            <div className="col-span-1">
-                                <Label>Data de lancamento <span className="text-red-600">*</span></Label>
-                                <DatePickerInput
-                                    value={entryDate}
-                                    onChange={(value) => {
-                                        setEntryDate(value);
-                                        clearErrors('entry_date');
-                                    }}
-                                    placeholder="Selecionar data"
-                                />
-                                {errors.entry_date?.message ? (
-                                    <p className="text-xs text-destructive">
-                                        {String(errors.entry_date.message)}
                                     </p>
                                 ) : null}
                             </div>

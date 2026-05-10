@@ -52,7 +52,6 @@ export function AccountsReceivableCreateDialog({
     const [item, setItem] = useState('');
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
-    const [entryDate, setEntryDate] = useState(today);
     const {
         setError,
         clearErrors,
@@ -77,7 +76,6 @@ export function AccountsReceivableCreateDialog({
         setItem('');
         setDescription('');
         setAmount('');
-        setEntryDate(today);
     };
 
     return (
@@ -131,14 +129,6 @@ export function AccountsReceivableCreateDialog({
                             hasError = true;
                         }
 
-                        if (!entryDate) {
-                            setError('entry_date', {
-                                type: 'required',
-                                message: 'Data e obrigatoria.',
-                            });
-                            hasError = true;
-                        }
-
                         if (hasError) {
                             return;
                         }
@@ -148,7 +138,7 @@ export function AccountsReceivableCreateDialog({
                             item: item.trim(),
                             description: description.trim() || undefined,
                             amount: parseCurrencyInput(amount),
-                            entry_date: entryDate,
+                            entry_date: today,
                         }).then(() => {
                             resetForm();
                             onOpenChange(false);
@@ -249,23 +239,6 @@ export function AccountsReceivableCreateDialog({
                                 {errors.amount?.message ? (
                                     <p className="text-xs text-destructive">
                                         {String(errors.amount.message)}
-                                    </p>
-                                ) : null}
-                            </div>
-
-                            <div className="col-span-1">
-                                <Label>Data de lancamento <span className="text-red-600">*</span></Label>
-                                <DatePickerInput
-                                    value={entryDate}
-                                    onChange={(value) => {
-                                        setEntryDate(value);
-                                        clearErrors('entry_date');
-                                    }}
-                                    placeholder="Selecionar data"
-                                />
-                                {errors.entry_date?.message ? (
-                                    <p className="text-xs text-destructive">
-                                        {String(errors.entry_date.message)}
                                     </p>
                                 ) : null}
                             </div>
