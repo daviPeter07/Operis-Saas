@@ -442,14 +442,6 @@ export function SalesModule() {
             header: 'Data',
             render: (value: unknown) => formatDateBR(String(value)),
         },
-        {
-            key: 'dueDate',
-            header: 'Vencimento',
-            render: (value: unknown, row: SaleRow) =>
-                row.payment_method === 'crediario'
-                    ? formatDateBR(String(row.date))
-                    : '-',
-        },
     ];
 
     const metrics = useMemo(() => {
@@ -604,7 +596,7 @@ export function SalesModule() {
                     { key: 'categoryNames', type: 'text' },
                     { key: 'date', type: 'date' },
                 ]}
-                dateFilterKey="date"
+                dateFilterKey="date" showPrint={true}
                 onFilteredDataChange={handleFilteredDataChange}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}

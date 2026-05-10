@@ -1,4 +1,4 @@
-import { Eye, Printer, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Printer, Trash2 } from 'lucide-react';
 import { MoreHorizontal } from 'lucide-react';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ export interface TableActionsProps {
     showView?: boolean;
     showEdit?: boolean;
     showDelete?: boolean;
+    showPrint?: boolean;
     className?: string;
 }
 
@@ -28,6 +29,7 @@ export function TableActions({
     showView = true,
     showEdit = true,
     showDelete = true,
+    showPrint = false,
     className,
 }: TableActionsProps) {
     const hasActions = showView || showEdit || showDelete;
@@ -40,16 +42,28 @@ export function TableActions({
         <div className={cn('flex items-center justify-end gap-1', className)}>
 {showView && onView && (
                     <>
-                        {/* Impressora antes do olho, cor preta */}
-<Button
-                             variant="ghost"
-                             size="icon"
-                             className="h-8 w-8 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white"
-                             onClick={onView}
-                             title="Imprimir comprovante"
-                         >
-                             <Printer className="h-4 w-4" />
-                         </Button>
+                        {/* Imprime somente se showPrint está habilitado */}
+                        {showPrint && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white"
+                                onClick={onView}
+                                title="Imprimir comprovante"
+                            >
+                                <Printer className="h-4 w-4" />
+                            </Button>
+                        )}
+                        {/* Ícone de olho para visualizar detalhes */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            onClick={onView}
+                            title="Ver detalhes"
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
                     </>
                 )}
             {showEdit && onEdit && (
