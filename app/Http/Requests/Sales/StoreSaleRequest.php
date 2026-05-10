@@ -27,6 +27,7 @@ class StoreSaleRequest extends FormRequest
             'installments' => ['nullable', 'integer', 'min:1', 'max:24'],
             'first_installment_date' => ['nullable', 'date'],
             'installment_value' => ['nullable', 'numeric', 'min:0'],
+            'crediario_entry' => ['nullable', 'numeric', 'min:0.01'],
             'paid_installments' => ['nullable', 'array'],
             'paid_installments.*' => ['integer', 'min:1', 'max:24'],
             'items' => ['required', 'array', 'min:1'],

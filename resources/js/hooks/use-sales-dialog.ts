@@ -39,6 +39,7 @@ export function useSalesDialog({
         useState<UiSale['paymentMethod']>('pix');
     const [cardType, setCardType] = useState<'debit' | 'credit'>('debit');
     const [installments, setInstallments] = useState('1');
+    const [crediarioEntry, setCrediarioEntry] = useState('0');
     const [firstInstallmentDate, setFirstInstallmentDate] =
         useState(todayString());
     const [saleDate, setSaleDate] = useState(todayString());
@@ -76,6 +77,8 @@ export function useSalesDialog({
             setCardType('debit');
 
             setInstallments('1');
+
+            setCrediarioEntry('0');
 
             setFirstInstallmentDate(todayString());
 
@@ -333,6 +336,7 @@ export function useSalesDialog({
         paymentMethod,
         cardType,
         installments,
+        crediarioEntry,
         firstInstallmentDate,
         productCreateOpen,
         productId,
@@ -357,6 +361,7 @@ export function useSalesDialog({
         setPaymentMethod,
         setCardType,
         setInstallments,
+        setCrediarioEntry,
         setFirstInstallmentDate,
         setProductCreateOpen,
         setProductId,

@@ -388,6 +388,10 @@ export function SalesModule() {
                 ? sale.firstInstallmentDate
                 : undefined,
             installment_value: useInstallments ? sale.installmentValue : undefined,
+            crediario_entry:
+                sale.paymentMethod === 'crediario'
+                    ? Number(sale.crediarioEntry ?? 0)
+                    : undefined,
             paid_installments:
                 sale.paymentMethod === 'crediario'
                     ? (sale.paidInstallments ?? undefined)
@@ -510,6 +514,8 @@ export function SalesModule() {
                                 full.first_installment_date ?? undefined,
                             installmentValue:
                                 full.installment_value ?? undefined,
+                            crediarioEntry:
+                                full.crediario_entry ?? undefined,
                             availableCredit: mappedCustomers.find(
                                 (customer) =>
                                     customer.id === String(full.customer_id),
@@ -626,6 +632,10 @@ export function SalesModule() {
                                         : 'card_debit'
                                     : 'pix';
 
+                        const isCrediario = sale.paymentMethod === 'crediario';
+                        const isCardCredit = sale.cardType === 'credit';
+                        const useInstallments = isCrediario || isCardCredit;
+
                         try {
                             const payload: SaleMutationPayload = {
                                 customer_id: customerId,
@@ -643,16 +653,20 @@ export function SalesModule() {
                                         ? 'completed'
                                         : 'pending',
                                 installments:
-                                    sale.cardType === 'credit'
+                                    useInstallments
                                         ? sale.installments
                                         : undefined,
                                 first_installment_date:
-                                    sale.cardType === 'credit'
+                                    useInstallments
                                         ? sale.firstInstallmentDate
                                         : undefined,
                                 installment_value:
-                                    sale.cardType === 'credit'
+                                    useInstallments
                                         ? sale.installmentValue
+                                        : undefined,
+                                crediario_entry:
+                                    isCrediario
+                                        ? Number(sale.crediarioEntry ?? 0)
                                         : undefined,
                                 items,
                             };

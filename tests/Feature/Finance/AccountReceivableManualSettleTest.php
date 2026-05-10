@@ -53,6 +53,7 @@ test('account receivable can be settled and complete pending sale', function () 
         'customer_id' => $customer->id,
         'date' => now()->toDateString(),
         'payment_method' => 'crediario',
+        'crediario_entry' => 5,
         'items' => [[
             'product_id' => $product->id,
             'quantity' => 2,
@@ -60,7 +61,10 @@ test('account receivable can be settled and complete pending sale', function () 
         ]],
     ])->json('data.id');
 
-    $receivable = AccountReceivable::query()->where('sale_id', $saleId)->firstOrFail();
+    $receivable = AccountReceivable::query()
+        ->where('sale_id', $saleId)
+        ->where('status', 'pending')
+        ->firstOrFail();
 
     $this->actingAs($user)->postJson("/api/account-receivables/{$receivable->id}/settle", [
         'received_at' => now()->toDateString(),

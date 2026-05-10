@@ -65,6 +65,7 @@ test('crediario sale uses customer credit settings and creates receivable', func
         'date' => '2026-05-06',
         'status' => 'completed',
         'payment_method' => 'crediario',
+        'crediario_entry' => 100,
         'items' => [[
             'product_id' => $product->id,
             'quantity' => 2,
@@ -83,8 +84,8 @@ test('crediario sale uses customer credit settings and creates receivable', func
 
     $receivable = AccountReceivable::query()->where('sale_id', $saleId)->firstOrFail();
 
-    expect($receivable->due_date?->toDateString())->toBe(Carbon::parse('2026-05-06')->addDays(45)->toDateString())
-        ->and($receivable->amount)->toBe('300.00');
+    expect($receivable->due_date?->toDateString())->toBe(Carbon::parse('2026-05-06')->addDays(30)->toDateString())
+        ->and($receivable->amount)->toBe('200.00');
 });
 
 test('crediario sale respects customer credit limit', function () {
@@ -155,6 +156,7 @@ test('crediario sale respects customer credit limit', function () {
         'date' => now()->toDateString(),
         'status' => 'pending',
         'payment_method' => 'crediario',
+        'crediario_entry' => 5,
         'items' => [[
             'product_id' => $product->id,
             'quantity' => 1,

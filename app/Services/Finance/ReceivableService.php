@@ -29,8 +29,14 @@ class ReceivableService
             $receivable->delete();
         }
 
+        $crediarioEntry = $sale->payment_method === 'crediario'
+            ? max(0, min((float) ($sale->crediario_entry ?? 0), (float) $sale->total))
+            : 0.0;
+        $financedTotal = max(0, (float) $sale->total - $crediarioEntry);
         $installments = $sale->installments ?? 1;
-        $installmentAmount = $sale->total / $installments;
+        $installmentAmount = $installments > 0
+            ? $financedTotal / $installments
+            : $financedTotal;
         $firstInstallmentDate = $sale->first_installment_date ?? $sale->date;
         $isCompletedSale = $sale->status === SaleStatus::Completed->value;
 
@@ -49,6 +55,22 @@ class ReceivableService
                 'amount' => $installmentAmount,
                 'status' => $isCompletedSale ? FinancialStatus::Received->value : FinancialStatus::Pending->value,
                 'received_at' => $isCompletedSale ? now() : null,
+            ]);
+        }
+
+        if ($crediarioEntry > 0) {
+            $this->receivables->create([
+                'company_id' => $sale->company_id,
+                'customer_id' => $sale->customer_id,
+                'sale_id' => $sale->id,
+                'installment_number' => null,
+                'entry_date' => $sale->date,
+                'due_date' => $sale->date,
+                'item' => 'Entrada',
+                'description' => 'Entrada no crediario',
+                'amount' => $crediarioEntry,
+                'status' => FinancialStatus::Received->value,
+                'received_at' => now(),
             ]);
         }
     }

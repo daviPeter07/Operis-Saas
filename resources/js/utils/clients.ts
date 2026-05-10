@@ -6,13 +6,13 @@ import type {
 } from '@/types/dashboard-forms';
 import { composeSupplierAddress } from '@/utils/suppliers';
 
-export function inferPersonType(document: string): ClientPersonType {
-    const numericDocument = document.replace(/\D/g, '');
+export function inferPersonType(document: string | null): ClientPersonType {
+    const numericDocument = (document ?? '').replace(/\D/g, '');
 
     return numericDocument.length > 11 ? 'pj' : 'pf';
 }
 
-export function inferClientPersonType(document: string): ClientPersonType {
+export function inferClientPersonType(document: string | null): ClientPersonType {
     return inferPersonType(document);
 }
 

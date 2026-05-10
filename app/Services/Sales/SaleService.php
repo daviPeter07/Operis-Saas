@@ -50,6 +50,9 @@ class SaleService
                 'installments' => $this->resolveInstallments($paymentMethod, $data),
                 'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
                 'installment_value' => $data['installment_value'] ?? null,
+                'crediario_entry' => $paymentMethod === 'crediario'
+                    ? (float) ($data['crediario_entry'] ?? 0)
+                    : 0,
             ]);
 
             $this->syncItems($sale, $data['items']);
@@ -123,6 +126,9 @@ class SaleService
                 'installments' => $this->resolveInstallments($paymentMethod, $data),
                 'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
                 'installment_value' => $data['installment_value'] ?? null,
+                'crediario_entry' => $paymentMethod === 'crediario'
+                    ? (float) ($data['crediario_entry'] ?? 0)
+                    : 0,
             ]);
 
             $sale->items()->delete();
@@ -248,9 +254,27 @@ class SaleService
             $sale->company_id,
             $customer->id
         );
-        $saleCurrentBalance = (float) $sale->receivables()->sum('amount');
+        $saleCurrentBalance = (float) $sale->receivables()
+            ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
+            ->sum('amount');
 
-        if ((($currentBalance - $saleCurrentBalance) + (float) $sale->total) > (float) $customer->credit_limit) {
+        $crediarioEntry = (float) ($sale->crediario_entry ?? 0);
+        $financedTotal = (float) $sale->total - $crediarioEntry;
+
+        if ($crediarioEntry <= 0 || $financedTotal <= 0) {
+            throw ValidationException::withMessages([
+                'crediario_entry' => 'Venda em crediario exige entrada maior que zero e menor que o total.',
+            ]);
+        }
+
+        $maxInstallments = max(1, (int) floor(((int) ($customer->credit_term_days ?? 30)) / 30));
+        if ((int) ($sale->installments ?? 1) > $maxInstallments) {
+            throw ValidationException::withMessages([
+                'installments' => "Numero de parcelas excede o prazo permitido para este cliente ({$maxInstallments}).",
+            ]);
+        }
+
+        if ((($currentBalance - $saleCurrentBalance) + $financedTotal) > (float) $customer->credit_limit) {
             throw ValidationException::withMessages([
                 'payment_method' => 'Limite de crediario do cliente excedido.',
             ]);
@@ -275,7 +299,7 @@ class SaleService
         if ($paymentMethod === 'crediario') {
             return $this->receivableService->resolveCrediarioDueDate(
                 $data['date'],
-                (int) ($customer?->credit_term_days ?? 30),
+                30,
             );
         }
 

@@ -22,6 +22,7 @@ type CardPaymentFieldsProps = {
     totalAmount: number;
     showCardTypeToggle?: boolean;
     enableInstallments?: boolean;
+    maxInstallments?: number;
 };
 
 const INSTALLMENT_OPTIONS = Array.from({ length: 24 }, (_, index) => {
@@ -43,12 +44,16 @@ export function CardPaymentFields({
     totalAmount,
     showCardTypeToggle = true,
     enableInstallments = true,
+    maxInstallments = 24,
 }: CardPaymentFieldsProps) {
+    const safeMaxInstallments = Math.max(1, Math.min(24, maxInstallments));
     const safeInstallments = Math.max(
         1,
-        Math.min(24, Number(installments) || 1),
+        Math.min(safeMaxInstallments, Number(installments) || 1),
     );
-    const installmentOptionsWithAmount = INSTALLMENT_OPTIONS.map((option) => {
+    const installmentOptionsWithAmount = INSTALLMENT_OPTIONS.filter(
+        (option) => option.installments <= safeMaxInstallments,
+    ).map((option) => {
         const valuePerInstallment = Number(
             (Math.max(0, totalAmount) / option.installments).toFixed(2),
         );

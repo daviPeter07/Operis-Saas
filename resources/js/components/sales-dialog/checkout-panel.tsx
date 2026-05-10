@@ -21,6 +21,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
 import { formatCurrencyBR } from '@/lib/format';
 import type { UiCustomer as Client } from '@/types/dashboard-entities';
 import type { SalesLineItem } from '@/types/sales-dialog';
@@ -49,6 +50,8 @@ interface CheckoutPanelProps {
     setCardType: (value: 'debit' | 'credit') => void;
     installments: string;
     setInstallments: (value: string) => void;
+    crediarioEntry: string;
+    setCrediarioEntry: (value: string) => void;
     firstInstallmentDate: string;
     setFirstInstallmentDate: (value: string) => void;
     total: number;
@@ -63,6 +66,8 @@ interface CheckoutPanelProps {
     setSaleDate: (value: string) => void;
     availableCredit?: number;
     crediarioExceeded: boolean;
+    maxCrediarioInstallments: number;
+    onOpenEditClient: () => void;
     canSubmit: boolean;
     onSubmit: () => void;
 }
@@ -84,6 +89,8 @@ export function CheckoutPanel({
     setCardType,
     installments,
     setInstallments,
+    crediarioEntry,
+    setCrediarioEntry,
     firstInstallmentDate,
     setFirstInstallmentDate,
     total,
@@ -98,6 +105,8 @@ export function CheckoutPanel({
     setSaleDate,
     availableCredit,
     crediarioExceeded,
+    maxCrediarioInstallments,
+    onOpenEditClient,
     canSubmit,
     onSubmit,
 }: CheckoutPanelProps) {
@@ -129,6 +138,12 @@ export function CheckoutPanel({
             setCardType('credit');
         }
     }, [paymentMethod, cardType, setCardType]);
+
+    const crediarioEntryValue = Math.max(0, Number(crediarioEntry) || 0);
+    const financedAmount = Math.max(0, finalTotal - crediarioEntryValue);
+    const isCrediarioEntryInvalid =
+        paymentMethod === 'crediario' &&
+        (!(crediarioEntryValue > 0) || crediarioEntryValue >= finalTotal);
 
     return (
         <section className="flex min-h-0 flex-col bg-card">
@@ -358,6 +373,24 @@ export function CheckoutPanel({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2 text-sm">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="crediario-entry">
+                                        Entrada no crediario
+                                    </Label>
+                                    <Input
+                                        id="crediario-entry"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={crediarioEntry}
+                                        onChange={(event) =>
+                                            setCrediarioEntry(
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder="0,00"
+                                    />
+                                </div>
                                 <CardPaymentFields
                                     cardType="credit"
                                     onCardTypeChange={setCardType}
@@ -367,10 +400,19 @@ export function CheckoutPanel({
                                     onFirstInstallmentDateChange={
                                         setFirstInstallmentDate
                                     }
-                                    totalAmount={finalTotal}
+                                    totalAmount={financedAmount}
                                     showCardTypeToggle={false}
                                     enableInstallments
+                                    maxInstallments={maxCrediarioInstallments}
                                 />
+                                <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground">
+                                        Saldo financiado
+                                    </span>
+                                    <span className="font-semibold">
+                                        {formatCurrencyBR(financedAmount)}
+                                    </span>
+                                </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-muted-foreground">
                                         Limite disponivel
@@ -385,14 +427,30 @@ export function CheckoutPanel({
                                     </span>
                                 </div>
                                 {crediarioExceeded ? (
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-destructive">
+                                            O saldo financiado excede o limite
+                                            disponivel do crediario.
+                                        </p>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={onOpenEditClient}
+                                        >
+                                            Ajustar limite do cliente
+                                        </Button>
+                                    </div>
+                                ) : isCrediarioEntryInvalid ? (
                                     <p className="text-sm text-destructive">
-                                        O valor desta venda excede o limite
-                                        disponivel do crediario.
+                                        Informe uma entrada maior que zero e
+                                        menor que o total da venda.
                                     </p>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        A venda sera registrada como pendente e
-                                        gerara conta a receber.
+                                        A venda sera registrada como pendente,
+                                        com entrada imediata e parcelas no
+                                        saldo financiado.
                                     </p>
                                 )}
                             </CardContent>
@@ -499,7 +557,11 @@ export function CheckoutPanel({
                         type="button"
                         className="w-full"
                         size="lg"
-                        disabled={!canSubmit || crediarioExceeded}
+                        disabled={
+                            !canSubmit ||
+                            crediarioExceeded ||
+                            isCrediarioEntryInvalid
+                        }
                         onClick={onSubmit}
                     >
                         Finalizar venda

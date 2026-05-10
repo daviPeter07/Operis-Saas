@@ -22,5 +22,6 @@ export interface Sale {
     installments?: number;
     first_installment_date?: string | null;
     installment_value?: number | null;
+    crediario_entry?: number | null;
     items?: SaleItem[];
 }

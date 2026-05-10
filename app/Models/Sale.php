@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'installments',
     'first_installment_date',
     'installment_value',
+    'crediario_entry',
 ])]
 class Sale extends Model
 {
@@ -34,6 +35,7 @@ class Sale extends Model
             'installments' => 'integer',
             'first_installment_date' => 'date',
             'installment_value' => 'decimal:2',
+            'crediario_entry' => 'decimal:2',
         ];
     }
 

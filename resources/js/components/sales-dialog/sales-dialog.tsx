@@ -8,6 +8,7 @@ import type { SalesRecord } from '@/types/sales-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';
 import { filterProductsByQuery } from '@/utils/sales-dialog';
 import { applyFieldMask, parseCurrencyInput } from '@/utils/form-fields';
+import { inferPersonType } from '@/utils/clients';
 import { CatalogPanel } from './catalog-panel';
 import { CheckoutPanel } from './checkout-panel';
 import { AddProductDialog, DiscountDialog } from './dialogs';
@@ -47,6 +48,7 @@ export function SalesDialog({
         paymentMethod,
         cardType,
         installments,
+        crediarioEntry,
         firstInstallmentDate,
         productCreateOpen,
         productSearch,
@@ -64,6 +66,7 @@ export function SalesDialog({
         setPaymentMethod,
         setCardType,
         setInstallments,
+        setCrediarioEntry,
         setFirstInstallmentDate,
         setProductCreateOpen,
         setProductSearch,
@@ -85,6 +88,8 @@ export function SalesDialog({
     const checkoutRef = React.useRef<HTMLDivElement>(null);
     const [confirmationOpen, setConfirmationOpen] = React.useState(false);
     const [saleDraft, setSaleDraft] = React.useState<SalesRecord | null>(null);
+    const [clientLimitEditorOpen, setClientLimitEditorOpen] =
+        React.useState(false);
 
     React.useEffect(() => {
         if (open && defaultTab === 'checkout' && checkoutRef.current) {
@@ -115,6 +120,15 @@ export function SalesDialog({
                 );
             }
 
+            if (sale.paymentMethod === 'crediario') {
+                setCardType('credit');
+                setInstallments(String(sale.installments ?? 1));
+                setFirstInstallmentDate(
+                    sale.firstInstallmentDate ?? firstInstallmentDate,
+                );
+                setCrediarioEntry(String(sale.crediarioEntry ?? 0));
+            }
+
             // Notes
             setNotes(sale.notes ?? '');
 
@@ -141,8 +155,30 @@ export function SalesDialog({
 
         return Number(selectedClient.availableCredit ?? 0);
     }, [selectedClient]);
+    const crediarioEntryValue = Math.max(0, Number(crediarioEntry) || 0);
+    const financedTotal = Math.max(0, finalTotal - crediarioEntryValue);
+    const maxCrediarioInstallments = React.useMemo(() => {
+        const termDays = Number(selectedClient?.creditTermDays ?? 30);
+        return Math.max(1, Math.floor(termDays / 30));
+    }, [selectedClient]);
+
+    React.useEffect(() => {
+        if (paymentMethod !== 'crediario') {
+            return;
+        }
+
+        const currentInstallments = Number(installments) || 1;
+        if (currentInstallments > maxCrediarioInstallments) {
+            setInstallments(String(maxCrediarioInstallments));
+        }
+    }, [
+        installments,
+        maxCrediarioInstallments,
+        paymentMethod,
+        setInstallments,
+    ]);
     const crediarioExceeded =
-        paymentMethod === 'crediario' && finalTotal > availableCredit;
+        paymentMethod === 'crediario' && financedTotal > availableCredit;
     const filteredClients = React.useMemo(() => {
         const normalizedQuery = clientSearch.trim().toLowerCase();
 
@@ -185,6 +221,23 @@ export function SalesDialog({
             return;
         }
 
+        if (paymentMethod === 'crediario') {
+            if (!(crediarioEntryValue > 0) || crediarioEntryValue >= finalTotal) {
+                return;
+            }
+        }
+
+        const effectiveInstallments =
+            paymentMethod === 'crediario'
+                ? Math.max(
+                      1,
+                      Math.min(
+                          maxCrediarioInstallments,
+                          Number(installments) || 1,
+                      ),
+                  )
+                : 1;
+
         const payload: SalesRecord = {
             id: crypto.randomUUID(),
             clientId: selectedClient.id,
@@ -206,7 +259,7 @@ export function SalesDialog({
                     : undefined,
             installments:
                 paymentMethod === 'crediario'
-                    ? Math.max(1, Math.min(24, Number(installments) || 1))
+                    ? effectiveInstallments
                     : undefined,
             firstInstallmentDate:
                 paymentMethod === 'crediario'
@@ -216,16 +269,14 @@ export function SalesDialog({
                 paymentMethod === 'crediario'
                     ? Number(
                           (
-                              finalTotal /
-                              Math.max(
-                                  1,
-                                  Math.min(24, Number(installments) || 1),
-                              )
+                              financedTotal / effectiveInstallments
                           ).toFixed(2),
                       )
                     : undefined,
             availableCredit:
                 paymentMethod === 'crediario' ? availableCredit : undefined,
+            crediarioEntry:
+                paymentMethod === 'crediario' ? crediarioEntryValue : undefined,
         };
         // open confirmation dialog instead of submitting immediately
         setSaleDraft(payload);
@@ -275,6 +326,8 @@ export function SalesDialog({
                             setCardType={setCardType}
                             installments={installments}
                             setInstallments={setInstallments}
+                            crediarioEntry={crediarioEntry}
+                            setCrediarioEntry={setCrediarioEntry}
                             firstInstallmentDate={firstInstallmentDate}
                             setFirstInstallmentDate={setFirstInstallmentDate}
                             total={total}
@@ -291,6 +344,8 @@ export function SalesDialog({
                             setSaleDate={setSaleDate}
                             availableCredit={availableCredit}
                             crediarioExceeded={crediarioExceeded}
+                            maxCrediarioInstallments={maxCrediarioInstallments}
+                            onOpenEditClient={() => setClientLimitEditorOpen(true)}
                             canSubmit={canSubmit}
                             onSubmit={handleSubmit}
                         />
@@ -328,6 +383,38 @@ export function SalesDialog({
                     onOpenChange={setClientCreateOpen}
                     onSuccess={(client) => {
                         selectClientById(String(client.id));
+                    }}
+                />
+
+                <ClientCreateDialog
+                    open={clientLimitEditorOpen}
+                    onOpenChange={setClientLimitEditorOpen}
+                    initialData={
+                        selectedClient
+                            ? {
+                                  id: Number(selectedClient.id),
+                                  name: selectedClient.name,
+                                  email: selectedClient.email,
+                                  phone: selectedClient.phone,
+                                  document: selectedClient.document,
+                                  personType: inferPersonType(
+                                      selectedClient.document,
+                                  ),
+                                  creditEnabled: Boolean(
+                                      selectedClient.creditEnabled,
+                                  ),
+                                  creditLimit: Number(
+                                      selectedClient.creditLimit ?? 0,
+                                  ),
+                                  creditTermDays: Number(
+                                      selectedClient.creditTermDays ?? 30,
+                                  ),
+                                  status: 'active',
+                              }
+                            : undefined
+                    }
+                    onSuccess={({ id }) => {
+                        selectClientById(String(id));
                     }}
                 />
 
