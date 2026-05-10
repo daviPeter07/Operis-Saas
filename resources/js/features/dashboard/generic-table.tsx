@@ -73,6 +73,7 @@ export interface GenericTableProps<T extends { id: string }> {
     }) => React.ReactNode;
     isCreateOpen?: boolean;
     onCreateOpenChange?: (open: boolean) => void;
+    onFilteredDataChange?: (data: T[]) => void;
 }
 
 export function GenericTable<T extends { id: string }>({
@@ -97,6 +98,7 @@ export function GenericTable<T extends { id: string }>({
     createDialog,
     isCreateOpen: externalIsCreateOpen,
     onCreateOpenChange: externalOnCreateOpenChange,
+    onFilteredDataChange,
 }: GenericTableProps<T>) {
     const [internalIsCreateOpen, setInternalIsCreateOpen] =
         React.useState(false);
@@ -258,6 +260,10 @@ export function GenericTable<T extends { id: string }>({
 
         return result;
     }, [customRange, data, dateFilterKey, period, search]);
+
+    React.useEffect(() => {
+        onFilteredDataChange?.(filteredData);
+    }, [filteredData, onFilteredDataChange]);
 
     const sortedData = React.useMemo(() => {
         if (!sortBy) {
@@ -871,6 +877,27 @@ function resolveDateRange(
         date.setMonth(date.getMonth() - 12);
 
         return { from: date.toISOString().slice(0, 10), to: today };
+    }
+
+    if (period === 'next-month') {
+        const from = new Date();
+        from.setHours(0, 0, 0, 0);
+
+        const to = new Date(from);
+        const baseDay = to.getDate();
+        to.setDate(1);
+        to.setMonth(to.getMonth() + 1);
+        const lastDayOfMonth = new Date(
+            to.getFullYear(),
+            to.getMonth() + 1,
+            0,
+        ).getDate();
+        to.setDate(Math.min(baseDay, lastDayOfMonth));
+
+        return {
+            from: from.toISOString().slice(0, 10),
+            to: to.toISOString().slice(0, 10),
+        };
     }
 
     if (period === 'custom' && customRange.from && customRange.to) {

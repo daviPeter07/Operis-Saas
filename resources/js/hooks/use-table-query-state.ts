@@ -40,6 +40,7 @@ function parseQueryParams(search: string) {
         periodParam === '30d' ||
         periodParam === '90d' ||
         periodParam === '12m' ||
+        periodParam === 'next-month' ||
         periodParam === 'custom'
             ? periodParam
             : 'all';

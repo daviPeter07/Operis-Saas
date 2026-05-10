@@ -30,7 +30,7 @@ import type {
     UiProduct,
 } from '@/types/dashboard-entities';
 import type { SalesRecord as DialogSalesRecord } from '@/types/sales-dialog';
-import { calculateSaleProfit, calculateSalesProfit } from '@/utils/sale-profit';
+import { calculateSaleProfit } from '@/utils/sale-profit';
 import { todayString } from '@/utils/sales-dialog';
 import type { Column } from '../generic-table';
 import { GenericTable } from '../generic-table';
@@ -101,6 +101,7 @@ export function SalesModule() {
         'digital',
     );
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
+    const [filteredRows, setFilteredRows] = useState<SaleRow[]>([]);
 
     const mappedCustomers = useMemo<UiCustomer[]>(
         () =>
@@ -243,6 +244,10 @@ export function SalesModule() {
             }
         });
 
+    useEffect(() => {
+        setFilteredRows(rows);
+    }, [rows]);
+
     const columns: Column<SaleRow>[] = [
         { key: 'clientName', header: 'Cliente' },
         { key: 'productNames', header: 'Produto' },
@@ -315,11 +320,11 @@ export function SalesModule() {
     ];
 
     const metrics = useMemo(() => {
-        const salesCount = rows.length;
-        const salesTotal = rows.reduce((sum, sale) => sum + sale.total, 0);
-        const activeSales = sales.filter((sale) => sale.status !== 'cancelled');
-        const profit = calculateSalesProfit(activeSales);
-        const receivable = rows
+        const baseRows = filteredRows;
+        const salesCount = baseRows.length;
+        const salesTotal = baseRows.reduce((sum, sale) => sum + sale.total, 0);
+        const profit = baseRows.reduce((sum, sale) => sum + sale.profit, 0);
+        const receivable = baseRows
             .filter((sale) => sale.status === 'pending')
             .reduce((sum, sale) => sum + sale.total, 0);
 
@@ -329,7 +334,7 @@ export function SalesModule() {
             profit,
             receivable,
         };
-    }, [rows, sales]);
+    }, [filteredRows]);
 
     const handleCreateFromSalesDialog = async (sale: DialogSalesRecord) => {
         const customerId = Number(sale.clientId);
@@ -459,6 +464,7 @@ export function SalesModule() {
                     { key: 'date', type: 'date' },
                 ]}
                 dateFilterKey="date"
+                onFilteredDataChange={setFilteredRows}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 onDelete={async (row) => {

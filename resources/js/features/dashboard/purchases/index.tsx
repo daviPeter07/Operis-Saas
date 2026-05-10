@@ -58,6 +58,7 @@ export function PurchasesModule() {
     const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
     const draftItemsRef = useRef<PurchaseLineItem[]>([]);
+    const [filteredRows, setFilteredRows] = useState<PurchaseRow[]>([]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -157,10 +158,18 @@ export function PurchasesModule() {
             };
         });
 
+    useEffect(() => {
+        setFilteredRows(rows);
+    }, [rows]);
+
     const metrics = useMemo(() => {
-        const purchaseCount = rows.length;
-        const purchaseTotal = rows.reduce((sum, purchase) => sum + purchase.total, 0);
-        const payable = purchases
+        const baseRows = filteredRows;
+        const purchaseCount = baseRows.length;
+        const purchaseTotal = baseRows.reduce(
+            (sum, purchase) => sum + purchase.total,
+            0,
+        );
+        const payable = baseRows
             .filter((purchase) => purchase.status === 'pending')
             .reduce((sum, purchase) => sum + purchase.total, 0);
 
@@ -169,7 +178,7 @@ export function PurchasesModule() {
             purchaseTotal,
             payable,
         };
-    }, [rows, purchases]);
+    }, [filteredRows]);
 
     const columns: Column<PurchaseRow>[] = [
         { key: 'productNames', header: 'Produto' },
@@ -362,6 +371,7 @@ export function PurchasesModule() {
                 { key: 'date', type: 'date' },
             ]}
             dateFilterKey="date"
+            onFilteredDataChange={setFilteredRows}
             onDelete={async (row) => {
                 await deletePurchase.mutateAsync(Number(row.id));
             }}

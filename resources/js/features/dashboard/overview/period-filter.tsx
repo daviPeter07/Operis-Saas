@@ -3,7 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import { Button } from '@/components/ui/button';
 
-export type Period = '7d' | '30d' | '90d' | '12m' | 'all' | 'custom';
+export type Period =
+    | '7d'
+    | '30d'
+    | '90d'
+    | '12m'
+    | 'next-month'
+    | 'all'
+    | 'custom';
 
 export interface CustomRange {
     from: string;
@@ -21,6 +28,7 @@ const periodLabels: Record<Period, string> = {
     '30d': 'Últimos 30 dias',
     '90d': 'Últimos 90 dias',
     '12m': 'Últimos 12 meses',
+    'next-month': 'Próximo mês',
     all: 'Todo período',
     custom: 'Personalizado',
 };
@@ -77,7 +85,9 @@ export function PeriodFilter({
 
             {open && (
                 <div className="absolute top-full right-0 z-50 mt-2 min-w-56 rounded-lg border bg-card py-2 shadow-lg">
-                    {(['7d', '30d', '90d', '12m', 'all'] as Period[]).map(
+                    {(
+                        ['7d', '30d', '90d', '12m', 'next-month', 'all'] as Period[]
+                    ).map(
                         (item) => (
                             <button
                                 key={item}
