@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import type { UiCustomer } from '@/types/dashboard-entities';
 
 type ManualAccountReceivableDialogProps = {
@@ -111,7 +112,7 @@ export function ManualAccountReceivableDialog({
                             hasError = true;
                         }
 
-                        if (!amount || Number(amount) <= 0) {
+                        if (!amount || parseCurrencyInput(amount) <= 0) {
                             setError('amount', {
                                 type: 'required',
                                 message: 'Valor deve ser maior que zero.',
@@ -135,7 +136,7 @@ export function ManualAccountReceivableDialog({
                             customer_id: Number(customerId),
                             item: item.trim(),
                             description: description.trim() || undefined,
-                            amount: Number(amount || 0),
+                            amount: parseCurrencyInput(amount),
                             entry_date: entryDate,
                         }).then(() => {
                             resetForm();
@@ -202,17 +203,15 @@ export function ManualAccountReceivableDialog({
                             </Label>
                             <Input
                                 id="manual-receivable-amount"
-                                type="number"
-                                min="0"
-                                step="0.01"
+                                type="text"
                                 value={amount}
                                 onChange={(event) =>
                                     {
-                                        setAmount(event.currentTarget.value);
+                                        setAmount(formatCurrencyInput(event.currentTarget.value));
                                         clearErrors('amount');
                                     }
                                 }
-                                placeholder="0,00"
+                                placeholder="R$ 0,00"
                                 required
                             />
                             {errors.amount?.message ? (

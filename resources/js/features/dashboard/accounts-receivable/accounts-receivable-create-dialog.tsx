@@ -20,6 +20,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import type { UiCustomer } from '@/types/dashboard-entities';
 import { todayString } from '@/utils/sales-dialog';
 
@@ -47,6 +48,7 @@ export function AccountsReceivableCreateDialog({
     const [customerSearch, setCustomerSearch] = useState('');
     const [customerId, setCustomerId] = useState('');
     const [clientCreateOpen, setClientCreateOpen] = useState(false);
+    const [clientTooltipOpen, setClientTooltipOpen] = useState(false);
     const [item, setItem] = useState('');
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
@@ -121,7 +123,7 @@ export function AccountsReceivableCreateDialog({
                             hasError = true;
                         }
 
-                        if (!amount || Number(amount) <= 0) {
+                        if (!amount || parseCurrencyInput(amount) <= 0) {
                             setError('amount', {
                                 type: 'required',
                                 message: 'Valor deve ser maior que zero.',
@@ -145,7 +147,7 @@ export function AccountsReceivableCreateDialog({
                             customer_id: Number(customerId),
                             item: item.trim(),
                             description: description.trim() || undefined,
-                            amount: Number(amount || 0),
+                            amount: parseCurrencyInput(amount),
                             entry_date: entryDate,
                         }).then(() => {
                             resetForm();
@@ -159,14 +161,15 @@ export function AccountsReceivableCreateDialog({
                                     <Label className="mb-0">
                                         Cliente <span className="text-red-600">*</span>
                                     </Label>
-                                    <Tooltip>
+                                    <Tooltip open={clientTooltipOpen} onOpenChange={setClientTooltipOpen}>
                                         <TooltipTrigger asChild>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-7 w-7 text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-0"
+                                                className="h-7 w-7 text-muted-foreground/50"
                                                 onClick={() => setClientCreateOpen(true)}
+                                                onFocus={(e) => e.preventDefault()}
                                             >
                                                 <UserPlus className="h-4 w-4" />
                                             </Button>
@@ -234,15 +237,13 @@ export function AccountsReceivableCreateDialog({
                                 </Label>
                                 <Input
                                     id="receivable-amount"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
+                                    type="text"
                                     value={amount}
                                     onChange={(event) => {
-                                        setAmount(event.currentTarget.value);
+                                        setAmount(formatCurrencyInput(event.currentTarget.value));
                                         clearErrors('amount');
                                     }}
-                                    placeholder="0,00"
+                                    placeholder="R$ 0,00"
                                     required
                                 />
                                 {errors.amount?.message ? (

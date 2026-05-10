@@ -26,6 +26,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import type { AccountsPayableCreateDialogProps } from '@/types/dashboard-forms';
 import { todayString } from '@/utils/sales-dialog';
 import { SupplierCreateDialog } from '../suppliers/supplier-create-dialog';
@@ -42,6 +43,7 @@ export function AccountsPayableCreateDialog({
     const [supplierCreateOpen, setSupplierCreateOpen] = useState(false);
     const [supplierSearch, setSupplierSearch] = useState('');
     const [supplierId, setSupplierId] = useState('');
+    const [supplierTooltipOpen, setSupplierTooltipOpen] = useState(false);
     const [item, setItem] = useState('');
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
@@ -124,7 +126,7 @@ export function AccountsPayableCreateDialog({
                                 hasError = true;
                             }
 
-                            if (!amount || Number(amount) <= 0) {
+                            if (!amount || parseCurrencyInput(amount) <= 0) {
                                 setError('amount', {
                                     type: 'required',
                                     message: 'Valor deve ser maior que zero.',
@@ -156,7 +158,7 @@ export function AccountsPayableCreateDialog({
                                 supplier_id: Number(supplierId),
                                 item: item.trim(),
                                 description: description.trim() || undefined,
-                                amount: Number(amount || 0),
+                                amount: parseCurrencyInput(amount),
                                 entry_date: entryDate,
                                 due_date: dueDate,
                                 payment_method: paymentMethod,
@@ -173,14 +175,15 @@ export function AccountsPayableCreateDialog({
                                     <Label className="mb-0">
                                         Fornecedor <span className="text-red-600">*</span>
                                     </Label>
-                                    <Tooltip>
+                                    <Tooltip open={supplierTooltipOpen} onOpenChange={setSupplierTooltipOpen}>
                                         <TooltipTrigger asChild>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-7 w-7 text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-0"
+                                                className="h-7 w-7 text-muted-foreground/50"
                                                 onClick={() => setSupplierCreateOpen(true)}
+                                                onFocus={(e) => e.preventDefault()}
                                             >
                                                 <Truck className="h-4 w-4" />
                                             </Button>
@@ -248,15 +251,13 @@ export function AccountsPayableCreateDialog({
                                 </Label>
                                 <Input
                                     id="payable-amount"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
+                                    type="text"
                                     value={amount}
                                     onChange={(event) => {
-                                        setAmount(event.currentTarget.value);
+                                        setAmount(formatCurrencyInput(event.currentTarget.value));
                                         clearErrors('amount');
                                     }}
-                                    placeholder="0,00"
+                                    placeholder="R$ 0,00"
                                     required
                                 />
                                 {errors.amount?.message ? (
