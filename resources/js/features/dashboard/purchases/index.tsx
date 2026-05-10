@@ -47,6 +47,7 @@ type PurchaseRow = {
     payableId?: number;
     installment_number: number | null; // allow null (matches API schema)
     due_date?: string;
+    entry_date?: string;
     amount?: number;
 };
 
@@ -203,6 +204,7 @@ export function PurchasesModule() {
                         payableId: pay.id,
                         installment_number: pay.installment_number,
                         due_date: pay.due_date,
+                        entry_date: purchase.date,
                         amount: pay.amount,
                     });
                 });
@@ -264,11 +266,6 @@ export function PurchasesModule() {
             render: (val: unknown) => formatCurrencyBR(Number(val)),
         },
         {
-            key: 'status',
-            header: 'Status',
-            render: (val: unknown) => <StatusBadge status={String(val)} />,
-        },
-        {
             key: 'payment_method',
             header: 'Método',
             render: (val: unknown) => translatePaymentMethod(String(val)),
@@ -294,6 +291,17 @@ export function PurchasesModule() {
             key: 'date',
             header: 'Data',
             render: (val: unknown) => formatDateBR(String(val)),
+        },
+        {
+            key: 'due_date',
+            header: 'Vencimento',
+            render: (val: unknown, row: PurchaseRow) => {
+                if (!val) {
+                    return '-';
+                }
+
+                return formatDateBR(String(val));
+            },
         },
     ];
 

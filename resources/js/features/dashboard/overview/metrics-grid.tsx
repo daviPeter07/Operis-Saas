@@ -1,6 +1,5 @@
 import {
     TrendingUp,
-    TrendingDown,
     Receipt,
     CreditCard,
     ShoppingCart,

@@ -32,17 +32,20 @@ class PayableService
 
         if ($purchase->payment_method === 'boleto') {
             $installments = 2;
-            $baseDate = $purchase->date?->copy() ?? now();
+        $baseDate = $purchase->date?->copy() ?? now();
+        // Parse the date as a local date in America/Sao_Paulo without shifting the day
+        $baseDate = \Carbon\Carbon::parse($baseDate->toDateString(), 'America/Sao_Paulo');
             $totalCents = (int) round((float) $purchase->total * 100);
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;
 
             for ($index = 1; $index <= $installments; $index++) {
                 $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
-                $dueDate = $baseDate->copy()->addDays(30 * $index)->toDateString();
+                $dueDate = $baseDate->copy()->addMonthsNoOverflow($index)->toDateString();
 
                 $this->payables->create([
                     'company_id' => $purchase->company_id,
+                    'supplier_id' => $purchase->supplier_id,
                     'purchase_id' => $purchase->id,
                     'installment_number' => $index,
                     'total_installments' => $installments,
@@ -61,8 +64,10 @@ class PayableService
 
         $this->payables->create([
             'company_id' => $purchase->company_id,
+            'supplier_id' => $purchase->supplier_id,
             'purchase_id' => $purchase->id,
             'installment_number' => 1,
+            'total_installments' => null,
             'due_date' => $dueDate,
             'amount' => $purchase->total,
             'status' => $isPaid ? 'paid' : 'pending',
@@ -91,11 +96,11 @@ class PayableService
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;
 
-            $baseDateObj = Carbon::parse($entryDate);
+            $baseDateObj = Carbon::parse($entryDate, 'America/Sao_Paulo');
 
             for ($index = 1; $index <= $installments; $index++) {
                 $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
-                $dueDate = $baseDateObj->copy()->addDays(30 * $index)->toDateString();
+                $dueDate = $baseDateObj->copy()->addMonthsNoOverflow($index)->toDateString();
 
                 $this->payables->create([
                     'company_id' => $companyId,

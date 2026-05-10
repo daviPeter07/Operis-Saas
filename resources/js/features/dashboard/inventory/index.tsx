@@ -1,4 +1,4 @@
-import { AlertTriangle, Boxes, DollarSign } from 'lucide-react';
+import { Boxes, DollarSign } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBrands, useCreateBrand } from '@/hooks/use-brands';

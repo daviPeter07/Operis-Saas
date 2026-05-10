@@ -98,19 +98,6 @@ export function AccountsReceivableModule() {
         setSelectedIds(new Set());
     };
 
-    const handleDelete = async () => {
-        const ids = Array.from(selectedIds).map((id) => Number(id));
-
-        if (ids.length === 0) {
-            return;
-        }
-
-        await Promise.all(
-            ids.map((id) => deleteAccountReceivable.mutateAsync(id)),
-        );
-
-        setSelectedIds(new Set());
-    };
 
     const totalSelected = selectedIds.size;
     const totalValue = rows
