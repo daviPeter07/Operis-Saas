@@ -76,14 +76,32 @@ export function useDeleteAccountReceivable() {
     return useMutation({
         mutationFn: async (id: number) =>
             accountReceivableService.delete(id),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({
-                queryKey: accountReceivablesQueryKey,
-            });
-            toast.success('Conta a receber deletada com sucesso');
+        // Optimistically remove the deleted receivable from the cache
+        onMutate: async (id: number) => {
+            await queryClient.cancelQueries({ queryKey: accountReceivablesQueryKey });
+            const previous = queryClient.getQueryData<any>(accountReceivablesQueryKey);
+
+            if (previous?.data) {
+                queryClient.setQueryData(accountReceivablesQueryKey, {
+                    ...previous,
+                    data: previous.data.filter((r: any) => r.id !== id),
+                });
+            }
+
+            return { previous };
         },
-        onError: () => {
+        onError: (err, id, context) => {
+            // Revert cache on error
+            if (context?.previous) {
+                queryClient.setQueryData(accountReceivablesQueryKey, context.previous);
+            }
+
             toast.error('Erro ao deletar conta a receber');
+        },
+        onSuccess: async () => {
+            // Ensure fresh data from server
+            await queryClient.invalidateQueries({ queryKey: accountReceivablesQueryKey });
+            toast.success('Conta a receber deletada com sucesso');
         },
     });
 }

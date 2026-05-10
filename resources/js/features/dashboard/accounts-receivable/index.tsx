@@ -82,19 +82,30 @@ export function AccountsReceivableModule() {
         const ids = Array.from(selectedIds).map((id) => Number(id));
 
         if (ids.length === 0) {
-            return;
-        }
+return;
+}
 
         await Promise.all(
             ids.map((id) =>
                 settleAccountReceivable.mutateAsync({
                     id,
                     received_at: new Date().toISOString().slice(0, 10),
-                }),
-            ),
+                })
+            )
         );
-
         toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
+        setSelectedIds(new Set());
+    };
+
+    const handleDelete = async () => {
+        const ids = Array.from(selectedIds).map((id) => Number(id));
+
+        if (ids.length === 0) {
+return;
+}
+
+        await Promise.all(ids.map((id) => deleteAccountReceivable.mutateAsync(id)));
+        toast.success(`${ids.length} conta(s) excluída(s) com sucesso.`);
         setSelectedIds(new Set());
     };
 
@@ -209,6 +220,12 @@ export function AccountsReceivableModule() {
                         className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
                     >
                         Marcar como Recebida
+                    </button>
+                    <button
+                        onClick={() => void handleDelete()}
+                        className="ml-2 inline-flex h-9 items-center justify-center rounded-md bg-red-600 px-4 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                    >
+                        Excluir
                     </button>
                 </div>
             )}

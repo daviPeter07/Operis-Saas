@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { StatusBadge } from '@/components/common/status-badge';
 import { useAccountPayables } from '@/hooks/use-account-payables';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
@@ -257,6 +256,7 @@ export function PurchasesModule() {
     }, [filteredRows]);
 
     const columns: Column<PurchaseRow>[] = [
+        { key: 'supplierName', header: 'Fornecedor' },
         { key: 'productNames', header: 'Produto' },
         { key: 'categoryNames', header: 'Categoria' },
         { key: 'brandNames', header: 'Marca' },
@@ -295,7 +295,7 @@ export function PurchasesModule() {
         {
             key: 'due_date',
             header: 'Vencimento',
-            render: (val: unknown, row: PurchaseRow) => {
+            render: (val: unknown) => {
                 if (!val) {
                     return '-';
                 }

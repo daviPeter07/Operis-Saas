@@ -35,8 +35,9 @@ export function AccountsPayableModule() {
     const { data: suppliers = [] } = useSuppliers();
     const createSupplier = useCreateSupplier();
     const createManualPayable = useCreateManualAccountPayable();
-    const deleteAccountPayable = useDeleteAccountPayable();
+
     const settleAccountPayable = useSettleAccountPayable();
+    const deleteAccountPayable = useDeleteAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
@@ -103,8 +104,8 @@ export function AccountsPayableModule() {
         const ids = Array.from(selectedIds).map((id) => Number(id));
 
         if (ids.length === 0) {
-            return;
-        }
+return;
+}
 
         await Promise.all(
             ids.map((id) =>
@@ -112,13 +113,13 @@ export function AccountsPayableModule() {
                     id,
                     paid_at: new Date().toISOString().slice(0, 10),
                     paid_method: 'pix',
-                }),
+                })
             ),
         );
-
         toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
         setSelectedIds(new Set());
     };
+
 
     const totalSelected = selectedIds.size;
     const totalValue = rows
@@ -272,6 +273,11 @@ export function AccountsPayableModule() {
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 onDelete={async (row) => {
+                    if (row.purchase_id) {
+                        // Impedir exclusão de contas vinculadas a compra
+                        throw new Error('Não é permitido excluir contas geradas a partir de uma compra.');
+                    }
+
                     await deleteAccountPayable.mutateAsync(Number(row.id));
                     setSelectedIds(new Set());
                 }}

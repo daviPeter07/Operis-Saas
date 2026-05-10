@@ -85,7 +85,7 @@ export function useDeleteAccountPayable() {
             accountPayableService.delete(id),
         onSuccess: async () => {
             await invalidateRelatedQueries(queryClient);
-            toast.success('Conta a pagar excluida com sucesso.');
+
         },
         onError: () => {
             toast.error('Erro ao excluir conta a pagar.');
