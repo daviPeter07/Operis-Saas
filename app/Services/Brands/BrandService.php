@@ -18,6 +18,7 @@ class BrandService
     public function create(int $companyId, array $data): Brand
     {
         $data = array_merge(['status' => 'active'], $data);
+
         return $this->brands->createForCompany($companyId, $data);
     }
 

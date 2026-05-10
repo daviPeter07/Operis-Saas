@@ -45,7 +45,7 @@ class TestUserSeeder extends Seeder
             ]
         );
 
-        if (!$user->current_company_id) {
+        if (! $user->current_company_id) {
             $user->current_company_id = $company->id;
             $user->save();
         }

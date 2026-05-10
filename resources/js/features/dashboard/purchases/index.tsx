@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
+import { useAccountPayables } from '@/hooks/use-account-payables';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
 import { useProducts } from '@/hooks/use-products';
@@ -39,8 +40,13 @@ type PurchaseRow = {
     status: string;
     payment_method: string;
     date: string;
-    installments: number | null;
+    installments: number | null; // installment number for boleto
     total_installments: number | null;
+    // optional fields for individual installment rows
+    payableId?: number;
+    installment_number?: number;
+    due_date?: string;
+    amount?: number;
 };
 
 function hasSamePurchaseMetricsRows(
@@ -70,6 +76,7 @@ function hasSamePurchaseMetricsRows(
 export function PurchasesModule() {
     const { data: purchases = [], isPending: isPurchasesPending } =
         usePurchases();
+    const { data: payables = [] } = useAccountPayables();
     const { data: suppliers = [], isPending: isSuppliersPending } =
         useSuppliers();
     const { data: products = [], isPending: isProductsPending } = useProducts();
@@ -143,9 +150,10 @@ export function PurchasesModule() {
         suppliers.map((supplier) => [supplier.id, supplier.name]),
     );
 
-    const rows: PurchaseRow[] = purchases
+    const rows: PurchaseRow[] = [];
+    purchases
         .filter((purchase) => purchase.status !== 'cancelled')
-        .map((purchase) => {
+        .forEach((purchase) => {
             const productNames = Array.from(
                 new Set(
                     (purchase.items ?? [])
@@ -168,26 +176,50 @@ export function PurchasesModule() {
                 ),
             );
 
-            return {
-                id: String(purchase.id),
-                supplier_id: purchase.supplier_id,
-                supplierName:
-                    suppliersById.get(purchase.supplier_id) ||
-                    `#${purchase.supplier_id}`,
-                productNames: productNames.join(', ') || '-',
-                categoryNames: categoryNames.join(', ') || '-',
-                brandNames: brandNames.join(', ') || '-',
-                total: purchase.total,
-                status: purchase.status,
-                payment_method: purchase.payment_method,
-                date: purchase.date,
-                installments: purchase.payment_method === 'boleto' 
-                    ? Math.max(1, Math.floor((purchase.boleto_term_days ?? 30) / 30)) 
-                    : null,
-                total_installments: purchase.payment_method === 'boleto' 
-                    ? Math.max(1, Math.floor((purchase.boleto_term_days ?? 30) / 30)) 
-                    : null,
-            };
+            if (purchase.payment_method === 'boleto') {
+                // Find related payables for this purchase
+                const related = payables.filter((p) => p.purchase_id === purchase.id);
+                const totalInst = related.length || 2; // fallback if not loaded yet
+                related.forEach((pay) => {
+                    rows.push({
+                        id: `${purchase.id}-${pay.id}`,
+                        supplier_id: purchase.supplier_id,
+                        supplierName:
+                            suppliersById.get(purchase.supplier_id) ||
+                            `#${purchase.supplier_id}`,
+                        productNames: productNames.join(', ') || '-',
+                        categoryNames: categoryNames.join(', ') || '-',
+                        brandNames: brandNames.join(', ') || '-',
+                        total: purchase.total,
+                        status: purchase.status,
+                        payment_method: purchase.payment_method,
+                        date: purchase.date,
+                        installments: pay.installment_number ?? null,
+                        total_installments: totalInst,
+                        payableId: pay.id,
+                        installment_number: pay.installment_number,
+                        due_date: pay.due_date,
+                        amount: pay.amount,
+                    });
+                });
+            } else {
+                rows.push({
+                    id: String(purchase.id),
+                    supplier_id: purchase.supplier_id,
+                    supplierName:
+                        suppliersById.get(purchase.supplier_id) ||
+                        `#${purchase.supplier_id}`,
+                    productNames: productNames.join(', ') || '-',
+                    categoryNames: categoryNames.join(', ') || '-',
+                    brandNames: brandNames.join(', ') || '-',
+                    total: purchase.total,
+                    status: purchase.status,
+                    payment_method: purchase.payment_method,
+                    date: purchase.date,
+                    installments: null,
+                    total_installments: null,
+                });
+            }
         });
 
     const handleFilteredDataChange = useCallback((nextRows: PurchaseRow[]) => {
@@ -246,7 +278,7 @@ export function PurchasesModule() {
                 const total = row.total_installments;
 
                 if (total && total >= 1) {
-                    return `1/${total}`;
+                    return `${val}/${total}`;
                 }
 
                 return '-';

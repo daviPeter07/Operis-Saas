@@ -81,10 +81,10 @@ test('pending purchase with boleto creates payable with boleto due date', functi
     expect($payables)->toHaveCount(2)
         ->and($payables[0]->installment_number)->toBe(1)
         ->and($payables[0]->due_date?->toDateString())
-            ->toBe(Carbon::parse('2026-05-06')->addDays(30)->toDateString())
+        ->toBe(Carbon::parse('2026-05-06')->addDays(30)->toDateString())
         ->and($payables[0]->amount)->toBe('15.00')
         ->and($payables[1]->installment_number)->toBe(2)
         ->and($payables[1]->due_date?->toDateString())
-            ->toBe(Carbon::parse('2026-05-06')->addDays(60)->toDateString())
+        ->toBe(Carbon::parse('2026-05-06')->addDays(60)->toDateString())
         ->and($payables[1]->amount)->toBe('15.00');
 });

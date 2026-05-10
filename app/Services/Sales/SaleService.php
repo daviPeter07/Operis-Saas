@@ -2,8 +2,8 @@
 
 namespace App\Services\Sales;
 
-use App\Enums\SaleStatus;
 use App\Enums\FinancialStatus;
+use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
 use App\Models\Customer;
 use App\Models\Product;
@@ -82,15 +82,15 @@ class SaleService
                 }
             }
 
-                // Always deduct stock on creation, regardless of status (including crediário)
-                $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
-                // If all crediário installments are already settled, mark the sale as completed (stock already deducted)
-                if ($paymentMethod === 'crediario') {
-                    $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
-                    if ($allSettled) {
-                        $sale->update(['status' => SaleStatus::Completed->value]);
-                    }
+            // Always deduct stock on creation, regardless of status (including crediário)
+            $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+            // If all crediário installments are already settled, mark the sale as completed (stock already deducted)
+            if ($paymentMethod === 'crediario') {
+                $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
+                if ($allSettled) {
+                    $sale->update(['status' => SaleStatus::Completed->value]);
                 }
+            }
 
             return $sale->refresh()->load(['items.product.category', 'customer']);
         });
@@ -159,22 +159,22 @@ class SaleService
                 }
             }
 
-                // If all crediário receivables are settled, update status (stock already deducted on creation)
-                if ($paymentMethod === 'crediario') {
-                    $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
-                    if ($allSettled) {
-                        $sale->update(['status' => SaleStatus::Completed->value]);
-                    }
+            // If all crediário receivables are settled, update status (stock already deducted on creation)
+            if ($paymentMethod === 'crediario') {
+                $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
+                if ($allSettled) {
+                    $sale->update(['status' => SaleStatus::Completed->value]);
                 }
+            }
 
-                // If a completed sale is set back to pending, revert stock
-                if ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
-                    $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
-                } elseif ($sale->status === SaleStatus::Completed->value) {
-                    // Adjust stock diff when items change on a completed sale
-                    $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
-                    $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
-                }
+            // If a completed sale is set back to pending, revert stock
+            if ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
+                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
+            } elseif ($sale->status === SaleStatus::Completed->value) {
+                // Adjust stock diff when items change on a completed sale
+                $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
+                $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
+            }
 
             return $sale->refresh()->load(['items.product.category', 'customer']);
         });

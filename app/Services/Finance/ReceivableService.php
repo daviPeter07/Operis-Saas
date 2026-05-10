@@ -4,9 +4,7 @@ namespace App\Services\Finance;
 
 use App\Enums\FinancialStatus;
 use App\Enums\SaleStatus;
-use App\Enums\StockMovementType;
 use App\Models\AccountReceivable;
-use App\Models\Product;
 use App\Models\Sale;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
 use App\Services\Products\StockMovementService;
@@ -121,7 +119,7 @@ class ReceivableService
 
     public function settle(AccountReceivable $receivable, int $userId, array $data): AccountReceivable
     {
-        return DB::transaction(function () use ($receivable, $userId, $data): AccountReceivable {
+        return DB::transaction(function () use ($receivable, $data): AccountReceivable {
             if (in_array($receivable->status, [FinancialStatus::Received->value, FinancialStatus::Cancelled->value], true)) {
                 throw ValidationException::withMessages([
                     'receivable' => 'Conta a receber ja foi baixada ou cancelada.',
@@ -152,7 +150,6 @@ class ReceivableService
             $sale->update(['status' => SaleStatus::Completed->value]);
 
             // Stock was already deducted on sale creation; no additional movement needed.
-
 
             return $receivable->refresh();
         });

@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
 use App\Services\Products\StockMovementService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -30,8 +31,7 @@ class PayableService
         $isPaid = $purchase->status === PurchaseStatus::Completed->value || $purchase->payment_method === 'cash';
 
         if ($purchase->payment_method === 'boleto') {
-            $termDays = max(30, (int) ($purchase->boleto_term_days ?? 30));
-            $installments = max(1, (int) floor($termDays / 30));
+            $installments = 2;
             $baseDate = $purchase->date?->copy() ?? now();
             $totalCents = (int) round((float) $purchase->total * 100);
             $baseInstallmentCents = intdiv($totalCents, $installments);
@@ -45,6 +45,7 @@ class PayableService
                     'company_id' => $purchase->company_id,
                     'purchase_id' => $purchase->id,
                     'installment_number' => $index,
+                    'total_installments' => $installments,
                     'due_date' => $dueDate,
                     'amount' => $currentCents / 100,
                     'status' => $isPaid ? 'paid' : 'pending',
@@ -83,15 +84,14 @@ class PayableService
         $paymentMethod = $data['payment_method'] ?? 'pix';
         $boletoTermDays = $data['boleto_term_days'] ?? null;
 
-        if ($paymentMethod === 'boleto' && $boletoTermDays) {
-            $termDays = max(30, (int) $boletoTermDays);
-            $installments = max(1, (int) floor($termDays / 30));
+        if ($paymentMethod === 'boleto') {
+            $installments = 2;
             $entryDate = $data['entry_date'];
             $totalCents = (int) round((float) $data['amount'] * 100);
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;
 
-            $baseDateObj = \Illuminate\Support\Carbon::parse($entryDate);
+            $baseDateObj = Carbon::parse($entryDate);
 
             for ($index = 1; $index <= $installments; $index++) {
                 $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
