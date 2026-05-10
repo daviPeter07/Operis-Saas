@@ -38,6 +38,7 @@ import { SaleDocumentPreviewDialog } from './sale-document-preview-dialog';
 import { SalesHeader } from './sales-header';
 
 type SaleRow = {
+    dueDate?: string;
     brandNames?: string;
     id: string;
     sale_id: number;
@@ -56,7 +57,10 @@ type SaleRow = {
 
 type SaleMutationPayload = SaleMutationInput;
 
-function hasSameSalesMetricsRows(previous: SaleRow[], next: SaleRow[]): boolean {
+function hasSameSalesMetricsRows(
+    previous: SaleRow[],
+    next: SaleRow[],
+): boolean {
     if (previous.length !== next.length) {
         return false;
     }
@@ -125,8 +129,7 @@ export function SalesModule() {
         useCategories();
     const { data: customers = [], isPending: isCustomersPending } =
         useCustomers();
-    const { data: products = [], isPending: isProductsPending } =
-        useProducts();
+    const { data: products = [], isPending: isProductsPending } = useProducts();
     const createBrand = useCreateBrand();
     const createCategory = useCreateCategory();
     const createProduct = useCreateProduct();
@@ -137,7 +140,9 @@ export function SalesModule() {
     const [editSale, setEditSale] = useState<DialogSalesRecord | null>(null);
     const [previewSale, setPreviewSale] = useState<Sale | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const [previewMode, setPreviewMode] = useState<'digital' | 'thermal'>('digital');
+    const [previewMode, setPreviewMode] = useState<'digital' | 'thermal'>(
+        'digital',
+    );
 
     // Abre o preview térmico ao clicar no ícone de visualização da linha
     const handlePreview = async (row: SaleRow) => {
@@ -220,7 +225,10 @@ export function SalesModule() {
         [brands],
     );
 
-    const brandMap = useMemo(() => new Map(brands.map((b) => [String(b.id), b.name])), [brands]);
+    const brandMap = useMemo(
+        () => new Map(brands.map((b) => [String(b.id), b.name])),
+        [brands],
+    );
     const categoryOptions = useMemo(
         () =>
             categories.map((category) => ({
@@ -266,8 +274,12 @@ export function SalesModule() {
                 new Set(
                     (sale.items ?? [])
                         .map((item) => {
-                            const prod = productById.get(String(item.product_id));
-                            return prod?.brand ? brandMap.get(prod.brand) ?? '' : '';
+                            const prod = productById.get(
+                                String(item.product_id),
+                            );
+                            return prod?.brand
+                                ? (brandMap.get(prod.brand) ?? '')
+                                : '';
                         })
                         .filter((value): value is string => Boolean(value)),
                 ),
@@ -295,8 +307,10 @@ export function SalesModule() {
                             return firstDate.localeCompare(secondDate);
                         }
 
-                        return (first.installment_number ?? 0) -
-                            (second.installment_number ?? 0);
+                        return (
+                            (first.installment_number ?? 0) -
+                            (second.installment_number ?? 0)
+                        );
                     }) ?? [];
 
             const saleProfit = calculateSaleProfit(sale);
@@ -304,7 +318,8 @@ export function SalesModule() {
             if (saleReceivables.length > 0) {
                 const totalReceivablesAmount =
                     saleReceivables.reduce(
-                        (sum, receivable) => sum + Number(receivable.amount ?? 0),
+                        (sum, receivable) =>
+                            sum + Number(receivable.amount ?? 0),
                         0,
                     ) || Number(sale.total);
 
@@ -340,6 +355,12 @@ export function SalesModule() {
                                 sale.createdAt ??
                                 sale.date,
                         ),
+                        dueDate: toDateOnly(
+                            receivable.due_date ??
+                                receivable.entry_date ??
+                                sale.createdAt ??
+                                sale.date,
+                        ),
                         installments: sale.installments ?? 1,
                         installment_number:
                             receivable.installment_number ?? undefined,
@@ -357,22 +378,23 @@ export function SalesModule() {
                 const installmentDate = new Date(baseDate);
                 installmentDate.setMonth(installmentDate.getMonth() + i);
 
-rows.push({
-                        id: `${sale.id}-${i + 1}`,
-                        sale_id: sale.id,
-                        customer_id: sale.customer_id,
-                        clientName,
-                        productNames: productNames.join(', ') || '-',
-                        categoryNames: categoryNames.join(', ') || '-',
-                        brandNames: brandNames.join(', ') || '-',
-                        total: installmentValue,
-                        profit: saleProfit / installments,
-                        status: sale.status,
-                        payment_method: sale.payment_method,
-                        date: installmentDate.toISOString().slice(0, 10),
-                        installments,
-                        installment_number: i + 1,
-                    });
+                rows.push({
+                    id: `${sale.id}-${i + 1}`,
+                    sale_id: sale.id,
+                    customer_id: sale.customer_id,
+                    clientName,
+                    productNames: productNames.join(', ') || '-',
+                    categoryNames: categoryNames.join(', ') || '-',
+                    brandNames: brandNames.join(', ') || '-',
+                    total: installmentValue,
+                    profit: saleProfit / installments,
+                    status: sale.status,
+                    payment_method: sale.payment_method,
+                    date: installmentDate.toISOString().slice(0, 10),
+                    dueDate: installmentDate.toISOString().slice(0, 10),
+                    installments,
+                    installment_number: i + 1,
+                });
             }
         });
 
@@ -420,7 +442,14 @@ rows.push({
             header: 'Data',
             render: (value: unknown) => formatDateBR(String(value)),
         },
-
+        {
+            key: 'dueDate',
+            header: 'Vencimento',
+            render: (value: unknown, row: SaleRow) =>
+                row.payment_method === 'crediario'
+                    ? formatDateBR(String(row.date))
+                    : '-',
+        },
     ];
 
     const metrics = useMemo(() => {
@@ -481,7 +510,9 @@ rows.push({
         const isCardCredit = sale.cardType === 'credit';
         const useInstallments = isCrediario || isCardCredit;
 
-        const isAllPaid = isCrediario && (sale.paidInstallments?.length ?? 0) === (sale.installments ?? 1);
+        const isAllPaid =
+            isCrediario &&
+            (sale.paidInstallments?.length ?? 0) === (sale.installments ?? 1);
         const payload: SaleMutationPayload = {
             customer_id: customerId,
             date: sale.createdAt || todayString(),
@@ -491,12 +522,18 @@ rows.push({
                 | 'card_debit'
                 | 'card_credit'
                 | 'crediario',
-            status: isAllPaid ? 'completed' : (sale.status === 'completed' ? 'completed' : 'pending'),
+            status: isAllPaid
+                ? 'completed'
+                : sale.status === 'completed'
+                  ? 'completed'
+                  : 'pending',
             installments: useInstallments ? sale.installments : undefined,
             first_installment_date: useInstallments
                 ? sale.firstInstallmentDate
                 : undefined,
-            installment_value: useInstallments ? sale.installmentValue : undefined,
+            installment_value: useInstallments
+                ? sale.installmentValue
+                : undefined,
             crediario_entry:
                 sale.paymentMethod === 'crediario'
                     ? Number(sale.crediarioEntry ?? 0)
@@ -584,10 +621,10 @@ rows.push({
                             full.payment_method === 'cash'
                                 ? 'money'
                                 : full.payment_method === 'crediario'
-                                ? 'crediario'
-                                : full.payment_method === 'pix'
-                                ? 'pix'
-                                : 'card';
+                                  ? 'crediario'
+                                  : full.payment_method === 'pix'
+                                    ? 'pix'
+                                    : 'card';
 
                         const mappedSale: DialogSalesRecord = {
                             id: String(full.id),
@@ -625,8 +662,7 @@ rows.push({
                                 full.first_installment_date ?? undefined,
                             installmentValue:
                                 full.installment_value ?? undefined,
-                            crediarioEntry:
-                                full.crediario_entry ?? undefined,
+                            crediarioEntry: full.crediario_entry ?? undefined,
                             availableCredit: mappedCustomers.find(
                                 (customer) =>
                                     customer.id === String(full.customer_id),
@@ -635,8 +671,8 @@ rows.push({
                                 full.status === 'completed'
                                     ? 'completed'
                                     : full.status === 'cancelled'
-                                    ? 'cancelled'
-                                    : 'pending',
+                                      ? 'cancelled'
+                                      : 'pending',
                         };
 
                         setEditSale(mappedSale);
@@ -750,9 +786,7 @@ rows.push({
                         try {
                             const payload: SaleMutationPayload = {
                                 customer_id: customerId,
-                                date:
-                                    sale.createdAt ||
-                                    todayString(),
+                                date: sale.createdAt || todayString(),
                                 payment_method: paymentMethod as
                                     | 'cash'
                                     | 'pix'
@@ -763,22 +797,18 @@ rows.push({
                                     sale.status === 'completed'
                                         ? 'completed'
                                         : 'pending',
-                                installments:
-                                    useInstallments
-                                        ? sale.installments
-                                        : undefined,
-                                first_installment_date:
-                                    useInstallments
-                                        ? sale.firstInstallmentDate
-                                        : undefined,
-                                installment_value:
-                                    useInstallments
-                                        ? sale.installmentValue
-                                        : undefined,
-                                crediario_entry:
-                                    isCrediario
-                                        ? Number(sale.crediarioEntry ?? 0)
-                                        : undefined,
+                                installments: useInstallments
+                                    ? sale.installments
+                                    : undefined,
+                                first_installment_date: useInstallments
+                                    ? sale.firstInstallmentDate
+                                    : undefined,
+                                installment_value: useInstallments
+                                    ? sale.installmentValue
+                                    : undefined,
+                                crediario_entry: isCrediario
+                                    ? Number(sale.crediarioEntry ?? 0)
+                                    : undefined,
                                 items,
                             };
 
