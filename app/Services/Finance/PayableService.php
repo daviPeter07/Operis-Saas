@@ -28,9 +28,35 @@ class PayableService
         }
 
         $isPaid = $purchase->status === PurchaseStatus::Completed->value || $purchase->payment_method === 'cash';
-        $dueDate = $purchase->payment_method === 'boleto'
-            ? $purchase->date?->copy()->addDays((int) ($purchase->boleto_term_days ?? 30))->toDateString()
-            : ($purchase->due_date?->toDateString() ?? $purchase->date?->toDateString());
+
+        if ($purchase->payment_method === 'boleto') {
+            $termDays = max(30, (int) ($purchase->boleto_term_days ?? 30));
+            $installments = max(1, (int) floor($termDays / 30));
+            $baseDate = $purchase->date?->copy() ?? now();
+            $totalCents = (int) round((float) $purchase->total * 100);
+            $baseInstallmentCents = intdiv($totalCents, $installments);
+            $remainderCents = $totalCents % $installments;
+
+            for ($index = 1; $index <= $installments; $index++) {
+                $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
+                $dueDate = $baseDate->copy()->addDays(30 * $index)->toDateString();
+
+                $this->payables->create([
+                    'company_id' => $purchase->company_id,
+                    'purchase_id' => $purchase->id,
+                    'installment_number' => $index,
+                    'due_date' => $dueDate,
+                    'amount' => $currentCents / 100,
+                    'status' => $isPaid ? 'paid' : 'pending',
+                    'paid_at' => $isPaid ? now() : null,
+                    'paid_method' => $isPaid ? $purchase->payment_method : null,
+                ]);
+            }
+
+            return;
+        }
+
+        $dueDate = $purchase->due_date?->toDateString() ?? $purchase->date?->toDateString();
 
         $this->payables->create([
             'company_id' => $purchase->company_id,
