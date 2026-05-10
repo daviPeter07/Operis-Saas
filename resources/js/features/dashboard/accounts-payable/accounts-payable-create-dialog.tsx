@@ -147,19 +147,20 @@ export function AccountsPayableCreateDialog({
                                 return;
                             }
 
-                            onSubmit({
-                                supplier_id: Number(supplierId),
-                                item: item.trim(),
-                                description: description.trim() || undefined,
-                                amount: parseCurrencyInput(amount),
-                                entry_date: today,
-                                due_date: dueDate,
-                                payment_method: paymentMethod,
-                                status,
-                                ...(paymentMethod === 'boleto' && {
-                                    boleto_term_days: Number(boletoTermDays),
-                                }),
-                            });
+onSubmit({
+                                 supplier_id: Number(supplierId),
+                                 item: item.trim(),
+                                 description: description.trim() || undefined,
+                                 amount: parseCurrencyInput(amount),
+                                 entry_date: today,
+                                 due_date: dueDate,
+                                 payment_method: paymentMethod,
+                                 status,
+                                 ...(paymentMethod === 'boleto' && {
+                                     boleto_term_days: Number(boletoTermDays),
+                                 }),
+                             });
+
 
                             resetForm();
                             onOpenChange(false);

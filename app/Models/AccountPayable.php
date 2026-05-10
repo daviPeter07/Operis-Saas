@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'supplier_id',
     'purchase_id',
     'installment_number',
+    'total_installments',
     'entry_date',
     'item',
     'description',

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Finance;
 
 use App\Http\Resources\ApiResource;
+use App\Models\AccountPayable;
 use Illuminate\Http\Request;
 
 class AccountPayableResource extends ApiResource
@@ -19,7 +20,7 @@ class AccountPayableResource extends ApiResource
             'supplier_id' => $this->supplier_id,
             'purchase_id' => $this->purchase_id,
             'installment_number' => $this->installment_number,
-            'total_installments' => $this->purchase ? $this->purchase->installments : null,
+            'total_installments' => $this->total_installments ?? ($this->purchase ? $this->purchase->installments : (int) AccountPayable::where('supplier_id', $this->supplier_id)->where('entry_date', $this->entry_date)->max('installment_number')),
             'entry_date' => $this->entry_date?->toDateString(),
             'item' => $this->item,
             'description' => $this->description,

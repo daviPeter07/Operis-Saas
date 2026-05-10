@@ -102,6 +102,7 @@ class PayableService
                     'supplier_id' => $data['supplier_id'],
                     'purchase_id' => null,
                     'installment_number' => $index,
+                    'total_installments' => $installments,
                     'entry_date' => $entryDate,
                     'item' => $data['item'],
                     'description' => $data['description'] ?? null,

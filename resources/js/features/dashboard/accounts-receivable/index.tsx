@@ -218,12 +218,6 @@ export function AccountsReceivableModule() {
                         </p>
                     </div>
                     <button
-                        onClick={() => void handleDelete()}
-                        className="inline-flex h-9 items-center justify-center rounded-md bg-red-600 px-4 text-sm font-medium text-white transition-colors hover:bg-red-700"
-                    >
-                        Deletar
-                    </button>
-                    <button
                         onClick={() => void handleConfirmReceipt()}
                         className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
                     >
