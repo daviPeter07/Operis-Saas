@@ -273,7 +273,7 @@ export function AccountsPayableModule() {
                 onCreateOpenChange={setIsCreateOpen}
                 onDelete={async (row) => {
                     await deleteAccountPayable.mutateAsync(Number(row.id));
-                    toast.success('Conta a pagar excluida com sucesso.');
+                    setSelectedIds(new Set());
                 }}
                 createDialog={({ open, onOpenChange }) => (
                     <AccountsPayableCreateDialog

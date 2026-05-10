@@ -5,6 +5,7 @@ import {
     useQuery,
     useQueryClient,
 } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { accountPayableService } from '@/services/account-payables';
 import { productsQueryKey } from './use-products';
 import { purchasesQueryKey } from './use-purchases';
@@ -84,6 +85,10 @@ export function useDeleteAccountPayable() {
             accountPayableService.delete(id),
         onSuccess: async () => {
             await invalidateRelatedQueries(queryClient);
+            toast.success('Conta a pagar excluida com sucesso.');
+        },
+        onError: () => {
+            toast.error('Erro ao excluir conta a pagar.');
         },
     });
 }
