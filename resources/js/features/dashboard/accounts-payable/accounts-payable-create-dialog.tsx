@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Truck } from 'lucide-react';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { AccountsPayableCreateDialogProps } from '@/types/dashboard-forms';
 import { todayString } from '@/utils/sales-dialog';
 import { SupplierCreateDialog } from '../suppliers/supplier-create-dialog';
@@ -161,46 +167,52 @@ export function AccountsPayableCreateDialog({
                             onOpenChange(false);
                         }}
                     >
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2 sm:col-span-2">
-                                <Label>Fornecedor *</Label>
-                                <div className="flex gap-2">
-                                    <div className="min-w-0 flex-1">
-                                        <SearchableSelect
-                                            value={supplierId}
-                                            searchValue={supplierSearch}
-                                            onSearchChange={setSupplierSearch}
-                                            onChange={(value) => {
-                                                setSupplierId(value);
-                                                clearErrors('supplier_id');
-                                                const selectedSupplier = suppliers.find(
-                                                    (supplier) =>
-                                                        supplier.id === value,
-                                                );
-
-                                                setSupplierSearch(
-                                                    selectedSupplier?.name ?? '',
-                                                );
-                                            }}
-                                            options={filteredSuppliers.map(
-                                                (supplier) => ({
-                                                    value: supplier.id,
-                                                    label: supplier.name,
-                                                }),
-                                            )}
-                                            placeholder="Buscar fornecedor"
-                                            emptyMessage="Nenhum fornecedor encontrado."
-                                        />
-                                    </div>
-
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setSupplierCreateOpen(true)}
-                                    >
-                                        Novo
-                                    </Button>
+                        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+                            <div className="col-span-1">
+                                <div className="flex items-center gap-2">
+                                    <Label className="mb-0">
+                                        Fornecedor <span className="text-red-600">*</span>
+                                    </Label>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-0"
+                                                onClick={() => setSupplierCreateOpen(true)}
+                                            >
+                                                <Truck className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Criar fornecedor</TooltipContent>
+                                    </Tooltip>
                                 </div>
+                                <SearchableSelect
+                                    value={supplierId}
+                                    searchValue={supplierSearch}
+                                    onSearchChange={setSupplierSearch}
+                                    onChange={(value) => {
+                                        setSupplierId(value);
+                                        clearErrors('supplier_id');
+                                        const selectedSupplier = suppliers.find(
+                                            (supplier) =>
+                                                supplier.id === value,
+                                        );
+
+                                        setSupplierSearch(
+                                            selectedSupplier?.name ?? '',
+                                        );
+                                    }}
+                                    options={filteredSuppliers.map(
+                                        (supplier) => ({
+                                            value: supplier.id,
+                                            label: supplier.name,
+                                        }),
+                                    )}
+                                    placeholder="Buscar fornecedor"
+                                    emptyMessage="Nenhum fornecedor encontrado."
+                                />
 
                                 {errors.supplier_id?.message ? (
                                     <p className="text-xs text-destructive">
@@ -209,9 +221,9 @@ export function AccountsPayableCreateDialog({
                                 ) : null}
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="col-span-1">
                                 <Label htmlFor="payable-item">
-                                    Item <span className="text-destructive">*</span>
+                                    Item <span className="text-red-600">*</span>
                                 </Label>
                                 <Input
                                     id="payable-item"
@@ -230,9 +242,9 @@ export function AccountsPayableCreateDialog({
                                 ) : null}
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="col-span-1">
                                 <Label htmlFor="payable-amount">
-                                    Valor <span className="text-destructive">*</span>
+                                    Valor <span className="text-red-600">*</span>
                                 </Label>
                                 <Input
                                     id="payable-amount"
@@ -254,20 +266,8 @@ export function AccountsPayableCreateDialog({
                                 ) : null}
                             </div>
 
-                            <div className="grid gap-2 sm:col-span-2">
-                                <Label htmlFor="payable-description">Descricao</Label>
-                                <Input
-                                    id="payable-description"
-                                    value={description}
-                                    onChange={(event) =>
-                                        setDescription(event.currentTarget.value)
-                                    }
-                                    placeholder="Detalhes da conta"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label>Data de lancamento *</Label>
+                            <div className="col-span-1">
+                                <Label>Data de lancamento <span className="text-red-600">*</span></Label>
                                 <DatePickerInput
                                     value={entryDate}
                                     onChange={(value) => {
@@ -283,8 +283,8 @@ export function AccountsPayableCreateDialog({
                                 ) : null}
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label>Vencimento *</Label>
+                            <div className="col-span-1">
+                                <Label>Vencimento <span className="text-red-600">*</span></Label>
                                 <DatePickerInput
                                     value={dueDate}
                                     onChange={(value) => {
@@ -300,7 +300,7 @@ export function AccountsPayableCreateDialog({
                                 ) : null}
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="col-span-1">
                                 <Label htmlFor="payable-method">Metodo</Label>
                                 <Select
                                     value={paymentMethod}
@@ -331,7 +331,7 @@ export function AccountsPayableCreateDialog({
                                 </Select>
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="col-span-1">
                                 <Label htmlFor="payable-status">Status</Label>
                                 <Select
                                     value={status}
@@ -349,6 +349,18 @@ export function AccountsPayableCreateDialog({
                                         <SelectItem value="paid">Pago</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+
+                            <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="payable-description">Descricao</Label>
+                                <Input
+                                    id="payable-description"
+                                    value={description}
+                                    onChange={(event) =>
+                                        setDescription(event.currentTarget.value)
+                                    }
+                                    placeholder="Detalhes da conta"
+                                />
                             </div>
                         </div>
 

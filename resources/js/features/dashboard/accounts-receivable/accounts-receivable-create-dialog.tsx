@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { UserPlus } from 'lucide-react';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { UiCustomer } from '@/types/dashboard-entities';
 import { todayString } from '@/utils/sales-dialog';
 
@@ -147,128 +153,134 @@ export function AccountsReceivableCreateDialog({
                         });
                     }}
                 >
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="grid gap-2 sm:col-span-2">
-                                <Label>Cliente *</Label>
-                                <div className="flex gap-2">
-                                    <div className="min-w-0 flex-1">
-                                        <SearchableSelect
-                                            value={customerId}
-                                            searchValue={customerSearch}
-                                            onSearchChange={setCustomerSearch}
-                                            onChange={(value) => {
-                                                setCustomerId(value);
-                                                clearErrors('customer_id');
-                                                const selectedCustomer =
-                                                    customers.find(
-                                                        (customer) =>
-                                                            customer.id === value,
-                                                    );
-
-                                                setCustomerSearch(
-                                                    selectedCustomer?.name ?? '',
-                                                );
-                                            }}
-                                            options={filteredCustomers.map(
-                                                (customer) => ({
-                                                    value: customer.id,
-                                                    label: customer.name,
-                                                }),
-                                            )}
-                                            placeholder="Buscar cliente"
-                                            emptyMessage="Nenhum cliente encontrado."
-                                        />
-                                    </div>
-
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setClientCreateOpen(true)}
-                                    >
-                                        Novo
-                                    </Button>
+                        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+                            <div className="col-span-1">
+                                <div className="flex items-center gap-2">
+                                    <Label className="mb-0">
+                                        Cliente <span className="text-red-600">*</span>
+                                    </Label>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-0"
+                                                onClick={() => setClientCreateOpen(true)}
+                                            >
+                                                <UserPlus className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Criar cliente</TooltipContent>
+                                    </Tooltip>
                                 </div>
+                                <SearchableSelect
+                                    value={customerId}
+                                    searchValue={customerSearch}
+                                    onSearchChange={setCustomerSearch}
+                                    onChange={(value) => {
+                                        setCustomerId(value);
+                                        clearErrors('customer_id');
+                                        const selectedCustomer =
+                                            customers.find(
+                                                (customer) =>
+                                                    customer.id === value,
+                                            );
+
+                                        setCustomerSearch(
+                                            selectedCustomer?.name ?? '',
+                                        );
+                                    }}
+                                    options={filteredCustomers.map(
+                                        (customer) => ({
+                                            value: customer.id,
+                                            label: customer.name,
+                                        }),
+                                    )}
+                                    placeholder="Buscar cliente"
+                                    emptyMessage="Nenhum cliente encontrado."
+                                />
                             {errors.customer_id?.message ? (
                                 <p className="text-xs text-destructive">
                                     {String(errors.customer_id.message)}
                                 </p>
                             ) : null}
-                        </div>
+                            </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="receivable-item">
-                                Item <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="receivable-item"
-                                value={item}
-                                onChange={(event) => {
-                                    setItem(event.currentTarget.value);
-                                    clearErrors('item');
-                                }}
-                                placeholder="Ex.: ajuste comercial"
-                                required
-                            />
-                            {errors.item?.message ? (
-                                <p className="text-xs text-destructive">
-                                    {String(errors.item.message)}
-                                </p>
-                            ) : null}
-                        </div>
+                            <div className="col-span-1">
+                                <Label htmlFor="receivable-item">
+                                    Item <span className="text-red-600">*</span>
+                                </Label>
+                                <Input
+                                    id="receivable-item"
+                                    value={item}
+                                    onChange={(event) => {
+                                        setItem(event.currentTarget.value);
+                                        clearErrors('item');
+                                    }}
+                                    placeholder="Ex.: ajuste comercial"
+                                    required
+                                />
+                                {errors.item?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.item.message)}
+                                    </p>
+                                ) : null}
+                            </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="receivable-amount">
-                                Valor <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="receivable-amount"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={amount}
-                                onChange={(event) => {
-                                    setAmount(event.currentTarget.value);
-                                    clearErrors('amount');
-                                }}
-                                placeholder="0,00"
-                                required
-                            />
-                            {errors.amount?.message ? (
-                                <p className="text-xs text-destructive">
-                                    {String(errors.amount.message)}
-                                </p>
-                            ) : null}
-                        </div>
+                            <div className="col-span-1">
+                                <Label htmlFor="receivable-amount">
+                                    Valor <span className="text-red-600">*</span>
+                                </Label>
+                                <Input
+                                    id="receivable-amount"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={amount}
+                                    onChange={(event) => {
+                                        setAmount(event.currentTarget.value);
+                                        clearErrors('amount');
+                                    }}
+                                    placeholder="0,00"
+                                    required
+                                />
+                                {errors.amount?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.amount.message)}
+                                    </p>
+                                ) : null}
+                            </div>
 
-                        <div className="grid gap-2 sm:col-span-2">
-                            <Label htmlFor="receivable-description">Descricao</Label>
-                            <Input
-                                id="receivable-description"
-                                value={description}
-                                onChange={(event) =>
-                                    setDescription(event.currentTarget.value)
-                                }
-                                placeholder="Detalhes da conta"
-                            />
-                        </div>
+                            <div className="col-span-1">
+                                <Label>Data de lancamento <span className="text-red-600">*</span></Label>
+                                <DatePickerInput
+                                    value={entryDate}
+                                    onChange={(value) => {
+                                        setEntryDate(value);
+                                        clearErrors('entry_date');
+                                    }}
+                                    placeholder="Selecionar data"
+                                />
+                                {errors.entry_date?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.entry_date.message)}
+                                    </p>
+                                ) : null}
+                            </div>
 
-                        <div className="grid gap-2">
-                            <Label>Data de lancamento *</Label>
-                            <DatePickerInput
-                                value={entryDate}
-                                onChange={(value) => {
-                                    setEntryDate(value);
-                                    clearErrors('entry_date');
-                                }}
-                                placeholder="Selecionar data"
-                            />
-                            {errors.entry_date?.message ? (
-                                <p className="text-xs text-destructive">
-                                    {String(errors.entry_date.message)}
-                                </p>
-                            ) : null}
+                            <div className="col-span-1 sm:col-span-2">
+                                <Label htmlFor="receivable-description">Descricao</Label>
+                                <Input
+                                    id="receivable-description"
+                                    value={description}
+                                    onChange={(event) =>
+                                        setDescription(event.currentTarget.value)
+                                    }
+                                    placeholder="Detalhes da conta"
+                                />
+                            </div>
                         </div>
-                    </div>
 
                     <DialogFooter>
                         <Button

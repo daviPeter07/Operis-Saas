@@ -144,7 +144,7 @@ export function ManualAccountReceivableDialog({
                     }}
                 >
                     <div className="grid gap-2">
-                        <Label>Cliente *</Label>
+                        <Label>Cliente <span className="text-red-600">*</span></Label>
                         <SearchableSelect
                             value={customerId}
                             searchValue={customerSearch}
@@ -238,7 +238,7 @@ export function ManualAccountReceivableDialog({
                     </div>
 
                     <div className="grid gap-2">
-                        <Label>Data *</Label>
+                        <Label>Data <span className="text-red-600">*</span></Label>
                         <DatePickerInput
                             value={entryDate}
                             onChange={(value) => {

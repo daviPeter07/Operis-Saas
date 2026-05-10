@@ -390,7 +390,7 @@ export function FinancialEntryDialog({
                                                 ) : null}
 
                                                 <div className="grid gap-2">
-                                                    <Label>Data *</Label>
+                                                    <Label>Data <span className="text-red-600">*</span></Label>
                                                     <DatePickerInput
                                                         value={form.createdAt}
                                                         onChange={(value) =>
