@@ -108,7 +108,7 @@ export function PurchaseCheckoutPanel({
         <section className="flex min-h-0 flex-col bg-card">
             <div className="border-b p-4">
                 <DialogHeader className="text-left">
-                    <DialogTitle className="text-lg">Finalizar compra</DialogTitle>
+                    <DialogTitle className="text-lg">Criar compra</DialogTitle>
                     <DialogDescription>
                         Fornecedor, itens, pagamento e fechamento.
                     </DialogDescription>
@@ -299,7 +299,7 @@ setBoletoTermDays(value);
                     </div>
 
                     <Button type="button" className="w-full" size="lg" disabled={!canSubmit} onClick={onSubmit}>
-                        Finalizar compra
+                        Próximo
                     </Button>
                 </div>
             </div>

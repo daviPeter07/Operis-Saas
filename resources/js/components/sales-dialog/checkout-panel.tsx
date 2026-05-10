@@ -150,9 +150,7 @@ export function CheckoutPanel({
         <section className="flex min-h-0 flex-col bg-card">
             <div className="border-b p-4">
                 <DialogHeader className="text-left">
-                    <DialogTitle className="text-lg">
-                        Finalizar venda
-                    </DialogTitle>
+                    <DialogTitle className="text-lg">Criar venda</DialogTitle>
                     <DialogDescription>
                         Cliente, itens, pagamento e fechamento.
                     </DialogDescription>
@@ -446,8 +444,8 @@ export function CheckoutPanel({
                                 ) : isCrediarioEntryInvalid ? null : (
                                     <p className="text-sm text-muted-foreground">
                                         A venda sera registrada como pendente,
-                                        com entrada imediata e parcelas no
-                                        saldo financiado.
+                                        com entrada imediata e parcelas no saldo
+                                        financiado.
                                     </p>
                                 )}
                             </CardContent>
@@ -561,7 +559,7 @@ export function CheckoutPanel({
                         }
                         onClick={onSubmit}
                     >
-                        Finalizar venda
+                        Próximo
                     </Button>
                 </div>
             </div>
