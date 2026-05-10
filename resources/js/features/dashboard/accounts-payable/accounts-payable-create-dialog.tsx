@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { initialAccountsPayableForm } from '@/constants/dashboard-form-initials';
 import { useFormState } from '@/hooks/use-form-state';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type { AccountsPayableCreateDialogProps } from '@/types/dashboard-forms';
-import { mapFinancialFormToAccountsPayable } from '@/utils/dashboard-financial';
 import { FinancialEntryDialog } from '../shared/financial-entry-dialog';
 import { SupplierCreateDialog } from '../suppliers/supplier-create-dialog';
 
@@ -15,6 +23,23 @@ export function AccountsPayableCreateDialog({
 }: AccountsPayableCreateDialogProps) {
     const { form, setField } = useFormState(initialAccountsPayableForm, open);
     const [supplierCreateOpen, setSupplierCreateOpen] = useState(false);
+    const [item, setItem] = useState('');
+    const [description, setDescription] = useState('');
+    const [dueDate, setDueDate] = useState(form.createdAt);
+    const [status, setStatus] = useState<'pending' | 'paid'>('pending');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        setItem('');
+        setDescription('');
+        setDueDate(form.createdAt);
+        setStatus('pending');
+        setErrors({});
+    }, [form.createdAt, open]);
 
     return (
         <>
@@ -29,28 +54,146 @@ export function AccountsPayableCreateDialog({
                 onChange={setField}
                 suppliers={suppliers}
                 onOpenCreateSupplier={() => setSupplierCreateOpen(true)}
+                showOperationSummary={false}
+                showStatusField={false}
                 catalogSection={
                     <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
-                        <div>
-                            <h3 className="text-sm font-semibold">
-                                Fluxo compartilhado com compras
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                                Contas a pagar manuais continuam fora do escopo. O
-                                fechamento abaixo existe para manter o mesmo padrao
-                                visual antes de redirecionar para o cadastro de
-                                compra.
+                        {errors.supplier ? (
+                            <p className="text-xs text-destructive">
+                                {errors.supplier}
                             </p>
+                        ) : null}
+                        {errors.total ? (
+                            <p className="text-xs text-destructive">
+                                {errors.total}
+                            </p>
+                        ) : null}
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="payable-item">
+                                Item <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="payable-item"
+                                value={item}
+                                onChange={(event) => setItem(event.currentTarget.value)}
+                                placeholder="Ex.: pagamento de frete"
+                            />
+                            {errors.item ? (
+                                <p className="text-xs text-destructive">
+                                    {errors.item}
+                                </p>
+                            ) : null}
                         </div>
 
-                        <div className="rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
-                            Para gerar titulos reais no backend, finalize pelo
-                            fluxo de compra completo.
+                        <div className="grid gap-2">
+                            <Label htmlFor="payable-description">Descrição</Label>
+                            <Input
+                                id="payable-description"
+                                value={description}
+                                onChange={(event) =>
+                                    setDescription(event.currentTarget.value)
+                                }
+                                placeholder="Detalhes da conta"
+                            />
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="payable-due-date">
+                                    Vencimento{' '}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="payable-due-date"
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(event) =>
+                                        setDueDate(event.currentTarget.value)
+                                    }
+                                />
+                                {errors.due_date ? (
+                                    <p className="text-xs text-destructive">
+                                        {errors.due_date}
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="payable-status">
+                                    Status{' '}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <Select
+                                    value={status}
+                                    onValueChange={(value) => {
+                                        if (value === 'pending' || value === 'paid') {
+                                            setStatus(value);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger id="payable-status">
+                                        <SelectValue placeholder="Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pending">
+                                            Pendente
+                                        </SelectItem>
+                                        <SelectItem value="paid">Pago</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
                 }
                 onSubmit={() => {
-                    onSubmit(mapFinancialFormToAccountsPayable(form));
+                    const supplier = suppliers.find(
+                        (entry) => entry.name === form.supplierName,
+                    );
+
+                    const nextErrors: Record<string, string> = {};
+
+                    if (!supplier) {
+                        nextErrors.supplier = 'Fornecedor é obrigatório.';
+                    }
+
+                    if (!item.trim()) {
+                        nextErrors.item = 'Item é obrigatório.';
+                    }
+
+                    if (!(Number(form.total || 0) > 0)) {
+                        nextErrors.total = 'Valor deve ser maior que zero.';
+                    }
+
+                    if (!dueDate) {
+                        nextErrors.due_date = 'Vencimento é obrigatório.';
+                    }
+
+                    setErrors(nextErrors);
+
+                    if (Object.keys(nextErrors).length > 0 || !supplier) {
+                        return;
+                    }
+
+                    const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' | 'boleto' =
+                        form.paymentMethod === 'money'
+                            ? 'cash'
+                            : form.paymentMethod === 'card'
+                              ? 'card'
+                              : form.paymentMethod === 'boleto'
+                                ? 'boleto'
+                                : 'pix';
+
+                    onSubmit({
+                        supplier_id: Number(supplier.id),
+                        item: item.trim(),
+                        description: description.trim() || undefined,
+                        amount: Number(form.total || 0),
+                        entry_date: form.createdAt,
+                        due_date: dueDate,
+                        payment_method: paymentMethod,
+                        status,
+                    });
                 }}
             />
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Finance\StoreAccountPayableRequest;
 use App\Http\Resources\Finance\AccountPayableResource;
 use App\Models\AccountPayable;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
@@ -16,6 +17,19 @@ class AccountPayableController extends Controller
         private readonly AccountPayableRepositoryInterface $payables,
         private readonly PayableService $payableService,
     ) {}
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreAccountPayableRequest $request): JsonResponse
+    {
+        $this->payableService->createManual(
+            auth()->user()->current_company_id,
+            $request->validated()
+        );
+
+        return response()->json(['data' => true], 201);
+    }
 
     /**
      * Display a listing of the resource.

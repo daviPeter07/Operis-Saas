@@ -16,8 +16,12 @@ class AccountPayableResource extends ApiResource
     {
         return [
             'id' => $this->id,
+            'supplier_id' => $this->supplier_id,
             'purchase_id' => $this->purchase_id,
             'installment_number' => $this->installment_number,
+            'entry_date' => $this->entry_date?->toDateString(),
+            'item' => $this->item,
+            'description' => $this->description,
             'due_date' => $this->due_date?->toDateString(),
             'amount' => $this->amount,
             'status' => $this->status,

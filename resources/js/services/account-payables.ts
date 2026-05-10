@@ -10,6 +10,17 @@ type SettleAccountPayablePayload = {
     payment_notes?: string;
 };
 
+type CreateManualAccountPayablePayload = {
+    supplier_id: number;
+    item: string;
+    description?: string;
+    amount: number;
+    entry_date: string;
+    due_date: string;
+    payment_method: 'cash' | 'pix' | 'card' | 'installment' | 'boleto';
+    status: 'pending' | 'paid';
+};
+
 function normalizeAccountPayable(accountPayable: AccountPayable): AccountPayable {
     return {
         ...accountPayable,
@@ -47,6 +58,10 @@ class AccountPayableService extends ApiService<AccountPayable> {
         );
 
         return normalizeAccountPayable(response.data);
+    }
+
+    async create(payload: CreateManualAccountPayablePayload): Promise<void> {
+        await apiClient.post('/account-payables', payload);
     }
 }
 

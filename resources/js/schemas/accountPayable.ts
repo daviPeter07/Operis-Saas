@@ -1,7 +1,11 @@
 export interface AccountPayable {
     id: number;
-    purchase_id: number;
-    installment_number: number;
+    supplier_id: number | null;
+    purchase_id: number | null;
+    installment_number: number | null;
+    entry_date: string | null;
+    item: string | null;
+    description: string | null;
     due_date: string;
     amount: number;
     status: 'pending' | 'paid' | 'overdue' | 'cancelled';

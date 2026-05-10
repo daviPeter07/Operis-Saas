@@ -10,8 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'company_id',
+    'supplier_id',
     'purchase_id',
     'installment_number',
+    'entry_date',
+    'item',
+    'description',
     'due_date',
     'amount',
     'status',
@@ -27,6 +31,7 @@ class AccountPayable extends Model
     {
         return [
             'due_date' => 'date',
+            'entry_date' => 'date',
             'amount' => 'decimal:2',
             'paid_at' => 'datetime',
         ];
@@ -35,5 +40,10 @@ class AccountPayable extends Model
     public function purchase(): BelongsTo
     {
         return $this->belongsTo(Purchase::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 }

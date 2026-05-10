@@ -25,6 +25,17 @@ type SettlePayload = {
     payment_notes?: string;
 };
 
+type CreateManualPayload = {
+    supplier_id: number;
+    item: string;
+    description?: string;
+    amount: number;
+    entry_date: string;
+    due_date: string;
+    payment_method: 'cash' | 'pix' | 'card' | 'installment' | 'boleto';
+    status: 'pending' | 'paid';
+};
+
 export function useAccountPayables() {
     return useQuery({
         queryKey: accountPayablesQueryKey,
@@ -46,6 +57,18 @@ export function useSettleAccountPayable() {
                 paid_method: payload.paid_method,
                 payment_notes: payload.payment_notes,
             }),
+        onSuccess: async () => {
+            await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
+export function useCreateManualAccountPayable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: CreateManualPayload) =>
+            accountPayableService.create(payload),
         onSuccess: async () => {
             await invalidateRelatedQueries(queryClient);
         },

@@ -94,7 +94,16 @@ export type PurchaseCreateDialogProps = {
 export type AccountsPayableCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (data: UiPurchase) => void;
+    onSubmit: (data: {
+        supplier_id: number;
+        item: string;
+        description?: string;
+        amount: number;
+        entry_date: string;
+        due_date: string;
+        payment_method: 'cash' | 'pix' | 'card' | 'installment' | 'boleto';
+        status: 'pending' | 'paid';
+    }) => void;
     suppliers: UiSupplier[];
     onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;
 };

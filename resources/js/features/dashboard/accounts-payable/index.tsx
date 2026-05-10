@@ -1,28 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import {
-    useCreatePurchase,
-} from '@/hooks/use-purchases';
-import { useBrands } from '@/hooks/use-brands';
-import { useCategories } from '@/hooks/use-categories';
-import { useCreateProduct, useProducts } from '@/hooks/use-products';
-import {
     useAccountPayables,
+    useCreateManualAccountPayable,
     useSettleAccountPayable,
 } from '@/hooks/use-account-payables';
 import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
-import type { UiProduct, UiPurchase, UiSupplier } from '@/types/dashboard-entities';
-import type { PurchaseLineItem } from '@/types/dashboard-forms';
+import type { UiSupplier } from '@/types/dashboard-entities';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
-import { PurchaseCreateDialog } from '../purchases/purchase-create-dialog';
+import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
 
 type PayableRow = {
     id: string;
-    purchase_id: number;
-    installment_number: number;
+    supplier_name: string;
+    purchase_id: number | null;
+    installment_number: number | null;
+    item: string | null;
+    description: string | null;
     amount: number;
     due_date: string;
     status: string;
@@ -33,29 +30,13 @@ type PayableRow = {
 export function AccountsPayableModule() {
     const { data: payables = [], isPending: isPayablesPending } =
         useAccountPayables();
-    const { data: products = [] } = useProducts();
-    const { data: categories = [] } = useCategories();
-    const { data: brands = [] } = useBrands();
-    const createProduct = useCreateProduct();
-    const createPurchase = useCreatePurchase();
     const { data: suppliers = [] } = useSuppliers();
     const createSupplier = useCreateSupplier();
+    const createManualPayable = useCreateManualAccountPayable();
     const settleAccountPayable = useSettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
-    const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
-    const draftItemsRef = useRef<PurchaseLineItem[]>([]);
-
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-
-        if (params.get('action') === 'create-expense') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setIsCreateOpen(true);
-            window.history.replaceState({}, '', '/dashboard/accounts-payable');
-        }
-    }, []);
 
     const mappedSuppliers = useMemo<UiSupplier[]>(
         () =>
@@ -77,34 +58,24 @@ export function AccountsPayableModule() {
         () => [...dialogSuppliers, ...mappedSuppliers],
         [dialogSuppliers, mappedSuppliers],
     );
-    const mappedProducts = useMemo<UiProduct[]>(
-        () =>
-            products.map((product) => ({
-                id: String(product.id),
-                name: product.name,
-                sku: product.sku,
-                barcode: product.barcode ?? undefined,
-                category: String(product.category_id ?? ''),
-                brand: String(product.brand_id ?? ''),
-                price: Number(product.sale_price ?? 0),
-                cost: Number(product.cost ?? 0),
-                stock: Number(product.stock ?? 0),
-                minStock: Number(product.min_stock ?? 0),
-                createdAt: new Date().toISOString().slice(0, 10),
-            })),
-        [products],
-    );
-    const dialogProductOptions = useMemo(
-        () => [...dialogProducts, ...mappedProducts],
-        [dialogProducts, mappedProducts],
+
+    const supplierNameById = useMemo(
+        () => new Map(suppliers.map((supplier) => [supplier.id, supplier.name])),
+        [suppliers],
     );
 
     const rows: PayableRow[] = payables
         .filter((payable) => payable.status === 'pending')
         .map((payable) => ({
             id: String(payable.id),
+            supplier_name: payable.supplier_id
+                ? (supplierNameById.get(payable.supplier_id) ??
+                  `#${payable.supplier_id}`)
+                : '-',
             purchase_id: payable.purchase_id,
             installment_number: payable.installment_number,
+            item: payable.item,
+            description: payable.description,
             amount: payable.amount,
             due_date: payable.due_date,
             status: payable.status,
@@ -177,123 +148,13 @@ export function AccountsPayableModule() {
         return mappedSupplier;
     };
 
-    const handleCreateProduct = async (product: {
-        name: string;
-        sku: string;
-        barcode: string;
-        categoryId: number;
-        brandId: number | null;
-        cost: number;
-        price: number;
-        stock: number;
-        minStock: number;
-        createdAt: string;
-    }): Promise<UiProduct> => {
-        const createdProduct = await createProduct.mutateAsync({
-            name: product.name,
-            sku: product.sku,
-            barcode: product.barcode || null,
-            description: null,
-            sale_price: product.price,
-            cost: product.cost,
-            stock: product.stock,
-            min_stock: product.minStock,
-            category_id: product.categoryId,
-            brand_id: product.brandId,
-        });
-
-        const mappedProduct: UiProduct = {
-            id: String(createdProduct.id),
-            name: createdProduct.name,
-            sku: createdProduct.sku,
-            barcode: createdProduct.barcode ?? undefined,
-            category: String(createdProduct.category_id),
-            brand: String(createdProduct.brand_id ?? ''),
-            price: Number(createdProduct.sale_price ?? 0),
-            cost: Number(createdProduct.cost ?? 0),
-            stock: Number(createdProduct.stock ?? 0),
-            minStock: Number(createdProduct.min_stock ?? 0),
-            createdAt: product.createdAt,
-        };
-
-        setDialogProducts((previous) => [mappedProduct, ...previous]);
-
-        return mappedProduct;
-    };
-
-    const handleCreateFromDialog = async (purchase: UiPurchase) => {
-        const supplier = dialogSupplierOptions.find(
-            (entry) => entry.name === purchase.supplierName,
-        );
-        const supplierId = Number(supplier?.id ?? 0);
-
-        if (!supplierId || Number.isNaN(supplierId)) {
-            throw new Error('Selecione um fornecedor válido para continuar.');
-        }
-
-        const items = draftItemsRef.current
-            .map((item) => ({
-                product_id: Number(item.productId),
-                quantity: Number(item.quantity),
-                unit_cost: Number(item.unitCost ?? 0),
-            }))
-            .filter(
-                (item) =>
-                    Number.isFinite(item.product_id) &&
-                    item.product_id > 0 &&
-                    Number.isFinite(item.quantity) &&
-                    item.quantity > 0 &&
-                    Number.isFinite(item.unit_cost) &&
-                    item.unit_cost >= 0,
-            );
-
-        if (items.length === 0) {
-            throw new Error('Adicione ao menos um produto na compra.');
-        }
-
-        const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' | 'boleto' =
-            purchase.paymentMethod === 'money'
-                ? 'cash'
-                : purchase.paymentMethod === 'boleto'
-                  ? 'boleto'
-                : purchase.paymentMethod === 'debit' ||
-                    purchase.paymentMethod === 'credit'
-                  ? 'card'
-                  : purchase.paymentMethod === 'installment'
-                    ? 'installment'
-                    : 'pix';
-
-        await createPurchase.mutateAsync({
-            supplier_id: supplierId,
-            date: purchase.createdAt || new Date().toISOString().slice(0, 10),
-            due_date:
-                paymentMethod === 'boleto'
-                    ? undefined
-                    : purchase.dueDate || undefined,
-            payment_method: paymentMethod,
-            boleto_term_days:
-                paymentMethod === 'boleto'
-                    ? ((Number(
-                          purchase.boletoTermDays ?? 30,
-                      ) as 30 | 60 | 90 | 120))
-                    : undefined,
-            status: purchase.status === 'completed' ? 'completed' : 'pending',
-            items,
-        });
-
-        draftItemsRef.current = [];
-        toast.success('Compra criada com sucesso.');
-    };
-
     const columns: Column<PayableRow>[] = [
         {
             key: 'select',
             header: (
                 <input
                     type="checkbox"
-                    checked={
-                        selectedIds.size === rows.length && rows.length > 0
-                    }
+                    checked={selectedIds.size === rows.length && rows.length > 0}
                     ref={(el) => {
                         if (el) {
                             el.indeterminate =
@@ -321,14 +182,28 @@ export function AccountsPayableModule() {
             ),
         },
         {
-            key: 'purchase_id',
-            header: 'Compra',
-            render: (val: unknown) => `#${String(val)}`,
+            key: 'supplier_name',
+            header: 'Fornecedor',
         },
         {
-            key: 'installment_number',
-            header: 'Parcela',
-            render: (val: unknown) => `Parcela ${String(val)}`,
+            key: 'item',
+            header: 'Descricao',
+            render: (value: unknown, row: PayableRow) => {
+                const fallback = row.purchase_id
+                    ? `Compra #${row.purchase_id}`
+                    : '-';
+                const item = String(value || fallback);
+                const installment = row.installment_number
+                    ? ` (Parcela ${row.installment_number})`
+                    : '';
+                return `${item}${installment}`;
+            },
+        },
+        {
+            key: 'purchase_id',
+            header: 'Origem',
+            render: (_, row: PayableRow) =>
+                row.purchase_id ? `Compra #${row.purchase_id}` : 'Manual',
         },
         {
             key: 'amount',
@@ -381,37 +256,28 @@ export function AccountsPayableModule() {
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 createDialog={({ open, onOpenChange }) => (
-                    <PurchaseCreateDialog
+                    <AccountsPayableCreateDialog
                         open={open}
                         onOpenChange={onOpenChange}
-                        onSubmit={(purchase) => {
-                            void handleCreateFromDialog(purchase)
+                        onSubmit={(payload) => {
+                            void createManualPayable
+                                .mutateAsync(payload)
                                 .then(() => {
+                                    toast.success(
+                                        'Conta a pagar criada com sucesso.',
+                                    );
                                     onOpenChange(false);
                                 })
                                 .catch((error: unknown) => {
                                     const message =
                                         error instanceof Error && error.message
                                             ? error.message
-                                            : 'Erro ao criar a compra.';
+                                            : 'Erro ao criar a conta a pagar.';
                                     toast.error(message);
                                 });
                         }}
-                        products={dialogProductOptions}
                         suppliers={dialogSupplierOptions}
-                        categories={categories.map((category) => ({
-                            id: category.id,
-                            name: category.name,
-                        }))}
-                        brands={brands.map((brand) => ({
-                            id: brand.id,
-                            name: brand.name,
-                        }))}
                         onCreateSupplier={handleCreateSupplier}
-                        onCreateProduct={handleCreateProduct}
-                        onApplyStock={(items) => {
-                            draftItemsRef.current = items;
-                        }}
                     />
                 )}
             />

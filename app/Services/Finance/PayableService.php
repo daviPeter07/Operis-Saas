@@ -77,6 +77,27 @@ class PayableService
         }
     }
 
+    public function createManual(int $companyId, array $data): void
+    {
+        $isPaid = ($data['status'] ?? 'pending') === 'paid';
+
+        $this->payables->create([
+            'company_id' => $companyId,
+            'supplier_id' => $data['supplier_id'],
+            'purchase_id' => null,
+            'installment_number' => null,
+            'entry_date' => $data['entry_date'],
+            'item' => $data['item'],
+            'description' => $data['description'] ?? null,
+            'due_date' => $data['due_date'],
+            'amount' => $data['amount'],
+            'status' => $isPaid ? 'paid' : 'pending',
+            'paid_at' => $isPaid ? ($data['entry_date']) : null,
+            'paid_method' => $data['payment_method'] ?? null,
+            'payment_notes' => $data['description'] ?? null,
+        ]);
+    }
+
     public function settle(AccountPayable $payable, int $userId, array $data): AccountPayable
     {
         return DB::transaction(function () use ($payable, $userId, $data): AccountPayable {
