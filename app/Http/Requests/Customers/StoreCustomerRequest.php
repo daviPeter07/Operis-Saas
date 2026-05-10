@@ -29,7 +29,7 @@ class StoreCustomerRequest extends FormRequest
             'document' => ['nullable', 'string', 'max:20'],
             'person_type' => ['nullable', 'string', 'in:pf,pj'],
             'credit_enabled' => ['sometimes', 'boolean'],
-            'credit_limit' => ['nullable', 'numeric', 'min:0'],
+            'credit_limit' => ['nullable', 'numeric', 'min:0', 'max:100000'],
             'credit_term_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ];
     }

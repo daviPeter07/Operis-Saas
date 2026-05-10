@@ -35,6 +35,18 @@ import {
     parseMaskedFieldValue,
 } from '@/utils/form-fields';
 
+const MAX_CREDIARIO_LIMIT = 100000;
+
+function formatCreditLimitFromAmount(amount: number | undefined): string {
+    const safeAmount = Number(amount ?? 0);
+
+    if (!Number.isFinite(safeAmount) || safeAmount <= 0) {
+        return '';
+    }
+
+    return formatCurrencyInput(String(Math.round(safeAmount * 100)));
+}
+
 function buildInitialValues(props: ClientCreateDialogProps) {
     if (!props.initialData) {
         return initialClientForm;
@@ -49,9 +61,7 @@ function buildInitialValues(props: ClientCreateDialogProps) {
         document: props.initialData.document ?? '',
         status: props.initialData.status ?? 'active',
         creditEnabled: props.initialData.creditEnabled ? 'yes' : 'no',
-        creditLimit: props.initialData.creditLimit
-            ? formatCurrencyInput(String(props.initialData.creditLimit))
-            : '',
+        creditLimit: formatCreditLimitFromAmount(props.initialData.creditLimit),
         creditTermDays: String(props.initialData.creditTermDays ?? 30),
     };
 }
@@ -96,6 +106,28 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                             return;
                         }
 
+                        const creditEnabled = form.creditEnabled === 'yes';
+                        const parsedCreditLimit = Number(
+                            parseMaskedFieldValue(form.creditLimit, 'currency') ||
+                                0,
+                        );
+
+                        if (
+                            creditEnabled &&
+                            Number.isFinite(parsedCreditLimit) &&
+                            parsedCreditLimit > MAX_CREDIARIO_LIMIT
+                        ) {
+                            setError('creditLimit', {
+                                type: 'max',
+                                message:
+                                    'Limite do crediario deve ser no maximo R$ 100.000,00.',
+                            });
+
+                            return;
+                        }
+
+                        clearErrors('creditLimit');
+
                         const payload = {
                             name: form.name,
                             email: form.email,
@@ -103,13 +135,10 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                             document: form.document,
                             person_type: form.personType,
                             status: form.status || 'active',
-                            credit_enabled: form.creditEnabled === 'yes',
-                            credit_limit: Number(
-                                parseMaskedFieldValue(
-                                    form.creditLimit,
-                                    'currency',
-                                ) || 0,
-                            ),
+                            credit_enabled: creditEnabled,
+                            credit_limit: creditEnabled
+                                ? parsedCreditLimit
+                                : 0,
                             credit_term_days: Number(form.creditTermDays || 30),
                         };
 
@@ -144,6 +173,12 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                             onSuccess: (data) => {
                                 onOpenChange(false);
                                 onSuccess?.({ id: data.id, name: data.name });
+                            },
+                            onError: () => {
+                                setError('name', {
+                                    type: 'manual',
+                                    message: 'Erro ao criar cliente.',
+                                });
                             },
                         });
                     }}
@@ -263,6 +298,10 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                                 onValueChange={(value) => {
                                     if (value === 'yes' || value === 'no') {
                                         setField('creditEnabled', value);
+
+                                        if (value === 'no') {
+                                            clearErrors('creditLimit');
+                                        }
                                     }
                                 }}
                             >
@@ -291,14 +330,15 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                                             <Input
                                                 id="client-credit-limit"
                                                 value={form.creditLimit}
-                                                onChange={(event) =>
+                                                onChange={(event) => {
                                                     setField(
                                                         'creditLimit',
                                                         formatCurrencyInput(
                                                             event.target.value,
                                                         ),
-                                                    )
-                                                }
+                                                    );
+                                                    clearErrors('creditLimit');
+                                                }}
                                                 placeholder="R$ 0,00"
                                                 disabled={
                                                     form.creditEnabled === 'no'
@@ -319,6 +359,11 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                                     )}
                                 </Tooltip>
                             </TooltipProvider>
+                            {errors.creditLimit?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.creditLimit.message)}
+                                </p>
+                            ) : null}
                         </div>
 
                         <div className="grid gap-2">

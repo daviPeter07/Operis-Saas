@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { useBrands } from '@/hooks/use-brands';
@@ -40,6 +40,30 @@ type PurchaseRow = {
     payment_method: string;
     date: string;
 };
+
+function hasSamePurchaseMetricsRows(
+    previous: PurchaseRow[],
+    next: PurchaseRow[],
+): boolean {
+    if (previous.length !== next.length) {
+        return false;
+    }
+
+    for (let index = 0; index < previous.length; index += 1) {
+        const prevRow = previous[index];
+        const nextRow = next[index];
+
+        if (
+            prevRow.id !== nextRow.id ||
+            prevRow.status !== nextRow.status ||
+            prevRow.total !== nextRow.total
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 export function PurchasesModule() {
     const { data: purchases = [], isPending: isPurchasesPending } =
@@ -158,9 +182,13 @@ export function PurchasesModule() {
             };
         });
 
-    useEffect(() => {
-        setFilteredRows(rows);
-    }, [rows]);
+    const handleFilteredDataChange = useCallback((nextRows: PurchaseRow[]) => {
+        setFilteredRows((previous) =>
+            hasSamePurchaseMetricsRows(previous, nextRows)
+                ? previous
+                : nextRows,
+        );
+    }, []);
 
     const metrics = useMemo(() => {
         const baseRows = filteredRows;
@@ -371,7 +399,7 @@ export function PurchasesModule() {
                 { key: 'date', type: 'date' },
             ]}
             dateFilterKey="date"
-            onFilteredDataChange={setFilteredRows}
+            onFilteredDataChange={handleFilteredDataChange}
             onDelete={async (row) => {
                 await deletePurchase.mutateAsync(Number(row.id));
             }}

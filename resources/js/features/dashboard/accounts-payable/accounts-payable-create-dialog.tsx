@@ -1,6 +1,16 @@
-import { useEffect, useState } from 'react';
-import { initialAccountsPayableForm } from '@/constants/dashboard-form-initials';
-import { useFormState } from '@/hooks/use-form-state';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { DatePickerInput } from '@/components/date/date-picker-input';
+import { SearchableSelect } from '@/components/searchable-select';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,8 +21,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import type { AccountsPayableCreateDialogProps } from '@/types/dashboard-forms';
-import { FinancialEntryDialog } from '../shared/financial-entry-dialog';
+import { todayString } from '@/utils/sales-dialog';
 import { SupplierCreateDialog } from '../suppliers/supplier-create-dialog';
+
+const today = todayString();
 
 export function AccountsPayableCreateDialog({
     open,
@@ -21,109 +33,306 @@ export function AccountsPayableCreateDialog({
     suppliers,
     onCreateSupplier,
 }: AccountsPayableCreateDialogProps) {
-    const { form, setField } = useFormState(initialAccountsPayableForm, open);
     const [supplierCreateOpen, setSupplierCreateOpen] = useState(false);
+    const [supplierSearch, setSupplierSearch] = useState('');
+    const [supplierId, setSupplierId] = useState('');
     const [item, setItem] = useState('');
     const [description, setDescription] = useState('');
-    const [dueDate, setDueDate] = useState(form.createdAt);
+    const [amount, setAmount] = useState('');
+    const [entryDate, setEntryDate] = useState(today);
+    const [dueDate, setDueDate] = useState(today);
     const [status, setStatus] = useState<'pending' | 'paid'>('pending');
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [paymentMethod, setPaymentMethod] = useState<
+        'cash' | 'pix' | 'card' | 'installment' | 'boleto'
+    >('pix');
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
-    useEffect(() => {
-        if (!open) {
-            return;
+    const filteredSuppliers = useMemo(() => {
+        const normalizedQuery = supplierSearch.trim().toLowerCase();
+
+        if (!normalizedQuery) {
+            return suppliers;
         }
 
+        return suppliers.filter((supplier) =>
+            supplier.name.toLowerCase().includes(normalizedQuery),
+        );
+    }, [supplierSearch, suppliers]);
+
+    const resetForm = () => {
+        setSupplierSearch('');
+        setSupplierId('');
         setItem('');
         setDescription('');
-        setDueDate(form.createdAt);
+        setAmount('');
+        setEntryDate(today);
+        setDueDate(today);
         setStatus('pending');
-        setErrors({});
-    }, [form.createdAt, open]);
+        setPaymentMethod('pix');
+    };
 
     return (
         <>
-            <FinancialEntryDialog
+            <Dialog
                 open={open}
-                onOpenChange={onOpenChange}
-                title="Nova conta a pagar"
-                description="Use o mesmo fechamento operacional das compras para revisar fornecedor, valores e pagamento."
-                primarySectionTitle="Fechamento da conta"
-                submitLabel="Continuar"
-                form={form}
-                onChange={setField}
-                suppliers={suppliers}
-                onOpenCreateSupplier={() => setSupplierCreateOpen(true)}
-                showOperationSummary={false}
-                showStatusField={false}
-                catalogSection={
-                    <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
-                        {errors.supplier ? (
-                            <p className="text-xs text-destructive">
-                                {errors.supplier}
-                            </p>
-                        ) : null}
-                        {errors.total ? (
-                            <p className="text-xs text-destructive">
-                                {errors.total}
-                            </p>
-                        ) : null}
+                onOpenChange={(nextOpen) => {
+                    onOpenChange(nextOpen);
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="payable-item">
-                                Item <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="payable-item"
-                                value={item}
-                                onChange={(event) => setItem(event.currentTarget.value)}
-                                placeholder="Ex.: pagamento de frete"
-                            />
-                            {errors.item ? (
-                                <p className="text-xs text-destructive">
-                                    {errors.item}
-                                </p>
-                            ) : null}
-                        </div>
+                    if (!nextOpen) {
+                        resetForm();
+                    }
+                }}
+            >
+                <DialogContent className="!w-[calc(100vw-2rem)] sm:!max-w-[920px]">
+                    <DialogHeader>
+                        <DialogTitle>Nova conta a pagar</DialogTitle>
+                        <DialogDescription>
+                            Preencha os dados principais da conta manual.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="payable-description">Descrição</Label>
-                            <Input
-                                id="payable-description"
-                                value={description}
-                                onChange={(event) =>
-                                    setDescription(event.currentTarget.value)
-                                }
-                                placeholder="Detalhes da conta"
-                            />
-                        </div>
+                    <form
+                        className="space-y-4"
+                        onSubmit={(event) => {
+                            event.preventDefault();
 
-                        <div className="grid gap-2 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                                <Label htmlFor="payable-due-date">
-                                    Vencimento{' '}
-                                    <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                    id="payable-due-date"
-                                    type="date"
-                                    value={dueDate}
-                                    onChange={(event) =>
-                                        setDueDate(event.currentTarget.value)
-                                    }
-                                />
-                                {errors.due_date ? (
+                            let hasError = false;
+
+                            if (!supplierId) {
+                                setError('supplier_id', {
+                                    type: 'required',
+                                    message: 'Fornecedor e obrigatorio.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (!item.trim()) {
+                                setError('item', {
+                                    type: 'required',
+                                    message: 'Item e obrigatorio.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (!amount || Number(amount) <= 0) {
+                                setError('amount', {
+                                    type: 'required',
+                                    message: 'Valor deve ser maior que zero.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (!entryDate) {
+                                setError('entry_date', {
+                                    type: 'required',
+                                    message: 'Data de lancamento e obrigatoria.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (!dueDate) {
+                                setError('due_date', {
+                                    type: 'required',
+                                    message: 'Vencimento e obrigatorio.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (hasError) {
+                                return;
+                            }
+
+                            onSubmit({
+                                supplier_id: Number(supplierId),
+                                item: item.trim(),
+                                description: description.trim() || undefined,
+                                amount: Number(amount || 0),
+                                entry_date: entryDate,
+                                due_date: dueDate,
+                                payment_method: paymentMethod,
+                                status,
+                            });
+
+                            resetForm();
+                            onOpenChange(false);
+                        }}
+                    >
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-2 sm:col-span-2">
+                                <Label>Fornecedor *</Label>
+                                <div className="flex gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <SearchableSelect
+                                            value={supplierId}
+                                            searchValue={supplierSearch}
+                                            onSearchChange={setSupplierSearch}
+                                            onChange={(value) => {
+                                                setSupplierId(value);
+                                                clearErrors('supplier_id');
+                                                const selectedSupplier = suppliers.find(
+                                                    (supplier) =>
+                                                        supplier.id === value,
+                                                );
+
+                                                setSupplierSearch(
+                                                    selectedSupplier?.name ?? '',
+                                                );
+                                            }}
+                                            options={filteredSuppliers.map(
+                                                (supplier) => ({
+                                                    value: supplier.id,
+                                                    label: supplier.name,
+                                                }),
+                                            )}
+                                            placeholder="Buscar fornecedor"
+                                            emptyMessage="Nenhum fornecedor encontrado."
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setSupplierCreateOpen(true)}
+                                    >
+                                        Novo
+                                    </Button>
+                                </div>
+
+                                {errors.supplier_id?.message ? (
                                     <p className="text-xs text-destructive">
-                                        {errors.due_date}
+                                        {String(errors.supplier_id.message)}
                                     </p>
                                 ) : null}
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="payable-status">
-                                    Status{' '}
-                                    <span className="text-destructive">*</span>
+                                <Label htmlFor="payable-item">
+                                    Item <span className="text-destructive">*</span>
                                 </Label>
+                                <Input
+                                    id="payable-item"
+                                    value={item}
+                                    onChange={(event) => {
+                                        setItem(event.currentTarget.value);
+                                        clearErrors('item');
+                                    }}
+                                    placeholder="Ex.: pagamento de frete"
+                                    required
+                                />
+                                {errors.item?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.item.message)}
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="payable-amount">
+                                    Valor <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="payable-amount"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={amount}
+                                    onChange={(event) => {
+                                        setAmount(event.currentTarget.value);
+                                        clearErrors('amount');
+                                    }}
+                                    placeholder="0,00"
+                                    required
+                                />
+                                {errors.amount?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.amount.message)}
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <div className="grid gap-2 sm:col-span-2">
+                                <Label htmlFor="payable-description">Descricao</Label>
+                                <Input
+                                    id="payable-description"
+                                    value={description}
+                                    onChange={(event) =>
+                                        setDescription(event.currentTarget.value)
+                                    }
+                                    placeholder="Detalhes da conta"
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label>Data de lancamento *</Label>
+                                <DatePickerInput
+                                    value={entryDate}
+                                    onChange={(value) => {
+                                        setEntryDate(value);
+                                        clearErrors('entry_date');
+                                    }}
+                                    placeholder="Selecionar data"
+                                />
+                                {errors.entry_date?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.entry_date.message)}
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label>Vencimento *</Label>
+                                <DatePickerInput
+                                    value={dueDate}
+                                    onChange={(value) => {
+                                        setDueDate(value);
+                                        clearErrors('due_date');
+                                    }}
+                                    placeholder="Selecionar data"
+                                />
+                                {errors.due_date?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.due_date.message)}
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="payable-method">Metodo</Label>
+                                <Select
+                                    value={paymentMethod}
+                                    onValueChange={(value) => {
+                                        if (
+                                            value === 'cash' ||
+                                            value === 'pix' ||
+                                            value === 'card' ||
+                                            value === 'installment' ||
+                                            value === 'boleto'
+                                        ) {
+                                            setPaymentMethod(value);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger id="payable-method">
+                                        <SelectValue placeholder="Metodo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cash">Dinheiro</SelectItem>
+                                        <SelectItem value="pix">PIX</SelectItem>
+                                        <SelectItem value="card">Cartao</SelectItem>
+                                        <SelectItem value="installment">
+                                            Parcelado
+                                        </SelectItem>
+                                        <SelectItem value="boleto">Boleto</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="payable-status">Status</Label>
                                 <Select
                                     value={status}
                                     onValueChange={(value) => {
@@ -136,66 +345,31 @@ export function AccountsPayableCreateDialog({
                                         <SelectValue placeholder="Status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="pending">
-                                            Pendente
-                                        </SelectItem>
+                                        <SelectItem value="pending">Pendente</SelectItem>
                                         <SelectItem value="paid">Pago</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
-                    </div>
-                }
-                onSubmit={() => {
-                    const supplier = suppliers.find(
-                        (entry) => entry.name === form.supplierName,
-                    );
 
-                    const nextErrors: Record<string, string> = {};
-
-                    if (!supplier) {
-                        nextErrors.supplier = 'Fornecedor é obrigatório.';
-                    }
-
-                    if (!item.trim()) {
-                        nextErrors.item = 'Item é obrigatório.';
-                    }
-
-                    if (!(Number(form.total || 0) > 0)) {
-                        nextErrors.total = 'Valor deve ser maior que zero.';
-                    }
-
-                    if (!dueDate) {
-                        nextErrors.due_date = 'Vencimento é obrigatório.';
-                    }
-
-                    setErrors(nextErrors);
-
-                    if (Object.keys(nextErrors).length > 0 || !supplier) {
-                        return;
-                    }
-
-                    const paymentMethod: 'cash' | 'pix' | 'card' | 'installment' | 'boleto' =
-                        form.paymentMethod === 'money'
-                            ? 'cash'
-                            : form.paymentMethod === 'card'
-                              ? 'card'
-                              : form.paymentMethod === 'boleto'
-                                ? 'boleto'
-                                : 'pix';
-
-                    onSubmit({
-                        supplier_id: Number(supplier.id),
-                        item: item.trim(),
-                        description: description.trim() || undefined,
-                        amount: Number(form.total || 0),
-                        entry_date: form.createdAt,
-                        due_date: dueDate,
-                        payment_method: paymentMethod,
-                        status,
-                    });
-                }}
-            />
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={!supplierId || !item.trim() || !amount}
+                            >
+                                Salvar conta
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             <SupplierCreateDialog
                 open={supplierCreateOpen}
@@ -210,9 +384,10 @@ export function AccountsPayableCreateDialog({
                         city: '',
                         state: '',
                         address: '',
-                        createdAt: new Date().toISOString().slice(0, 10),
+                        createdAt: today,
                     }).then((supplier) => {
-                        setField('supplierName', supplier.name);
+                        setSupplierId(supplier.id);
+                        setSupplierSearch(supplier.name);
                     });
                 }}
             />

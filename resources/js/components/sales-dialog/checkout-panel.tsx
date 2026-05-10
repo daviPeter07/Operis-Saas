@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { formatCurrencyBR } from '@/lib/format';
 import type { UiCustomer as Client } from '@/types/dashboard-entities';
 import type { SalesLineItem } from '@/types/sales-dialog';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { paymentMethodOptions } from '@/utils/sales-dialog';
 
 function parseLocalDate(dateString: string): Date {
@@ -139,7 +140,7 @@ export function CheckoutPanel({
         }
     }, [paymentMethod, cardType, setCardType]);
 
-    const crediarioEntryValue = Math.max(0, Number(crediarioEntry) || 0);
+    const crediarioEntryValue = Math.max(0, parseCurrencyInput(crediarioEntry));
     const financedAmount = Math.max(0, finalTotal - crediarioEntryValue);
     const isCrediarioEntryInvalid =
         paymentMethod === 'crediario' &&
@@ -379,16 +380,17 @@ export function CheckoutPanel({
                                     </Label>
                                     <Input
                                         id="crediario-entry"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={crediarioEntry}
-                                        onChange={(event) =>
+                                        onChange={(event) => {
                                             setCrediarioEntry(
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="0,00"
+                                                formatCurrencyInput(
+                                                    event.target.value,
+                                                ),
+                                            );
+                                        }}
+                                        placeholder="R$ 0,00"
                                     />
                                 </div>
                                 <CardPaymentFields
@@ -441,12 +443,7 @@ export function CheckoutPanel({
                                             Ajustar limite do cliente
                                         </Button>
                                     </div>
-                                ) : isCrediarioEntryInvalid ? (
-                                    <p className="text-sm text-destructive">
-                                        Informe uma entrada maior que zero e
-                                        menor que o total da venda.
-                                    </p>
-                                ) : (
+                                ) : isCrediarioEntryInvalid ? null : (
                                     <p className="text-sm text-muted-foreground">
                                         A venda sera registrada como pendente,
                                         com entrada imediata e parcelas no

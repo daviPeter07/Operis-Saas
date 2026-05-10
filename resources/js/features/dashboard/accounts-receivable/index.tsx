@@ -169,6 +169,12 @@ export function AccountsReceivableModule() {
             render: (value: unknown) =>
                 value ? formatDateBR(String(value)) : '-',
         },
+        {
+            key: 'entry_date',
+            header: 'Lancamento',
+            render: (value: unknown) =>
+                value ? formatDateBR(String(value)) : '-',
+        },
     ];
 
     return (
@@ -198,6 +204,7 @@ export function AccountsReceivableModule() {
                     { key: 'customer_name', type: 'text' },
                     { key: 'item', type: 'text' },
                     { key: 'due_date', type: 'date' },
+                    { key: 'entry_date', type: 'date' },
                 ]}
                 dateFilterKey="due_date"
                 clickableRow

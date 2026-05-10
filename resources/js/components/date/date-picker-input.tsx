@@ -41,6 +41,14 @@ export function DatePickerInput({
 
     const selectedDate = value ? new Date(`${value}T00:00:00`) : undefined;
 
+    const toIsoDate = (date: Date): string => {
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    };
+
     return (
         <div ref={containerRef} className={`relative ${className || ''}`}>
             <button
@@ -74,7 +82,7 @@ export function DatePickerInput({
                                 return;
                             }
 
-                            onChange(format(date, 'yyyy-MM-dd'));
+                            onChange(toIsoDate(date));
                             setOpen(false);
                         }}
                         locale={ptBR}

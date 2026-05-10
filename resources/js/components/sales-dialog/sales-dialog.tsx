@@ -126,7 +126,15 @@ export function SalesDialog({
                 setFirstInstallmentDate(
                     sale.firstInstallmentDate ?? firstInstallmentDate,
                 );
-                setCrediarioEntry(String(sale.crediarioEntry ?? 0));
+                const entryAmount = Number(sale.crediarioEntry ?? 0);
+                setCrediarioEntry(
+                    entryAmount > 0
+                        ? applyFieldMask(
+                              String(Math.round(entryAmount * 100)),
+                              'currency',
+                          )
+                        : '',
+                );
             }
 
             // Notes
@@ -155,7 +163,7 @@ export function SalesDialog({
 
         return Number(selectedClient.availableCredit ?? 0);
     }, [selectedClient]);
-    const crediarioEntryValue = Math.max(0, Number(crediarioEntry) || 0);
+    const crediarioEntryValue = Math.max(0, parseCurrencyInput(crediarioEntry));
     const financedTotal = Math.max(0, finalTotal - crediarioEntryValue);
     const maxCrediarioInstallments = React.useMemo(() => {
         const termDays = Number(selectedClient?.creditTermDays ?? 30);

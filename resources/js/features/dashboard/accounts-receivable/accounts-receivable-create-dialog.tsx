@@ -1,10 +1,21 @@
-import { useEffect, useState } from 'react';
-import { useFormState } from '@/hooks/use-form-state';
-import { initialAccountsPayableForm } from '@/constants/dashboard-form-initials';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { DatePickerInput } from '@/components/date/date-picker-input';
+import { SearchableSelect } from '@/components/searchable-select';
+import { Button } from '@/components/ui/button';
+import { ClientCreateDialog } from '@/features/dashboard/clients/client-create-dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { UiCustomer, UiSupplier } from '@/types/dashboard-entities';
-import { FinancialEntryDialog } from '../shared/financial-entry-dialog';
+import type { UiCustomer } from '@/types/dashboard-entities';
+import { todayString } from '@/utils/sales-dialog';
 
 type AccountsReceivableCreateDialogProps = {
     open: boolean;
@@ -19,152 +30,274 @@ type AccountsReceivableCreateDialogProps = {
     }) => Promise<void>;
 };
 
+const today = todayString();
+
 export function AccountsReceivableCreateDialog({
     open,
     onOpenChange,
     customers,
     onSubmit,
 }: AccountsReceivableCreateDialogProps) {
-    const { form, setField } = useFormState(initialAccountsPayableForm, open);
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [customerId, setCustomerId] = useState('');
+    const [clientCreateOpen, setClientCreateOpen] = useState(false);
     const [item, setItem] = useState('');
     const [description, setDescription] = useState('');
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [amount, setAmount] = useState('');
+    const [entryDate, setEntryDate] = useState(today);
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
-    const clearError = (key: string) => {
-        setErrors((current) => {
-            if (!current[key]) {
-                return current;
-            }
+    const filteredCustomers = useMemo(() => {
+        const normalizedQuery = customerSearch.trim().toLowerCase();
 
-            const next = { ...current };
-            delete next[key];
+        if (!normalizedQuery) {
+            return customers;
+        }
 
-            return next;
-        });
+        return customers.filter((customer) =>
+            customer.name.toLowerCase().includes(normalizedQuery),
+        );
+    }, [customerSearch, customers]);
+
+    const resetForm = () => {
+        setCustomerSearch('');
+        setCustomerId('');
+        setItem('');
+        setDescription('');
+        setAmount('');
+        setEntryDate(today);
     };
 
-    useEffect(() => {
-        if (form.supplierName && errors.customer) {
-            clearError('customer');
-        }
-        if (Number(form.total || 0) > 0 && errors.total) {
-            clearError('total');
-        }
-    }, [form.supplierName, form.total, errors.customer, errors.total]);
-
-    const customerOptions: UiSupplier[] = customers.map((customer) => ({
-        id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        document: customer.document,
-        city: customer.city,
-        state: customer.state,
-        address: customer.address,
-        createdAt: customer.createdAt,
-    }));
-
     return (
-        <FinancialEntryDialog
+        <>
+        <Dialog
             open={open}
-            onOpenChange={onOpenChange}
-            title="Nova conta a receber"
-            description="Use o mesmo layout operacional para registrar um recebimento manual."
-            primarySectionTitle="Fechamento da conta"
-            primarySectionDescription="Cliente, pagamento e fechamento operacional."
-            submitLabel="Salvar conta"
-            showOperationSummary={false}
-            showStatusField={false}
-            form={form}
-            onChange={setField}
-            suppliers={customerOptions}
-            partyLabel="Cliente"
-            partySearchPlaceholder="Buscar cliente"
-            partyEmptyMessage="Nenhum cliente encontrado."
-            partyCreateTooltip="Criar cliente"
-            catalogSection={
-                <div className="space-y-4 rounded-xl border bg-muted/20 p-5">
-                    {errors.customer ? (
-                        <p className="text-xs text-destructive">{errors.customer}</p>
-                    ) : null}
-                    {errors.total ? (
-                        <p className="text-xs text-destructive">{errors.total}</p>
-                    ) : null}
-                    <div className="grid gap-2">
-                        <Label htmlFor="receivable-item">
-                            Item <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="receivable-item"
-                            value={item}
-                            onChange={(event) => {
-                                setItem(event.currentTarget.value);
-                                clearError('item');
-                            }}
-                            placeholder="Ex.: ajuste comercial"
-                        />
-                        {errors.item ? (
-                            <p className="text-xs text-destructive">{errors.item}</p>
-                        ) : null}
+            onOpenChange={(nextOpen) => {
+                onOpenChange(nextOpen);
+
+                if (!nextOpen) {
+                    resetForm();
+                }
+            }}
+        >
+            <DialogContent className="!w-[calc(100vw-2rem)] sm:!max-w-[920px]">
+                <DialogHeader>
+                    <DialogTitle>Nova conta a receber</DialogTitle>
+                    <DialogDescription>
+                        Preencha os dados principais da conta manual.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form
+                    className="space-y-4"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+
+                        let hasError = false;
+
+                        if (!customerId) {
+                            setError('customer_id', {
+                                type: 'required',
+                                message: 'Cliente e obrigatorio.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (!item.trim()) {
+                            setError('item', {
+                                type: 'required',
+                                message: 'Item e obrigatorio.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (!amount || Number(amount) <= 0) {
+                            setError('amount', {
+                                type: 'required',
+                                message: 'Valor deve ser maior que zero.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (!entryDate) {
+                            setError('entry_date', {
+                                type: 'required',
+                                message: 'Data e obrigatoria.',
+                            });
+                            hasError = true;
+                        }
+
+                        if (hasError) {
+                            return;
+                        }
+
+                        void onSubmit({
+                            customer_id: Number(customerId),
+                            item: item.trim(),
+                            description: description.trim() || undefined,
+                            amount: Number(amount || 0),
+                            entry_date: entryDate,
+                        }).then(() => {
+                            resetForm();
+                            onOpenChange(false);
+                        });
+                    }}
+                >
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-2 sm:col-span-2">
+                                <Label>Cliente *</Label>
+                                <div className="flex gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <SearchableSelect
+                                            value={customerId}
+                                            searchValue={customerSearch}
+                                            onSearchChange={setCustomerSearch}
+                                            onChange={(value) => {
+                                                setCustomerId(value);
+                                                clearErrors('customer_id');
+                                                const selectedCustomer =
+                                                    customers.find(
+                                                        (customer) =>
+                                                            customer.id === value,
+                                                    );
+
+                                                setCustomerSearch(
+                                                    selectedCustomer?.name ?? '',
+                                                );
+                                            }}
+                                            options={filteredCustomers.map(
+                                                (customer) => ({
+                                                    value: customer.id,
+                                                    label: customer.name,
+                                                }),
+                                            )}
+                                            placeholder="Buscar cliente"
+                                            emptyMessage="Nenhum cliente encontrado."
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setClientCreateOpen(true)}
+                                    >
+                                        Novo
+                                    </Button>
+                                </div>
+                            {errors.customer_id?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.customer_id.message)}
+                                </p>
+                            ) : null}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="receivable-item">
+                                Item <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="receivable-item"
+                                value={item}
+                                onChange={(event) => {
+                                    setItem(event.currentTarget.value);
+                                    clearErrors('item');
+                                }}
+                                placeholder="Ex.: ajuste comercial"
+                                required
+                            />
+                            {errors.item?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.item.message)}
+                                </p>
+                            ) : null}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="receivable-amount">
+                                Valor <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="receivable-amount"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={amount}
+                                onChange={(event) => {
+                                    setAmount(event.currentTarget.value);
+                                    clearErrors('amount');
+                                }}
+                                placeholder="0,00"
+                                required
+                            />
+                            {errors.amount?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.amount.message)}
+                                </p>
+                            ) : null}
+                        </div>
+
+                        <div className="grid gap-2 sm:col-span-2">
+                            <Label htmlFor="receivable-description">Descricao</Label>
+                            <Input
+                                id="receivable-description"
+                                value={description}
+                                onChange={(event) =>
+                                    setDescription(event.currentTarget.value)
+                                }
+                                placeholder="Detalhes da conta"
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label>Data de lancamento *</Label>
+                            <DatePickerInput
+                                value={entryDate}
+                                onChange={(value) => {
+                                    setEntryDate(value);
+                                    clearErrors('entry_date');
+                                }}
+                                placeholder="Selecionar data"
+                            />
+                            {errors.entry_date?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.entry_date.message)}
+                                </p>
+                            ) : null}
+                        </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="receivable-description">Descrição</Label>
-                        <Input
-                            id="receivable-description"
-                            value={description}
-                            onChange={(event) =>
-                                setDescription(event.currentTarget.value)
-                            }
-                            placeholder="Detalhes do lançamento"
-                        />
-                    </div>
-                </div>
-            }
-            onSubmit={() => {
-                const customer = customerOptions.find(
-                    (entry) => entry.name === form.supplierName,
-                );
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={!customerId || !item.trim() || !amount}
+                        >
+                            Salvar conta
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
 
-                const nextErrors: Record<string, string> = {};
-
-                if (!customer) {
-                    nextErrors.customer = 'Cliente é obrigatório.';
-                }
-
-                if (!item.trim()) {
-                    nextErrors.item = 'Item é obrigatório.';
-                }
-
-                if (!(Number(form.total || 0) > 0)) {
-                    nextErrors.total = 'Valor deve ser maior que zero.';
-                }
-
-                setErrors(nextErrors);
-
-                if (Object.keys(nextErrors).length > 0) {
-                    return;
-                }
-
-                const selectedCustomer = customer;
-
-                if (!selectedCustomer) {
-                    return;
-                }
-
-                void onSubmit({
-                    customer_id: Number(selectedCustomer.id),
-                    item: item.trim(),
-                    description: description.trim() || undefined,
-                    amount: Number(form.total || 0),
-                    entry_date: form.createdAt,
-                }).then(() => {
-                    onOpenChange(false);
-                    setItem('');
-                    setDescription('');
-                    setErrors({});
-                });
+        <ClientCreateDialog
+            open={clientCreateOpen}
+            onOpenChange={setClientCreateOpen}
+            onSuccess={({ id, name }) => {
+                setCustomerId(String(id));
+                setCustomerSearch(name);
+                clearErrors('customer_id');
             }}
         />
+        </>
     );
 }

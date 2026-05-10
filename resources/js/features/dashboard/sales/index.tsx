@@ -1,5 +1,5 @@
 import { Printer, DollarSign } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
@@ -55,6 +55,38 @@ type SaleRow = {
 
 type SaleMutationPayload = SaleMutationInput;
 
+function hasSameSalesMetricsRows(previous: SaleRow[], next: SaleRow[]): boolean {
+    if (previous.length !== next.length) {
+        return false;
+    }
+
+    for (let index = 0; index < previous.length; index += 1) {
+        const prevRow = previous[index];
+        const nextRow = next[index];
+
+        if (
+            prevRow.id !== nextRow.id ||
+            prevRow.status !== nextRow.status ||
+            prevRow.total !== nextRow.total ||
+            prevRow.profit !== nextRow.profit
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function toDateOnly(value: string | null | undefined): string {
+    if (!value) {
+        return '';
+    }
+
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+
+    return match ? match[1] : value;
+}
+
 export function SalesModule() {
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
@@ -72,14 +104,21 @@ export function SalesModule() {
 
     const { data: sales = [], isPending: isSalesPending } = useSales();
     const { data: receivables = [] } = useAccountReceivables();
-    // Map para buscar o status da parcela (receivable) por venda+número da parcela
-    const receivableStatusMap = new Map<string, string>();
-    receivables.forEach(r => {
-        if (r.sale_id != null && r.installment_number != null) {
-            const key = `${r.sale_id}-${r.installment_number}`;
-            receivableStatusMap.set(key, r.status);
-        }
-    });
+    const receivablesBySaleId = useMemo(() => {
+        const grouped = new Map<number, typeof receivables>();
+
+        receivables.forEach((receivable) => {
+            if (receivable.sale_id == null) {
+                return;
+            }
+
+            const current = grouped.get(receivable.sale_id) ?? [];
+            current.push(receivable);
+            grouped.set(receivable.sale_id, current);
+        });
+
+        return grouped;
+    }, [receivables]);
     const { data: brands = [], isPending: isBrandsPending } = useBrands();
     const { data: categories = [], isPending: isCategoriesPending } =
         useCategories();
@@ -211,6 +250,75 @@ export function SalesModule() {
                     : customerNameById.get(sale.customer_id) ||
                       `#${sale.customer_id}`;
 
+            const saleReceivables =
+                receivablesBySaleId
+                    .get(sale.id)
+                    ?.slice()
+                    .sort((first, second) => {
+                        const firstDate = toDateOnly(
+                            first.due_date ?? first.entry_date ?? sale.date,
+                        );
+                        const secondDate = toDateOnly(
+                            second.due_date ?? second.entry_date ?? sale.date,
+                        );
+
+                        if (firstDate !== secondDate) {
+                            return firstDate.localeCompare(secondDate);
+                        }
+
+                        return (first.installment_number ?? 0) -
+                            (second.installment_number ?? 0);
+                    }) ?? [];
+
+            const saleProfit = calculateSaleProfit(sale);
+
+            if (saleReceivables.length > 0) {
+                const totalReceivablesAmount =
+                    saleReceivables.reduce(
+                        (sum, receivable) => sum + Number(receivable.amount ?? 0),
+                        0,
+                    ) || Number(sale.total);
+
+                saleReceivables.forEach((receivable) => {
+                    const amount = Number(receivable.amount ?? 0);
+                    const ratio =
+                        totalReceivablesAmount > 0
+                            ? amount / totalReceivablesAmount
+                            : 0;
+                    const status =
+                        receivable.status === 'received'
+                            ? 'completed'
+                            : receivable.status;
+
+                    rows.push({
+                        id:
+                            receivable.installment_number != null
+                                ? `${sale.id}-${receivable.installment_number}`
+                                : `${sale.id}-entry-${receivable.id}`,
+                        sale_id: sale.id,
+                        customer_id: sale.customer_id,
+                        clientName,
+                        productNames: productNames.join(', ') || '-',
+                        categoryNames: categoryNames.join(', ') || '-',
+                        total: amount,
+                        profit: saleProfit * ratio,
+                        status,
+                        payment_method: sale.payment_method,
+                        date: toDateOnly(
+                            receivable.due_date ??
+                                receivable.entry_date ??
+                                sale.createdAt ??
+                                sale.date,
+                        ),
+                        installments: sale.installments ?? 1,
+                        installment_number:
+                            receivable.installment_number ?? undefined,
+                    });
+                });
+
+                return;
+            }
+
             const installments = sale.installments ?? 1;
             const installmentValue = sale.total / installments;
             const baseDate = sale.createdAt ?? sale.date;
@@ -218,12 +326,6 @@ export function SalesModule() {
             for (let i = 0; i < installments; i++) {
                 const installmentDate = new Date(baseDate);
                 installmentDate.setMonth(installmentDate.getMonth() + i);
-                const installmentDateStr = installmentDate
-                    .toISOString()
-                    .slice(0, 10);
-                    // Determine parcel status (translate "received" to "completed")
-                    const rawParcelStatus = receivableStatusMap.get(`${sale.id}-${i + 1}`);
-                    const parcelStatus = rawParcelStatus === 'received' ? 'completed' : rawParcelStatus;
 
                 rows.push({
                     id: `${sale.id}-${i + 1}`,
@@ -233,20 +335,21 @@ export function SalesModule() {
                     productNames: productNames.join(', ') || '-',
                     categoryNames: categoryNames.join(', ') || '-',
                     total: installmentValue,
-                    profit: calculateSaleProfit(sale) / installments,
-                      status: parcelStatus ?? sale.status,
-
+                    profit: saleProfit / installments,
+                    status: sale.status,
                     payment_method: sale.payment_method,
-                    date: installmentDateStr,
+                    date: installmentDate.toISOString().slice(0, 10),
                     installments,
-                    installment_number: installments > 1 ? i + 1 : undefined,
+                    installment_number: i + 1,
                 });
             }
         });
 
-    useEffect(() => {
-        setFilteredRows(rows);
-    }, [rows]);
+    const handleFilteredDataChange = useCallback((nextRows: SaleRow[]) => {
+        setFilteredRows((previous) =>
+            hasSameSalesMetricsRows(previous, nextRows) ? previous : nextRows,
+        );
+    }, []);
 
     const columns: Column<SaleRow>[] = [
         { key: 'clientName', header: 'Cliente' },
@@ -276,7 +379,7 @@ export function SalesModule() {
             key: 'installment_number',
             header: 'Parcela',
             render: (value: unknown, row: SaleRow) =>
-                row.installments && row.installments > 1
+                row.installment_number
                     ? `${row.installment_number}/${row.installments}`
                     : '-',
         },
@@ -474,7 +577,7 @@ export function SalesModule() {
                     { key: 'date', type: 'date' },
                 ]}
                 dateFilterKey="date"
-                onFilteredDataChange={setFilteredRows}
+                onFilteredDataChange={handleFilteredDataChange}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 onDelete={async (row) => {

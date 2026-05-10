@@ -37,11 +37,12 @@ class ReceivableService
         $installmentAmount = $installments > 0
             ? $financedTotal / $installments
             : $financedTotal;
-        $firstInstallmentDate = $sale->first_installment_date ?? $sale->date;
+        $firstInstallmentDate = Carbon::parse($sale->first_installment_date ?? $sale->date)
+            ->startOfDay();
         $isCompletedSale = $sale->status === SaleStatus::Completed->value;
 
         for ($i = 0; $i < $installments; $i++) {
-            $dueDate = (new \DateTime($firstInstallmentDate))->modify("+{$i} month");
+            $dueDate = $firstInstallmentDate->copy()->addMonthsNoOverflow($i);
 
             $this->receivables->create([
                 'company_id' => $sale->company_id,
@@ -49,7 +50,7 @@ class ReceivableService
                 'sale_id' => $sale->id,
                 'installment_number' => $i + 1,
                 'entry_date' => $sale->date,
-                'due_date' => $dueDate->format('Y-m-d'),
+                'due_date' => $dueDate->toDateString(),
                 'item' => $this->resolveSaleItemSummary($sale),
                 'description' => null,
                 'amount' => $installmentAmount,
