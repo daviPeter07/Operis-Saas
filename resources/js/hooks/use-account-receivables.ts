@@ -5,6 +5,7 @@ import {
     useQuery,
     useQueryClient,
 } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { accountReceivableService } from '@/services/account-receivables';
 import { productsQueryKey } from './use-products';
 import { salesQueryKey } from './use-sales';
@@ -65,6 +66,24 @@ export function useSettleAccountReceivable() {
             }),
         onSuccess: async () => {
             await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
+export function useDeleteAccountReceivable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) =>
+            accountReceivableService.delete(id),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: accountReceivablesQueryKey,
+            });
+            toast.success('Conta a receber deletada com sucesso');
+        },
+        onError: () => {
+            toast.error('Erro ao deletar conta a receber');
         },
     });
 }

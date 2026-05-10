@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/common/status-badge';
 import {
     useAccountReceivables,
     useCreateManualAccountReceivable,
+    useDeleteAccountReceivable,
     useSettleAccountReceivable,
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
@@ -35,6 +36,7 @@ export function AccountsReceivableModule() {
         useCustomers();
     const createManualReceivable = useCreateManualAccountReceivable();
     const settleAccountReceivable = useSettleAccountReceivable();
+    const deleteAccountReceivable = useDeleteAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -93,6 +95,20 @@ export function AccountsReceivableModule() {
         );
 
         toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
+        setSelectedIds(new Set());
+    };
+
+    const handleDelete = async () => {
+        const ids = Array.from(selectedIds).map((id) => Number(id));
+
+        if (ids.length === 0) {
+            return;
+        }
+
+        await Promise.all(
+            ids.map((id) => deleteAccountReceivable.mutateAsync(id)),
+        );
+
         setSelectedIds(new Set());
     };
 
@@ -201,6 +217,12 @@ export function AccountsReceivableModule() {
                             Total: {formatCurrencyBR(totalValue)}
                         </p>
                     </div>
+                    <button
+                        onClick={() => void handleDelete()}
+                        className="inline-flex h-9 items-center justify-center rounded-md bg-red-600 px-4 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                    >
+                        Deletar
+                    </button>
                     <button
                         onClick={() => void handleConfirmReceipt()}
                         className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"

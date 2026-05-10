@@ -62,6 +62,10 @@ class AccountReceivableService extends ApiService<AccountReceivable> {
 
         return normalizeAccountReceivable(response.data);
     }
+
+    async delete(id: number): Promise<void> {
+        await apiClient.delete(`/account-receivables/${id}`);
+    }
 }
 
 export const accountReceivableService = new AccountReceivableService();

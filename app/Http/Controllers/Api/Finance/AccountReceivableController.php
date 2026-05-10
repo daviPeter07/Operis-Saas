@@ -52,4 +52,16 @@ class AccountReceivableController extends Controller
 
         return response()->json(['data' => AccountReceivableResource::make($accountReceivable)]);
     }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(AccountReceivable $accountReceivable): JsonResponse
+    {
+        $this->authorize('delete', $accountReceivable);
+
+        $accountReceivable->delete();
+
+        return response()->json(['data' => true]);
+    }
 }

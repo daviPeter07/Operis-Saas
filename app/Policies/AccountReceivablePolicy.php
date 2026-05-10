@@ -44,7 +44,7 @@ class AccountReceivablePolicy
      */
     public function delete(User $user, AccountReceivable $accountReceivable): bool
     {
-        return false;
+        return $user->current_company_id === $accountReceivable->company_id;
     }
 
     /**

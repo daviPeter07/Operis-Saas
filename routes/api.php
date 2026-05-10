@@ -65,7 +65,7 @@ Route::middleware([
     Route::post('products/import', ProductImportController::class)->name('api.products.import');
     Route::apiResource('sales', SaleController::class);
     Route::post('sales/{sale}/cancel', SaleCancelController::class)->name('api.sales.cancel');
-    Route::apiResource('account-receivables', AccountReceivableController::class)->only(['index', 'show', 'store']);
+    Route::apiResource('account-receivables', AccountReceivableController::class)->only(['index', 'show', 'store', 'destroy']);
     Route::post('account-receivables/{accountReceivable}/settle', AccountReceivablePaymentController::class)->name('api.account-receivables.settle');
     Route::apiResource('purchases', PurchaseController::class);
     Route::post('purchases/{purchase}/cancel', PurchaseCancelController::class)->name('api.purchases.cancel');
