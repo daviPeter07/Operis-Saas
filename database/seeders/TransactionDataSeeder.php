@@ -73,7 +73,7 @@ class TransactionDataSeeder extends Seeder
         foreach ($purchaseSeed as $payload) {
             $alreadyExists = Purchase::query()
                 ->where('company_id', $companyId)
-                ->whereDate('date', '=', $payload['date'], 'and')
+                ->whereDate('date', $payload['date'])
                 ->exists();
 
             if ($alreadyExists) {
@@ -152,7 +152,7 @@ class TransactionDataSeeder extends Seeder
         foreach ($saleSeed as $payload) {
             $alreadyExists = Sale::query()
                 ->where('company_id', $companyId)
-                ->whereDate('date', '=', $payload['date'], 'and')
+                ->whereDate('date', $payload['date'])
                 ->exists();
 
             if ($alreadyExists) {

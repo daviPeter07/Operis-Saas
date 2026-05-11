@@ -70,10 +70,12 @@ class ImportConfirmService
         return $model::query()->where('company_id', $companyId)
             ->where(function ($q) use ($document, $email): void {
                 if ($document !== null) {
-                    $q->orWhere('document', $document);
+                    $q->where('document', $document);
                 }
+
                 if ($email !== null) {
-                    $q->orWhere('email', $email);
+                    $method = $document !== null ? 'orWhere' : 'where';
+                    $q->{$method}('email', $email);
                 }
             })
             ->first();
@@ -97,8 +99,10 @@ class ImportConfirmService
                 if ($sku !== null) {
                     $q->where('sku', $sku);
                 }
+
                 if ($barcode !== null) {
-                    $q->orWhere('barcode', $barcode);
+                    $method = $sku !== null ? 'orWhere' : 'where';
+                    $q->{$method}('barcode', $barcode);
                 }
             })
             ->first();

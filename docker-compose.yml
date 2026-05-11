@@ -1,22 +1,23 @@
 services:
-  pgsql:
-    image: postgres:17-alpine
+  mysql:
+    image: mysql:8.4
     restart: unless-stopped
     ports:
-      - '${DB_PORT:-5432}:5432'
+      - '${DB_PORT:-3306}:3306'
     environment:
-      POSTGRES_DB: '${DB_DATABASE}'
-      POSTGRES_USER: '${DB_USERNAME}'
-      POSTGRES_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
     volumes:
-      - 'pgsql-data:/var/lib/postgresql/data'
+      - 'mysql-data:/var/lib/mysql'
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-u', 'root', '-p$$MYSQL_ROOT_PASSWORD']
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
 volumes:
-  pgsql-data:
+  mysql-data:
     driver: local

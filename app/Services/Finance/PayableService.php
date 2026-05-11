@@ -43,7 +43,7 @@ class PayableService
 
             for ($index = 1; $index <= $installments; $index++) {
                 $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
-                $dueDate = $baseDate->copy()->addMonthsNoOverflow($index)->toDateString();
+                $dueDate = $baseDate->copy()->addDays(30 * $index)->toDateString();
 
                 $this->payables->create([
                     'company_id' => $purchase->company_id,
@@ -102,7 +102,7 @@ class PayableService
 
             for ($index = 1; $index <= $installments; $index++) {
                 $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
-                $dueDate = $baseDateObj->copy()->addMonthsNoOverflow($index)->toDateString();
+                $dueDate = $baseDateObj->copy()->addDays(30 * $index)->toDateString();
 
                 $this->payables->create([
                     'company_id' => $companyId,
