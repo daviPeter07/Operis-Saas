@@ -4,7 +4,7 @@ interface ApiResponse<T> {
 }
 
 class ApiClient {
-    private baseUrl = '/api';
+    private baseUrl = '/operis/api';
 
     private async request<T>(
         method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
