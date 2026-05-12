@@ -20,6 +20,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { withAppBasePath } from '@/constants/workspace';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
@@ -42,13 +43,20 @@ export function AppHeaderWithActions({
     const { appearance, updateAppearance } = useAppearance();
     const handleAction = (actionKey: string) => {
         const routes: Record<string, string> = {
-            'create-client': '/dashboard/clients?action=create-client',
-            'create-sale': '/dashboard/sales?action=create-sale',
-            'create-purchase': '/dashboard/purchases?action=create-purchase',
-            'create-expense':
-                '/dashboard/accounts-payable?action=create-expense',
-            'create-brand': '/dashboard/brands?action=create-brand',
-            'create-category': '/dashboard/categories?action=create-category',
+                'create-client': withAppBasePath(
+                    '/dashboard/clients?action=create-client',
+                ),
+                'create-sale': withAppBasePath('/dashboard/sales?action=create-sale'),
+                'create-purchase': withAppBasePath(
+                    '/dashboard/purchases?action=create-purchase',
+                ),
+                'create-expense': withAppBasePath(
+                    '/dashboard/accounts-payable?action=create-expense',
+                ),
+                'create-brand': withAppBasePath('/dashboard/brands?action=create-brand'),
+                'create-category': withAppBasePath(
+                    '/dashboard/categories?action=create-category',
+                ),
         };
 
         if (routes[actionKey]) {

@@ -1,9 +1,7 @@
-import { Printer, DollarSign } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
-import { Button } from '@/components/ui/button';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useBrands, useCreateBrand } from '@/hooks/use-brands';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
@@ -19,7 +17,6 @@ import {
 import {
     formatCurrencyBR,
     formatDateBR,
-    formatDateTimeBR,
     translatePaymentMethod,
 } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
@@ -38,7 +35,6 @@ import { SaleDocumentPreviewDialog } from './sale-document-preview-dialog';
 import { SalesHeader } from './sales-header';
 
 type SaleRow = {
-    dueDate?: string;
     brandNames?: string;
     id: string;
     sale_id: number;
@@ -52,7 +48,6 @@ type SaleRow = {
     status: string;
     date: string;
     installments?: number;
-    installment_number?: number;
 };
 
 type SaleMutationPayload = SaleMutationInput;
@@ -109,21 +104,6 @@ export function SalesModule() {
 
     const { data: sales = [], isPending: isSalesPending } = useSales();
     const { data: receivables = [] } = useAccountReceivables();
-    const receivablesBySaleId = useMemo(() => {
-        const grouped = new Map<number, typeof receivables>();
-
-        receivables.forEach((receivable) => {
-            if (receivable.sale_id == null) {
-                return;
-            }
-
-            const current = grouped.get(receivable.sale_id) ?? [];
-            current.push(receivable);
-            grouped.set(receivable.sale_id, current);
-        });
-
-        return grouped;
-    }, [receivables]);
     const { data: brands = [], isPending: isBrandsPending } = useBrands();
     const { data: categories = [], isPending: isCategoriesPending } =
         useCategories();
@@ -146,11 +126,12 @@ export function SalesModule() {
 
     // Abre o preview térmico ao clicar no ícone de visualização da linha
     const handlePreview = async (row: SaleRow) => {
-        const saleId = Number(String(row.id).split('-')[0]);
+        const saleId = row.sale_id;
         const previewStatus: Sale['status'] =
             row.status === 'completed' || row.status === 'cancelled'
                 ? row.status
                 : 'pending';
+
         try {
             const sale = await saleService.get(saleId);
             setPreviewMode('thermal');
@@ -251,152 +232,72 @@ export function SalesModule() {
         [customers],
     );
 
-    const rows: SaleRow[] = [];
-    sales
-        .filter((sale) => sale.status !== 'cancelled')
-        .forEach((sale) => {
-            const productNames = Array.from(
-                new Set(
-                    (sale.items ?? [])
-                        .map((item) => item.product_name?.trim())
-                        .filter((value): value is string => Boolean(value)),
-                ),
-            );
-            const categoryNames = Array.from(
-                new Set(
-                    (sale.items ?? [])
-                        .map((item) => item.category_name?.trim())
-                        .filter((value): value is string => Boolean(value)),
-                ),
-            );
+    const rows: SaleRow[] = useMemo(
+        () =>
+            sales
+                .filter((sale) => sale.status !== 'cancelled')
+                .map((sale) => {
+                    const productNames = Array.from(
+                        new Set(
+                            (sale.items ?? [])
+                                .map((item) => item.product_name?.trim())
+                                .filter((value): value is string =>
+                                    Boolean(value),
+                                ),
+                        ),
+                    );
+                    const categoryNames = Array.from(
+                        new Set(
+                            (sale.items ?? [])
+                                .map((item) => item.category_name?.trim())
+                                .filter((value): value is string =>
+                                    Boolean(value),
+                                ),
+                        ),
+                    );
 
-            const brandNames = Array.from(
-                new Set(
-                    (sale.items ?? [])
-                        .map((item) => {
-                            const prod = productById.get(
-                                String(item.product_id),
-                            );
-                            return prod?.brand
-                                ? (brandMap.get(prod.brand) ?? '')
-                                : '';
-                        })
-                        .filter((value): value is string => Boolean(value)),
-                ),
-            );
+                    const brandNames = Array.from(
+                        new Set(
+                            (sale.items ?? [])
+                                .map((item) => {
+                                    const prod = productById.get(
+                                        String(item.product_id),
+                                    );
 
-            const clientName =
-                sale.customer_id === null
-                    ? 'Sem cliente'
-                    : customerNameById.get(sale.customer_id) ||
-                      `#${sale.customer_id}`;
+                                    return prod?.brand
+                                        ? (brandMap.get(prod.brand) ?? '')
+                                        : '';
+                                })
+                                .filter((value): value is string =>
+                                    Boolean(value),
+                                ),
+                        ),
+                    );
 
-            const saleReceivables =
-                receivablesBySaleId
-                    .get(sale.id)
-                    ?.slice()
-                    .sort((first, second) => {
-                        const firstDate = toDateOnly(
-                            first.due_date ?? first.entry_date ?? sale.date,
-                        );
-                        const secondDate = toDateOnly(
-                            second.due_date ?? second.entry_date ?? sale.date,
-                        );
+                    const clientName =
+                        sale.customer_id === null
+                            ? 'Sem cliente'
+                            : customerNameById.get(sale.customer_id) ||
+                              `#${sale.customer_id}`;
 
-                        if (firstDate !== secondDate) {
-                            return firstDate.localeCompare(secondDate);
-                        }
-
-                        return (
-                            (first.installment_number ?? 0) -
-                            (second.installment_number ?? 0)
-                        );
-                    }) ?? [];
-
-            const saleProfit = calculateSaleProfit(sale);
-
-            if (saleReceivables.length > 0) {
-                const totalReceivablesAmount =
-                    saleReceivables.reduce(
-                        (sum, receivable) =>
-                            sum + Number(receivable.amount ?? 0),
-                        0,
-                    ) || Number(sale.total);
-
-                saleReceivables.forEach((receivable) => {
-                    const amount = Number(receivable.amount ?? 0);
-                    const ratio =
-                        totalReceivablesAmount > 0
-                            ? amount / totalReceivablesAmount
-                            : 0;
-                    const status =
-                        receivable.status === 'received'
-                            ? 'completed'
-                            : receivable.status;
-
-                    rows.push({
-                        id:
-                            receivable.installment_number != null
-                                ? `${sale.id}-${receivable.installment_number}`
-                                : `${sale.id}-entry-${receivable.id}`,
+                    return {
+                        id: String(sale.id),
                         sale_id: sale.id,
                         customer_id: sale.customer_id,
                         clientName,
                         productNames: productNames.join(', ') || '-',
                         categoryNames: categoryNames.join(', ') || '-',
                         brandNames: brandNames.join(', ') || '-',
-                        total: amount,
-                        profit: saleProfit * ratio,
-                        status,
+                        total: Number(sale.total),
+                        profit: calculateSaleProfit(sale),
+                        status: sale.status,
                         payment_method: sale.payment_method,
-                        date: toDateOnly(
-                            receivable.due_date ??
-                                receivable.entry_date ??
-                                sale.createdAt ??
-                                sale.date,
-                        ),
-                        dueDate: toDateOnly(
-                            receivable.due_date ??
-                                receivable.entry_date ??
-                                sale.createdAt ??
-                                sale.date,
-                        ),
+                        date: toDateOnly(sale.createdAt ?? sale.date),
                         installments: sale.installments ?? 1,
-                        installment_number:
-                            receivable.installment_number ?? undefined,
-                    });
-                });
-
-                return;
-            }
-
-            const installments = sale.installments ?? 1;
-            const installmentValue = sale.total / installments;
-            const baseDate = sale.createdAt ?? sale.date;
-
-            for (let i = 0; i < installments; i++) {
-                const installmentDate = new Date(baseDate);
-                installmentDate.setMonth(installmentDate.getMonth() + i);
-
-                rows.push({
-                    id: `${sale.id}-${i + 1}`,
-                    sale_id: sale.id,
-                    customer_id: sale.customer_id,
-                    clientName,
-                    productNames: productNames.join(', ') || '-',
-                    categoryNames: categoryNames.join(', ') || '-',
-                    brandNames: brandNames.join(', ') || '-',
-                    total: installmentValue,
-                    profit: saleProfit / installments,
-                    status: sale.status,
-                    payment_method: sale.payment_method,
-                    date: installmentDate.toISOString().slice(0, 10),
-                    dueDate: installmentDate.toISOString().slice(0, 10),
-                    installments,
-                    installment_number: i + 1,
-                });
-            }
-        });
+                    };
+                }),
+        [brandMap, customerNameById, productById, sales],
+    );
 
     const handleFilteredDataChange = useCallback((nextRows: SaleRow[]) => {
         setFilteredRows((previous) =>
@@ -430,12 +331,9 @@ export function SalesModule() {
             render: (value: unknown) => translatePaymentMethod(String(value)),
         },
         {
-            key: 'installment_number',
+            key: 'installments',
             header: 'Parcela',
-            render: (value: unknown, row: SaleRow) =>
-                row.installment_number
-                    ? `${row.installment_number}/${row.installments}`
-                    : '-',
+            render: (value: unknown, row: SaleRow) => row.installments ?? 1,
         },
         {
             key: 'date',
@@ -596,18 +494,18 @@ export function SalesModule() {
                     { key: 'categoryNames', type: 'text' },
                     { key: 'date', type: 'date' },
                 ]}
-                dateFilterKey="date" showPrint={true}
+                dateFilterKey="date"
+                showPrint={true}
                 onFilteredDataChange={handleFilteredDataChange}
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 onView={handlePreview}
                 onDelete={async (row) => {
-                    const saleId = Number(String(row.id).split('-')[0]);
-                    await deleteSale.mutateAsync(saleId);
+                    await deleteSale.mutateAsync(row.sale_id);
                 }}
                 onEdit={async (row) => {
                     try {
-                        const saleId = Number(String(row.id).split('-')[0]);
+                        const saleId = row.sale_id;
                         const full = await saleService.get(saleId);
                         const mappedPaymentMethod: UiPaymentMethod =
                             full.payment_method === 'cash'

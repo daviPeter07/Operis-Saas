@@ -131,9 +131,9 @@ class ReceivableService
                 'received_at' => $data['received_at'],
             ]);
 
-            $sale = $receivable->sale()
-                ->with('items:id,sale_id,product_id,quantity')
-                ->first();
+            $sale = Sale::query()
+                ->with(['items:id,sale_id,product_id,quantity', 'receivables:id,sale_id,status'])
+                ->find($receivable->sale_id);
 
             if (! $sale || $sale->status !== SaleStatus::Pending->value) {
                 return $receivable->refresh();
@@ -155,42 +155,79 @@ class ReceivableService
         });
     }
 
+    public function unsettle(AccountReceivable $receivable, int $userId): AccountReceivable
+    {
+        return DB::transaction(function () use ($receivable): AccountReceivable {
+            if ($receivable->status !== FinancialStatus::Received->value) {
+                throw ValidationException::withMessages([
+                    'receivable' => 'Conta a receber precisa estar baixada para desfazer a baixa.',
+                ]);
+            }
+
+            $receivable->update([
+                'status' => FinancialStatus::Pending->value,
+                'received_at' => null,
+            ]);
+
+            $sale = Sale::query()
+                ->with('receivables:id,sale_id,status')
+                ->find($receivable->sale_id);
+
+            if (! $sale) {
+                return $receivable->refresh();
+            }
+
+            $hasOpenReceivables = $sale->receivables()
+                ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
+                ->exists();
+
+            $sale->update([
+                'status' => $hasOpenReceivables
+                    ? SaleStatus::Pending->value
+                    : SaleStatus::Completed->value,
+            ]);
+
+            return $receivable->refresh();
+        });
+    }
+
     public function syncStatusesFromSales(?int $companyId = null): int
     {
         $updated = 0;
 
-        AccountReceivable::query()
+        $receivables = AccountReceivable::query()
             ->whereNotNull('sale_id')
             ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
             ->with('sale:id,status')
-            ->chunkById(200, function ($receivables) use (&$updated): void {
-                foreach ($receivables as $receivable) {
-                    $saleStatus = $receivable->sale?->status;
+            ->get();
 
-                    if ($saleStatus === null) {
-                        continue;
-                    }
+        foreach ($receivables as $receivable) {
+            /** @var AccountReceivable $receivable */
+            $saleStatus = $receivable->sale?->status;
 
-                    $targetStatus = match ($saleStatus) {
-                        SaleStatus::Completed->value => FinancialStatus::Received->value,
-                        SaleStatus::Cancelled->value => FinancialStatus::Cancelled->value,
-                        default => FinancialStatus::Pending->value,
-                    };
+            if ($saleStatus === null) {
+                continue;
+            }
 
-                    if ($receivable->status === $targetStatus) {
-                        continue;
-                    }
+            $targetStatus = match ($saleStatus) {
+                SaleStatus::Completed->value => FinancialStatus::Received->value,
+                SaleStatus::Cancelled->value => FinancialStatus::Cancelled->value,
+                default => FinancialStatus::Pending->value,
+            };
 
-                    $receivable->update([
-                        'status' => $targetStatus,
-                        'received_at' => $targetStatus === FinancialStatus::Received->value
-                            ? ($receivable->received_at ?? now())
-                            : null,
-                    ]);
+            if ($receivable->status === $targetStatus) {
+                continue;
+            }
 
-                    $updated++;
-                }
-            });
+            $receivable->update([
+                'status' => $targetStatus,
+                'received_at' => $targetStatus === FinancialStatus::Received->value
+                    ? ($receivable->received_at ?? now())
+                    : null,
+            ]);
+
+            $updated++;
+        }
 
         return $updated;
     }

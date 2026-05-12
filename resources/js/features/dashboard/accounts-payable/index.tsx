@@ -4,8 +4,8 @@ import { StatusBadge } from '@/components/common/status-badge';
 import {
     useAccountPayables,
     useCreateManualAccountPayable,
-    useDeleteAccountPayable,
     useSettleAccountPayable,
+    useUnsettleAccountPayable,
 } from '@/hooks/use-account-payables';
 import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
@@ -37,7 +37,7 @@ export function AccountsPayableModule() {
     const createManualPayable = useCreateManualAccountPayable();
 
     const settleAccountPayable = useSettleAccountPayable();
-    const deleteAccountPayable = useDeleteAccountPayable();
+    const unsettleAccountPayable = useUnsettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
@@ -68,9 +68,7 @@ export function AccountsPayableModule() {
         [suppliers],
     );
 
-    const rows: PayableRow[] = payables
-        .filter((payable) => payable.status === 'pending')
-        .map((payable) => ({
+    const rows: PayableRow[] = payables.map((payable) => ({
             id: String(payable.id),
             supplier_name: payable.supplier_id
                 ? (supplierNameById.get(payable.supplier_id) ??
@@ -101,11 +99,13 @@ export function AccountsPayableModule() {
     };
 
     const handleConfirmPayment = async () => {
-        const ids = Array.from(selectedIds).map((id) => Number(id));
+        const ids = rows
+            .filter((row) => selectedIds.has(row.id) && row.status === 'pending')
+            .map((row) => Number(row.id));
 
         if (ids.length === 0) {
-return;
-}
+            return;
+        }
 
         await Promise.all(
             ids.map((id) =>
@@ -120,11 +120,29 @@ return;
         setSelectedIds(new Set());
     };
 
+    const handleUndoPayment = async () => {
+        const ids = rows
+            .filter((row) => selectedIds.has(row.id) && row.status === 'paid')
+            .map((row) => Number(row.id));
+
+        if (ids.length === 0) {
+            return;
+        }
+
+        await Promise.all(ids.map((id) => unsettleAccountPayable.mutateAsync(id)));
+        toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
+        setSelectedIds(new Set());
+    };
+
 
     const totalSelected = selectedIds.size;
-    const totalValue = rows
-        .filter((row) => selectedIds.has(row.id))
-        .reduce((sum, row) => sum + row.amount, 0);
+    const selectedRows = rows.filter((row) => selectedIds.has(row.id));
+    const selectedStatuses = new Set(selectedRows.map((row) => row.status));
+    const selectedAction =
+        selectedRows.length > 0 && selectedStatuses.size === 1
+            ? selectedRows[0].status
+            : null;
+    const totalValue = selectedRows.reduce((sum, row) => sum + row.amount, 0);
 
     const handleCreateSupplier = async (
         supplier: UiSupplier,
@@ -247,13 +265,28 @@ return;
                         <p className="text-sm text-muted-foreground">
                             Total: {formatCurrencyBR(totalValue)}
                         </p>
+                        {selectedAction === null && (
+                            <p className="text-sm text-amber-600">
+                                Selecione apenas títulos com o mesmo status para aplicar a ação.
+                            </p>
+                        )}
                     </div>
-                    <button
-                        onClick={() => void handleConfirmPayment()}
-                        className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
-                    >
-                        Marcar como Paga
-                    </button>
+                    {selectedAction === 'pending' && (
+                        <button
+                            onClick={() => void handleConfirmPayment()}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+                        >
+                            Marcar como Paga
+                        </button>
+                    )}
+                    {selectedAction === 'paid' && (
+                        <button
+                            onClick={() => void handleUndoPayment()}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+                        >
+                            Desfazer baixa
+                        </button>
+                    )}
                 </div>
             )}
             <GenericTable
@@ -272,15 +305,6 @@ return;
                 }
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
-                onDelete={async (row) => {
-                    if (row.purchase_id) {
-                        // Impedir exclusão de contas vinculadas a compra
-                        throw new Error('Não é permitido excluir contas geradas a partir de uma compra.');
-                    }
-
-                    await deleteAccountPayable.mutateAsync(Number(row.id));
-                    setSelectedIds(new Set());
-                }}
                 createDialog={({ open, onOpenChange }) => (
                     <AccountsPayableCreateDialog
                         open={open}

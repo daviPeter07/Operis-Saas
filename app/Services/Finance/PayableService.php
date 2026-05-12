@@ -34,9 +34,8 @@ class PayableService
             // Determine number of installments based on boleto term days (30 days per installment)
             $termDays = $purchase->boleto_term_days ?? 60; // default 60 days → 2 installments
             $installments = (int) ceil($termDays / 30);
-            $baseDate = $purchase->date?->copy() ?? now();
-            // Parse the date as a local date in America/Sao_Paulo without shifting the day
-            $baseDate = \Carbon\Carbon::parse($baseDate->toDateString(), 'America/Sao_Paulo');
+            // Parse the stored date as a local date in America/Sao_Paulo without shifting the day
+            $baseDate = Carbon::parse((string) $purchase->date, 'America/Sao_Paulo')->startOfDay();
             $totalCents = (int) round((float) $purchase->total * 100);
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;
@@ -62,7 +61,7 @@ class PayableService
             return;
         }
 
-        $dueDate = $purchase->due_date?->toDateString() ?? $purchase->date?->toDateString();
+        $dueDate = Carbon::parse((string) ($purchase->due_date ?? $purchase->date))->toDateString();
 
         $this->payables->create([
             'company_id' => $purchase->company_id,
@@ -158,9 +157,9 @@ class PayableService
                 'payment_notes' => $data['payment_notes'] ?? null,
             ]);
 
-            $purchase = $payable->purchase()
-                ->with('items:id,purchase_id,product_id,quantity')
-                ->first();
+            $purchase = Purchase::query()
+                ->with(['items:id,purchase_id,product_id,quantity', 'payables:id,purchase_id,status'])
+                ->find($payable->purchase_id);
 
             if (! $purchase || $purchase->status !== PurchaseStatus::Pending->value) {
                 return $payable->refresh();
@@ -191,6 +190,53 @@ class PayableService
         });
     }
 
+    public function unsettle(AccountPayable $payable, int $userId): AccountPayable
+    {
+        return DB::transaction(function () use ($payable, $userId): AccountPayable {
+            if ($payable->status !== 'paid') {
+                throw ValidationException::withMessages([
+                    'payable' => 'Conta a pagar precisa estar paga para desfazer a baixa.',
+                ]);
+            }
+
+            $payable->update([
+                'status' => 'pending',
+                'paid_at' => null,
+                'paid_method' => null,
+                'payment_notes' => null,
+            ]);
+
+            $purchase = Purchase::query()
+                ->with(['items:id,purchase_id,product_id,quantity', 'payables:id,purchase_id,status'])
+                ->find($payable->purchase_id);
+
+            if (! $purchase) {
+                return $payable->refresh();
+            }
+
+            $hasOpenPayables = $purchase->payables()->where('status', 'pending')->exists();
+
+            if ($purchase->status === PurchaseStatus::Completed->value && $hasOpenPayables) {
+                foreach ($purchase->items as $item) {
+                    $product = Product::query()->findOrFail($item->product_id);
+
+                    $this->stockMovementService->register(
+                        $product,
+                        -(float) $item->quantity,
+                        StockMovementType::PurchaseEdit,
+                        $purchase->id,
+                        $userId,
+                        'purchase'
+                    );
+                }
+
+                $purchase->update(['status' => PurchaseStatus::Pending->value]);
+            }
+
+            return $payable->refresh();
+        });
+    }
+
     public function syncMissingForCompany(int $companyId): void
     {
         Purchase::query()
@@ -205,37 +251,38 @@ class PayableService
     {
         $updated = 0;
 
-        AccountPayable::query()
+        $payables = AccountPayable::query()
             ->whereNotNull('purchase_id')
             ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
             ->with('purchase:id,status,payment_method')
-            ->chunkById(200, function ($payables) use (&$updated): void {
-                foreach ($payables as $payable) {
-                    $purchaseStatus = $payable->purchase?->status;
+            ->get();
 
-                    if ($purchaseStatus === null) {
-                        continue;
-                    }
+        foreach ($payables as $payable) {
+            /** @var AccountPayable $payable */
+            $purchaseStatus = $payable->purchase?->status;
 
-                    $targetStatus = match ($purchaseStatus) {
-                        PurchaseStatus::Completed->value => 'paid',
-                        PurchaseStatus::Cancelled->value => 'cancelled',
-                        default => 'pending',
-                    };
+            if ($purchaseStatus === null) {
+                continue;
+            }
 
-                    if ($payable->status === $targetStatus) {
-                        continue;
-                    }
+            $targetStatus = match ($purchaseStatus) {
+                PurchaseStatus::Completed->value => 'paid',
+                PurchaseStatus::Cancelled->value => 'cancelled',
+                default => 'pending',
+            };
 
-                    $payable->update([
-                        'status' => $targetStatus,
-                        'paid_at' => $targetStatus === 'paid' ? ($payable->paid_at ?? now()) : null,
-                        'paid_method' => $targetStatus === 'paid' ? ($payable->paid_method ?? $payable->purchase?->payment_method) : null,
-                    ]);
+            if ($payable->status === $targetStatus) {
+                continue;
+            }
 
-                    $updated++;
-                }
-            });
+            $payable->update([
+                'status' => $targetStatus,
+                'paid_at' => $targetStatus === 'paid' ? ($payable->paid_at ?? now()) : null,
+                'paid_method' => $targetStatus === 'paid' ? ($payable->paid_method ?? $payable->purchase?->payment_method) : null,
+            ]);
+
+            $updated++;
+        }
 
         return $updated;
     }

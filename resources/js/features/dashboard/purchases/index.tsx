@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { StatusBadge } from '@/components/common/status-badge';
 import { useAccountPayables } from '@/hooks/use-account-payables';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
@@ -27,7 +28,6 @@ import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { PurchaseCreateDialog } from './purchase-create-dialog';
 import { PurchaseHeader } from './purchase-header';
-import { StatusBadge } from '@/components/common/status-badge';
 
 type PurchaseRow = {
     id: string; // unique row identifier (may include payable id for boleto rows)

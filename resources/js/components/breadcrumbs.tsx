@@ -8,6 +8,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { withAppBasePath } from '@/constants/workspace';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 export function Breadcrumbs({
@@ -15,6 +16,9 @@ export function Breadcrumbs({
 }: {
     breadcrumbs: BreadcrumbItemType[];
 }) {
+    const resolveHref = (href: string): string =>
+        href.startsWith('/operis') ? href : withAppBasePath(href);
+
     return (
         <>
             {breadcrumbs.length > 0 && (
@@ -32,7 +36,7 @@ export function Breadcrumbs({
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
-                                                <Link href={item.href}>
+                                                <Link href={resolveHref(item.href)}>
                                                     {item.title}
                                                 </Link>
                                             </BreadcrumbLink>

@@ -60,6 +60,15 @@ class AccountPayableService extends ApiService<AccountPayable> {
         return normalizeAccountPayable(response.data);
     }
 
+    async unsettle(id: number): Promise<AccountPayable> {
+        const response = await apiClient.post<AccountPayable>(
+            `/account-payables/${id}/unsettle`,
+            {},
+        );
+
+        return normalizeAccountPayable(response.data);
+    }
+
     async create(payload: CreateManualAccountPayablePayload): Promise<void> {
         await apiClient.post('/account-payables', payload);
     }

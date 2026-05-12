@@ -65,6 +65,17 @@ export function useSettleAccountPayable() {
     });
 }
 
+export function useUnsettleAccountPayable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => accountPayableService.unsettle(id),
+        onSuccess: async () => {
+            await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
 export function useCreateManualAccountPayable() {
     const queryClient = useQueryClient();
 

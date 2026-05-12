@@ -67,8 +67,10 @@ Route::middleware([
     Route::post('sales/{sale}/cancel', SaleCancelController::class)->name('api.sales.cancel');
     Route::apiResource('account-receivables', AccountReceivableController::class)->only(['index', 'show', 'store', 'destroy']);
     Route::post('account-receivables/{accountReceivable}/settle', AccountReceivablePaymentController::class)->name('api.account-receivables.settle');
+    Route::post('account-receivables/{accountReceivable}/unsettle', [AccountReceivablePaymentController::class, 'reverse'])->name('api.account-receivables.unsettle');
     Route::apiResource('purchases', PurchaseController::class);
     Route::post('purchases/{purchase}/cancel', PurchaseCancelController::class)->name('api.purchases.cancel');
     Route::apiResource('account-payables', AccountPayableController::class)->only(['index', 'show', 'store', 'destroy']);
     Route::post('account-payables/{accountPayable}/settle', AccountPayablePaymentController::class)->name('api.account-payables.settle');
+    Route::post('account-payables/{accountPayable}/unsettle', [AccountPayablePaymentController::class, 'reverse'])->name('api.account-payables.unsettle');
 });

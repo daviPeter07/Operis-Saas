@@ -4,8 +4,8 @@ import { StatusBadge } from '@/components/common/status-badge';
 import {
     useAccountReceivables,
     useCreateManualAccountReceivable,
-    useDeleteAccountReceivable,
     useSettleAccountReceivable,
+    useUnsettleAccountReceivable,
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
@@ -36,7 +36,7 @@ export function AccountsReceivableModule() {
         useCustomers();
     const createManualReceivable = useCreateManualAccountReceivable();
     const settleAccountReceivable = useSettleAccountReceivable();
-    const deleteAccountReceivable = useDeleteAccountReceivable();
+    const unsettleAccountReceivable = useUnsettleAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -45,9 +45,7 @@ export function AccountsReceivableModule() {
         [customers],
     );
 
-    const rows: ReceivableRow[] = receivables
-        .filter((receivable) => receivable.status === 'pending')
-        .map((receivable) => ({
+    const rows: ReceivableRow[] = receivables.map((receivable) => ({
             id: String(receivable.id),
             customer_id: receivable.customer_id,
             customer_name: receivable.customer_id
@@ -79,11 +77,13 @@ export function AccountsReceivableModule() {
     };
 
     const handleConfirmReceipt = async () => {
-        const ids = Array.from(selectedIds).map((id) => Number(id));
+        const ids = rows
+            .filter((row) => selectedIds.has(row.id) && row.status === 'pending')
+            .map((row) => Number(row.id));
 
         if (ids.length === 0) {
-return;
-}
+            return;
+        }
 
         await Promise.all(
             ids.map((id) =>
@@ -97,23 +97,31 @@ return;
         setSelectedIds(new Set());
     };
 
-    const handleDelete = async () => {
-        const ids = Array.from(selectedIds).map((id) => Number(id));
+    const handleUndoReceipt = async () => {
+        const ids = rows
+            .filter((row) => selectedIds.has(row.id) && row.status === 'received')
+            .map((row) => Number(row.id));
 
         if (ids.length === 0) {
-return;
-}
+            return;
+        }
 
-        await Promise.all(ids.map((id) => deleteAccountReceivable.mutateAsync(id)));
-        toast.success(`${ids.length} conta(s) excluída(s) com sucesso.`);
+        await Promise.all(
+            ids.map((id) => unsettleAccountReceivable.mutateAsync(id)),
+        );
+        toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
         setSelectedIds(new Set());
     };
 
 
     const totalSelected = selectedIds.size;
-    const totalValue = rows
-        .filter((row) => selectedIds.has(row.id))
-        .reduce((sum, row) => sum + row.amount, 0);
+    const selectedRows = rows.filter((row) => selectedIds.has(row.id));
+    const selectedStatuses = new Set(selectedRows.map((row) => row.status));
+    const selectedAction =
+        selectedRows.length > 0 && selectedStatuses.size === 1
+            ? selectedRows[0].status
+            : null;
+    const totalValue = selectedRows.reduce((sum, row) => sum + row.amount, 0);
 
     const columns: Column<ReceivableRow>[] = [
         {
@@ -214,19 +222,28 @@ return;
                         <p className="text-sm text-muted-foreground">
                             Total: {formatCurrencyBR(totalValue)}
                         </p>
+                        {selectedAction === null && (
+                            <p className="text-sm text-amber-600">
+                                Selecione apenas títulos com o mesmo status para aplicar a ação.
+                            </p>
+                        )}
                     </div>
-                    <button
-                        onClick={() => void handleConfirmReceipt()}
-                        className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
-                    >
-                        Marcar como Recebida
-                    </button>
-                    <button
-                        onClick={() => void handleDelete()}
-                        className="ml-2 inline-flex h-9 items-center justify-center rounded-md bg-red-600 px-4 text-sm font-medium text-white transition-colors hover:bg-red-700"
-                    >
-                        Excluir
-                    </button>
+                    {selectedAction === 'pending' && (
+                        <button
+                            onClick={() => void handleConfirmReceipt()}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+                        >
+                            Marcar como Recebida
+                        </button>
+                    )}
+                    {selectedAction === 'received' && (
+                        <button
+                            onClick={() => void handleUndoReceipt()}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+                        >
+                            Desfazer baixa
+                        </button>
+                    )}
                 </div>
             )}
             <GenericTable

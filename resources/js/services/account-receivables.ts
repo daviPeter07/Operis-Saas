@@ -63,6 +63,15 @@ class AccountReceivableService extends ApiService<AccountReceivable> {
         return normalizeAccountReceivable(response.data);
     }
 
+    async unsettle(id: number): Promise<AccountReceivable> {
+        const response = await apiClient.post<AccountReceivable>(
+            `/account-receivables/${id}/unsettle`,
+            {},
+        );
+
+        return normalizeAccountReceivable(response.data);
+    }
+
     async delete(id: number): Promise<void> {
         await apiClient.delete(`/account-receivables/${id}`);
     }

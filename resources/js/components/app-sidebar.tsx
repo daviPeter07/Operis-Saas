@@ -34,12 +34,12 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { withAppBasePath } from '@/constants/workspace';
 import { useWorkspace } from '@/features/dashboard/workspace-context';
 import {
     getAltShortcutLabel,
     isEditableElement,
 } from '@/lib/keyboard-shortcuts';
-import { withAppBasePath } from '@/constants/workspace';
 import type { WorkspaceModuleKey } from '@/types/workspace';
 
 const navMetaByModule: Record<

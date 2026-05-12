@@ -70,6 +70,17 @@ export function useSettleAccountReceivable() {
     });
 }
 
+export function useUnsettleAccountReceivable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: number) => accountReceivableService.unsettle(id),
+        onSuccess: async () => {
+            await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
 export function useDeleteAccountReceivable() {
     const queryClient = useQueryClient();
 
