@@ -23,6 +23,16 @@ class Company extends Model
 {
     use HasFactory;
 
+    public function brands(): HasMany
+    {
+        return $this->hasMany(Brand::class);
+    }
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class);
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(CompanyUser::class);
