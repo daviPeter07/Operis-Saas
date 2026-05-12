@@ -69,6 +69,7 @@ export interface CreateModalProps<T extends Record<string, unknown>> {
     title?: string;
     description?: string;
     fields: FormField[];
+    initialData?: Partial<T>;
     onSubmit: (data: T) => void;
     submitLabel?: string;
     className?: string;
@@ -80,6 +81,7 @@ export function CreateModal<T extends Record<string, unknown>>({
     title = 'Criar Novo Registro',
     description = 'Preencha os dados abaixo para criar um novo registro.',
     fields,
+    initialData,
     onSubmit,
     submitLabel = 'Criar',
     className,
@@ -199,9 +201,14 @@ export function CreateModal<T extends Record<string, unknown>>({
 
     React.useEffect(() => {
         if (open) {
-            queueMicrotask(() => setFormData(buildDefaultFormData()));
+            queueMicrotask(() =>
+                setFormData({
+                    ...buildDefaultFormData(),
+                    ...(initialData ?? {}),
+                }),
+            );
         }
-    }, [buildDefaultFormData, open]);
+    }, [buildDefaultFormData, initialData, open]);
 
     const handleChange = (field: FormField, value: string) => {
         let maskedValue = value;
