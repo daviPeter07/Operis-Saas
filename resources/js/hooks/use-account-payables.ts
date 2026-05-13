@@ -8,6 +8,18 @@ import { salesQueryKey } from './use-sales';
 
 export const accountPayablesQueryKey = ['account-payables'] as const;
 const accountReceivablesQueryKey = ['account-receivables'] as const;
+let payablesInvalidateTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleInvalidateRelatedQueries(queryClient: QueryClient): void {
+    if (payablesInvalidateTimer) {
+        clearTimeout(payablesInvalidateTimer);
+    }
+
+    payablesInvalidateTimer = setTimeout(() => {
+        void invalidateRelatedQueries(queryClient);
+        payablesInvalidateTimer = null;
+    }, 150);
+}
 
 async function invalidateRelatedQueries(
     queryClient: QueryClient,
@@ -18,11 +30,6 @@ async function invalidateRelatedQueries(
         queryClient.invalidateQueries({ queryKey: productsQueryKey }),
         queryClient.invalidateQueries({ queryKey: salesQueryKey }),
         queryClient.invalidateQueries({ queryKey: accountReceivablesQueryKey }),
-        queryClient.refetchQueries({ queryKey: accountPayablesQueryKey }),
-        queryClient.refetchQueries({ queryKey: purchasesQueryKey }),
-        queryClient.refetchQueries({ queryKey: productsQueryKey }),
-        queryClient.refetchQueries({ queryKey: salesQueryKey }),
-        queryClient.refetchQueries({ queryKey: accountReceivablesQueryKey }),
     ]);
 }
 
@@ -65,8 +72,36 @@ export function useSettleAccountPayable() {
                 paid_method: payload.paid_method,
                 payment_notes: payload.payment_notes,
             }),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onMutate: async (payload: SettlePayload) => {
+            await queryClient.cancelQueries({ queryKey: accountPayablesQueryKey });
+
+            const previous = queryClient.getQueryData<any>(accountPayablesQueryKey);
+
+            if (previous?.data) {
+                queryClient.setQueryData(accountPayablesQueryKey, {
+                    ...previous,
+                    data: previous.data.map((row: any) =>
+                        row.id === payload.id
+                            ? {
+                                  ...row,
+                                  status: 'paid',
+                                  paid_at: payload.paid_at,
+                                  paid_method: payload.paid_method,
+                              }
+                            : row,
+                    ),
+                });
+            }
+
+            return { previous };
+        },
+        onSuccess: () => {
+            scheduleInvalidateRelatedQueries(queryClient);
+        },
+        onError: (_error, _payload, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(accountPayablesQueryKey, context.previous);
+            }
         },
     });
 }
@@ -76,8 +111,36 @@ export function useUnsettleAccountPayable() {
 
     return useMutation({
         mutationFn: async (id: number) => accountPayableService.unsettle(id),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onMutate: async (id: number) => {
+            await queryClient.cancelQueries({ queryKey: accountPayablesQueryKey });
+
+            const previous = queryClient.getQueryData<any>(accountPayablesQueryKey);
+
+            if (previous?.data) {
+                queryClient.setQueryData(accountPayablesQueryKey, {
+                    ...previous,
+                    data: previous.data.map((row: any) =>
+                        row.id === id
+                            ? {
+                                  ...row,
+                                  status: 'pending',
+                                  paid_at: null,
+                                  paid_method: null,
+                              }
+                            : row,
+                    ),
+                });
+            }
+
+            return { previous };
+        },
+        onSuccess: () => {
+            scheduleInvalidateRelatedQueries(queryClient);
+        },
+        onError: (_error, _id, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(accountPayablesQueryKey, context.previous);
+            }
         },
     });
 }
@@ -88,8 +151,8 @@ export function useCreateManualAccountPayable() {
     return useMutation({
         mutationFn: async (payload: CreateManualPayload) =>
             accountPayableService.create(payload),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onSuccess: () => {
+            void invalidateRelatedQueries(queryClient);
         },
     });
 }
@@ -102,8 +165,8 @@ export function useUpdateAccountPayable() {
             id: number;
             data: CreateManualPayload;
         }) => accountPayableService.update(payload.id, payload.data),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onSuccess: () => {
+            void invalidateRelatedQueries(queryClient);
         },
     });
 }
@@ -113,8 +176,8 @@ export function useDeleteAccountPayable() {
 
     return useMutation({
         mutationFn: async (id: number) => accountPayableService.delete(id),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onSuccess: () => {
+            void invalidateRelatedQueries(queryClient);
         },
         onError: () => {
             toast.error('Erro ao excluir conta a pagar.');

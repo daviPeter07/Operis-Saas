@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import {
@@ -13,6 +13,7 @@ import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { AccountsReceivableCreateDialog } from './accounts-receivable-create-dialog';
+import { AccountsReceivableHeader } from './accounts-receivable-header';
 
 type ReceivableRow = {
     id: string;
@@ -30,6 +31,30 @@ type ReceivableRow = {
     received_at: string | null;
 };
 
+function hasSameReceivableMetricsRows(
+    previous: ReceivableRow[],
+    next: ReceivableRow[],
+): boolean {
+    if (previous.length !== next.length) {
+        return false;
+    }
+
+    for (let index = 0; index < previous.length; index += 1) {
+        const prevRow = previous[index];
+        const nextRow = next[index];
+
+        if (
+            prevRow.id !== nextRow.id ||
+            prevRow.status !== nextRow.status ||
+            prevRow.amount !== nextRow.amount
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 export function AccountsReceivableModule() {
     const { data: receivables = [], isPending: isReceivablesPending } =
         useAccountReceivables();
@@ -41,6 +66,15 @@ export function AccountsReceivableModule() {
     const unsettleAccountReceivable = useUnsettleAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [filteredRows, setFilteredRows] = useState<ReceivableRow[]>([]);
+    const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+    const [batchAction, setBatchAction] = useState<
+        'pending' | 'received' | null
+    >(null);
+    const [processingSnapshot, setProcessingSnapshot] = useState<{
+        count: number;
+        total: number;
+    } | null>(null);
 
     const customerNameById = useMemo(
         () =>
@@ -79,7 +113,7 @@ export function AccountsReceivableModule() {
         setSelectedIds(next);
     };
 
-    const handleConfirmReceipt = async () => {
+    const handleConfirmReceipt = () => {
         const ids = rows
             .filter(
                 (row) => selectedIds.has(row.id) && row.status === 'pending',
@@ -90,19 +124,43 @@ export function AccountsReceivableModule() {
             return;
         }
 
-        await Promise.all(
+        const selectedForAction = rows.filter((row) => selectedIds.has(row.id));
+        setBatchAction('pending');
+        setIsBatchProcessing(true);
+        setProcessingSnapshot({
+            count: selectedForAction.length,
+            total: selectedForAction.reduce((sum, row) => sum + row.amount, 0),
+        });
+
+        void Promise.allSettled(
             ids.map((id) =>
                 settleAccountReceivable.mutateAsync({
                     id,
                     received_at: new Date().toISOString().slice(0, 10),
                 }),
             ),
-        );
-        toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
-        setSelectedIds(new Set());
+        ).then((results) => {
+            setIsBatchProcessing(false);
+            setBatchAction(null);
+            setProcessingSnapshot(null);
+            setSelectedIds(new Set());
+            const failed = results.filter(
+                (result) => result.status === 'rejected',
+            ).length;
+
+            if (failed > 0) {
+                toast.error(
+                    `${failed} de ${ids.length} baixa(s) falharam. Tente novamente.`,
+                );
+
+                return;
+            }
+
+            toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
+        });
     };
 
-    const handleUndoReceipt = async () => {
+    const handleUndoReceipt = () => {
         const ids = rows
             .filter(
                 (row) => selectedIds.has(row.id) && row.status === 'received',
@@ -113,11 +171,35 @@ export function AccountsReceivableModule() {
             return;
         }
 
-        await Promise.all(
+        const selectedForAction = rows.filter((row) => selectedIds.has(row.id));
+        setBatchAction('received');
+        setIsBatchProcessing(true);
+        setProcessingSnapshot({
+            count: selectedForAction.length,
+            total: selectedForAction.reduce((sum, row) => sum + row.amount, 0),
+        });
+
+        void Promise.allSettled(
             ids.map((id) => unsettleAccountReceivable.mutateAsync(id)),
-        );
-        toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
-        setSelectedIds(new Set());
+        ).then((results) => {
+            setIsBatchProcessing(false);
+            setBatchAction(null);
+            setProcessingSnapshot(null);
+            setSelectedIds(new Set());
+            const failed = results.filter(
+                (result) => result.status === 'rejected',
+            ).length;
+
+            if (failed > 0) {
+                toast.error(
+                    `${failed} de ${ids.length} estorno(s) falharam. Tente novamente.`,
+                );
+
+                return;
+            }
+
+            toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
+        });
     };
 
     const totalSelected = selectedIds.size;
@@ -128,6 +210,34 @@ export function AccountsReceivableModule() {
             ? selectedRows[0].status
             : null;
     const totalValue = selectedRows.reduce((sum, row) => sum + row.amount, 0);
+    const displaySelectedCount = processingSnapshot?.count ?? totalSelected;
+    const displayTotalValue = processingSnapshot?.total ?? totalValue;
+    const isProcessingReceiptAction =
+        isBatchProcessing ||
+        settleAccountReceivable.isPending ||
+        unsettleAccountReceivable.isPending;
+
+    const handleFilteredDataChange = useCallback((nextRows: ReceivableRow[]) => {
+        setFilteredRows((previous) =>
+            hasSameReceivableMetricsRows(previous, nextRows)
+                ? previous
+                : nextRows,
+        );
+    }, []);
+
+    const metrics = useMemo(() => {
+        const baseRows = filteredRows;
+
+        return {
+            totalTitles: baseRows.length,
+            pendingAmount: baseRows
+                .filter((row) => row.status === 'pending')
+                .reduce((sum, row) => sum + row.amount, 0),
+            receivedAmount: baseRows
+                .filter((row) => row.status === 'received')
+                .reduce((sum, row) => sum + row.amount, 0),
+        };
+    }, [filteredRows]);
 
     const columns: Column<ReceivableRow>[] = [
         {
@@ -223,36 +333,52 @@ export function AccountsReceivableModule() {
 
     return (
         <div className="space-y-4">
-            {totalSelected > 0 && (
+            <AccountsReceivableHeader
+                metrics={metrics}
+                loading={
+                    isReceivablesPending ||
+                    isCustomersPending ||
+                    isProcessingReceiptAction
+                }
+            />
+
+            {(totalSelected > 0 || processingSnapshot !== null) && (
                 <div className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
                     <div>
                         <p className="font-medium">
-                            {totalSelected} selecionada(s)
+                            {displaySelectedCount} selecionada(s)
                         </p>
                         <p className="text-sm text-muted-foreground">
-                            Total: {formatCurrencyBR(totalValue)}
+                            Total: {formatCurrencyBR(displayTotalValue)}
                         </p>
-                        {selectedAction === null && (
+                        {!isProcessingReceiptAction && selectedAction === null && (
                             <p className="text-sm text-amber-600">
                                 Selecione apenas títulos com o mesmo status para
                                 aplicar a ação.
                             </p>
                         )}
                     </div>
-                    {selectedAction === 'pending' && (
+                    {(selectedAction === 'pending' || batchAction === 'pending') && (
                         <button
                             onClick={() => void handleConfirmReceipt()}
-                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+                            disabled={isProcessingReceiptAction}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Marcar como Recebida
+                            {isProcessingReceiptAction
+                                ? 'Processando...'
+                                : 'Marcar como Recebida'}
                         </button>
                     )}
-                    {selectedAction === 'received' && (
+                    {(selectedAction === 'received' ||
+                        batchAction === 'received') && (
                         <button
                             onClick={() => void handleUndoReceipt()}
-                            className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+                            disabled={isProcessingReceiptAction}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Desfazer baixa
+                            {isProcessingReceiptAction
+                                ? 'Processando...'
+                                : 'Desfazer baixa'}
                         </button>
                     )}
                 </div>
@@ -270,6 +396,7 @@ export function AccountsReceivableModule() {
                     { key: 'entry_date', type: 'date' },
                 ]}
                 dateFilterKey="due_date"
+                onFilteredDataChange={handleFilteredDataChange}
                 clickableRow
                 onRowClick={(row) =>
                     handleSelectOne(row.id, !selectedIds.has(row.id))

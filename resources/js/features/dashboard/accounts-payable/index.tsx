@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import {
@@ -14,6 +14,7 @@ import type { UiSupplier } from '@/types/dashboard-entities';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
+import { AccountsPayableHeader } from './accounts-payable-header';
 
 type PayableRow = {
     id: string;
@@ -31,6 +32,30 @@ type PayableRow = {
     paid_method: string | null;
 };
 
+function hasSamePayableMetricsRows(
+    previous: PayableRow[],
+    next: PayableRow[],
+): boolean {
+    if (previous.length !== next.length) {
+        return false;
+    }
+
+    for (let index = 0; index < previous.length; index += 1) {
+        const prevRow = previous[index];
+        const nextRow = next[index];
+
+        if (
+            prevRow.id !== nextRow.id ||
+            prevRow.status !== nextRow.status ||
+            prevRow.amount !== nextRow.amount
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 export function AccountsPayableModule() {
     const { data: payables = [], isPending: isPayablesPending } =
         useAccountPayables();
@@ -42,6 +67,15 @@ export function AccountsPayableModule() {
     const unsettleAccountPayable = useUnsettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [filteredRows, setFilteredRows] = useState<PayableRow[]>([]);
+    const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+    const [batchAction, setBatchAction] = useState<'pending' | 'paid' | null>(
+        null,
+    );
+    const [processingSnapshot, setProcessingSnapshot] = useState<{
+        count: number;
+        total: number;
+    } | null>(null);
 
     const mappedSuppliers = useMemo<UiSupplier[]>(
         () =>
@@ -98,7 +132,7 @@ export function AccountsPayableModule() {
         setSelectedIds(next);
     };
 
-    const handleConfirmPayment = async () => {
+    const handleConfirmPayment = () => {
         const ids = rows
             .filter(
                 (row) => selectedIds.has(row.id) && row.status === 'pending',
@@ -109,7 +143,15 @@ export function AccountsPayableModule() {
             return;
         }
 
-        await Promise.all(
+        const selectedForAction = rows.filter((row) => selectedIds.has(row.id));
+        setBatchAction('pending');
+        setIsBatchProcessing(true);
+        setProcessingSnapshot({
+            count: selectedForAction.length,
+            total: selectedForAction.reduce((sum, row) => sum + row.amount, 0),
+        });
+
+        void Promise.allSettled(
             ids.map((id) =>
                 settleAccountPayable.mutateAsync({
                     id,
@@ -117,12 +159,28 @@ export function AccountsPayableModule() {
                     paid_method: 'pix',
                 }),
             ),
-        );
-        toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
-        setSelectedIds(new Set());
+        ).then((results) => {
+            setIsBatchProcessing(false);
+            setBatchAction(null);
+            setProcessingSnapshot(null);
+            setSelectedIds(new Set());
+            const failed = results.filter(
+                (result) => result.status === 'rejected',
+            ).length;
+
+            if (failed > 0) {
+                toast.error(
+                    `${failed} de ${ids.length} baixa(s) falharam. Tente novamente.`,
+                );
+
+                return;
+            }
+
+            toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
+        });
     };
 
-    const handleUndoPayment = async () => {
+    const handleUndoPayment = () => {
         const ids = rows
             .filter((row) => selectedIds.has(row.id) && row.status === 'paid')
             .map((row) => Number(row.id));
@@ -131,11 +189,35 @@ export function AccountsPayableModule() {
             return;
         }
 
-        await Promise.all(
+        const selectedForAction = rows.filter((row) => selectedIds.has(row.id));
+        setBatchAction('paid');
+        setIsBatchProcessing(true);
+        setProcessingSnapshot({
+            count: selectedForAction.length,
+            total: selectedForAction.reduce((sum, row) => sum + row.amount, 0),
+        });
+
+        void Promise.allSettled(
             ids.map((id) => unsettleAccountPayable.mutateAsync(id)),
-        );
-        toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
-        setSelectedIds(new Set());
+        ).then((results) => {
+            setIsBatchProcessing(false);
+            setBatchAction(null);
+            setProcessingSnapshot(null);
+            setSelectedIds(new Set());
+            const failed = results.filter(
+                (result) => result.status === 'rejected',
+            ).length;
+
+            if (failed > 0) {
+                toast.error(
+                    `${failed} de ${ids.length} estorno(s) falharam. Tente novamente.`,
+                );
+
+                return;
+            }
+
+            toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
+        });
     };
 
     const totalSelected = selectedIds.size;
@@ -146,6 +228,33 @@ export function AccountsPayableModule() {
             ? selectedRows[0].status
             : null;
     const totalValue = selectedRows.reduce((sum, row) => sum + row.amount, 0);
+    const displaySelectedCount = processingSnapshot?.count ?? totalSelected;
+    const displayTotalValue = processingSnapshot?.total ?? totalValue;
+    const isProcessingPayableAction =
+        isBatchProcessing ||
+        settleAccountPayable.isPending ||
+        unsettleAccountPayable.isPending;
+
+    const handleFilteredDataChange = useCallback((nextRows: PayableRow[]) => {
+        setFilteredRows((previous) =>
+            hasSamePayableMetricsRows(previous, nextRows) ? previous : nextRows,
+        );
+    }, []);
+
+    const metrics = useMemo(() => {
+        const baseRows = filteredRows;
+
+        return {
+            totalTitles: baseRows.length,
+            totalAmount: baseRows.reduce((sum, row) => sum + row.amount, 0),
+            pendingAmount: baseRows
+                .filter((row) => row.status === 'pending')
+                .reduce((sum, row) => sum + row.amount, 0),
+            paidAmount: baseRows
+                .filter((row) => row.status === 'paid')
+                .reduce((sum, row) => sum + row.amount, 0),
+        };
+    }, [filteredRows]);
 
     const columns: Column<PayableRow>[] = [
         {
@@ -234,36 +343,47 @@ export function AccountsPayableModule() {
 
     return (
         <div className="space-y-4">
-            {totalSelected > 0 && (
+            <AccountsPayableHeader
+                metrics={metrics}
+                loading={isPayablesPending || isProcessingPayableAction}
+            />
+
+            {(totalSelected > 0 || processingSnapshot !== null) && (
                 <div className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
                     <div>
                         <p className="font-medium">
-                            {totalSelected} selecionada(s)
+                            {displaySelectedCount} selecionada(s)
                         </p>
                         <p className="text-sm text-muted-foreground">
-                            Total: {formatCurrencyBR(totalValue)}
+                            Total: {formatCurrencyBR(displayTotalValue)}
                         </p>
-                        {selectedAction === null && (
+                        {!isProcessingPayableAction && selectedAction === null && (
                             <p className="text-sm text-amber-600">
                                 Selecione apenas títulos com o mesmo status para
                                 aplicar a ação.
                             </p>
                         )}
                     </div>
-                    {selectedAction === 'pending' && (
+                    {(selectedAction === 'pending' || batchAction === 'pending') && (
                         <button
                             onClick={() => void handleConfirmPayment()}
-                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+                            disabled={isProcessingPayableAction}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Marcar como Paga
+                            {isProcessingPayableAction
+                                ? 'Processando...'
+                                : 'Marcar como Paga'}
                         </button>
                     )}
-                    {selectedAction === 'paid' && (
+                    {(selectedAction === 'paid' || batchAction === 'paid') && (
                         <button
                             onClick={() => void handleUndoPayment()}
-                            className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+                            disabled={isProcessingPayableAction}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Desfazer baixa
+                            {isProcessingPayableAction
+                                ? 'Processando...'
+                                : 'Desfazer baixa'}
                         </button>
                     )}
                 </div>
@@ -278,6 +398,7 @@ export function AccountsPayableModule() {
                     { key: 'due_date', type: 'date' },
                 ]}
                 dateFilterKey="due_date"
+                onFilteredDataChange={handleFilteredDataChange}
                 clickableRow
                 onRowClick={(row) =>
                     handleSelectOne(row.id, !selectedIds.has(row.id))

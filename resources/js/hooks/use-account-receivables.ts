@@ -8,6 +8,18 @@ import { purchasesQueryKey } from './use-purchases';
 
 export const accountReceivablesQueryKey = ['account-receivables'] as const;
 const accountPayablesQueryKey = ['account-payables'] as const;
+let receivablesInvalidateTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleInvalidateRelatedQueries(queryClient: QueryClient): void {
+    if (receivablesInvalidateTimer) {
+        clearTimeout(receivablesInvalidateTimer);
+    }
+
+    receivablesInvalidateTimer = setTimeout(() => {
+        void invalidateRelatedQueries(queryClient);
+        receivablesInvalidateTimer = null;
+    }, 150);
+}
 
 type SettlePayload = {
     id: number;
@@ -23,11 +35,6 @@ async function invalidateRelatedQueries(
         queryClient.invalidateQueries({ queryKey: productsQueryKey }),
         queryClient.invalidateQueries({ queryKey: purchasesQueryKey }),
         queryClient.invalidateQueries({ queryKey: accountPayablesQueryKey }),
-        queryClient.refetchQueries({ queryKey: accountReceivablesQueryKey }),
-        queryClient.refetchQueries({ queryKey: salesQueryKey }),
-        queryClient.refetchQueries({ queryKey: productsQueryKey }),
-        queryClient.refetchQueries({ queryKey: purchasesQueryKey }),
-        queryClient.refetchQueries({ queryKey: accountPayablesQueryKey }),
     ]);
 }
 
@@ -56,8 +63,8 @@ export function useCreateManualAccountReceivable() {
     return useMutation({
         mutationFn: async (payload: CreateManualReceivableInput) =>
             accountReceivableService.createManual(payload),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onSuccess: () => {
+            void invalidateRelatedQueries(queryClient);
         },
     });
 }
@@ -70,8 +77,8 @@ export function useUpdateAccountReceivable() {
             id: number;
             data: CreateManualReceivableInput;
         }) => accountReceivableService.update(payload.id, payload.data),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onSuccess: () => {
+            void invalidateRelatedQueries(queryClient);
         },
     });
 }
@@ -84,8 +91,42 @@ export function useSettleAccountReceivable() {
             accountReceivableService.settle(payload.id, {
                 received_at: payload.received_at,
             }),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onMutate: async (payload: SettlePayload) => {
+            await queryClient.cancelQueries({
+                queryKey: accountReceivablesQueryKey,
+            });
+
+            const previous = queryClient.getQueryData<any>(
+                accountReceivablesQueryKey,
+            );
+
+            if (previous?.data) {
+                queryClient.setQueryData(accountReceivablesQueryKey, {
+                    ...previous,
+                    data: previous.data.map((row: any) =>
+                        row.id === payload.id
+                            ? {
+                                  ...row,
+                                  status: 'received',
+                                  received_at: payload.received_at,
+                              }
+                            : row,
+                    ),
+                });
+            }
+
+            return { previous };
+        },
+        onSuccess: () => {
+            scheduleInvalidateRelatedQueries(queryClient);
+        },
+        onError: (_error, _payload, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(
+                    accountReceivablesQueryKey,
+                    context.previous,
+                );
+            }
         },
     });
 }
@@ -95,8 +136,42 @@ export function useUnsettleAccountReceivable() {
 
     return useMutation({
         mutationFn: async (id: number) => accountReceivableService.unsettle(id),
-        onSuccess: async () => {
-            await invalidateRelatedQueries(queryClient);
+        onMutate: async (id: number) => {
+            await queryClient.cancelQueries({
+                queryKey: accountReceivablesQueryKey,
+            });
+
+            const previous = queryClient.getQueryData<any>(
+                accountReceivablesQueryKey,
+            );
+
+            if (previous?.data) {
+                queryClient.setQueryData(accountReceivablesQueryKey, {
+                    ...previous,
+                    data: previous.data.map((row: any) =>
+                        row.id === id
+                            ? {
+                                  ...row,
+                                  status: 'pending',
+                                  received_at: null,
+                              }
+                            : row,
+                    ),
+                });
+            }
+
+            return { previous };
+        },
+        onSuccess: () => {
+            scheduleInvalidateRelatedQueries(queryClient);
+        },
+        onError: (_error, _id, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(
+                    accountReceivablesQueryKey,
+                    context.previous,
+                );
+            }
         },
     });
 }
@@ -135,9 +210,9 @@ export function useDeleteAccountReceivable() {
 
             toast.error('Erro ao deletar conta a receber');
         },
-        onSuccess: async () => {
+        onSuccess: () => {
             // Ensure fresh data from server
-            await queryClient.invalidateQueries({
+            void queryClient.invalidateQueries({
                 queryKey: accountReceivablesQueryKey,
             });
             toast.success('Conta a receber deletada com sucesso');
