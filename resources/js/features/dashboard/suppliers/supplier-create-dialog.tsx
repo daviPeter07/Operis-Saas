@@ -53,6 +53,7 @@ export function SupplierCreateDialog({
     mode = 'create',
     initialData,
 }: SupplierCreateDialogProps) {
+    const submitLockRef = React.useRef(false);
     const initialForm = React.useMemo(
         () =>
             initialData
@@ -99,7 +100,7 @@ export function SupplierCreateDialog({
                     onSubmit={(event) => {
                         event.preventDefault();
 
-                        if (isSubmitting) {
+                        if (isSubmitting || submitLockRef.current) {
                             return;
                         }
 
@@ -111,6 +112,8 @@ export function SupplierCreateDialog({
 
                             return;
                         }
+
+                        submitLockRef.current = true;
 
                         const payload = {
                             name: form.name,
@@ -128,6 +131,7 @@ export function SupplierCreateDialog({
                                 },
                                 {
                                     onSuccess: (data) => {
+                                        submitLockRef.current = false;
                                         onOpenChange(false);
                                         onSuccess?.({
                                             id: data.id,
@@ -135,6 +139,7 @@ export function SupplierCreateDialog({
                                         });
                                     },
                                     onError: (error: unknown) => {
+                                        submitLockRef.current = false;
                                         const message =
                                             (error as {
                                                 message?: string;
@@ -151,6 +156,7 @@ export function SupplierCreateDialog({
 
                         createSupplier.mutate(payload, {
                             onSuccess: (data) => {
+                                submitLockRef.current = false;
                                 onOpenChange(false);
                                 onSuccess?.({
                                     id: data.id,
@@ -158,6 +164,7 @@ export function SupplierCreateDialog({
                                 });
                             },
                             onError: (error: unknown) => {
+                                submitLockRef.current = false;
                                 const message =
                                     (error as {
                                         message?: string;
