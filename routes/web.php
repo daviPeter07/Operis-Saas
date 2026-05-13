@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('operis')->group(function (): void {
+$appPrefix = config('app.base_path', 'operis');
+
+Route::prefix($appPrefix)->group(function (): void {
     Route::get('/', function () {
         if (auth('web')->check()) {
             return redirect()->route('dashboard');

@@ -4,10 +4,15 @@ import type {
     WorkspaceRole,
 } from '@/types/workspace';
 
-const appBasePath = '/operis';
+const envBasePath = (import.meta.env.VITE_APP_BASE_PATH as string | undefined) ?? '/operis';
+const normalizedBasePath = envBasePath
+    ? `/${envBasePath.replace(/^\/+|\/+$/g, '')}`
+    : '';
 
 export function withAppBasePath(path: string): string {
-    return `${appBasePath}${path}`;
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+    return `${normalizedBasePath}${normalizedPath}`;
 }
 
 export const defaultWorkspaceNavigation: WorkspaceModule[] = [

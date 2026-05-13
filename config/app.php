@@ -2,6 +2,8 @@
 
 return [
 
+    'base_path' => trim((string) env('APP_BASE_PATH', 'operis'), '/'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name
