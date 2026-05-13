@@ -32,8 +32,36 @@ export abstract class ApiService<T extends { id: number }> {
 
     async list(params?: ListParams): Promise<PaginatedData<T>> {
         const response = await apiClient.get<unknown>(this.basePath, params);
-        const payload = response.data as unknown;
+        const firstPage = this.normalizeListPayload(response.data as unknown);
 
+        if (params?.page || firstPage.meta.last_page <= 1) {
+            return firstPage;
+        }
+
+        let allRows = [...firstPage.data];
+
+        for (let page = 2; page <= firstPage.meta.last_page; page++) {
+            const nextResponse = await apiClient.get<unknown>(this.basePath, {
+                ...params,
+                page,
+                per_page: params?.per_page ?? firstPage.meta.per_page,
+            });
+            const nextPage = this.normalizeListPayload(nextResponse.data as unknown);
+            allRows = allRows.concat(nextPage.data);
+        }
+
+        return {
+            data: allRows,
+            meta: {
+                current_page: 1,
+                last_page: 1,
+                per_page: allRows.length,
+                total: firstPage.meta.total,
+            },
+        };
+    }
+
+    private normalizeListPayload(payload: unknown): PaginatedData<T> {
         if (Array.isArray(payload)) {
             return {
                 data: payload as T[],
@@ -59,7 +87,8 @@ export abstract class ApiService<T extends { id: number }> {
 
             if (Array.isArray(maybePaginated.data)) {
                 const total = maybePaginated.meta?.total ?? maybePaginated.data.length;
-                const perPage = maybePaginated.meta?.per_page ?? maybePaginated.data.length;
+                const perPage =
+                    maybePaginated.meta?.per_page ?? maybePaginated.data.length;
                 const lastPage = maybePaginated.meta?.last_page ?? 1;
                 const currentPage = maybePaginated.meta?.current_page ?? 1;
 
