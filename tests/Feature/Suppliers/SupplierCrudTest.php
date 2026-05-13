@@ -25,11 +25,25 @@ test('supplier crud cycle works', function () {
     ]);
     $user->update(['current_company_id' => $company->id]);
 
-    $create = $this->actingAs($user)->postJson('/api/suppliers', ['name' => 'Fornecedor 1']);
+    $create = $this->actingAs($user)->postJson('/api/suppliers', [
+        'name' => 'Fornecedor 1',
+        'document' => '12345678901',
+        'person_type' => 'pf',
+    ]);
     $create->assertCreated();
     $id = $create->json('data.id');
 
+    $this->actingAs($user)->postJson('/api/suppliers', [
+        'name' => 'Fornecedor Duplicado',
+        'document' => '12345678901',
+        'person_type' => 'pf',
+    ])->assertStatus(422)->assertJsonValidationErrors(['document']);
+
     $this->actingAs($user)->getJson('/api/suppliers')->assertOk();
-    $this->actingAs($user)->putJson("/api/suppliers/{$id}", ['name' => 'Fornecedor 2'])->assertOk();
+    $this->actingAs($user)->putJson("/api/suppliers/{$id}", [
+        'name' => 'Fornecedor 2',
+        'document' => '12345678901',
+        'person_type' => 'pf',
+    ])->assertOk();
     $this->actingAs($user)->deleteJson("/api/suppliers/{$id}")->assertNoContent();
 });

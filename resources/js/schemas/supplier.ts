@@ -4,5 +4,6 @@ export interface Supplier {
     email: string;
     phone: string;
     document: string;
+    person_type?: 'pf' | 'pj';
     status: 'active' | 'inactive';
 }

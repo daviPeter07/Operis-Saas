@@ -7,7 +7,7 @@ use App\Models\CompanyUser;
 use App\Models\Product;
 use App\Models\User;
 
-test('pending purchase creates payable without increasing stock', function () {
+test('pending purchase creates payable and increases stock immediately', function () {
     $user = User::factory()->create();
     $company = Company::query()->create([
         'name' => 'Empresa P2',
@@ -48,7 +48,7 @@ test('pending purchase creates payable without increasing stock', function () {
         ]],
     ])->assertCreated();
 
-    expect($product->fresh()->stock)->toBe('2.00');
-    $this->assertDatabaseCount('stock_movements', 0);
+    expect($product->fresh()->stock)->toBe('7.00');
+    $this->assertDatabaseCount('stock_movements', 1);
     $this->assertDatabaseCount('account_payables', 1);
 });

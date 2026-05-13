@@ -3,11 +3,23 @@
 namespace App\Http\Resources\Finance;
 
 use App\Http\Resources\ApiResource;
-use App\Models\AccountPayable;
 use Illuminate\Http\Request;
 
 class AccountPayableResource extends ApiResource
 {
+    private function resolveItem(): ?string
+    {
+        if ($this->item) {
+            return $this->item;
+        }
+
+        if (! $this->purchase_id) {
+            return null;
+        }
+
+        return sprintf('Compra #%d', $this->purchase_id);
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -20,9 +32,9 @@ class AccountPayableResource extends ApiResource
             'supplier_id' => $this->supplier_id,
             'purchase_id' => $this->purchase_id,
             'installment_number' => $this->installment_number,
-            'total_installments' => $this->total_installments ?? ($this->purchase ? $this->purchase->installments : (int) AccountPayable::where('supplier_id', $this->supplier_id)->where('entry_date', $this->entry_date)->max('installment_number')),
+            'total_installments' => $this->total_installments,
             'entry_date' => $this->entry_date?->toDateString(),
-            'item' => $this->item,
+            'item' => $this->resolveItem(),
             'description' => $this->description,
             'due_date' => $this->due_date?->toDateString(),
             'amount' => $this->amount,

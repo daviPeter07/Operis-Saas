@@ -12,7 +12,6 @@ import {
     usePurchases,
     useUpdatePurchase,
 } from '@/hooks/use-purchases';
-import { useCreateSupplier } from '@/hooks/use-suppliers';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import {
     formatDateBR,
@@ -31,8 +30,8 @@ import { PurchaseCreateDialog } from './purchase-create-dialog';
 import { PurchaseHeader } from './purchase-header';
 
 type PurchaseRow = {
-    id: string; // unique row identifier (may include payable id for boleto rows)
-    purchaseId: number; // actual purchase primary key used for actions like delete
+    id: string;
+    purchaseId: number;
     supplier_id: number;
     supplierName: string;
     productNames: string;
@@ -42,11 +41,9 @@ type PurchaseRow = {
     status: string;
     payment_method: string;
     date: string;
-    installments: number | null; // installment number for boleto
+    installments: number | null;
     total_installments: number | null;
-    // optional fields for individual installment rows
-    payableId?: number;
-    installment_number: number | null; // allow null (matches API schema)
+    installment_number: number | null;
     due_date?: string;
     entry_date?: string;
     amount?: number;
@@ -89,10 +86,8 @@ export function PurchasesModule() {
     const createPurchase = useCreatePurchase();
     const updatePurchase = useUpdatePurchase();
     const createProduct = useCreateProduct();
-    const createSupplier = useCreateSupplier();
     const deletePurchase = useDeletePurchase();
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
     const draftItemsRef = useRef<PurchaseLineItem[]>([]);
     const [filteredRows, setFilteredRows] = useState<PurchaseRow[]>([]);
@@ -141,10 +136,6 @@ export function PurchasesModule() {
         [products],
     );
 
-    const dialogSupplierOptions = useMemo(
-        () => [...dialogSuppliers, ...mappedSuppliers],
-        [dialogSuppliers, mappedSuppliers],
-    );
     const dialogProductOptions = useMemo(
         () => [...dialogProducts, ...mappedProducts],
         [dialogProducts, mappedProducts],
@@ -154,10 +145,9 @@ export function PurchasesModule() {
         suppliers.map((supplier) => [supplier.id, supplier.name]),
     );
 
-    const rows: PurchaseRow[] = [];
-    purchases
+    const rows: PurchaseRow[] = purchases
         .filter((purchase) => purchase.status !== 'cancelled')
-        .forEach((purchase) => {
+        .map((purchase) => {
             const productNames = Array.from(
                 new Set(
                     (purchase.items ?? [])
@@ -179,57 +169,32 @@ export function PurchasesModule() {
                         .filter((value): value is string => Boolean(value)),
                 ),
             );
+            const relatedPayables = payables.filter(
+                (payable) => payable.purchase_id === purchase.id,
+            );
+            const totalInstallments =
+                relatedPayables[0]?.total_installments ??
+                (purchase.payment_method === 'boleto' ? relatedPayables.length : null);
 
-            if (purchase.payment_method === 'boleto') {
-                // Find related payables for this purchase
-                const related = payables.filter(
-                    (p) => p.purchase_id === purchase.id,
-                );
-                const totalInst = related.length || 2; // fallback if not loaded yet
-                related.forEach((pay) => {
-                    rows.push({
-                        id: `${purchase.id}-${pay.id}`,
-                        purchaseId: purchase.id,
-                        supplier_id: purchase.supplier_id,
-                        supplierName:
-                            suppliersById.get(purchase.supplier_id) ||
-                            `#${purchase.supplier_id}`,
-                        productNames: productNames.join(', ') || '-',
-                        categoryNames: categoryNames.join(', ') || '-',
-                        brandNames: brandNames.join(', ') || '-',
-                        total: purchase.total,
-                        status: purchase.status,
-                        payment_method: purchase.payment_method,
-                        date: purchase.date,
-                        installments: pay.installment_number ?? null,
-                        total_installments: totalInst,
-                        payableId: pay.id,
-                        installment_number: pay.installment_number,
-                        due_date: pay.due_date,
-                        entry_date: purchase.date,
-                        amount: pay.amount,
-                    });
-                });
-            } else {
-                rows.push({
-                    id: String(purchase.id),
-                    purchaseId: purchase.id,
-                    supplier_id: purchase.supplier_id,
-                    supplierName:
-                        suppliersById.get(purchase.supplier_id) ||
-                        `#${purchase.supplier_id}`,
-                    productNames: productNames.join(', ') || '-',
-                    categoryNames: categoryNames.join(', ') || '-',
-                    brandNames: brandNames.join(', ') || '-',
-                    total: purchase.total,
-                    status: purchase.status,
-                    payment_method: purchase.payment_method,
-                    date: purchase.date,
-                    installments: null,
-                    total_installments: null,
-                    installment_number: null,
-                });
-            }
+            return {
+                id: String(purchase.id),
+                purchaseId: purchase.id,
+                supplier_id: purchase.supplier_id,
+                supplierName:
+                    suppliersById.get(purchase.supplier_id) ||
+                    `#${purchase.supplier_id}`,
+                productNames: productNames.join(', ') || '-',
+                categoryNames: categoryNames.join(', ') || '-',
+                brandNames: brandNames.join(', ') || '-',
+                total: purchase.total,
+                status: purchase.status,
+                payment_method: purchase.payment_method,
+                date: purchase.date,
+                installments: totalInstallments,
+                total_installments: totalInstallments,
+                installment_number: null,
+                due_date: purchase.due_date ?? undefined,
+            };
         });
 
     const handleFilteredDataChange = useCallback((nextRows: PurchaseRow[]) => {
@@ -289,7 +254,7 @@ export function PurchasesModule() {
                 const total = row.total_installments;
 
                 if (total && total >= 1) {
-                    return `${val}/${total}`;
+                    return String(total);
                 }
 
                 return '-';
@@ -312,33 +277,6 @@ export function PurchasesModule() {
             },
         },
     ];
-
-    const handleCreateSupplier = async (
-        supplier: UiSupplier,
-    ): Promise<UiSupplier> => {
-        const createdSupplier = await createSupplier.mutateAsync({
-            name: supplier.name,
-            email: supplier.email,
-            phone: supplier.phone,
-            document: supplier.document,
-        });
-
-        const mappedSupplier: UiSupplier = {
-            id: String(createdSupplier.id),
-            name: createdSupplier.name,
-            email: createdSupplier.email ?? '',
-            phone: createdSupplier.phone ?? '',
-            document: createdSupplier.document ?? '',
-            city: '',
-            state: '',
-            address: '',
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
-
-        setDialogSuppliers((previous) => [mappedSupplier, ...previous]);
-
-        return mappedSupplier;
-    };
 
     const handleCreateProduct = async (product: {
         name: string;
@@ -386,7 +324,7 @@ export function PurchasesModule() {
     };
 
     const buildPurchasePayload = (purchase: UiPurchase) => {
-        const supplier = dialogSupplierOptions.find(
+        const supplier = mappedSuppliers.find(
             (entry) => entry.name === purchase.supplierName,
         );
         const supplierId = Number(supplier?.id ?? 0);
@@ -448,7 +386,9 @@ export function PurchasesModule() {
                           | 90
                           | 120)
                     : undefined,
-            status: purchase.status === 'completed' ? 'completed' : 'pending',
+            status: (purchase.status === 'completed'
+                ? 'completed'
+                : 'pending') as 'completed' | 'pending',
             items,
         };
     };
@@ -520,7 +460,7 @@ export function PurchasesModule() {
                                 });
                         }}
                         products={dialogProductOptions}
-                        suppliers={dialogSupplierOptions}
+                        suppliers={mappedSuppliers}
                         categories={categories.map((category) => ({
                             id: category.id,
                             name: category.name,
@@ -529,7 +469,6 @@ export function PurchasesModule() {
                             id: brand.id,
                             name: brand.name,
                         }))}
-                        onCreateSupplier={handleCreateSupplier}
                         onCreateProduct={handleCreateProduct}
                         onApplyStock={(items) => {
                             draftItemsRef.current = items;
@@ -554,7 +493,7 @@ export function PurchasesModule() {
                                 id: String(purchase.id),
                                 supplierId: String(purchase.supplier_id),
                                 supplierName:
-                                    dialogSupplierOptions.find(
+                                    mappedSuppliers.find(
                                         (entry) =>
                                             entry.id ===
                                             String(purchase.supplier_id),
@@ -604,7 +543,7 @@ export function PurchasesModule() {
                                     });
                             }}
                             products={dialogProductOptions}
-                            suppliers={dialogSupplierOptions}
+                            suppliers={mappedSuppliers}
                             categories={categories.map((category) => ({
                                 id: category.id,
                                 name: category.name,
@@ -613,7 +552,6 @@ export function PurchasesModule() {
                                 id: brand.id,
                                 name: brand.name,
                             }))}
-                            onCreateSupplier={handleCreateSupplier}
                             onCreateProduct={handleCreateProduct}
                             onApplyStock={(items) => {
                                 draftItemsRef.current = items;

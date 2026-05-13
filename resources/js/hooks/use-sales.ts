@@ -22,6 +22,7 @@ export type SaleMutationInput = {
     installment_value?: number;
     crediario_entry?: number;
     paid_installments?: number[];
+    allow_negative_stock?: boolean;
     items: Array<{
         product_id: number;
         quantity: number;

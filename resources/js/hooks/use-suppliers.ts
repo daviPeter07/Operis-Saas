@@ -8,7 +8,7 @@ type CreateSupplierInput = {
     email: string;
     phone: string;
     document: string;
-    person_type?: string;
+    person_type?: 'pf' | 'pj';
 };
 
 export function useSuppliers() {
@@ -32,6 +32,7 @@ export function useCreateSupplier() {
                 email: payload.email,
                 phone: payload.phone,
                 document: payload.document,
+                person_type: payload.person_type,
                 status: 'active',
             }),
         onSuccess: async () => {

@@ -5,6 +5,8 @@ import { purchaseService } from '@/services/purchases';
 
 export const purchasesQueryKey = ['purchases'] as const;
 export const payablesQueryKey = ['account-payables'] as const;
+const receivablesQueryKey = ['account-receivables'] as const;
+const salesQueryKey = ['sales'] as const;
 
 type CreatePurchaseInput = {
     supplier_id: number | null;
@@ -47,6 +49,15 @@ export function useCreatePurchase() {
             await queryClient.invalidateQueries({
                 queryKey: payablesQueryKey,
             });
+            await queryClient.invalidateQueries({
+                queryKey: productsQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: salesQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: receivablesQueryKey,
+            });
         },
     });
 }
@@ -70,6 +81,15 @@ export function useUpdatePurchase() {
             await queryClient.invalidateQueries({
                 queryKey: payablesQueryKey,
             });
+            await queryClient.invalidateQueries({
+                queryKey: productsQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: salesQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: receivablesQueryKey,
+            });
         },
     });
 }
@@ -85,6 +105,15 @@ export function useDeletePurchase() {
             });
             await queryClient.invalidateQueries({
                 queryKey: payablesQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: productsQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: salesQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: receivablesQueryKey,
             });
         },
     });

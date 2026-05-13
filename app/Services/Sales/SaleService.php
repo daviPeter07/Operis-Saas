@@ -31,6 +31,12 @@ class SaleService
     public function create(int $companyId, int $userId, array $data): Sale
     {
         return DB::transaction(function () use ($companyId, $userId, $data): Sale {
+            $this->assertStockAvailability(
+                $data['items'],
+                [],
+                (bool) ($data['allow_negative_stock'] ?? false)
+            );
+
             $totals = $this->calculateTotals($data['items']);
             $paymentMethod = $data['payment_method'];
             $customer = isset($data['customer_id'])
@@ -107,6 +113,11 @@ class SaleService
 
             $previousStatus = $sale->status;
             $previousItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
+            $this->assertStockAvailability(
+                $data['items'],
+                $previousItems,
+                (bool) ($data['allow_negative_stock'] ?? false)
+            );
             $totals = $this->calculateTotals($data['items']);
             $paymentMethod = $data['payment_method'];
             $customer = isset($data['customer_id'])
@@ -332,5 +343,48 @@ class SaleService
             $product = Product::query()->findOrFail($productId);
             $this->stockMovementService->register($product, -$diff, StockMovementType::SaleEdit, $sale->id, $userId);
         }
+    }
+
+    /**
+     * @param  array<int, array{product_id:int, quantity:float|int|string}>  $items
+     * @param  array<int, float>  $previousItems
+     */
+    private function assertStockAvailability(array $items, array $previousItems = [], bool $allowNegativeStock = false): void
+    {
+        if ($allowNegativeStock) {
+            return;
+        }
+
+        $requestedByProduct = collect($items)
+            ->groupBy(fn (array $item): int => (int) $item['product_id'])
+            ->map(fn ($group): float => (float) $group->sum(fn (array $item): float => (float) $item['quantity']))
+            ->all();
+
+        $insufficientItems = [];
+
+        foreach ($requestedByProduct as $productId => $requestedQuantity) {
+            $product = Product::query()->findOrFail((int) $productId);
+            $available = (float) $product->stock + (float) ($previousItems[(int) $productId] ?? 0.0);
+
+            if ($requestedQuantity <= $available) {
+                continue;
+            }
+
+            $insufficientItems[] = [
+                'product_id' => (int) $productId,
+                'product_name' => $product->name,
+                'available' => $available,
+                'requested' => $requestedQuantity,
+            ];
+        }
+
+        if ($insufficientItems === []) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'stock' => 'Estoque insuficiente para concluir a venda.',
+            'stock_items' => $insufficientItems,
+        ]);
     }
 }

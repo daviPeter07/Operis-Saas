@@ -39,7 +39,6 @@ export function AccountsPayableCreateDialog({
     onOpenChange,
     onSubmit,
     suppliers,
-    onCreateSupplier,
     mode = 'create',
     initialData,
 }: AccountsPayableCreateDialogProps) {
@@ -485,20 +484,8 @@ export function AccountsPayableCreateDialog({
                 open={supplierCreateOpen}
                 onOpenChange={setSupplierCreateOpen}
                 onSuccess={({ id, name }) => {
-                    void onCreateSupplier({
-                        id: String(id),
-                        name,
-                        email: '',
-                        phone: '',
-                        document: '',
-                        city: '',
-                        state: '',
-                        address: '',
-                        createdAt: today,
-                    }).then((supplier) => {
-                        setSupplierId(supplier.id);
-                        setSupplierSearch(supplier.name);
-                    });
+                    setSupplierId(String(id));
+                    setSupplierSearch(name);
                 }}
             />
         </>

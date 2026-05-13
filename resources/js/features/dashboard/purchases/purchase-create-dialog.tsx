@@ -179,7 +179,6 @@ export function PurchaseCreateDialog({
     suppliers,
     categories,
     brands,
-    onCreateSupplier,
     onCreateProduct,
     onApplyStock,
     mode = 'create',
@@ -193,6 +192,10 @@ export function PurchaseCreateDialog({
     const [supplierCreateOpen, setSupplierCreateOpen] = React.useState(false);
     const [supplierSearch, setSupplierSearch] = React.useState('');
     const [selectedSupplierId, setSelectedSupplierId] = React.useState('');
+    const [createdSupplier, setCreatedSupplier] = React.useState<{
+        id: string;
+        name: string;
+    } | null>(null);
     const [purchaseDate, setPurchaseDate] = React.useState(
         new Date().toISOString().slice(0, 10),
     );
@@ -259,6 +262,7 @@ export function PurchaseCreateDialog({
                 setIsScannerReady(false);
                 setSupplierSearch('');
                 setSelectedSupplierId('');
+                setCreatedSupplier(null);
                 setPurchaseDate(new Date().toISOString().slice(0, 10));
                 setCalendarOpen(false);
                 setPaymentMethod('pix');
@@ -288,22 +292,51 @@ export function PurchaseCreateDialog({
     }, [productSearch, products]);
 
     const filteredSuppliers = React.useMemo(() => {
+        const supplierOptions = createdSupplier
+            ? [
+                  ...suppliers,
+                  {
+                      id: createdSupplier.id,
+                      name: createdSupplier.name,
+                      email: '',
+                      phone: '',
+                      document: '',
+                      city: '',
+                      state: '',
+                      address: '',
+                      createdAt: new Date().toISOString().slice(0, 10),
+                  },
+              ]
+            : suppliers;
         const normalized = supplierSearch.trim().toLowerCase();
 
         if (!normalized) {
-            return suppliers;
+            return supplierOptions;
         }
 
-        return suppliers.filter((supplier) =>
+        return supplierOptions.filter((supplier) =>
             supplier.name.toLowerCase().includes(normalized),
         );
-    }, [supplierSearch, suppliers]);
+    }, [createdSupplier, supplierSearch, suppliers]);
 
     const selectedSupplier = React.useMemo(
         () =>
             suppliers.find((supplier) => supplier.id === selectedSupplierId) ??
+            (createdSupplier?.id === selectedSupplierId
+                ? {
+                      id: createdSupplier.id,
+                      name: createdSupplier.name,
+                      email: '',
+                      phone: '',
+                      document: '',
+                      city: '',
+                      state: '',
+                      address: '',
+                      createdAt: new Date().toISOString().slice(0, 10),
+                  }
+                : null) ??
             null,
-        [suppliers, selectedSupplierId],
+        [createdSupplier, selectedSupplierId, suppliers],
     );
 
     const handleAddFromCatalog = (productId: string) => {
@@ -649,20 +682,10 @@ export function PurchaseCreateDialog({
                 open={supplierCreateOpen}
                 onOpenChange={setSupplierCreateOpen}
                 onSuccess={({ id, name }) => {
-                    void onCreateSupplier({
-                        id: String(id),
-                        name,
-                        email: '',
-                        phone: '',
-                        document: '',
-                        city: '',
-                        state: '',
-                        address: '',
-                        createdAt: new Date().toISOString().slice(0, 10),
-                    }).then((supplier) => {
-                        setSelectedSupplierId(supplier.id);
-                        setSupplierSearch(supplier.name);
-                    });
+                    const supplierId = String(id);
+                    setCreatedSupplier({ id: supplierId, name });
+                    setSelectedSupplierId(supplierId);
+                    setSupplierSearch(name);
                 }}
             />
         </>

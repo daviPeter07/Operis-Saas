@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { Button } from '@/components/ui/button';
@@ -96,6 +97,10 @@ export function SupplierCreateDialog({
                     className="space-y-4"
                     onSubmit={(event) => {
                         event.preventDefault();
+
+                        if (isSubmitting) {
+                            return;
+                        }
 
                         if (!form.name.trim()) {
                             setError('name', {

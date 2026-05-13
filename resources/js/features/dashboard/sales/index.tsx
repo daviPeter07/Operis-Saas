@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useBrands, useCreateBrand } from '@/hooks/use-brands';
@@ -51,6 +60,17 @@ type SaleRow = {
 };
 
 type SaleMutationPayload = SaleMutationInput;
+
+type ApiMutationError = {
+    message?: string;
+    errors?: Record<string, unknown>;
+};
+
+type PendingSaleAction = {
+    mode: 'create' | 'update';
+    payload: SaleMutationPayload;
+    saleId?: number;
+};
 
 function hasSameSalesMetricsRows(
     previous: SaleRow[],
@@ -143,6 +163,38 @@ export function SalesModule() {
     };
     const [dialogProducts, setDialogProducts] = useState<UiProduct[]>([]);
     const [filteredRows, setFilteredRows] = useState<SaleRow[]>([]);
+    const [stockWarningOpen, setStockWarningOpen] = useState(false);
+    const [stockWarningMessage, setStockWarningMessage] = useState('');
+    const [pendingSaleAction, setPendingSaleAction] =
+        useState<PendingSaleAction | null>(null);
+
+    const resolveErrorMessage = (error: unknown, fallback: string): string => {
+        if (error && typeof error === 'object') {
+            const maybeError = error as ApiMutationError;
+
+            if (typeof maybeError.message === 'string' && maybeError.message) {
+                return maybeError.message;
+            }
+
+            const stock = maybeError.errors?.stock;
+            if (Array.isArray(stock) && typeof stock[0] === 'string') {
+                return stock[0];
+            }
+        }
+
+        return fallback;
+    };
+
+    const isStockInsufficientError = (error: unknown): boolean => {
+        if (!error || typeof error !== 'object') {
+            return false;
+        }
+
+        const maybeError = error as ApiMutationError;
+        const stock = maybeError.errors?.stock;
+
+        return Array.isArray(stock) && stock.length > 0;
+    };
 
     const mappedCustomers = useMemo<UiCustomer[]>(
         () =>
@@ -359,7 +411,10 @@ export function SalesModule() {
         };
     }, [filteredRows]);
 
-    const handleCreateFromSalesDialog = async (sale: DialogSalesRecord) => {
+    const runCreateSale = async (
+        sale: DialogSalesRecord,
+        options: { allowNegativeStock?: boolean } = {},
+    ) => {
         const customerId = Number(sale.clientId);
         const items = sale.lineItems
             .map((item: DialogSalesRecord['lineItems'][number]) => ({
@@ -403,6 +458,7 @@ export function SalesModule() {
         const isAllPaid =
             isCrediario &&
             (sale.paidInstallments?.length ?? 0) === (sale.installments ?? 1);
+
         const payload: SaleMutationPayload = {
             customer_id: customerId,
             date: sale.createdAt || todayString(),
@@ -421,9 +477,7 @@ export function SalesModule() {
             first_installment_date: useInstallments
                 ? sale.firstInstallmentDate
                 : undefined,
-            installment_value: useInstallments
-                ? sale.installmentValue
-                : undefined,
+            installment_value: useInstallments ? sale.installmentValue : undefined,
             crediario_entry:
                 sale.paymentMethod === 'crediario'
                     ? Number(sale.crediarioEntry ?? 0)
@@ -432,11 +486,28 @@ export function SalesModule() {
                 sale.paymentMethod === 'crediario'
                     ? (sale.paidInstallments ?? undefined)
                     : undefined,
+            allow_negative_stock: options.allowNegativeStock ? true : undefined,
             items,
         };
 
-        await createSale.mutateAsync(payload);
-        toast.success('Venda criada com sucesso.');
+        try {
+            await createSale.mutateAsync(payload);
+            toast.success('Venda criada com sucesso.');
+        } catch (error) {
+            if (!options.allowNegativeStock && isStockInsufficientError(error)) {
+                setPendingSaleAction({ mode: 'create', payload });
+                setStockWarningMessage(
+                    resolveErrorMessage(
+                        error,
+                        'Estoque insuficiente para concluir a venda.',
+                    ),
+                );
+                setStockWarningOpen(true);
+                throw { message: '__stock_warning__' };
+            }
+
+            throw error;
+        }
     };
 
     const handleCreateProduct = async (data: {
@@ -576,15 +647,24 @@ export function SalesModule() {
                         open={open}
                         onOpenChange={onOpenChange}
                         onSubmit={(sale) => {
-                            void handleCreateFromSalesDialog(sale)
+                            void runCreateSale(sale)
                                 .then(() => {
                                     onOpenChange(false);
                                 })
                                 .catch((error: unknown) => {
-                                    const message =
-                                        error instanceof Error && error.message
-                                            ? error.message
-                                            : 'Erro ao criar a venda.';
+                                    if (
+                                        error &&
+                                        typeof error === 'object' &&
+                                        (error as { message?: string }).message ===
+                                            '__stock_warning__'
+                                    ) {
+                                        return;
+                                    }
+
+                                    const message = resolveErrorMessage(
+                                        error,
+                                        'Erro ao criar a venda.',
+                                    );
 
                                     toast.error(message);
                                 });
@@ -673,8 +753,7 @@ export function SalesModule() {
                         const isCardCredit = sale.cardType === 'credit';
                         const useInstallments = isCrediario || isCardCredit;
 
-                        try {
-                            const payload: SaleMutationPayload = {
+                        const payload: SaleMutationPayload = {
                                 customer_id: customerId,
                                 date: sale.createdAt || todayString(),
                                 payment_method: paymentMethod as
@@ -699,8 +778,11 @@ export function SalesModule() {
                                 crediario_entry: isCrediario
                                     ? Number(sale.crediarioEntry ?? 0)
                                     : undefined,
+                                allow_negative_stock: undefined,
                                 items,
                             };
+
+                        try {
 
                             await updateSale.mutateAsync({
                                 id: Number(editSale.id),
@@ -711,10 +793,27 @@ export function SalesModule() {
                             setIsEditOpen(false);
                             setEditSale(null);
                         } catch (error) {
-                            const message =
-                                error instanceof Error && error.message
-                                    ? error.message
-                                    : 'Erro ao atualizar a venda.';
+                            if (isStockInsufficientError(error)) {
+                                setPendingSaleAction({
+                                    mode: 'update',
+                                    saleId: Number(editSale.id),
+                                    payload,
+                                });
+                                setStockWarningMessage(
+                                    resolveErrorMessage(
+                                        error,
+                                        'Estoque insuficiente para concluir a venda.',
+                                    ),
+                                );
+                                setStockWarningOpen(true);
+
+                                return;
+                            }
+
+                            const message = resolveErrorMessage(
+                                error,
+                                'Erro ao atualizar a venda.',
+                            );
 
                             toast.error(message);
                         }
@@ -746,6 +845,72 @@ export function SalesModule() {
                 sale={previewSale}
                 initialMode={previewMode}
             />
+
+            <Dialog open={stockWarningOpen} onOpenChange={setStockWarningOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Estoque negativo</DialogTitle>
+                        <DialogDescription>{stockWarningMessage}</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setStockWarningOpen(false);
+                                setPendingSaleAction(null);
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                if (!pendingSaleAction) {
+                                    return;
+                                }
+
+                                const payload: SaleMutationPayload = {
+                                    ...pendingSaleAction.payload,
+                                    allow_negative_stock: true,
+                                };
+
+                                const promise =
+                                    pendingSaleAction.mode === 'create'
+                                        ? createSale.mutateAsync(payload)
+                                        : updateSale.mutateAsync({
+                                              id: pendingSaleAction.saleId ?? 0,
+                                              data: payload,
+                                          });
+
+                                void promise
+                                    .then(() => {
+                                        toast.success(
+                                            pendingSaleAction.mode === 'create'
+                                                ? 'Venda criada com sucesso.'
+                                                : 'Venda atualizada com sucesso.',
+                                        );
+                                        setStockWarningOpen(false);
+                                        setPendingSaleAction(null);
+                                        setIsCreateOpen(false);
+                                        setIsEditOpen(false);
+                                        setEditSale(null);
+                                    })
+                                    .catch((error: unknown) => {
+                                        toast.error(
+                                            resolveErrorMessage(
+                                                error,
+                                                'Erro ao concluir a venda.',
+                                            ),
+                                        );
+                                    });
+                            }}
+                        >
+                            Ir pra venda mesmo assim
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

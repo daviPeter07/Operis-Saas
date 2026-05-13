@@ -8,7 +8,7 @@ import {
     useUpdateAccountPayable,
     useUnsettleAccountPayable,
 } from '@/hooks/use-account-payables';
-import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
+import { useSuppliers } from '@/hooks/use-suppliers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { UiSupplier } from '@/types/dashboard-entities';
 import { GenericTable } from '../generic-table';
@@ -35,7 +35,6 @@ export function AccountsPayableModule() {
     const { data: payables = [], isPending: isPayablesPending } =
         useAccountPayables();
     const { data: suppliers = [] } = useSuppliers();
-    const createSupplier = useCreateSupplier();
     const createManualPayable = useCreateManualAccountPayable();
     const updateAccountPayable = useUpdateAccountPayable();
 
@@ -43,7 +42,6 @@ export function AccountsPayableModule() {
     const unsettleAccountPayable = useUnsettleAccountPayable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [dialogSuppliers, setDialogSuppliers] = useState<UiSupplier[]>([]);
 
     const mappedSuppliers = useMemo<UiSupplier[]>(
         () =>
@@ -61,10 +59,7 @@ export function AccountsPayableModule() {
         [suppliers],
     );
 
-    const dialogSupplierOptions = useMemo(
-        () => [...dialogSuppliers, ...mappedSuppliers],
-        [dialogSuppliers, mappedSuppliers],
-    );
+    const dialogSupplierOptions = useMemo(() => mappedSuppliers, [mappedSuppliers]);
 
     const supplierNameById = useMemo(
         () =>
@@ -151,33 +146,6 @@ export function AccountsPayableModule() {
             ? selectedRows[0].status
             : null;
     const totalValue = selectedRows.reduce((sum, row) => sum + row.amount, 0);
-
-    const handleCreateSupplier = async (
-        supplier: UiSupplier,
-    ): Promise<UiSupplier> => {
-        const createdSupplier = await createSupplier.mutateAsync({
-            name: supplier.name,
-            email: supplier.email,
-            phone: supplier.phone,
-            document: supplier.document,
-        });
-
-        const mappedSupplier: UiSupplier = {
-            id: String(createdSupplier.id),
-            name: createdSupplier.name,
-            email: createdSupplier.email ?? '',
-            phone: createdSupplier.phone ?? '',
-            document: createdSupplier.document ?? '',
-            city: '',
-            state: '',
-            address: '',
-            createdAt: new Date().toISOString().slice(0, 10),
-        };
-
-        setDialogSuppliers((previous) => [mappedSupplier, ...previous]);
-
-        return mappedSupplier;
-    };
 
     const columns: Column<PayableRow>[] = [
         {
@@ -338,7 +306,6 @@ export function AccountsPayableModule() {
                                 });
                         }}
                         suppliers={dialogSupplierOptions}
-                        onCreateSupplier={handleCreateSupplier}
                     />
                 )}
                 editDialog={({ open, onOpenChange, row }) => (
@@ -364,7 +331,6 @@ export function AccountsPayableModule() {
                             boleto_term_days: row.purchase_id ? 30 : 30,
                         }}
                         suppliers={dialogSupplierOptions}
-                        onCreateSupplier={handleCreateSupplier}
                         onSubmit={async (payload) => {
                             await updateAccountPayable.mutateAsync({
                                 id: Number(row.id),

@@ -3,12 +3,9 @@
 namespace App\Services\Finance;
 
 use App\Enums\PurchaseStatus;
-use App\Enums\StockMovementType;
 use App\Models\AccountPayable;
-use App\Models\Product;
 use App\Models\Purchase;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
-use App\Services\Products\StockMovementService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +14,6 @@ class PayableService
 {
     public function __construct(
         private readonly AccountPayableRepositoryInterface $payables,
-        private readonly StockMovementService $stockMovementService,
     ) {}
 
     public function regenerateFromPurchase(Purchase $purchase): void
@@ -50,6 +46,9 @@ class PayableService
                     'purchase_id' => $purchase->id,
                     'installment_number' => $index,
                     'total_installments' => $installments,
+                    'entry_date' => $purchase->date,
+                    'item' => $this->resolvePurchaseItemSummary($purchase),
+                    'description' => sprintf('Compra #%d - Parcela %d/%d (boleto)', $purchase->id, $index, $installments),
                     'due_date' => $dueDate,
                     'amount' => $currentCents / 100,
                     'status' => $isPaid ? 'paid' : 'pending',
@@ -69,6 +68,9 @@ class PayableService
             'purchase_id' => $purchase->id,
             'installment_number' => 1,
             'total_installments' => null,
+            'entry_date' => $purchase->date,
+            'item' => $this->resolvePurchaseItemSummary($purchase),
+            'description' => sprintf('Compra #%d', $purchase->id),
             'due_date' => $dueDate,
             'amount' => $purchase->total,
             'status' => $isPaid ? 'paid' : 'pending',
@@ -157,7 +159,7 @@ class PayableService
 
     public function settle(AccountPayable $payable, int $userId, array $data): AccountPayable
     {
-        return DB::transaction(function () use ($payable, $userId, $data): AccountPayable {
+        return DB::transaction(function () use ($payable, $data): AccountPayable {
             if (in_array($payable->status, ['paid', 'cancelled'], true)) {
                 throw ValidationException::withMessages([
                     'payable' => 'Conta a pagar ja foi liquidada ou cancelada.',
@@ -172,7 +174,7 @@ class PayableService
             ]);
 
             $purchase = Purchase::query()
-                ->with(['items:id,purchase_id,product_id,quantity', 'payables:id,purchase_id,status'])
+                ->with(['payables:id,purchase_id,status'])
                 ->find($payable->purchase_id);
 
             if (! $purchase || $purchase->status !== PurchaseStatus::Pending->value) {
@@ -187,26 +189,13 @@ class PayableService
 
             $purchase->update(['status' => PurchaseStatus::Completed->value]);
 
-            foreach ($purchase->items as $item) {
-                $product = Product::query()->findOrFail($item->product_id);
-
-                $this->stockMovementService->register(
-                    $product,
-                    (float) $item->quantity,
-                    StockMovementType::PurchaseEdit,
-                    $purchase->id,
-                    $userId,
-                    'purchase'
-                );
-            }
-
             return $payable->refresh();
         });
     }
 
     public function unsettle(AccountPayable $payable, int $userId): AccountPayable
     {
-        return DB::transaction(function () use ($payable, $userId): AccountPayable {
+        return DB::transaction(function () use ($payable): AccountPayable {
             if ($payable->status !== 'paid') {
                 throw ValidationException::withMessages([
                     'payable' => 'Conta a pagar precisa estar paga para desfazer a baixa.',
@@ -221,7 +210,7 @@ class PayableService
             ]);
 
             $purchase = Purchase::query()
-                ->with(['items:id,purchase_id,product_id,quantity', 'payables:id,purchase_id,status'])
+                ->with(['payables:id,purchase_id,status'])
                 ->find($payable->purchase_id);
 
             if (! $purchase) {
@@ -231,19 +220,6 @@ class PayableService
             $hasOpenPayables = $purchase->payables()->where('status', 'pending')->exists();
 
             if ($purchase->status === PurchaseStatus::Completed->value && $hasOpenPayables) {
-                foreach ($purchase->items as $item) {
-                    $product = Product::query()->findOrFail($item->product_id);
-
-                    $this->stockMovementService->register(
-                        $product,
-                        -(float) $item->quantity,
-                        StockMovementType::PurchaseEdit,
-                        $purchase->id,
-                        $userId,
-                        'purchase'
-                    );
-                }
-
                 $purchase->update(['status' => PurchaseStatus::Pending->value]);
             }
 
@@ -258,7 +234,7 @@ class PayableService
             ->whereIn('status', [PurchaseStatus::Pending->value, PurchaseStatus::Completed->value])
             ->doesntHave('payables')
             ->get()
-            ->each(fn(Purchase $purchase) => $this->regenerateFromPurchase($purchase));
+            ->each(fn (Purchase $purchase) => $this->regenerateFromPurchase($purchase));
     }
 
     public function syncStatusesFromPurchases(?int $companyId = null): int
@@ -267,7 +243,7 @@ class PayableService
 
         $payables = AccountPayable::query()
             ->whereNotNull('purchase_id')
-            ->when($companyId !== null, fn($query) => $query->where('company_id', $companyId))
+            ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
             ->with('purchase:id,status,payment_method')
             ->get();
 
@@ -299,5 +275,26 @@ class PayableService
         }
 
         return $updated;
+    }
+
+    private function resolvePurchaseItemSummary(Purchase $purchase): ?string
+    {
+        $items = $purchase->items()
+            ->with('product')
+            ->get()
+            ->pluck('product.name')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        if ($items->count() === 1) {
+            return $items->first();
+        }
+
+        return sprintf('%s +%d item(ns)', $items->first(), $items->count() - 1);
     }
 }

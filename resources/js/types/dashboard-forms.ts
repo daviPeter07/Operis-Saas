@@ -75,7 +75,6 @@ export type PurchaseCreateDialogProps = {
     suppliers: UiSupplier[];
     categories: Array<{ id: number; name: string }>;
     brands: Array<{ id: number; name: string }>;
-    onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;
     onCreateProduct: (data: {
         name: string;
         sku: string;
@@ -109,7 +108,6 @@ export type AccountsPayableCreateDialogProps = {
         boleto_term_days?: number;
     }) => void;
     suppliers: UiSupplier[];
-    onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;
     mode?: 'create' | 'edit';
     initialData?: {
         supplier_id: number;

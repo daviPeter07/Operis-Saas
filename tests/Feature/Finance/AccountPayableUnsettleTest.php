@@ -63,5 +63,5 @@ test('account payable can be unsettled and reopen pending purchase', function ()
 
     expect($payable->fresh()->status)->toBe('pending')
         ->and(Purchase::query()->findOrFail($purchaseId)->status)->toBe('pending')
-        ->and((float) Product::query()->findOrFail($product->id)->stock)->toBe(2.0);
+        ->and((float) Product::query()->findOrFail($product->id)->stock)->toBe(4.0);
 });

@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import { accountReceivableService } from '@/services/account-receivables';
 import { productsQueryKey } from './use-products';
 import { salesQueryKey } from './use-sales';
+import { purchasesQueryKey } from './use-purchases';
 
 export const accountReceivablesQueryKey = ['account-receivables'] as const;
+const accountPayablesQueryKey = ['account-payables'] as const;
 
 type SettlePayload = {
     id: number;
@@ -19,6 +21,13 @@ async function invalidateRelatedQueries(
         queryClient.invalidateQueries({ queryKey: accountReceivablesQueryKey }),
         queryClient.invalidateQueries({ queryKey: salesQueryKey }),
         queryClient.invalidateQueries({ queryKey: productsQueryKey }),
+        queryClient.invalidateQueries({ queryKey: purchasesQueryKey }),
+        queryClient.invalidateQueries({ queryKey: accountPayablesQueryKey }),
+        queryClient.refetchQueries({ queryKey: accountReceivablesQueryKey }),
+        queryClient.refetchQueries({ queryKey: salesQueryKey }),
+        queryClient.refetchQueries({ queryKey: productsQueryKey }),
+        queryClient.refetchQueries({ queryKey: purchasesQueryKey }),
+        queryClient.refetchQueries({ queryKey: accountPayablesQueryKey }),
     ]);
 }
 
