@@ -20,6 +20,7 @@ class SupplierResource extends ApiResource
             'email' => $this->email,
             'phone' => $this->phone,
             'document' => $this->document,
+            'person_type' => $this->person_type,
             'status' => $this->status,
             'createdAt' => $this->created_at?->clone()->setTimezone('America/Sao_Paulo')->format('Y-m-d H:i:s'),
         ];

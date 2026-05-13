@@ -8,7 +8,7 @@ type CreateSupplierInput = {
     email: string;
     phone: string;
     document: string;
-    person_type?: 'pf' | 'pj';
+    person_type: 'pf' | 'pj';
 };
 
 export function useSuppliers() {

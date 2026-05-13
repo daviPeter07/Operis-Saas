@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { StateCityFilter } from '@/components/filters/state-city-filter';
 import { Button } from '@/components/ui/button';
 import {
@@ -133,6 +134,15 @@ export function SupplierCreateDialog({
                                             name: data.name,
                                         });
                                     },
+                                    onError: (error: unknown) => {
+                                        const message =
+                                            (error as {
+                                                message?: string;
+                                            })?.message ??
+                                            'Erro ao salvar fornecedor.';
+
+                                        toast.error(message);
+                                    },
                                 },
                             );
 
@@ -146,6 +156,15 @@ export function SupplierCreateDialog({
                                     id: data.id,
                                     name: data.name,
                                 });
+                            },
+                            onError: (error: unknown) => {
+                                const message =
+                                    (error as {
+                                        message?: string;
+                                    })?.message ??
+                                    'Erro ao criar fornecedor.';
+
+                                toast.error(message);
                             },
                         });
                     }}
@@ -236,15 +255,16 @@ export function SupplierCreateDialog({
                             <Input
                                 id="supplier-document"
                                 value={form.document}
-                                onChange={(event) =>
+                                onChange={(event) => {
                                     setField(
                                         'document',
                                         formatDocumentInputByType(
                                             event.target.value,
                                             form.personType,
                                         ),
-                                    )
-                                }
+                                    );
+                                    clearErrors('document');
+                                }}
                                 placeholder={
                                     form.personType === 'pj'
                                         ? '00.000.000/0000-00'
@@ -252,6 +272,11 @@ export function SupplierCreateDialog({
                                 }
                                 maxLength={form.personType === 'pj' ? 18 : 14}
                             />
+                            {errors.document?.message ? (
+                                <p className="text-xs text-destructive">
+                                    {String(errors.document.message)}
+                                </p>
+                            ) : null}
                         </div>
                     </div>
 

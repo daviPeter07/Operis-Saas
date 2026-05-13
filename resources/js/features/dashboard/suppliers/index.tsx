@@ -5,7 +5,6 @@ import {
     useDeleteSupplier,
     useSuppliers,
 } from '@/hooks/use-suppliers';
-import { inferPersonType } from '@/utils/clients';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { SupplierCreateDialog } from './supplier-create-dialog';
@@ -16,6 +15,7 @@ type SupplierRow = {
     email: string;
     phone: string;
     document: string;
+    personType: 'pf' | 'pj';
     city: string;
     status: 'active' | 'inactive';
 };
@@ -32,7 +32,7 @@ export function SuppliersModule() {
             key: 'personType',
             header: 'Tipo',
             render: (_value: unknown, row: SupplierRow) => (
-                <PersonTypeBadge personType={inferPersonType(row.document)} />
+                <PersonTypeBadge personType={row.personType} />
             ),
         },
         {
@@ -65,9 +65,10 @@ export function SuppliersModule() {
     const rows: SupplierRow[] = suppliers.map((supplier) => ({
         id: String(supplier.id),
         name: supplier.name,
-        email: supplier.email,
-        phone: supplier.phone,
-        document: supplier.document,
+        email: supplier.email ?? '',
+        phone: supplier.phone ?? '',
+        document: supplier.document ?? '',
+        personType: supplier.person_type,
         city: '',
         status: supplier.status,
     }));
@@ -77,6 +78,7 @@ export function SuppliersModule() {
         email: string;
         phone: string;
         document: string;
+        person_type: 'pf' | 'pj';
     }) => {
         const name = String(data.name || '').trim();
 
@@ -89,6 +91,7 @@ export function SuppliersModule() {
             email: String(data.email || '').trim(),
             phone: String(data.phone || '').trim(),
             document: String(data.document || '').trim(),
+            person_type: data.person_type,
         });
     };
 
@@ -118,7 +121,7 @@ export function SuppliersModule() {
                         email: row.email,
                         phone: row.phone,
                         document: row.document,
-                        personType: inferPersonType(row.document),
+                        personType: row.personType,
                         status: row.status,
                     }}
                 />

@@ -30,7 +30,7 @@ class StoreSupplierRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'document' => [
-                'required',
+                'nullable',
                 'string',
                 'max:20',
                 Rule::unique('suppliers', 'document')->where('company_id', $companyId),
