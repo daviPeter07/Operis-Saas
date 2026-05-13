@@ -12,29 +12,25 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 
-$appBasePath = trim((string) env('APP_BASE_PATH', 'operis'), '/');
-$apiPrefix = $appBasePath === '' ? 'api' : $appBasePath.'/api';
+$apiPrefix = trim((string) env('API_BASE_PATH', 'api'), '/');
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
         apiPrefix: $apiPrefix,
-        commands: __DIR__.'/../routes/console.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
-
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-
         $middleware->web(append: [
             BypassAuth::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
-
         $middleware->alias([
             'company.user' => EnsureUserHasCompany::class,
             'company.verified' => EnsureCompanyIsVerified::class,
