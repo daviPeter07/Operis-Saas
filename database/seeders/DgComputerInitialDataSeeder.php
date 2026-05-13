@@ -85,6 +85,13 @@ class DgComputerInitialDataSeeder extends Seeder
             );
         }
 
+        for ($index = 1; $index <= 30; $index++) {
+            $company->brands()->firstOrCreate(
+                ['name' => sprintf('Marca DG %02d', $index)],
+                ['status' => 'active']
+            );
+        }
+
         foreach (
             [
                 'Periféricos',
@@ -101,6 +108,16 @@ class DgComputerInitialDataSeeder extends Seeder
         ) {
             $company->categories()->firstOrCreate(
                 ['name' => $categoryName],
+                [
+                    'parent_id' => null,
+                    'status' => 'active',
+                ]
+            );
+        }
+
+        for ($index = 1; $index <= 30; $index++) {
+            $company->categories()->firstOrCreate(
+                ['name' => sprintf('Categoria DG %02d', $index)],
                 [
                     'parent_id' => null,
                     'status' => 'active',
@@ -155,6 +172,27 @@ class DgComputerInitialDataSeeder extends Seeder
             ]
         );
 
+        for ($index = 1; $index <= 30; $index++) {
+            $document = sprintf('900000000%02d', $index);
+
+            Customer::query()->firstOrCreate(
+                [
+                    'company_id' => $company->id,
+                    'document' => $document,
+                ],
+                [
+                    'name' => sprintf('Cliente DG %02d', $index),
+                    'email' => sprintf('cliente%02d@dgcomputer.com.br', $index),
+                    'phone' => sprintf('9299111%04d', $index),
+                    'person_type' => 'pf',
+                    'status' => 'active',
+                    'credit_enabled' => $index % 4 === 0,
+                    'credit_limit' => $index % 4 === 0 ? 2000 : 0,
+                    'credit_term_days' => 30,
+                ]
+            );
+        }
+
         return [
             'general' => $general,
             'credit' => $credit,
@@ -186,6 +224,22 @@ class DgComputerInitialDataSeeder extends Seeder
                     'name' => $supplierData['name'],
                     'email' => strtolower(str_replace(' ', '.', $supplierData['name'])).'@dgcomputer.com.br',
                     'phone' => '92990002'.substr($supplierData['document'], -2),
+                    'person_type' => 'pj',
+                    'status' => 'active',
+                ]
+            );
+        }
+
+        for ($index = 1; $index <= 30; $index++) {
+            Supplier::query()->firstOrCreate(
+                [
+                    'company_id' => $company->id,
+                    'document' => sprintf('6666666600%03d', $index),
+                ],
+                [
+                    'name' => sprintf('Fornecedor DG %02d', $index),
+                    'email' => sprintf('fornecedor%02d@dgcomputer.com.br', $index),
+                    'phone' => sprintf('9299222%04d', $index),
                     'person_type' => 'pj',
                     'status' => 'active',
                 ]
@@ -284,6 +338,34 @@ class DgComputerInitialDataSeeder extends Seeder
             );
         }
 
+        $brandNames = array_values($brandIds->keys()->all());
+        $categoryNames = array_values($categoryIds->keys()->all());
+
+        for ($index = 1; $index <= 60; $index++) {
+            $sku = sprintf('DG-PRD-%03d', $index);
+            $brandName = $brandNames[$index % count($brandNames)] ?? 'Logitech';
+            $categoryName = $categoryNames[$index % count($categoryNames)] ?? 'Periféricos';
+
+            $products[$sku] = Product::query()->firstOrCreate(
+                [
+                    'company_id' => $company->id,
+                    'sku' => $sku,
+                ],
+                [
+                    'category_id' => $categoryIds[$categoryName] ?? null,
+                    'brand_id' => $brandIds[$brandName] ?? null,
+                    'name' => sprintf('Produto DG %03d', $index),
+                    'barcode' => sprintf('78990000%05d', $index),
+                    'description' => sprintf('Produto de teste DG %03d', $index),
+                    'sale_price' => 49.9 + $index,
+                    'cost' => 25 + ($index / 2),
+                    'stock' => 20 + $index,
+                    'min_stock' => 5,
+                    'status' => 'active',
+                ]
+            );
+        }
+
         return $products;
     }
 
@@ -355,6 +437,37 @@ class DgComputerInitialDataSeeder extends Seeder
                 ['product_id' => $products['DG-MSE-001']->id, 'quantity' => 1, 'unit_price' => 89.90],
             ],
         ]);
+
+        $customerIds = Customer::query()->where('company_id', $company->id)->pluck('id')->values();
+        $productCollection = collect($products)->values();
+        $paymentMethods = ['cash', 'pix', 'card_debit', 'card_credit'];
+
+        for ($index = 1; $index <= 35; $index++) {
+            $product = $productCollection[$index % max($productCollection->count(), 1)];
+            $paymentMethod = $paymentMethods[$index % count($paymentMethods)];
+            $status = $index % 5 === 0 ? SaleStatus::Pending->value : SaleStatus::Completed->value;
+
+            $payload = [
+                'customer_id' => $customerIds[$index % max($customerIds->count(), 1)] ?? $customers['general']->id,
+                'date' => now()->subDays($index)->toDateString(),
+                'status' => $status,
+                'payment_method' => $paymentMethod,
+                'items' => [
+                    [
+                        'product_id' => $product->id,
+                        'quantity' => ($index % 3) + 1,
+                        'unit_price' => (float) $product->sale_price,
+                    ],
+                ],
+            ];
+
+            if ($paymentMethod === 'card_credit') {
+                $payload['installments'] = 3;
+                $payload['first_installment_date'] = now()->addDays(30)->toDateString();
+            }
+
+            $saleService->create($company->id, $user->id, $payload);
+        }
     }
 
     /**
@@ -420,5 +533,34 @@ class DgComputerInitialDataSeeder extends Seeder
                 ['product_id' => $products['DG-CAB-001']->id, 'quantity' => 20, 'unit_cost' => 8],
             ],
         ]);
+
+        $supplierIds = Supplier::query()->where('company_id', $company->id)->pluck('id')->values();
+        $productCollection = collect($products)->values();
+        $paymentMethods = ['cash', 'pix', 'card', 'installment', 'boleto'];
+
+        for ($index = 1; $index <= 35; $index++) {
+            $product = $productCollection[$index % max($productCollection->count(), 1)];
+            $paymentMethod = $paymentMethods[$index % count($paymentMethods)];
+
+            $payload = [
+                'supplier_id' => $supplierIds[$index % max($supplierIds->count(), 1)] ?? $suppliers['cash']->id,
+                'date' => now()->subDays($index)->toDateString(),
+                'status' => $index % 4 === 0 ? PurchaseStatus::Pending->value : PurchaseStatus::Completed->value,
+                'payment_method' => $paymentMethod,
+                'items' => [
+                    [
+                        'product_id' => $product->id,
+                        'quantity' => ($index % 5) + 1,
+                        'unit_cost' => (float) $product->cost,
+                    ],
+                ],
+            ];
+
+            if ($paymentMethod === 'boleto') {
+                $payload['boleto_term_days'] = 60;
+            }
+
+            $purchaseService->create($company->id, $user->id, $payload);
+        }
     }
 }

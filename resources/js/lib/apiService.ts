@@ -6,6 +6,7 @@ export interface ListParams {
     search?: string;
     sort?: string;
     order?: 'asc' | 'desc';
+    fetch_all?: boolean;
     [key: string]: unknown;
 }
 
@@ -32,9 +33,17 @@ export abstract class ApiService<T extends { id: number }> {
 
     async list(params?: ListParams): Promise<PaginatedData<T>> {
         const response = await apiClient.get<unknown>(this.basePath, params);
-        const firstPage = this.normalizeListPayload(response.data as unknown);
+        const payload =
+            response &&
+            typeof response === 'object' &&
+            'meta' in response &&
+            'data' in response
+                ? (response as unknown)
+                : (response.data as unknown);
+        const firstPage = this.normalizeListPayload(payload);
+        const shouldFetchAll = params?.fetch_all !== false;
 
-        if (params?.page || firstPage.meta.last_page <= 1) {
+        if (!shouldFetchAll || params?.page || firstPage.meta.last_page <= 1) {
             return firstPage;
         }
 
@@ -45,8 +54,18 @@ export abstract class ApiService<T extends { id: number }> {
                 ...params,
                 page,
                 per_page: params?.per_page ?? firstPage.meta.per_page,
+                fetch_all: undefined,
             });
-            const nextPage = this.normalizeListPayload(nextResponse.data as unknown);
+
+            const nextPayload =
+                nextResponse &&
+                typeof nextResponse === 'object' &&
+                'meta' in nextResponse &&
+                'data' in nextResponse
+                    ? (nextResponse as unknown)
+                    : (nextResponse.data as unknown);
+
+            const nextPage = this.normalizeListPayload(nextPayload);
             allRows = allRows.concat(nextPage.data);
         }
 
@@ -83,14 +102,27 @@ export abstract class ApiService<T extends { id: number }> {
                     per_page?: number;
                     total?: number;
                 };
+                current_page?: number;
+                last_page?: number;
+                per_page?: number;
+                total?: number;
             };
 
             if (Array.isArray(maybePaginated.data)) {
-                const total = maybePaginated.meta?.total ?? maybePaginated.data.length;
+                const total =
+                    maybePaginated.meta?.total ??
+                    maybePaginated.total ??
+                    maybePaginated.data.length;
                 const perPage =
-                    maybePaginated.meta?.per_page ?? maybePaginated.data.length;
-                const lastPage = maybePaginated.meta?.last_page ?? 1;
-                const currentPage = maybePaginated.meta?.current_page ?? 1;
+                    maybePaginated.meta?.per_page ??
+                    maybePaginated.per_page ??
+                    maybePaginated.data.length;
+                const lastPage =
+                    maybePaginated.meta?.last_page ?? maybePaginated.last_page ?? 1;
+                const currentPage =
+                    maybePaginated.meta?.current_page ??
+                    maybePaginated.current_page ??
+                    1;
 
                 return {
                     data: maybePaginated.data as T[],
