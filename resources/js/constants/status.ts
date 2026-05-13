@@ -1,6 +1,8 @@
 export const STATUS_LABELS: Record<string, string> = {
     pending: 'Pendente',
     completed: 'Concluido',
+    received: 'Recebido',
+    paid: 'Pago',
     cancelled: 'Cancelado',
     active: 'Ativo',
     inactive: 'Inativo',

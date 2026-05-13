@@ -51,10 +51,6 @@ export function Pagination({
         return pages;
     }, [currentPage, totalPages, siblingCount]);
 
-    if (totalPages <= 1) {
-        return null;
-    }
-
     return (
         <nav
             aria-label="Paginação"
