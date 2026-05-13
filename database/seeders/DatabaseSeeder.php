@@ -9,8 +9,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         if (app()->environment('local')) {
+            $localSeedMode = (string) env('LOCAL_SEED_MODE', 'full');
+
             $this->call([
-                LocalQuickSeeder::class,
+                $localSeedMode === 'quick'
+                    ? LocalQuickSeeder::class
+                    : LocalFullSeeder::class,
             ]);
 
             return;
