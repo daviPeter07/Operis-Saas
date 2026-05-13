@@ -21,7 +21,9 @@ type CreateManualAccountPayablePayload = {
     status: 'pending' | 'paid';
 };
 
-function normalizeAccountPayable(accountPayable: AccountPayable): AccountPayable {
+function normalizeAccountPayable(
+    accountPayable: AccountPayable,
+): AccountPayable {
     return {
         ...accountPayable,
         amount: toNumber(accountPayable.amount),
@@ -71,6 +73,18 @@ class AccountPayableService extends ApiService<AccountPayable> {
 
     async create(payload: CreateManualAccountPayablePayload): Promise<void> {
         await apiClient.post('/account-payables', payload);
+    }
+
+    async update(
+        id: number,
+        payload: CreateManualAccountPayablePayload,
+    ): Promise<AccountPayable> {
+        const response = await apiClient.put<AccountPayable>(
+            `/account-payables/${id}`,
+            payload,
+        );
+
+        return normalizeAccountPayable(response.data);
     }
 
     async delete(id: number): Promise<void> {

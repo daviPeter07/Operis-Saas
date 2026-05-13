@@ -29,7 +29,6 @@ import {
 import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
 import { PurchaseConfirmationDialog } from './purchase-confirmation-dialog';
 
-
 interface AddPurchaseProductDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -183,6 +182,9 @@ export function PurchaseCreateDialog({
     onCreateSupplier,
     onCreateProduct,
     onApplyStock,
+    mode = 'create',
+    initialData,
+    initialItems,
 }: PurchaseCreateDialogProps) {
     const [productSearch, setProductSearch] = React.useState('');
     const [items, setItems] = React.useState<DraftPurchaseLine[]>([]);
@@ -212,23 +214,60 @@ export function PurchaseCreateDialog({
     );
     const createBrand = useCreateBrand();
     const createCategory = useCreateCategory();
+    const isEditMode = mode === 'edit';
+
+    const purchaseItems = React.useMemo(
+        () =>
+            (initialItems ?? []).map((item) => ({
+                productId: item.productId,
+                quantity: String(item.quantity),
+                unitCost: String(item.unitCost),
+            })),
+        [initialItems],
+    );
 
     React.useEffect(() => {
         if (open) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setProductSearch('');
-            setItems([]);
-            setIsScannerReady(false);
-            setSupplierSearch('');
-            setSelectedSupplierId('');
-            setPurchaseDate(new Date().toISOString().slice(0, 10));
-            setCalendarOpen(false);
-            setPaymentMethod('pix');
-            setCardType('debit');
-            setBoletoTermDays('30');
-            setNotes('');
+            if (mode === 'edit' && initialData) {
+                setProductSearch('');
+                setItems(purchaseItems);
+                setIsScannerReady(false);
+                setSupplierSearch(initialData.supplierName);
+                setSelectedSupplierId(initialData.supplierId);
+                setPurchaseDate(initialData.createdAt.slice(0, 10));
+                setCalendarOpen(false);
+                setNotes('');
+
+                if (
+                    initialData.paymentMethod === 'credit' ||
+                    initialData.paymentMethod === 'debit'
+                ) {
+                    setPaymentMethod('card');
+                    setCardType(initialData.paymentMethod);
+                } else if (initialData.paymentMethod === 'boleto') {
+                    setPaymentMethod('boleto');
+                    setBoletoTermDays(initialData.boletoTermDays ?? '30');
+                } else if (initialData.paymentMethod === 'cash') {
+                    setPaymentMethod('money');
+                } else {
+                    setPaymentMethod('pix');
+                }
+            } else {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setProductSearch('');
+                setItems([]);
+                setIsScannerReady(false);
+                setSupplierSearch('');
+                setSelectedSupplierId('');
+                setPurchaseDate(new Date().toISOString().slice(0, 10));
+                setCalendarOpen(false);
+                setPaymentMethod('pix');
+                setCardType('debit');
+                setBoletoTermDays('30');
+                setNotes('');
+            }
         }
-    }, [open]);
+    }, [initialData, initialItems, mode, open, purchaseItems]);
 
     const visibleProducts = React.useMemo(() => {
         const normalized = productSearch.trim().toLowerCase();
@@ -599,7 +638,10 @@ export function PurchaseCreateDialog({
                     return createBrand.mutateAsync({ name, status: 'active' });
                 }}
                 onCreateCategory={async (name) => {
-                    return createCategory.mutateAsync({ name, status: 'active' });
+                    return createCategory.mutateAsync({
+                        name,
+                        status: 'active',
+                    });
                 }}
             />
 

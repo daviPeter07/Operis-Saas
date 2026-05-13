@@ -72,6 +72,13 @@ export interface GenericTableProps<T extends { id: string }> {
         onSubmit: (data: T) => void;
         title: string;
     }) => React.ReactNode;
+    editDialog?: (params: {
+        open: boolean;
+        onOpenChange: (open: boolean) => void;
+        onSubmit: (data: T) => void;
+        title: string;
+        row: T;
+    }) => React.ReactNode;
     isCreateOpen?: boolean;
     onCreateOpenChange?: (open: boolean) => void;
     onFilteredDataChange?: (data: T[]) => void;
@@ -92,11 +99,13 @@ export function GenericTable<T extends { id: string }>({
     onImport,
     className,
     routeUrl,
-    showActions = true, showPrint = false,
+    showActions = true,
+    showPrint = false,
     clickableRow = false,
     onRowClick,
     createFields,
     createDialog,
+    editDialog,
     isCreateOpen: externalIsCreateOpen,
     onCreateOpenChange: externalOnCreateOpenChange,
     onFilteredDataChange,
@@ -719,33 +728,57 @@ export function GenericTable<T extends { id: string }>({
                 fields={viewFields}
             />
 
-            {selectedRow && (
-                <EditDialog
-                    open={isEditOpen}
-                    onOpenChange={setIsEditOpen}
-                    title={`Editar ${title}`}
-                    fields={editFields}
-                    initialData={
-                        selectedRow as unknown as Record<string, unknown>
-                    }
-                    onSubmit={(data) => {
-                        try {
-                            onEdit?.(data as T);
-                            toast.success(
-                                `${title}: registro atualizado com sucesso.`,
-                            );
-                            setIsEditOpen(false);
-                        } catch (error) {
-                            const message =
-                                error instanceof Error && error.message
-                                    ? error.message
-                                    : `${title}: erro ao atualizar o registro.`;
+            {selectedRow &&
+                (editDialog ? (
+                    editDialog({
+                        open: isEditOpen,
+                        onOpenChange: setIsEditOpen,
+                        title: `Editar ${title}`,
+                        row: selectedRow,
+                        onSubmit: (data) => {
+                            try {
+                                onEdit?.(data as T);
+                                toast.success(
+                                    `${title}: registro atualizado com sucesso.`,
+                                );
+                                setIsEditOpen(false);
+                            } catch (error) {
+                                const message =
+                                    error instanceof Error && error.message
+                                        ? error.message
+                                        : `${title}: erro ao atualizar o registro.`;
 
-                            toast.error(message);
+                                toast.error(message);
+                            }
+                        },
+                    })
+                ) : (
+                    <EditDialog
+                        open={isEditOpen}
+                        onOpenChange={setIsEditOpen}
+                        title={`Editar ${title}`}
+                        fields={editFields}
+                        initialData={
+                            selectedRow as unknown as Record<string, unknown>
                         }
-                    }}
-                />
-            )}
+                        onSubmit={(data) => {
+                            try {
+                                onEdit?.(data as T);
+                                toast.success(
+                                    `${title}: registro atualizado com sucesso.`,
+                                );
+                                setIsEditOpen(false);
+                            } catch (error) {
+                                const message =
+                                    error instanceof Error && error.message
+                                        ? error.message
+                                        : `${title}: erro ao atualizar o registro.`;
+
+                                toast.error(message);
+                            }
+                        }}
+                    />
+                ))}
 
             <DeleteConfirmDialog
                 open={isDeleteOpen}

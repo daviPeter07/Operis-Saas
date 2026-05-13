@@ -89,6 +89,9 @@ export type PurchaseCreateDialogProps = {
         createdAt: string;
     }) => Promise<UiProduct>;
     onApplyStock: (items: PurchaseLineItem[]) => void;
+    mode?: 'create' | 'edit';
+    initialData?: UiPurchase;
+    initialItems?: PurchaseLineItem[];
 };
 
 export type AccountsPayableCreateDialogProps = {
@@ -107,6 +110,18 @@ export type AccountsPayableCreateDialogProps = {
     }) => void;
     suppliers: UiSupplier[];
     onCreateSupplier: (data: UiSupplier) => Promise<UiSupplier>;
+    mode?: 'create' | 'edit';
+    initialData?: {
+        supplier_id: number;
+        item: string;
+        description?: string | null;
+        amount: number;
+        entry_date: string;
+        due_date: string;
+        payment_method: 'cash' | 'pix' | 'card' | 'boleto';
+        status: 'pending' | 'paid';
+        boleto_term_days?: number | null;
+    };
 };
 
 export type SupplierForm = {
@@ -126,4 +141,14 @@ export type SupplierForm = {
 export type SupplierCreateDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    mode?: 'create' | 'edit';
+    initialData?: {
+        id?: number;
+        name: string;
+        email: string;
+        phone: string;
+        document: string;
+        personType: 'pf' | 'pj';
+        status?: 'active' | 'inactive';
+    };
 };

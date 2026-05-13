@@ -51,6 +51,18 @@ class AccountReceivableService extends ApiService<AccountReceivable> {
         await super.create(payload as unknown as Partial<AccountReceivable>);
     }
 
+    async update(
+        id: number,
+        payload: CreateManualAccountReceivableInput,
+    ): Promise<AccountReceivable> {
+        const response = await apiClient.put<AccountReceivable>(
+            `/account-receivables/${id}`,
+            payload,
+        );
+
+        return normalizeAccountReceivable(response.data);
+    }
+
     async settle(
         id: number,
         payload: SettleAccountReceivablePayload,

@@ -92,7 +92,7 @@ class ReceivableService
             ->whereIn('status', [SaleStatus::Pending->value, SaleStatus::Completed->value])
             ->doesntHave('receivables')
             ->get()
-            ->each(fn (Sale $sale) => $this->regenerateFromSale($sale));
+            ->each(fn(Sale $sale) => $this->regenerateFromSale($sale));
     }
 
     public function createManual(int $companyId, array $data): void
@@ -110,6 +110,19 @@ class ReceivableService
             'status' => FinancialStatus::Pending->value,
             'received_at' => null,
         ]);
+    }
+
+    public function update(AccountReceivable $receivable, array $data): AccountReceivable
+    {
+        $receivable->update([
+            'customer_id' => $data['customer_id'],
+            'entry_date' => $data['entry_date'],
+            'item' => $data['item'],
+            'description' => $data['description'] ?? null,
+            'amount' => $data['amount'],
+        ]);
+
+        return $receivable->refresh();
     }
 
     public function customerOpenBalance(int $companyId, int $customerId): float
@@ -197,7 +210,7 @@ class ReceivableService
 
         $receivables = AccountReceivable::query()
             ->whereNotNull('sale_id')
-            ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
+            ->when($companyId !== null, fn($query) => $query->where('company_id', $companyId))
             ->with('sale:id,status')
             ->get();
 

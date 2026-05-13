@@ -5,6 +5,7 @@ import {
     useAccountPayables,
     useCreateManualAccountPayable,
     useSettleAccountPayable,
+    useUpdateAccountPayable,
     useUnsettleAccountPayable,
 } from '@/hooks/use-account-payables';
 import { useCreateSupplier, useSuppliers } from '@/hooks/use-suppliers';
@@ -16,6 +17,7 @@ import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
 
 type PayableRow = {
     id: string;
+    supplier_id: number | null;
     supplier_name: string;
     purchase_id: number | null;
     installment_number: number | null;
@@ -35,6 +37,7 @@ export function AccountsPayableModule() {
     const { data: suppliers = [] } = useSuppliers();
     const createSupplier = useCreateSupplier();
     const createManualPayable = useCreateManualAccountPayable();
+    const updateAccountPayable = useUpdateAccountPayable();
 
     const settleAccountPayable = useSettleAccountPayable();
     const unsettleAccountPayable = useUnsettleAccountPayable();
@@ -64,27 +67,29 @@ export function AccountsPayableModule() {
     );
 
     const supplierNameById = useMemo(
-        () => new Map(suppliers.map((supplier) => [supplier.id, supplier.name])),
+        () =>
+            new Map(suppliers.map((supplier) => [supplier.id, supplier.name])),
         [suppliers],
     );
 
     const rows: PayableRow[] = payables.map((payable) => ({
-            id: String(payable.id),
-            supplier_name: payable.supplier_id
-                ? (supplierNameById.get(payable.supplier_id) ??
-                  `#${payable.supplier_id}`)
-                : '-',
-            purchase_id: payable.purchase_id,
-            installment_number: payable.installment_number,
-            total_installments: payable.total_installments ?? null,
-            item: payable.item,
-            description: payable.description,
-            amount: payable.amount,
-            due_date: payable.due_date,
-            status: payable.status,
-            paid_at: payable.paid_at,
-            paid_method: payable.paid_method,
-        }));
+        id: String(payable.id),
+        supplier_id: payable.supplier_id,
+        supplier_name: payable.supplier_id
+            ? (supplierNameById.get(payable.supplier_id) ??
+              `#${payable.supplier_id}`)
+            : '-',
+        purchase_id: payable.purchase_id,
+        installment_number: payable.installment_number,
+        total_installments: payable.total_installments ?? null,
+        item: payable.item,
+        description: payable.description,
+        amount: payable.amount,
+        due_date: payable.due_date,
+        status: payable.status,
+        paid_at: payable.paid_at,
+        paid_method: payable.paid_method,
+    }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const next = new Set(selectedIds);
@@ -100,7 +105,9 @@ export function AccountsPayableModule() {
 
     const handleConfirmPayment = async () => {
         const ids = rows
-            .filter((row) => selectedIds.has(row.id) && row.status === 'pending')
+            .filter(
+                (row) => selectedIds.has(row.id) && row.status === 'pending',
+            )
             .map((row) => Number(row.id));
 
         if (ids.length === 0) {
@@ -113,7 +120,7 @@ export function AccountsPayableModule() {
                     id,
                     paid_at: new Date().toISOString().slice(0, 10),
                     paid_method: 'pix',
-                })
+                }),
             ),
         );
         toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
@@ -129,11 +136,12 @@ export function AccountsPayableModule() {
             return;
         }
 
-        await Promise.all(ids.map((id) => unsettleAccountPayable.mutateAsync(id)));
+        await Promise.all(
+            ids.map((id) => unsettleAccountPayable.mutateAsync(id)),
+        );
         toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
         setSelectedIds(new Set());
     };
-
 
     const totalSelected = selectedIds.size;
     const selectedRows = rows.filter((row) => selectedIds.has(row.id));
@@ -177,7 +185,9 @@ export function AccountsPayableModule() {
             header: (
                 <input
                     type="checkbox"
-                    checked={selectedIds.size === rows.length && rows.length > 0}
+                    checked={
+                        selectedIds.size === rows.length && rows.length > 0
+                    }
                     ref={(el) => {
                         if (el) {
                             el.indeterminate =
@@ -208,7 +218,7 @@ export function AccountsPayableModule() {
             key: 'supplier_name',
             header: 'Fornecedor',
         },
-{
+        {
             key: 'item',
             header: 'Descricao',
             render: (value: unknown, row: PayableRow) => {
@@ -267,7 +277,8 @@ export function AccountsPayableModule() {
                         </p>
                         {selectedAction === null && (
                             <p className="text-sm text-amber-600">
-                                Selecione apenas títulos com o mesmo status para aplicar a ação.
+                                Selecione apenas títulos com o mesmo status para
+                                aplicar a ação.
                             </p>
                         )}
                     </div>
@@ -328,6 +339,42 @@ export function AccountsPayableModule() {
                         }}
                         suppliers={dialogSupplierOptions}
                         onCreateSupplier={handleCreateSupplier}
+                    />
+                )}
+                editDialog={({ open, onOpenChange, row }) => (
+                    <AccountsPayableCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        mode="edit"
+                        initialData={{
+                            supplier_id: row.supplier_id ?? 0,
+                            item: row.item ?? '',
+                            description: row.description,
+                            amount: row.amount,
+                            entry_date: new Date().toISOString().slice(0, 10),
+                            due_date: row.due_date,
+                            payment_method:
+                                row.paid_method === 'cash' ||
+                                row.paid_method === 'pix' ||
+                                row.paid_method === 'card' ||
+                                row.paid_method === 'boleto'
+                                    ? row.paid_method
+                                    : 'pix',
+                            status: row.status === 'paid' ? 'paid' : 'pending',
+                            boleto_term_days: row.purchase_id ? 30 : 30,
+                        }}
+                        suppliers={dialogSupplierOptions}
+                        onCreateSupplier={handleCreateSupplier}
+                        onSubmit={async (payload) => {
+                            await updateAccountPayable.mutateAsync({
+                                id: Number(row.id),
+                                data: payload,
+                            });
+                            toast.success(
+                                'Conta a pagar atualizada com sucesso.',
+                            );
+                            onOpenChange(false);
+                        }}
                     />
                 )}
             />

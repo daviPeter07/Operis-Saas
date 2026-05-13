@@ -10,6 +10,7 @@ import {
     useCreatePurchase,
     useDeletePurchase,
     usePurchases,
+    useUpdatePurchase,
 } from '@/hooks/use-purchases';
 import { useCreateSupplier } from '@/hooks/use-suppliers';
 import { useSuppliers } from '@/hooks/use-suppliers';
@@ -86,6 +87,7 @@ export function PurchasesModule() {
         useCategories();
     const { data: brands = [], isPending: isBrandsPending } = useBrands();
     const createPurchase = useCreatePurchase();
+    const updatePurchase = useUpdatePurchase();
     const createProduct = useCreateProduct();
     const createSupplier = useCreateSupplier();
     const deletePurchase = useDeletePurchase();
@@ -383,7 +385,7 @@ export function PurchasesModule() {
         return mappedProduct;
     };
 
-    const handleCreateFromDialog = async (purchase: UiPurchase) => {
+    const buildPurchasePayload = (purchase: UiPurchase) => {
         const supplier = dialogSupplierOptions.find(
             (entry) => entry.name === purchase.supplierName,
         );
@@ -430,7 +432,7 @@ export function PurchasesModule() {
                       ? 'installment'
                       : 'pix';
 
-        await createPurchase.mutateAsync({
+        return {
             supplier_id: supplierId,
             date: purchase.createdAt || new Date().toISOString().slice(0, 10),
             due_date:
@@ -448,10 +450,27 @@ export function PurchasesModule() {
                     : undefined,
             status: purchase.status === 'completed' ? 'completed' : 'pending',
             items,
-        });
+        };
+    };
+
+    const handleCreateFromDialog = async (purchase: UiPurchase) => {
+        await createPurchase.mutateAsync(buildPurchasePayload(purchase));
 
         draftItemsRef.current = [];
         toast.success('Compra criada com sucesso.');
+    };
+
+    const handleUpdateFromDialog = async (
+        purchaseId: number,
+        purchase: UiPurchase,
+    ) => {
+        await updatePurchase.mutateAsync({
+            id: purchaseId,
+            data: buildPurchasePayload(purchase),
+        });
+
+        draftItemsRef.current = [];
+        toast.success('Compra atualizada com sucesso.');
     };
 
     return (
@@ -517,6 +536,91 @@ export function PurchasesModule() {
                         }}
                     />
                 )}
+                editDialog={({ open, onOpenChange, row }) => {
+                    const purchase = purchases.find(
+                        (entry) => entry.id === row.purchaseId,
+                    );
+
+                    if (!purchase) {
+                        return null;
+                    }
+
+                    return (
+                        <PurchaseCreateDialog
+                            open={open}
+                            onOpenChange={onOpenChange}
+                            mode="edit"
+                            initialData={{
+                                id: String(purchase.id),
+                                supplierId: String(purchase.supplier_id),
+                                supplierName:
+                                    dialogSupplierOptions.find(
+                                        (entry) =>
+                                            entry.id ===
+                                            String(purchase.supplier_id),
+                                    )?.name ?? row.supplierName,
+                                total: Number(purchase.total ?? 0),
+                                status:
+                                    purchase.status === 'completed'
+                                        ? 'completed'
+                                        : purchase.status === 'cancelled'
+                                          ? 'cancelled'
+                                          : 'pending',
+                                paymentMethod: purchase.payment_method,
+                                boletoTermDays: purchase.boleto_term_days
+                                    ? String(purchase.boleto_term_days)
+                                    : undefined,
+                                dueDate: purchase.due_date ?? undefined,
+                                createdAt:
+                                    purchase.date ??
+                                    purchase.createdAt?.slice(0, 10) ??
+                                    new Date().toISOString().slice(0, 10),
+                                items: purchase.items?.length,
+                            }}
+                            initialItems={(purchase.items ?? []).map(
+                                (item) => ({
+                                    productId: String(item.product_id),
+                                    quantity: Number(item.quantity),
+                                    unitCost: Number(item.unit_cost),
+                                    productName: item.product_name ?? undefined,
+                                }),
+                            )}
+                            onSubmit={(purchaseDraft) => {
+                                void handleUpdateFromDialog(
+                                    row.purchaseId,
+                                    purchaseDraft,
+                                )
+                                    .then(() => {
+                                        onOpenChange(false);
+                                    })
+                                    .catch((error: unknown) => {
+                                        const message =
+                                            error instanceof Error &&
+                                            error.message
+                                                ? error.message
+                                                : 'Erro ao atualizar a compra.';
+
+                                        toast.error(message);
+                                    });
+                            }}
+                            products={dialogProductOptions}
+                            suppliers={dialogSupplierOptions}
+                            categories={categories.map((category) => ({
+                                id: category.id,
+                                name: category.name,
+                            }))}
+                            brands={brands.map((brand) => ({
+                                id: brand.id,
+                                name: brand.name,
+                            }))}
+                            onCreateSupplier={handleCreateSupplier}
+                            onCreateProduct={handleCreateProduct}
+                            onApplyStock={(items) => {
+                                draftItemsRef.current = items;
+                            }}
+                        />
+                    );
+                }}
             />
         </div>
     );

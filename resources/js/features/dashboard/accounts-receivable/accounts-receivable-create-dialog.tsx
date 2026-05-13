@@ -1,5 +1,5 @@
 import { UserPlus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,14 @@ type AccountsReceivableCreateDialogProps = {
         amount: number;
         entry_date: string;
     }) => Promise<void>;
+    mode?: 'create' | 'edit';
+    initialData?: {
+        customer_id: number;
+        item: string;
+        description?: string | null;
+        amount: number;
+        entry_date: string;
+    };
 };
 
 const today = todayString();
@@ -43,6 +51,8 @@ export function AccountsReceivableCreateDialog({
     onOpenChange,
     customers,
     onSubmit,
+    mode = 'create',
+    initialData,
 }: AccountsReceivableCreateDialogProps) {
     const [customerSearch, setCustomerSearch] = useState('');
     const [customerId, setCustomerId] = useState('');
@@ -56,6 +66,26 @@ export function AccountsReceivableCreateDialog({
         clearErrors,
         formState: { errors },
     } = useForm<Record<string, string>>({ mode: 'onSubmit' });
+    const isEditMode = mode === 'edit';
+
+    useEffect(() => {
+        if (open && initialData) {
+            setCustomerId(String(initialData.customer_id));
+            setCustomerSearch(
+                customers.find(
+                    (customer) =>
+                        customer.id === String(initialData.customer_id),
+                )?.name ?? '',
+            );
+            setItem(initialData.item);
+            setDescription(initialData.description ?? '');
+            setAmount(
+                formatCurrencyInput(
+                    String(Math.round(Number(initialData.amount ?? 0) * 100)),
+                ),
+            );
+        }
+    }, [customers, initialData, open]);
 
     const filteredCustomers = useMemo(() => {
         const normalizedQuery = customerSearch.trim().toLowerCase();
@@ -79,91 +109,101 @@ export function AccountsReceivableCreateDialog({
 
     return (
         <>
-        <Dialog
-            open={open}
-            onOpenChange={(nextOpen) => {
-                onOpenChange(nextOpen);
+            <Dialog
+                open={open}
+                onOpenChange={(nextOpen) => {
+                    onOpenChange(nextOpen);
 
-                if (!nextOpen) {
-                    resetForm();
-                }
-            }}
-        >
-            <DialogContent className="!w-[calc(100vw-2rem)] sm:!max-w-[920px]">
-                <DialogHeader>
-                    <DialogTitle>Nova conta a receber</DialogTitle>
-                    <DialogDescription>
-                        Preencha os dados principais da conta manual.
-                    </DialogDescription>
-                </DialogHeader>
+                    if (!nextOpen) {
+                        resetForm();
+                    }
+                }}
+            >
+                <DialogContent className="w-[calc(100vw-2rem)]! sm:max-w-230!">
+                    <DialogHeader>
+                        <DialogTitle>Nova conta a receber</DialogTitle>
+                        <DialogDescription>
+                            Preencha os dados principais da conta manual.
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <form
-                    className="space-y-4"
-                    onSubmit={(event) => {
-                        event.preventDefault();
+                    <form
+                        className="space-y-4"
+                        onSubmit={(event) => {
+                            event.preventDefault();
 
-                        let hasError = false;
+                            let hasError = false;
 
-                        if (!customerId) {
-                            setError('customer_id', {
-                                type: 'required',
-                                message: 'Cliente e obrigatorio.',
+                            if (!customerId) {
+                                setError('customer_id', {
+                                    type: 'required',
+                                    message: 'Cliente e obrigatorio.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (!item.trim()) {
+                                setError('item', {
+                                    type: 'required',
+                                    message: 'Item e obrigatorio.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (!amount || parseCurrencyInput(amount) <= 0) {
+                                setError('amount', {
+                                    type: 'required',
+                                    message: 'Valor deve ser maior que zero.',
+                                });
+                                hasError = true;
+                            }
+
+                            if (hasError) {
+                                return;
+                            }
+
+                            void onSubmit({
+                                customer_id: Number(customerId),
+                                item: item.trim(),
+                                description: description.trim() || undefined,
+                                amount: parseCurrencyInput(amount),
+                                entry_date: today,
+                            }).then(() => {
+                                resetForm();
+                                onOpenChange(false);
                             });
-                            hasError = true;
-                        }
-
-                        if (!item.trim()) {
-                            setError('item', {
-                                type: 'required',
-                                message: 'Item e obrigatorio.',
-                            });
-                            hasError = true;
-                        }
-
-                        if (!amount || parseCurrencyInput(amount) <= 0) {
-                            setError('amount', {
-                                type: 'required',
-                                message: 'Valor deve ser maior que zero.',
-                            });
-                            hasError = true;
-                        }
-
-                        if (hasError) {
-                            return;
-                        }
-
-                        void onSubmit({
-                            customer_id: Number(customerId),
-                            item: item.trim(),
-                            description: description.trim() || undefined,
-                            amount: parseCurrencyInput(amount),
-                            entry_date: today,
-                        }).then(() => {
-                            resetForm();
-                            onOpenChange(false);
-                        });
-                    }}
-                >
+                        }}
+                    >
                         <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
                             <div className="col-span-1">
                                 <div className="flex items-center gap-2">
                                     <Label className="mb-0">
-                                        Cliente <span className="text-red-600">*</span>
+                                        Cliente{' '}
+                                        <span className="text-red-600">*</span>
                                     </Label>
-                                    <Tooltip open={clientTooltipOpen} onOpenChange={setClientTooltipOpen}>
+                                    <Tooltip
+                                        open={clientTooltipOpen}
+                                        onOpenChange={setClientTooltipOpen}
+                                    >
                                         <TooltipTrigger asChild>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-7 w-7 text-muted-foreground/50"
-                                                onClick={() => setClientCreateOpen(true)}
-                                                onFocus={(e) => e.preventDefault()}
+                                                onClick={() =>
+                                                    setClientCreateOpen(true)
+                                                }
+                                                onFocus={(e) =>
+                                                    e.preventDefault()
+                                                }
                                             >
                                                 <UserPlus className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>Criar cliente</TooltipContent>
+                                        <TooltipContent>
+                                            Criar cliente
+                                        </TooltipContent>
                                     </Tooltip>
                                 </div>
                                 <SearchableSelect
@@ -173,11 +213,9 @@ export function AccountsReceivableCreateDialog({
                                     onChange={(value) => {
                                         setCustomerId(value);
                                         clearErrors('customer_id');
-                                        const selectedCustomer =
-                                            customers.find(
-                                                (customer) =>
-                                                    customer.id === value,
-                                            );
+                                        const selectedCustomer = customers.find(
+                                            (customer) => customer.id === value,
+                                        );
 
                                         setCustomerSearch(
                                             selectedCustomer?.name ?? '',
@@ -192,11 +230,11 @@ export function AccountsReceivableCreateDialog({
                                     placeholder="Buscar cliente"
                                     emptyMessage="Nenhum cliente encontrado."
                                 />
-                            {errors.customer_id?.message ? (
-                                <p className="text-xs text-destructive">
-                                    {String(errors.customer_id.message)}
-                                </p>
-                            ) : null}
+                                {errors.customer_id?.message ? (
+                                    <p className="text-xs text-destructive">
+                                        {String(errors.customer_id.message)}
+                                    </p>
+                                ) : null}
                             </div>
 
                             <div className="col-span-1">
@@ -222,14 +260,19 @@ export function AccountsReceivableCreateDialog({
 
                             <div className="col-span-1">
                                 <Label htmlFor="receivable-amount">
-                                    Valor <span className="text-red-600">*</span>
+                                    Valor{' '}
+                                    <span className="text-red-600">*</span>
                                 </Label>
                                 <Input
                                     id="receivable-amount"
                                     type="text"
                                     value={amount}
                                     onChange={(event) => {
-                                        setAmount(formatCurrencyInput(event.currentTarget.value));
+                                        setAmount(
+                                            formatCurrencyInput(
+                                                event.currentTarget.value,
+                                            ),
+                                        );
                                         clearErrors('amount');
                                     }}
                                     placeholder="R$ 0,00"
@@ -243,46 +286,52 @@ export function AccountsReceivableCreateDialog({
                             </div>
 
                             <div className="col-span-1 sm:col-span-2">
-                                <Label htmlFor="receivable-description">Descricao</Label>
+                                <Label htmlFor="receivable-description">
+                                    Descricao
+                                </Label>
                                 <Input
                                     id="receivable-description"
                                     value={description}
                                     onChange={(event) =>
-                                        setDescription(event.currentTarget.value)
+                                        setDescription(
+                                            event.currentTarget.value,
+                                        )
                                     }
                                     placeholder="Detalhes da conta"
                                 />
                             </div>
                         </div>
 
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={!customerId || !item.trim() || !amount}
-                        >
-                            Salvar conta
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={
+                                    !customerId || !item.trim() || !amount
+                                }
+                            >
+                                {isEditMode ? 'Salvar conta' : 'Criar conta'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
-        <ClientCreateDialog
-            open={clientCreateOpen}
-            onOpenChange={setClientCreateOpen}
-            onSuccess={({ id, name }) => {
-                setCustomerId(String(id));
-                setCustomerSearch(name);
-                clearErrors('customer_id');
-            }}
-        />
+            <ClientCreateDialog
+                open={clientCreateOpen}
+                onOpenChange={setClientCreateOpen}
+                onSuccess={({ id, name }) => {
+                    setCustomerId(String(id));
+                    setCustomerSearch(name);
+                    clearErrors('customer_id');
+                }}
+            />
         </>
     );
 }

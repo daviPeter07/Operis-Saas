@@ -1,10 +1,5 @@
-import type {
-    QueryClient} from '@tanstack/react-query';
-import {
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { accountReceivableService } from '@/services/account-receivables';
 import { productsQueryKey } from './use-products';
@@ -17,7 +12,9 @@ type SettlePayload = {
     received_at: string;
 };
 
-async function invalidateRelatedQueries(queryClient: QueryClient): Promise<void> {
+async function invalidateRelatedQueries(
+    queryClient: QueryClient,
+): Promise<void> {
     await Promise.all([
         queryClient.invalidateQueries({ queryKey: accountReceivablesQueryKey }),
         queryClient.invalidateQueries({ queryKey: salesQueryKey }),
@@ -56,6 +53,20 @@ export function useCreateManualAccountReceivable() {
     });
 }
 
+export function useUpdateAccountReceivable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: {
+            id: number;
+            data: CreateManualReceivableInput;
+        }) => accountReceivableService.update(payload.id, payload.data),
+        onSuccess: async () => {
+            await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
 export function useSettleAccountReceivable() {
     const queryClient = useQueryClient();
 
@@ -85,12 +96,15 @@ export function useDeleteAccountReceivable() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (id: number) =>
-            accountReceivableService.delete(id),
+        mutationFn: async (id: number) => accountReceivableService.delete(id),
         // Optimistically remove the deleted receivable from the cache
         onMutate: async (id: number) => {
-            await queryClient.cancelQueries({ queryKey: accountReceivablesQueryKey });
-            const previous = queryClient.getQueryData<any>(accountReceivablesQueryKey);
+            await queryClient.cancelQueries({
+                queryKey: accountReceivablesQueryKey,
+            });
+            const previous = queryClient.getQueryData<any>(
+                accountReceivablesQueryKey,
+            );
 
             if (previous?.data) {
                 queryClient.setQueryData(accountReceivablesQueryKey, {
@@ -104,14 +118,19 @@ export function useDeleteAccountReceivable() {
         onError: (err, id, context) => {
             // Revert cache on error
             if (context?.previous) {
-                queryClient.setQueryData(accountReceivablesQueryKey, context.previous);
+                queryClient.setQueryData(
+                    accountReceivablesQueryKey,
+                    context.previous,
+                );
             }
 
             toast.error('Erro ao deletar conta a receber');
         },
         onSuccess: async () => {
             // Ensure fresh data from server
-            await queryClient.invalidateQueries({ queryKey: accountReceivablesQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: accountReceivablesQueryKey,
+            });
             toast.success('Conta a receber deletada com sucesso');
         },
     });

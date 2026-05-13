@@ -55,7 +55,11 @@ export function SuppliersModule() {
             header: 'Cidade',
             render: (val: unknown) => String(val || '-'),
         },
-        { key: 'status', header: 'Status', render: (val: unknown) => <StatusBadge status={String(val)} /> },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (val: unknown) => <StatusBadge status={String(val)} />,
+        },
     ];
 
     const rows: SupplierRow[] = suppliers.map((supplier) => ({
@@ -103,11 +107,24 @@ export function SuppliersModule() {
             onDelete={async (row) => {
                 await deleteSupplier.mutateAsync(Number(row.id));
             }}
-            createDialog={({ open, onOpenChange }) => (
+            editDialog={({ open, onOpenChange, row }) => (
                 <SupplierCreateDialog
                     open={open}
                     onOpenChange={onOpenChange}
+                    mode="edit"
+                    initialData={{
+                        id: Number(row.id),
+                        name: row.name,
+                        email: row.email,
+                        phone: row.phone,
+                        document: row.document,
+                        personType: inferPersonType(row.document),
+                        status: row.status,
+                    }}
                 />
+            )}
+            createDialog={({ open, onOpenChange }) => (
+                <SupplierCreateDialog open={open} onOpenChange={onOpenChange} />
             )}
         />
     );

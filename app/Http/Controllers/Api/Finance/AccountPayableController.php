@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreAccountPayableRequest;
+use App\Http\Requests\Finance\UpdateAccountPayableRequest;
 use App\Http\Resources\Finance\AccountPayableResource;
 use App\Models\AccountPayable;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
@@ -29,6 +30,15 @@ class AccountPayableController extends Controller
         );
 
         return response()->json(['data' => true], 201);
+    }
+
+    public function update(UpdateAccountPayableRequest $request, AccountPayable $accountPayable): JsonResponse
+    {
+        $this->authorize('update', $accountPayable);
+
+        $payable = $this->payableService->update($accountPayable, $request->validated());
+
+        return response()->json(['data' => AccountPayableResource::make($payable)]);
     }
 
     /**

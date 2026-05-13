@@ -141,6 +141,20 @@ class PayableService
         ]);
     }
 
+    public function update(AccountPayable $payable, array $data): AccountPayable
+    {
+        $payable->update([
+            'supplier_id' => $data['supplier_id'],
+            'entry_date' => $data['entry_date'],
+            'due_date' => $data['due_date'],
+            'item' => $data['item'],
+            'description' => $data['description'] ?? null,
+            'amount' => $data['amount'],
+        ]);
+
+        return $payable->refresh();
+    }
+
     public function settle(AccountPayable $payable, int $userId, array $data): AccountPayable
     {
         return DB::transaction(function () use ($payable, $userId, $data): AccountPayable {
@@ -244,7 +258,7 @@ class PayableService
             ->whereIn('status', [PurchaseStatus::Pending->value, PurchaseStatus::Completed->value])
             ->doesntHave('payables')
             ->get()
-            ->each(fn (Purchase $purchase) => $this->regenerateFromPurchase($purchase));
+            ->each(fn(Purchase $purchase) => $this->regenerateFromPurchase($purchase));
     }
 
     public function syncStatusesFromPurchases(?int $companyId = null): int
@@ -253,7 +267,7 @@ class PayableService
 
         $payables = AccountPayable::query()
             ->whereNotNull('purchase_id')
-            ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
+            ->when($companyId !== null, fn($query) => $query->where('company_id', $companyId))
             ->with('purchase:id,status,payment_method')
             ->get();
 

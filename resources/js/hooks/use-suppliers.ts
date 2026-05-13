@@ -42,6 +42,32 @@ export function useCreateSupplier() {
     });
 }
 
+export function useUpdateSupplier() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            data,
+        }: {
+            id: number;
+            data: CreateSupplierInput;
+        }) =>
+            supplierService.update(id, {
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                document: data.document,
+                person_type: data.person_type,
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: suppliersQueryKey,
+            });
+        },
+    });
+}
+
 export function useDeleteSupplier() {
     const queryClient = useQueryClient();
 

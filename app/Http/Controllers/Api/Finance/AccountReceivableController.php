@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreAccountReceivableRequest;
+use App\Http\Requests\Finance\UpdateAccountReceivableRequest;
 use App\Http\Resources\Finance\AccountReceivableResource;
 use App\Models\AccountReceivable;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
@@ -29,6 +30,15 @@ class AccountReceivableController extends Controller
         );
 
         return response()->json(['data' => true], 201);
+    }
+
+    public function update(UpdateAccountReceivableRequest $request, AccountReceivable $accountReceivable): JsonResponse
+    {
+        $this->authorize('update', $accountReceivable);
+
+        $receivable = $this->receivableService->update($accountReceivable, $request->validated());
+
+        return response()->json(['data' => AccountReceivableResource::make($receivable)]);
     }
 
     /**

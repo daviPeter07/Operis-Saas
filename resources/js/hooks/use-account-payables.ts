@@ -1,10 +1,5 @@
-import type {
-    QueryClient} from '@tanstack/react-query';
-import {
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { accountPayableService } from '@/services/account-payables';
 import { productsQueryKey } from './use-products';
@@ -12,7 +7,9 @@ import { purchasesQueryKey } from './use-purchases';
 
 export const accountPayablesQueryKey = ['account-payables'] as const;
 
-async function invalidateRelatedQueries(queryClient: QueryClient): Promise<void> {
+async function invalidateRelatedQueries(
+    queryClient: QueryClient,
+): Promise<void> {
     await Promise.all([
         queryClient.invalidateQueries({ queryKey: accountPayablesQueryKey }),
         queryClient.invalidateQueries({ queryKey: purchasesQueryKey }),
@@ -88,15 +85,27 @@ export function useCreateManualAccountPayable() {
     });
 }
 
+export function useUpdateAccountPayable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: {
+            id: number;
+            data: CreateManualPayload;
+        }) => accountPayableService.update(payload.id, payload.data),
+        onSuccess: async () => {
+            await invalidateRelatedQueries(queryClient);
+        },
+    });
+}
+
 export function useDeleteAccountPayable() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (id: number) =>
-            accountPayableService.delete(id),
+        mutationFn: async (id: number) => accountPayableService.delete(id),
         onSuccess: async () => {
             await invalidateRelatedQueries(queryClient);
-
         },
         onError: () => {
             toast.error('Erro ao excluir conta a pagar.');

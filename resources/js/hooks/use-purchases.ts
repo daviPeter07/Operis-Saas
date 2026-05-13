@@ -21,6 +21,8 @@ type CreatePurchaseInput = {
     }>;
 };
 
+type UpdatePurchaseInput = CreatePurchaseInput;
+
 export function usePurchases() {
     return useQuery({
         queryKey: purchasesQueryKey,
@@ -38,6 +40,29 @@ export function useCreatePurchase() {
     return useMutation({
         mutationFn: async (payload: CreatePurchaseInput) =>
             purchaseService.create(payload as unknown as Partial<Purchase>),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: purchasesQueryKey,
+            });
+            await queryClient.invalidateQueries({
+                queryKey: payablesQueryKey,
+            });
+        },
+    });
+}
+
+export function useUpdatePurchase() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: {
+            id: number;
+            data: UpdatePurchaseInput;
+        }) =>
+            purchaseService.update(
+                payload.id,
+                payload.data as unknown as Partial<Purchase>,
+            ),
         onSuccess: async () => {
             await queryClient.invalidateQueries({
                 queryKey: purchasesQueryKey,

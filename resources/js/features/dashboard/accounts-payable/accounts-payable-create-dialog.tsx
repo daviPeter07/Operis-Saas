@@ -1,5 +1,5 @@
 import { UserPlus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import { SearchableSelect } from '@/components/searchable-select';
@@ -40,6 +40,8 @@ export function AccountsPayableCreateDialog({
     onSubmit,
     suppliers,
     onCreateSupplier,
+    mode = 'create',
+    initialData,
 }: AccountsPayableCreateDialogProps) {
     const [supplierCreateOpen, setSupplierCreateOpen] = useState(false);
     const [supplierSearch, setSupplierSearch] = useState('');
@@ -60,6 +62,8 @@ export function AccountsPayableCreateDialog({
         formState: { errors },
     } = useForm<Record<string, string>>({ mode: 'onSubmit' });
 
+    const isEditMode = mode === 'edit';
+
     const filteredSuppliers = useMemo(() => {
         const normalizedQuery = supplierSearch.trim().toLowerCase();
 
@@ -71,6 +75,29 @@ export function AccountsPayableCreateDialog({
             supplier.name.toLowerCase().includes(normalizedQuery),
         );
     }, [supplierSearch, suppliers]);
+
+    useEffect(() => {
+        if (open && initialData) {
+            setSupplierId(String(initialData.supplier_id));
+            setSupplierSearch(
+                suppliers.find(
+                    (supplier) =>
+                        supplier.id === String(initialData.supplier_id),
+                )?.name ?? '',
+            );
+            setItem(initialData.item);
+            setDescription(initialData.description ?? '');
+            setAmount(
+                formatCurrencyInput(
+                    String(Math.round(initialData.amount * 100)),
+                ),
+            );
+            setDueDate(initialData.due_date);
+            setStatus(initialData.status);
+            setPaymentMethod(initialData.payment_method);
+            setBoletoTermDays(String(initialData.boleto_term_days ?? 30));
+        }
+    }, [initialData, open, suppliers]);
 
     const resetForm = () => {
         setSupplierSearch('');
@@ -96,9 +123,13 @@ export function AccountsPayableCreateDialog({
                     }
                 }}
             >
-                <DialogContent className="!w-[calc(100vw-2rem)] sm:!max-w-[920px]">
+                <DialogContent className="w-[calc(100vw-2rem)]! sm:max-w-230!">
                     <DialogHeader>
-                        <DialogTitle>Nova conta a pagar</DialogTitle>
+                        <DialogTitle>
+                            {isEditMode
+                                ? 'Editar conta a pagar'
+                                : 'Nova conta a pagar'}
+                        </DialogTitle>
                         <DialogDescription>
                             Preencha os dados principais da conta manual.
                         </DialogDescription>
@@ -147,20 +178,19 @@ export function AccountsPayableCreateDialog({
                                 return;
                             }
 
-onSubmit({
-                                 supplier_id: Number(supplierId),
-                                 item: item.trim(),
-                                 description: description.trim() || undefined,
-                                 amount: parseCurrencyInput(amount),
-                                 entry_date: today,
-                                 due_date: dueDate,
-                                 payment_method: paymentMethod,
-                                 status,
-                                 ...(paymentMethod === 'boleto' && {
-                                     boleto_term_days: Number(boletoTermDays),
-                                 }),
-                             });
-
+                            onSubmit({
+                                supplier_id: Number(supplierId),
+                                item: item.trim(),
+                                description: description.trim() || undefined,
+                                amount: parseCurrencyInput(amount),
+                                entry_date: today,
+                                due_date: dueDate,
+                                payment_method: paymentMethod,
+                                status,
+                                ...(paymentMethod === 'boleto' && {
+                                    boleto_term_days: Number(boletoTermDays),
+                                }),
+                            });
 
                             resetForm();
                             onOpenChange(false);
@@ -170,22 +200,32 @@ onSubmit({
                             <div className="col-span-1">
                                 <div className="flex items-center gap-2">
                                     <Label className="mb-0">
-                                        Fornecedor <span className="text-red-600">*</span>
+                                        Fornecedor{' '}
+                                        <span className="text-red-600">*</span>
                                     </Label>
-                                    <Tooltip open={supplierTooltipOpen} onOpenChange={setSupplierTooltipOpen}>
+                                    <Tooltip
+                                        open={supplierTooltipOpen}
+                                        onOpenChange={setSupplierTooltipOpen}
+                                    >
                                         <TooltipTrigger asChild>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-7 w-7 text-muted-foreground/50"
-                                                onClick={() => setSupplierCreateOpen(true)}
-                                                onFocus={(e) => e.preventDefault()}
+                                                onClick={() =>
+                                                    setSupplierCreateOpen(true)
+                                                }
+                                                onFocus={(e) =>
+                                                    e.preventDefault()
+                                                }
                                             >
                                                 <UserPlus className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>Criar fornecedor</TooltipContent>
+                                        <TooltipContent>
+                                            Criar fornecedor
+                                        </TooltipContent>
                                     </Tooltip>
                                 </div>
                                 <SearchableSelect
@@ -196,8 +236,7 @@ onSubmit({
                                         setSupplierId(value);
                                         clearErrors('supplier_id');
                                         const selectedSupplier = suppliers.find(
-                                            (supplier) =>
-                                                supplier.id === value,
+                                            (supplier) => supplier.id === value,
                                         );
 
                                         setSupplierSearch(
@@ -244,14 +283,19 @@ onSubmit({
 
                             <div className="col-span-1">
                                 <Label htmlFor="payable-amount">
-                                    Valor <span className="text-red-600">*</span>
+                                    Valor{' '}
+                                    <span className="text-red-600">*</span>
                                 </Label>
                                 <Input
                                     id="payable-amount"
                                     type="text"
                                     value={amount}
                                     onChange={(event) => {
-                                        setAmount(formatCurrencyInput(event.currentTarget.value));
+                                        setAmount(
+                                            formatCurrencyInput(
+                                                event.currentTarget.value,
+                                            ),
+                                        );
                                         clearErrors('amount');
                                     }}
                                     placeholder="R$ 0,00"
@@ -265,7 +309,10 @@ onSubmit({
                             </div>
 
                             <div className="col-span-1">
-                                <Label>Vencimento <span className="text-red-600">*</span></Label>
+                                <Label>
+                                    Vencimento{' '}
+                                    <span className="text-red-600">*</span>
+                                </Label>
                                 <DatePickerInput
                                     value={dueDate}
                                     onChange={(value) => {
@@ -300,10 +347,16 @@ onSubmit({
                                         <SelectValue placeholder="Metodo" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="cash">Dinheiro</SelectItem>
+                                        <SelectItem value="cash">
+                                            Dinheiro
+                                        </SelectItem>
                                         <SelectItem value="pix">PIX</SelectItem>
-                                        <SelectItem value="card">Cartao</SelectItem>
-                                        <SelectItem value="boleto">Boleto</SelectItem>
+                                        <SelectItem value="card">
+                                            Cartao
+                                        </SelectItem>
+                                        <SelectItem value="boleto">
+                                            Boleto
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -313,7 +366,10 @@ onSubmit({
                                 <Select
                                     value={status}
                                     onValueChange={(value) => {
-                                        if (value === 'pending' || value === 'paid') {
+                                        if (
+                                            value === 'pending' ||
+                                            value === 'paid'
+                                        ) {
                                             setStatus(value);
                                         }
                                     }}
@@ -322,8 +378,12 @@ onSubmit({
                                         <SelectValue placeholder="Status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="pending">Pendente</SelectItem>
-                                        <SelectItem value="paid">Pago</SelectItem>
+                                        <SelectItem value="pending">
+                                            Pendente
+                                        </SelectItem>
+                                        <SelectItem value="paid">
+                                            Pago
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -339,27 +399,61 @@ onSubmit({
                                                 setBoletoTermDays(value);
                                                 const days = Number(value);
                                                 const newDueDate = new Date();
-                                                newDueDate.setDate(newDueDate.getDate() + days);
-                                                setDueDate(newDueDate.toISOString().slice(0, 10));
+                                                newDueDate.setDate(
+                                                    newDueDate.getDate() + days,
+                                                );
+                                                setDueDate(
+                                                    newDueDate
+                                                        .toISOString()
+                                                        .slice(0, 10),
+                                                );
                                             }
                                         }}
                                         className="grid grid-cols-2 gap-2 sm:grid-cols-4"
                                     >
-                                        <ToggleGroupItem value="30" variant="outline" className="rounded-md border">30 dias</ToggleGroupItem>
-                                        <ToggleGroupItem value="60" variant="outline" className="rounded-md border">60 dias</ToggleGroupItem>
-                                        <ToggleGroupItem value="90" variant="outline" className="rounded-md border">90 dias</ToggleGroupItem>
-                                        <ToggleGroupItem value="120" variant="outline" className="rounded-md border">120 dias</ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="30"
+                                            variant="outline"
+                                            className="rounded-md border"
+                                        >
+                                            30 dias
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="60"
+                                            variant="outline"
+                                            className="rounded-md border"
+                                        >
+                                            60 dias
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="90"
+                                            variant="outline"
+                                            className="rounded-md border"
+                                        >
+                                            90 dias
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="120"
+                                            variant="outline"
+                                            className="rounded-md border"
+                                        >
+                                            120 dias
+                                        </ToggleGroupItem>
                                     </ToggleGroup>
                                 </div>
                             ) : null}
 
                             <div className="col-span-1 sm:col-span-2">
-                                <Label htmlFor="payable-description">Descricao</Label>
+                                <Label htmlFor="payable-description">
+                                    Descricao
+                                </Label>
                                 <Input
                                     id="payable-description"
                                     value={description}
                                     onChange={(event) =>
-                                        setDescription(event.currentTarget.value)
+                                        setDescription(
+                                            event.currentTarget.value,
+                                        )
                                     }
                                     placeholder="Detalhes da conta"
                                 />
@@ -376,9 +470,11 @@ onSubmit({
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={!supplierId || !item.trim() || !amount}
+                                disabled={
+                                    !supplierId || !item.trim() || !amount
+                                }
                             >
-                                Salvar conta
+                                {isEditMode ? 'Salvar conta' : 'Criar conta'}
                             </Button>
                         </DialogFooter>
                     </form>

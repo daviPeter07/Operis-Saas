@@ -5,6 +5,7 @@ import {
     useAccountReceivables,
     useCreateManualAccountReceivable,
     useSettleAccountReceivable,
+    useUpdateAccountReceivable,
     useUnsettleAccountReceivable,
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
@@ -35,34 +36,36 @@ export function AccountsReceivableModule() {
     const { data: customers = [], isPending: isCustomersPending } =
         useCustomers();
     const createManualReceivable = useCreateManualAccountReceivable();
+    const updateAccountReceivable = useUpdateAccountReceivable();
     const settleAccountReceivable = useSettleAccountReceivable();
     const unsettleAccountReceivable = useUnsettleAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     const customerNameById = useMemo(
-        () => new Map(customers.map((customer) => [customer.id, customer.name])),
+        () =>
+            new Map(customers.map((customer) => [customer.id, customer.name])),
         [customers],
     );
 
     const rows: ReceivableRow[] = receivables.map((receivable) => ({
-            id: String(receivable.id),
-            customer_id: receivable.customer_id,
-            customer_name: receivable.customer_id
-                ? (customerNameById.get(receivable.customer_id) ??
-                  `#${receivable.customer_id}`)
-                : 'Sem cliente',
-            sale_id: receivable.sale_id,
-            installment_number: receivable.installment_number,
-            total_installments: receivable.total_installments ?? null,
-            item: receivable.item,
-            description: receivable.description,
-            amount: receivable.amount,
-            due_date: receivable.due_date,
-            entry_date: receivable.entry_date,
-            status: receivable.status,
-            received_at: receivable.received_at,
-        }));
+        id: String(receivable.id),
+        customer_id: receivable.customer_id,
+        customer_name: receivable.customer_id
+            ? (customerNameById.get(receivable.customer_id) ??
+              `#${receivable.customer_id}`)
+            : 'Sem cliente',
+        sale_id: receivable.sale_id,
+        installment_number: receivable.installment_number,
+        total_installments: receivable.total_installments ?? null,
+        item: receivable.item,
+        description: receivable.description,
+        amount: receivable.amount,
+        due_date: receivable.due_date,
+        entry_date: receivable.entry_date,
+        status: receivable.status,
+        received_at: receivable.received_at,
+    }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const next = new Set(selectedIds);
@@ -78,7 +81,9 @@ export function AccountsReceivableModule() {
 
     const handleConfirmReceipt = async () => {
         const ids = rows
-            .filter((row) => selectedIds.has(row.id) && row.status === 'pending')
+            .filter(
+                (row) => selectedIds.has(row.id) && row.status === 'pending',
+            )
             .map((row) => Number(row.id));
 
         if (ids.length === 0) {
@@ -90,8 +95,8 @@ export function AccountsReceivableModule() {
                 settleAccountReceivable.mutateAsync({
                     id,
                     received_at: new Date().toISOString().slice(0, 10),
-                })
-            )
+                }),
+            ),
         );
         toast.success(`${ids.length} conta(s) baixada(s) com sucesso.`);
         setSelectedIds(new Set());
@@ -99,7 +104,9 @@ export function AccountsReceivableModule() {
 
     const handleUndoReceipt = async () => {
         const ids = rows
-            .filter((row) => selectedIds.has(row.id) && row.status === 'received')
+            .filter(
+                (row) => selectedIds.has(row.id) && row.status === 'received',
+            )
             .map((row) => Number(row.id));
 
         if (ids.length === 0) {
@@ -112,7 +119,6 @@ export function AccountsReceivableModule() {
         toast.success(`${ids.length} baixa(s) desfeita(s) com sucesso.`);
         setSelectedIds(new Set());
     };
-
 
     const totalSelected = selectedIds.size;
     const selectedRows = rows.filter((row) => selectedIds.has(row.id));
@@ -129,7 +135,9 @@ export function AccountsReceivableModule() {
             header: (
                 <input
                     type="checkbox"
-                    checked={selectedIds.size === rows.length && rows.length > 0}
+                    checked={
+                        selectedIds.size === rows.length && rows.length > 0
+                    }
                     ref={(el) => {
                         if (el) {
                             el.indeterminate =
@@ -218,13 +226,16 @@ export function AccountsReceivableModule() {
             {totalSelected > 0 && (
                 <div className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
                     <div>
-                        <p className="font-medium">{totalSelected} selecionada(s)</p>
+                        <p className="font-medium">
+                            {totalSelected} selecionada(s)
+                        </p>
                         <p className="text-sm text-muted-foreground">
                             Total: {formatCurrencyBR(totalValue)}
                         </p>
                         {selectedAction === null && (
                             <p className="text-sm text-amber-600">
-                                Selecione apenas títulos com o mesmo status para aplicar a ação.
+                                Selecione apenas títulos com o mesmo status para
+                                aplicar a ação.
                             </p>
                         )}
                     </div>
@@ -260,7 +271,9 @@ export function AccountsReceivableModule() {
                 ]}
                 dateFilterKey="due_date"
                 clickableRow
-                onRowClick={(row) => handleSelectOne(row.id, !selectedIds.has(row.id))}
+                onRowClick={(row) =>
+                    handleSelectOne(row.id, !selectedIds.has(row.id))
+                }
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 createDialog={({ open, onOpenChange }) => (
@@ -285,7 +298,51 @@ export function AccountsReceivableModule() {
                         }))}
                         onSubmit={async (payload) => {
                             await createManualReceivable.mutateAsync(payload);
-                            toast.success('Conta a receber criada com sucesso.');
+                            toast.success(
+                                'Conta a receber criada com sucesso.',
+                            );
+                        }}
+                    />
+                )}
+                editDialog={({ open, onOpenChange, row }) => (
+                    <AccountsReceivableCreateDialog
+                        open={open}
+                        onOpenChange={onOpenChange}
+                        mode="edit"
+                        initialData={{
+                            customer_id: row.customer_id ?? 0,
+                            item: row.item ?? '',
+                            description: row.description,
+                            amount: row.amount,
+                            entry_date:
+                                row.entry_date ??
+                                new Date().toISOString().slice(0, 10),
+                        }}
+                        customers={customers.map((customer) => ({
+                            id: String(customer.id),
+                            name: customer.name,
+                            email: customer.email ?? '',
+                            phone: customer.phone ?? '',
+                            document: customer.document ?? '',
+                            city: '',
+                            state: '',
+                            address: '',
+                            createdAt: new Date().toISOString().slice(0, 10),
+                            creditEnabled: customer.credit_enabled,
+                            creditLimit: Number(customer.credit_limit ?? 0),
+                            creditTermDays: Number(
+                                customer.credit_term_days ?? 30,
+                            ),
+                        }))}
+                        onSubmit={async (payload) => {
+                            await updateAccountReceivable.mutateAsync({
+                                id: Number(row.id),
+                                data: payload,
+                            });
+                            toast.success(
+                                'Conta a receber atualizada com sucesso.',
+                            );
+                            onOpenChange(false);
                         }}
                     />
                 )}
