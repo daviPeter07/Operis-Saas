@@ -13,7 +13,7 @@ Route::prefix($appPrefix)->group(function (): void {
         return redirect()->route('login');
     })->name('home');
 
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth'])->group(function (): void {
         Route::inertia('dashboard', 'dashboard/index')->name('dashboard');
         Route::inertia('dashboard/clients', 'dashboard/clients')->name('dashboard.clients');
         Route::inertia('dashboard/sales', 'dashboard/sales')->name('dashboard.sales');

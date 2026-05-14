@@ -12,7 +12,9 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 
-$apiPrefix = trim((string) env('API_BASE_PATH', 'api'), '/');
+$appBasePath = trim((string) env('APP_BASE_PATH', 'operis'), '/');
+$apiPath = trim((string) env('API_BASE_PATH', 'api'), '/');
+$apiPrefix = trim($appBasePath . '/' . $apiPath, '/');
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
