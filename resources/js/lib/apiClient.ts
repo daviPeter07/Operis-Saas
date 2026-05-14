@@ -4,10 +4,7 @@ interface ApiResponse<T> {
 }
 
 class ApiClient {
-    private baseUrl = (
-        (import.meta.env.VITE_API_BASE_PATH as string | undefined) ??
-        `${((import.meta.env.VITE_APP_BASE_PATH as string | undefined) ?? '/operis').replace(/\/$/, '')}/api`
-    ).replace(/\/$/, '');
+    private baseUrl = '/api';
 
     private async request<T>(
         method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',

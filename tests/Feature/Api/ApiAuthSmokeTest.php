@@ -8,6 +8,14 @@ test('guest cannot access auth me endpoint', function () {
     $response->assertUnauthorized();
 });
 
+test('api routes are registered under api prefix', function () {
+    $routes = collect(app('router')->getRoutes())->filter(
+        fn ($route) => str_starts_with($route->uri(), 'api/')
+    );
+
+    expect($routes)->not->toBeEmpty();
+});
+
 test('authenticated user can access auth me endpoint', function () {
     $user = User::factory()->create();
 
