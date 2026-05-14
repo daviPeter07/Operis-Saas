@@ -10,6 +10,7 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { settings } from '@/routes/dashboard';
+import { withAppBasePath } from '@/constants/workspace';
 import type { User } from '@/types';
 
 type Props = {
@@ -44,7 +45,7 @@ export function UserMenuContent({ user }: Props) {
             <DropdownMenuItem variant="muted" asChild>
                 <Link
                     method="post"
-                    href={logout()}
+                    href={withAppBasePath(logout().url)}
                     className="w-full cursor-pointer"
                     style={{ color: '#dc2626' }}
                     data-test="logout-button"

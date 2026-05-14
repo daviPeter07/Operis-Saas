@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
+import { withAppBasePath } from '@/constants/workspace';
 
 export default function VerifyEmailPageContent({
     status,
@@ -31,7 +32,7 @@ export default function VerifyEmailPageContent({
                         </Button>
 
                         <TextLink
-                            href={logout()}
+                            href={withAppBasePath(logout().url)}
                             className="mx-auto block text-sm"
                         >
                             Sair
