@@ -44,7 +44,7 @@ export function UserMenuContent({ user }: Props) {
             <DropdownMenuItem variant="muted" asChild>
                 <Link
                     method="post"
-                    href={logout.url()}
+                    href={logout()}
                     className="w-full cursor-pointer"
                     style={{ color: '#dc2626' }}
                     data-test="logout-button"
