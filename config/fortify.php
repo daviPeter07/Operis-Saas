@@ -3,7 +3,7 @@
 use Laravel\Fortify\Features;
 
 $appBasePath = 'operis';
-$appPrefix = $appBasePath === '' ? '' : '/'.$appBasePath;
+$appPrefix = $appBasePath === '' ? '' : '/';
 
 return [
 

@@ -25,6 +25,7 @@ use App\Repositories\Eloquent\SupplierRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -61,6 +62,13 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        $rootUrl = rtrim((string) config('app.url'), '/');
+        $rootPath = (string) (parse_url($rootUrl, PHP_URL_PATH) ?? '');
+
+        if ($rootPath === '' || $rootPath === '/') {
+            URL::forceRootUrl($rootUrl.'/operis');
+        }
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
