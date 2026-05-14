@@ -39,7 +39,7 @@ test('account payable can be unsettled and reopen pending purchase', function ()
         'status' => 'active',
     ]);
 
-    $purchaseId = $this->actingAs($user)->postJson('/api/purchases', [
+    $purchaseId = $this->actingAs($user)->postJson('/operis/api/purchases', [
         'date' => now()->toDateString(),
         'status' => 'pending',
         'payment_method' => 'pix',
@@ -52,13 +52,13 @@ test('account payable can be unsettled and reopen pending purchase', function ()
 
     $payable = AccountPayable::query()->where('purchase_id', $purchaseId)->firstOrFail();
 
-    $this->actingAs($user)->postJson("/api/account-payables/{$payable->id}/settle", [
+    $this->actingAs($user)->postJson("/operis/api/account-payables/{$payable->id}/settle", [
         'paid_at' => now()->toDateString(),
         'paid_method' => 'pix',
         'payment_notes' => 'Pago no prazo',
     ])->assertOk();
 
-    $this->actingAs($user)->postJson("/api/account-payables/{$payable->id}/unsettle")
+    $this->actingAs($user)->postJson("/operis/api/account-payables/{$payable->id}/unsettle")
         ->assertOk();
 
     expect($payable->fresh()->status)->toBe('pending')

@@ -1,10 +1,12 @@
+import { apiBasePath } from '@/config/api';
+
 interface ApiResponse<T> {
     data: T;
     [key: string]: unknown;
 }
 
 class ApiClient {
-    private baseUrl = '/api';
+    private baseUrl = apiBasePath;
 
     private async request<T>(
         method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',

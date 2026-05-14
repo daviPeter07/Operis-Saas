@@ -3,14 +3,14 @@
 use App\Models\User;
 
 test('guest cannot access auth me endpoint', function () {
-    $response = $this->getJson('/api/auth/me');
+    $response = $this->getJson('/operis/api/auth/me');
 
     $response->assertUnauthorized();
 });
 
 test('api routes are registered under api prefix', function () {
     $routes = collect(app('router')->getRoutes())->filter(
-        fn ($route) => str_starts_with($route->uri(), 'api/')
+        fn ($route) => str_starts_with($route->uri(), 'operis/api/')
     );
 
     expect($routes)->not->toBeEmpty();
@@ -21,7 +21,7 @@ test('authenticated user can access auth me endpoint', function () {
 
     $response = $this
         ->actingAs($user)
-        ->getJson('/api/auth/me');
+        ->getJson('/operis/api/auth/me');
 
     $response->assertOk()
         ->assertJsonPath('data.id', $user->id)
