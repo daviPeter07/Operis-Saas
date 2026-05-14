@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'base_path' => 'operis/api',
+    'base_path' => 'api',
 ];
