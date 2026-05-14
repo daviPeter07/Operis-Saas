@@ -65,6 +65,7 @@ export interface GenericTableProps<T extends { id: string }> {
     clickableRow?: boolean;
     onRowClick?: (row: T) => void;
     showMobileList?: boolean;
+    rowClassName?: string | ((row: T, index: number) => string | undefined);
     createFields?: FormField[];
     createDialog?: (params: {
         open: boolean;
@@ -109,6 +110,7 @@ export function GenericTable<T extends { id: string }>({
     isCreateOpen: externalIsCreateOpen,
     onCreateOpenChange: externalOnCreateOpenChange,
     onFilteredDataChange,
+    rowClassName,
 }: GenericTableProps<T>) {
     const [internalIsCreateOpen, setInternalIsCreateOpen] =
         React.useState(false);
@@ -450,6 +452,14 @@ export function GenericTable<T extends { id: string }>({
 
     const skeletonRowCount = 6;
 
+    const resolveRowClassName = (row: T, index: number): string | undefined => {
+        if (typeof rowClassName === 'function') {
+            return rowClassName(row, index);
+        }
+
+        return rowClassName;
+    };
+
     return (
         <div className={cn('space-y-4', className)}>
             <TableToolbar
@@ -573,8 +583,17 @@ export function GenericTable<T extends { id: string }>({
                                         className={
                                             clickableRow &&
                                             (onRowClick || onEdit)
-                                                ? 'cursor-pointer'
-                                                : undefined
+                                                ? cn(
+                                                      'cursor-pointer',
+                                                      resolveRowClassName(
+                                                          row,
+                                                          index,
+                                                      ),
+                                                  )
+                                                : resolveRowClassName(
+                                                      row,
+                                                      index,
+                                                  )
                                         }
                                     >
                                         {columns.map((col: Column<T>) => (
@@ -650,10 +669,13 @@ export function GenericTable<T extends { id: string }>({
                         Nenhum registro encontrado
                     </div>
                 ) : (
-                    paginatedData.map((row: T) => (
+                    paginatedData.map((row: T, index: number) => (
                         <div
                             key={String((row as { id: string }).id)}
-                            className="rounded-lg border bg-card p-3"
+                            className={cn(
+                                'rounded-lg border bg-card p-3',
+                                resolveRowClassName(row, index),
+                            )}
                         >
                             {columns.map((col: Column<T>) => (
                                 <div

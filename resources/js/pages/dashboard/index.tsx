@@ -333,11 +333,15 @@ export default function DashboardPage() {
                 label: 'Pagamentos atrasados',
                 value: payables.filter((p) => p.status === 'overdue').length,
             },
-                // Undelivered orders alert removed as per request
             {
-                id: 'orders-to-confirm',
-                label: 'Pedidos a confirmar',
+                id: 'orders-to-pay',
+                label: 'Pedidos a pagar',
                 value: activeSales.filter((s) => s.status === 'pending').length,
+            },
+            {
+                id: 'purchases-to-pay',
+                label: 'Compras a pagar',
+                value: activePurchases.filter((p) => p.status === 'pending').length,
             },
             {
                 id: 'out-of-stock-products',

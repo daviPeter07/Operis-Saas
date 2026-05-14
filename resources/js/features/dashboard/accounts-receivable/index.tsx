@@ -56,6 +56,10 @@ function hasSameReceivableMetricsRows(
 }
 
 export function AccountsReceivableModule() {
+    const initialStatusFilter =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('status')
+            : null;
     const { data: receivables = [], isPending: isReceivablesPending } =
         useAccountReceivables();
     const { data: customers = [], isPending: isCustomersPending } =
@@ -82,24 +86,32 @@ export function AccountsReceivableModule() {
         [customers],
     );
 
-    const rows: ReceivableRow[] = receivables.map((receivable) => ({
-        id: String(receivable.id),
-        customer_id: receivable.customer_id,
-        customer_name: receivable.customer_id
-            ? (customerNameById.get(receivable.customer_id) ??
-              `#${receivable.customer_id}`)
-            : 'Sem cliente',
-        sale_id: receivable.sale_id,
-        installment_number: receivable.installment_number,
-        total_installments: receivable.total_installments ?? null,
-        item: receivable.item,
-        description: receivable.description,
-        amount: receivable.amount,
-        due_date: receivable.due_date,
-        entry_date: receivable.entry_date,
-        status: receivable.status,
-        received_at: receivable.received_at,
-    }));
+    const rows: ReceivableRow[] = receivables
+        .filter((receivable) => {
+            if (!initialStatusFilter) {
+                return true;
+            }
+
+            return receivable.status === initialStatusFilter;
+        })
+        .map((receivable) => ({
+            id: String(receivable.id),
+            customer_id: receivable.customer_id,
+            customer_name: receivable.customer_id
+                ? (customerNameById.get(receivable.customer_id) ??
+                  `#${receivable.customer_id}`)
+                : 'Sem cliente',
+            sale_id: receivable.sale_id,
+            installment_number: receivable.installment_number,
+            total_installments: receivable.total_installments ?? null,
+            item: receivable.item,
+            description: receivable.description,
+            amount: receivable.amount,
+            due_date: receivable.due_date,
+            entry_date: receivable.entry_date,
+            status: receivable.status,
+            received_at: receivable.received_at,
+        }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const next = new Set(selectedIds);

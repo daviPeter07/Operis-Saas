@@ -108,6 +108,10 @@ function toDateOnly(value: string | null | undefined): string {
 }
 
 export function SalesModule() {
+    const initialStatusFilter =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('status')
+            : null;
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -287,7 +291,13 @@ export function SalesModule() {
     const rows: SaleRow[] = useMemo(
         () =>
             sales
-                .filter((sale) => sale.status !== 'cancelled')
+                .filter((sale) => {
+                    if (initialStatusFilter) {
+                        return sale.status === initialStatusFilter;
+                    }
+
+                    return sale.status !== 'cancelled';
+                })
                 .map((sale) => {
                     const productNames = Array.from(
                         new Set(
@@ -348,7 +358,7 @@ export function SalesModule() {
                         installments: sale.installments ?? 1,
                     };
                 }),
-        [brandMap, customerNameById, productById, sales],
+        [brandMap, customerNameById, initialStatusFilter, productById, sales],
     );
 
     const handleFilteredDataChange = useCallback((nextRows: SaleRow[]) => {

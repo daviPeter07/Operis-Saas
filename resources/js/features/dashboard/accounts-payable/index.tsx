@@ -57,6 +57,10 @@ function hasSamePayableMetricsRows(
 }
 
 export function AccountsPayableModule() {
+    const initialStatusFilter =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('status')
+            : null;
     const { data: payables = [], isPending: isPayablesPending } =
         useAccountPayables();
     const { data: suppliers = [] } = useSuppliers();
@@ -101,24 +105,32 @@ export function AccountsPayableModule() {
         [suppliers],
     );
 
-    const rows: PayableRow[] = payables.map((payable) => ({
-        id: String(payable.id),
-        supplier_id: payable.supplier_id,
-        supplier_name: payable.supplier_id
-            ? (supplierNameById.get(payable.supplier_id) ??
-              `#${payable.supplier_id}`)
-            : '-',
-        purchase_id: payable.purchase_id,
-        installment_number: payable.installment_number,
-        total_installments: payable.total_installments ?? null,
-        item: payable.item,
-        description: payable.description,
-        amount: payable.amount,
-        due_date: payable.due_date,
-        status: payable.status,
-        paid_at: payable.paid_at,
-        paid_method: payable.paid_method,
-    }));
+    const rows: PayableRow[] = payables
+        .filter((payable) => {
+            if (!initialStatusFilter) {
+                return true;
+            }
+
+            return payable.status === initialStatusFilter;
+        })
+        .map((payable) => ({
+            id: String(payable.id),
+            supplier_id: payable.supplier_id,
+            supplier_name: payable.supplier_id
+                ? (supplierNameById.get(payable.supplier_id) ??
+                  `#${payable.supplier_id}`)
+                : '-',
+            purchase_id: payable.purchase_id,
+            installment_number: payable.installment_number,
+            total_installments: payable.total_installments ?? null,
+            item: payable.item,
+            description: payable.description,
+            amount: payable.amount,
+            due_date: payable.due_date,
+            status: payable.status,
+            paid_at: payable.paid_at,
+            paid_method: payable.paid_method,
+        }));
 
     const handleSelectOne = (id: string, checked: boolean) => {
         const next = new Set(selectedIds);

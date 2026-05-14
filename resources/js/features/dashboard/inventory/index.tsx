@@ -33,6 +33,10 @@ type ProductRow = {
 };
 
 export function InventoryModule() {
+    const initialStockStatusFilter =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('stock_status')
+            : null;
     const { data: products = [], isPending: isProductsPending } = useProducts();
     const { data: brands = [], isPending: isBrandsPending } = useBrands();
     const { data: categories = [], isPending: isCategoriesPending } =
@@ -79,6 +83,13 @@ export function InventoryModule() {
 
     const rows: ProductRow[] = products
         .filter((product) => product.status === 'active')
+        .filter((product) => {
+            if (initialStockStatusFilter === 'out_of_stock') {
+                return product.stock <= 0;
+            }
+
+            return true;
+        })
         .map((product) => ({
             id: String(product.id),
             name: product.name,
@@ -215,6 +226,11 @@ export function InventoryModule() {
                     { key: 'brandName', type: 'text' },
                     { key: 'categoryName', type: 'text' },
                 ]}
+                rowClassName={(row) =>
+                    row.stock < 0
+                        ? 'border-red-500/40 bg-red-500/5 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300'
+                        : undefined
+                }
                 isCreateOpen={isCreateOpen}
                 onCreateOpenChange={setIsCreateOpen}
                 createDialog={({ open, onOpenChange }) => (

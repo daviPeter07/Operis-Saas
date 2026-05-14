@@ -1,24 +1,29 @@
 import { useMemo } from 'react';
+import { withAppBasePath } from '@/constants/workspace';
 import type { AlertTarget } from '@/types/table-ui-bugs';
 
 export function useAlertNavigationMap() {
     return useMemo<Record<string, AlertTarget>>(
         () => ({
             'late-payments': {
-                path: '/dashboard/accounts-payable',
-                filters: { status: 'pending' },
+                path: withAppBasePath('/dashboard/accounts-payable'),
+                filters: { status: 'overdue' },
             },
             'undelivered-orders': {
-                path: '/dashboard/sales',
+                path: withAppBasePath('/dashboard/sales'),
                 filters: { status: 'pending' },
             },
-            'orders-to-confirm': {
-                path: '/dashboard/sales',
+            'orders-to-pay': {
+                path: withAppBasePath('/dashboard/sales'),
+                filters: { status: 'pending' },
+            },
+            'purchases-to-pay': {
+                path: withAppBasePath('/dashboard/accounts-payable'),
                 filters: { status: 'pending' },
             },
             'out-of-stock-products': {
-                path: '/dashboard/inventory',
-                filters: { status: 'out_of_stock' },
+                path: withAppBasePath('/dashboard/inventory'),
+                filters: { stock_status: 'out_of_stock' },
             },
         }),
         [],
