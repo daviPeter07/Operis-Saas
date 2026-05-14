@@ -18,7 +18,6 @@ class BypassAuth
 
         if (
             $request->is('login') ||
-            $request->is('operis/login') ||
             $request->routeIs('login')
         ) {
             return $next($request);
@@ -26,7 +25,6 @@ class BypassAuth
 
         if (
             $request->is('register') ||
-            $request->is('operis/register') ||
             $request->routeIs('register')
         ) {
             return $next($request);

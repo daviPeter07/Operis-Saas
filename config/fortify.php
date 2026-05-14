@@ -2,8 +2,8 @@
 
 use Laravel\Fortify\Features;
 
-$appBasePath = 'operis';
-$appPrefix = $appBasePath === '' ? '' : '/';
+$appBasePath = '';
+$appPrefix = '';
 
 return [
 
@@ -76,7 +76,7 @@ return [
     |
     */
 
-    'home' => ($appPrefix === '' ? '/dashboard' : $appPrefix.'/dashboard'),
+    'home' => '/dashboard',
 
     /*
     |--------------------------------------------------------------------------
