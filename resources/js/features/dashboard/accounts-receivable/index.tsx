@@ -43,6 +43,7 @@ type ReceivableRow = {
     total_installments: number | null;
     item: string | null;
     description: string | null;
+    total_amount: number;
     amount: number;
     amount_paid: number;
     remaining_balance: number;
@@ -132,6 +133,7 @@ export function AccountsReceivableModule() {
             total_installments: receivable.total_installments ?? null,
             item: receivable.item,
             description: receivable.description,
+            total_amount: receivable.total_amount ?? receivable.amount,
             amount: receivable.amount,
             amount_paid: receivable.amount_paid ?? 0,
             remaining_balance: receivable.remaining_balance ?? receivable.amount,
@@ -268,6 +270,10 @@ export function AccountsReceivableModule() {
         selectedPendingOrPartialRows.length === 1
             ? selectedPendingOrPartialRows[0]
             : null;
+    const partialAmountNumber = parseCurrencyInput(partialAmountInput);
+    const previewRemainingBalance = selectedSingleRow
+        ? Math.max(0, selectedSingleRow.remaining_balance - partialAmountNumber)
+        : 0;
 
     const handleFilteredDataChange = useCallback((nextRows: ReceivableRow[]) => {
         setFilteredRows((previous) =>
@@ -591,7 +597,7 @@ export function AccountsReceivableModule() {
                                 </p>
                                 <p className="text-muted-foreground">Valor total</p>
                                 <p className="font-medium">
-                                    {formatCurrencyBR(selectedSingleRow.amount)}
+                                    {formatCurrencyBR(selectedSingleRow.total_amount)}
                                 </p>
                                 <p className="text-muted-foreground">Saldo restante</p>
                                 <p className="font-medium">
@@ -604,6 +610,7 @@ export function AccountsReceivableModule() {
                                 </Label>
                                 <Input
                                     id="receivable-partial-amount"
+                                    className="mt-2"
                                     value={partialAmountInput}
                                     onChange={(event) =>
                                         setPartialAmountInput(
@@ -614,6 +621,10 @@ export function AccountsReceivableModule() {
                                     }
                                     placeholder="R$ 0,00"
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                    Saldo apos baixa:{' '}
+                                    {formatCurrencyBR(previewRemainingBalance)}
+                                </p>
                             </div>
                         </div>
                     ) : (

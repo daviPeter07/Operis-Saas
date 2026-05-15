@@ -9,6 +9,7 @@ export interface AccountReceivable {
     item: string | null;
     item_quantity: number | null;
     description: string | null;
+    total_amount: number;
     amount: number;
     amount_paid: number;
     remaining_balance: number;

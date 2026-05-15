@@ -44,6 +44,7 @@ type PayableRow = {
     total_installments: number | null;
     item: string | null;
     description: string | null;
+    total_amount: number;
     amount: number;
     amount_paid: number;
     remaining_balance: number;
@@ -151,6 +152,7 @@ export function AccountsPayableModule() {
             total_installments: payable.total_installments ?? null,
             item: payable.item,
             description: payable.description,
+            total_amount: payable.total_amount ?? payable.amount,
             amount: payable.amount,
             amount_paid: payable.amount_paid ?? 0,
             remaining_balance: payable.remaining_balance ?? payable.amount,
@@ -286,6 +288,10 @@ export function AccountsPayableModule() {
         selectedPendingOrPartialRows.length === 1
             ? selectedPendingOrPartialRows[0]
             : null;
+    const partialAmountNumber = parseCurrencyInput(partialAmountInput);
+    const previewRemainingBalance = selectedSingleRow
+        ? Math.max(0, selectedSingleRow.remaining_balance - partialAmountNumber)
+        : 0;
 
     const handleFilteredDataChange = useCallback((nextRows: PayableRow[]) => {
         setFilteredRows((previous) =>
@@ -582,7 +588,7 @@ export function AccountsPayableModule() {
                                 </p>
                                 <p className="text-muted-foreground">Valor total</p>
                                 <p className="font-medium">
-                                    {formatCurrencyBR(selectedSingleRow.amount)}
+                                    {formatCurrencyBR(selectedSingleRow.total_amount)}
                                 </p>
                                 <p className="text-muted-foreground">Saldo restante</p>
                                 <p className="font-medium">
@@ -595,6 +601,7 @@ export function AccountsPayableModule() {
                                 </Label>
                                 <Input
                                     id="payable-partial-amount"
+                                    className="mt-2"
                                     value={partialAmountInput}
                                     onChange={(event) =>
                                         setPartialAmountInput(
@@ -605,6 +612,10 @@ export function AccountsPayableModule() {
                                     }
                                     placeholder="R$ 0,00"
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                    Saldo apos baixa:{' '}
+                                    {formatCurrencyBR(previewRemainingBalance)}
+                                </p>
                             </div>
                         </div>
                     ) : (

@@ -9,6 +9,7 @@ export interface AccountPayable {
     item_quantity: number | null;
     description: string | null;
     due_date: string;
+    total_amount: number;
     amount: number;
     amount_paid: number;
     remaining_balance: number;

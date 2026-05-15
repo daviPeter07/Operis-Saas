@@ -26,6 +26,7 @@ function normalizeAccountReceivable(
 ): AccountReceivable {
     return {
         ...accountReceivable,
+        total_amount: toNumber(accountReceivable.total_amount),
         amount: toNumber(accountReceivable.amount),
         amount_paid: toNumber(accountReceivable.amount_paid),
         remaining_balance: toNumber(accountReceivable.remaining_balance),

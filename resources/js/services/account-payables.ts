@@ -33,6 +33,7 @@ function normalizeAccountPayable(
 ): AccountPayable {
     return {
         ...accountPayable,
+        total_amount: toNumber(accountPayable.total_amount),
         amount: toNumber(accountPayable.amount),
         amount_paid: toNumber(accountPayable.amount_paid),
         remaining_balance: toNumber(accountPayable.remaining_balance),
