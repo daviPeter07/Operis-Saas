@@ -28,6 +28,7 @@ import {
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { AccountsReceivableCreateDialog } from './accounts-receivable-create-dialog';
@@ -43,6 +44,9 @@ type ReceivableRow = {
     item: string | null;
     description: string | null;
     amount: number;
+    amount_paid: number;
+    remaining_balance: number;
+    item_quantity: number | null;
     due_date: string | null;
     entry_date: string | null;
     status: string;
@@ -100,7 +104,7 @@ export function AccountsReceivableModule() {
         total: number;
     } | null>(null);
     const [isPartialDialogOpen, setIsPartialDialogOpen] = useState(false);
-    const [partialPercentage, setPartialPercentage] = useState('10');
+    const [partialAmountInput, setPartialAmountInput] = useState('');
 
     const customerNameById = useMemo(
         () =>
@@ -129,6 +133,9 @@ export function AccountsReceivableModule() {
             item: receivable.item,
             description: receivable.description,
             amount: receivable.amount,
+            amount_paid: receivable.amount_paid ?? 0,
+            remaining_balance: receivable.remaining_balance ?? receivable.amount,
+            item_quantity: receivable.item_quantity ?? null,
             due_date: receivable.due_date,
             entry_date: receivable.entry_date,
             status: receivable.status,
@@ -257,6 +264,10 @@ export function AccountsReceivableModule() {
     const selectedPendingOrPartialRows = selectedRows.filter(
         (row) => row.status === 'pending' || row.status === 'partial',
     );
+    const selectedSingleRow =
+        selectedPendingOrPartialRows.length === 1
+            ? selectedPendingOrPartialRows[0]
+            : null;
 
     const handleFilteredDataChange = useCallback((nextRows: ReceivableRow[]) => {
         setFilteredRows((previous) =>
@@ -405,13 +416,24 @@ export function AccountsReceivableModule() {
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="outline"
-                                onClick={() => setIsPartialDialogOpen(true)}
+                                onClick={() => {
+                                    if (selectedPendingOrPartialRows.length !== 1) {
+                                        toast.error(
+                                            'Selecione exatamente 1 titulo para baixa parcial.',
+                                        );
+
+                                        return;
+                                    }
+
+                                    setPartialAmountInput('');
+                                    setIsPartialDialogOpen(true);
+                                }}
                                 disabled={
                                     isProcessingReceiptAction ||
                                     selectedPendingOrPartialRows.length === 0
                                 }
                             >
-                                Receber %
+                                Receber percentual
                             </Button>
                             <button
                             onClick={() => void handleConfirmReceipt()}
@@ -554,26 +576,51 @@ export function AccountsReceivableModule() {
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Recebimento percentual</DialogTitle>
+                        <DialogTitle>Baixa parcial (Receber)</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground">
-                            Aplicar percentual sobre o saldo restante dos titulos selecionados.
-                        </p>
-                        <div className="space-y-2">
-                            <Label htmlFor="receivable-percentage">Percentual (%)</Label>
-                            <Input
-                                id="receivable-percentage"
-                                type="number"
-                                min={1}
-                                max={100}
-                                value={partialPercentage}
-                                onChange={(event) =>
-                                    setPartialPercentage(event.currentTarget.value)
-                                }
-                            />
+                    {selectedSingleRow ? (
+                        <div className="space-y-3 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                                <p className="text-muted-foreground">Cliente</p>
+                                <p className="font-medium">{selectedSingleRow.customer_name}</p>
+                                <p className="text-muted-foreground">Produto</p>
+                                <p className="font-medium">{selectedSingleRow.item ?? '-'}</p>
+                                <p className="text-muted-foreground">Quantidade</p>
+                                <p className="font-medium">
+                                    {selectedSingleRow.item_quantity ?? '-'}
+                                </p>
+                                <p className="text-muted-foreground">Valor total</p>
+                                <p className="font-medium">
+                                    {formatCurrencyBR(selectedSingleRow.amount)}
+                                </p>
+                                <p className="text-muted-foreground">Saldo restante</p>
+                                <p className="font-medium">
+                                    {formatCurrencyBR(selectedSingleRow.remaining_balance)}
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="receivable-partial-amount">
+                                    Valor recebido agora
+                                </Label>
+                                <Input
+                                    id="receivable-partial-amount"
+                                    value={partialAmountInput}
+                                    onChange={(event) =>
+                                        setPartialAmountInput(
+                                            formatCurrencyInput(
+                                                event.currentTarget.value,
+                                            ),
+                                        )
+                                    }
+                                    placeholder="R$ 0,00"
+                                />
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Selecione exatamente 1 titulo pendente/parcial.
+                        </p>
+                    )}
                     <DialogFooter>
                         <Button
                             variant="outline"
@@ -583,48 +630,42 @@ export function AccountsReceivableModule() {
                         </Button>
                         <Button
                             onClick={() => {
-                                const percentage = Number(partialPercentage);
-
-                                if (Number.isNaN(percentage) || percentage <= 0 || percentage > 100) {
-                                    toast.error('Informe um percentual entre 1 e 100.');
+                                if (!selectedSingleRow) {
+                                    toast.error('Selecione exatamente 1 titulo.');
 
                                     return;
                                 }
 
-                                const rowsToSettle = selectedRows.filter(
-                                    (row) => row.status === 'pending' || row.status === 'partial',
-                                );
+                                const amount = parseCurrencyInput(partialAmountInput);
 
-                                void Promise.allSettled(
-                                    rowsToSettle.map((row) =>
-                                        partialSettleAccountReceivable.mutateAsync({
-                                            id: Number(row.id),
-                                            amount: Number(
-                                                (
-                                                    ((row.amount - (receivables.find((entry) => entry.id === Number(row.id))?.amount_paid ?? 0)) *
-                                                        percentage) /
-                                                    100
-                                                ).toFixed(2),
-                                            ),
-                                            received_at: new Date().toISOString().slice(0, 10),
-                                        }),
-                                    ),
-                                ).then((results) => {
-                                    const failed = results.filter(
-                                        (result) => result.status === 'rejected',
-                                    ).length;
+                                if (amount <= 0) {
+                                    toast.error('Informe um valor valido para receber.');
 
-                                    if (failed > 0) {
-                                        toast.error(`${failed} baixa(s) percentual(is) falharam.`);
-                                    } else {
-                                        toast.success('Recebimento percentual aplicado com sucesso.');
+                                    return;
+                                }
+
+                                if (amount > selectedSingleRow.remaining_balance) {
+                                    toast.error('Valor acima do saldo restante da parcela.');
+
+                                    return;
+                                }
+
+                                void partialSettleAccountReceivable
+                                    .mutateAsync({
+                                        id: Number(selectedSingleRow.id),
+                                        amount,
+                                        received_at: new Date()
+                                            .toISOString()
+                                            .slice(0, 10),
+                                    })
+                                    .then(() => {
+                                        toast.success('Baixa parcial aplicada com sucesso.');
                                         setSelectedIds(new Set());
                                         setIsPartialDialogOpen(false);
-                                    }
-                                });
+                                    });
                             }}
                         >
-                            Aplicar
+                            Concluir
                         </Button>
                     </DialogFooter>
                 </DialogContent>

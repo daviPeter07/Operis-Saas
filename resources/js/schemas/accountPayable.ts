@@ -6,6 +6,7 @@ export interface AccountPayable {
     total_installments: number | null;
     entry_date: string | null;
     item: string | null;
+    item_quantity: number | null;
     description: string | null;
     due_date: string;
     amount: number;

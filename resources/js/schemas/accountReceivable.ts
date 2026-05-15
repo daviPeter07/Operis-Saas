@@ -7,6 +7,7 @@ export interface AccountReceivable {
     entry_date: string | null;
     due_date: string | null;
     item: string | null;
+    item_quantity: number | null;
     description: string | null;
     amount: number;
     amount_paid: number;

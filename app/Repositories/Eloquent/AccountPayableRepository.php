@@ -14,6 +14,7 @@ class AccountPayableRepository implements AccountPayableRepositoryInterface
     {
         return AccountPayable::query()
             ->forCompany($companyId)
+            ->with(['supplier', 'purchase.items'])
             ->where('status', '!=', 'cancelled')
             ->latest()
             ->paginate();

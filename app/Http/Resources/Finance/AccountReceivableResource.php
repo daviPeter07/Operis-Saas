@@ -32,6 +32,17 @@ class AccountReceivableResource extends ApiResource
         return sprintf('%s +%d item(ns)', $items->first(), $items->count() - 1);
     }
 
+    private function resolveSaleItemQuantity(): ?float
+    {
+        $sale = $this->sale;
+
+        if (! $sale) {
+            return null;
+        }
+
+        return (float) $sale->items->sum('quantity');
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -48,6 +59,7 @@ class AccountReceivableResource extends ApiResource
             'entry_date' => $this->entry_date?->toDateString(),
             'due_date' => $this->due_date?->toDateString(),
             'item' => $this->item ?? $this->resolveSaleItemSummary(),
+            'item_quantity' => $this->resolveSaleItemQuantity(),
             'description' => $this->description,
             'amount' => $this->amount,
             'amount_paid' => $this->amount_paid,

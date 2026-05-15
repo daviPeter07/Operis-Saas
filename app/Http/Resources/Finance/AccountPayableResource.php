@@ -20,6 +20,15 @@ class AccountPayableResource extends ApiResource
         return sprintf('Compra #%d', $this->purchase_id);
     }
 
+    private function resolveItemQuantity(): ?float
+    {
+        if (! $this->purchase) {
+            return null;
+        }
+
+        return (float) $this->purchase->items->sum('quantity');
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -35,6 +44,7 @@ class AccountPayableResource extends ApiResource
             'total_installments' => $this->total_installments,
             'entry_date' => $this->entry_date?->toDateString(),
             'item' => $this->resolveItem(),
+            'item_quantity' => $this->resolveItemQuantity(),
             'description' => $this->description,
             'due_date' => $this->due_date?->toDateString(),
             'amount' => $this->amount,

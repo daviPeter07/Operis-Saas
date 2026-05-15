@@ -29,6 +29,7 @@ import {
 import { useSuppliers } from '@/hooks/use-suppliers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { UiSupplier } from '@/types/dashboard-entities';
+import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
 import type { Column } from '../generic-table';
 import { AccountsPayableCreateDialog } from './accounts-payable-create-dialog';
@@ -44,6 +45,9 @@ type PayableRow = {
     item: string | null;
     description: string | null;
     amount: number;
+    amount_paid: number;
+    remaining_balance: number;
+    item_quantity: number | null;
     due_date: string;
     status: string;
     paid_at: string | null;
@@ -101,7 +105,7 @@ export function AccountsPayableModule() {
         total: number;
     } | null>(null);
     const [isPartialDialogOpen, setIsPartialDialogOpen] = useState(false);
-    const [partialPercentage, setPartialPercentage] = useState('10');
+    const [partialAmountInput, setPartialAmountInput] = useState('');
 
     const mappedSuppliers = useMemo<UiSupplier[]>(
         () =>
@@ -148,6 +152,9 @@ export function AccountsPayableModule() {
             item: payable.item,
             description: payable.description,
             amount: payable.amount,
+            amount_paid: payable.amount_paid ?? 0,
+            remaining_balance: payable.remaining_balance ?? payable.amount,
+            item_quantity: payable.item_quantity ?? null,
             due_date: payable.due_date,
             status: payable.status,
             paid_at: payable.paid_at,
@@ -275,6 +282,10 @@ export function AccountsPayableModule() {
     const selectedPendingOrPartialRows = selectedRows.filter(
         (row) => row.status === 'pending' || row.status === 'partial',
     );
+    const selectedSingleRow =
+        selectedPendingOrPartialRows.length === 1
+            ? selectedPendingOrPartialRows[0]
+            : null;
 
     const handleFilteredDataChange = useCallback((nextRows: PayableRow[]) => {
         setFilteredRows((previous) =>
@@ -411,13 +422,24 @@ export function AccountsPayableModule() {
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="outline"
-                                onClick={() => setIsPartialDialogOpen(true)}
+                                onClick={() => {
+                                    if (selectedPendingOrPartialRows.length !== 1) {
+                                        toast.error(
+                                            'Selecione exatamente 1 titulo para pagamento parcial.',
+                                        );
+
+                                        return;
+                                    }
+
+                                    setPartialAmountInput('');
+                                    setIsPartialDialogOpen(true);
+                                }}
                                 disabled={
                                     isProcessingPayableAction ||
                                     selectedPendingOrPartialRows.length === 0
                                 }
                             >
-                                Pagar %
+                                Pagar percentual
                             </Button>
                             <button
                             onClick={() => void handleConfirmPayment()}
@@ -545,26 +567,51 @@ export function AccountsPayableModule() {
             >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Pagamento percentual</DialogTitle>
+                        <DialogTitle>Baixa parcial (Pagar)</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground">
-                            Aplicar percentual sobre o saldo restante dos titulos selecionados.
-                        </p>
-                        <div className="space-y-2">
-                            <Label htmlFor="payable-percentage">Percentual (%)</Label>
-                            <Input
-                                id="payable-percentage"
-                                type="number"
-                                min={1}
-                                max={100}
-                                value={partialPercentage}
-                                onChange={(event) =>
-                                    setPartialPercentage(event.currentTarget.value)
-                                }
-                            />
+                    {selectedSingleRow ? (
+                        <div className="space-y-3 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                                <p className="text-muted-foreground">Fornecedor</p>
+                                <p className="font-medium">{selectedSingleRow.supplier_name}</p>
+                                <p className="text-muted-foreground">Produto</p>
+                                <p className="font-medium">{selectedSingleRow.item ?? '-'}</p>
+                                <p className="text-muted-foreground">Quantidade</p>
+                                <p className="font-medium">
+                                    {selectedSingleRow.item_quantity ?? '-'}
+                                </p>
+                                <p className="text-muted-foreground">Valor total</p>
+                                <p className="font-medium">
+                                    {formatCurrencyBR(selectedSingleRow.amount)}
+                                </p>
+                                <p className="text-muted-foreground">Saldo restante</p>
+                                <p className="font-medium">
+                                    {formatCurrencyBR(selectedSingleRow.remaining_balance)}
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="payable-partial-amount">
+                                    Valor pago agora
+                                </Label>
+                                <Input
+                                    id="payable-partial-amount"
+                                    value={partialAmountInput}
+                                    onChange={(event) =>
+                                        setPartialAmountInput(
+                                            formatCurrencyInput(
+                                                event.currentTarget.value,
+                                            ),
+                                        )
+                                    }
+                                    placeholder="R$ 0,00"
+                                />
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Selecione exatamente 1 titulo pendente/parcial.
+                        </p>
+                    )}
                     <DialogFooter>
                         <Button
                             variant="outline"
@@ -574,49 +621,41 @@ export function AccountsPayableModule() {
                         </Button>
                         <Button
                             onClick={() => {
-                                const percentage = Number(partialPercentage);
-
-                                if (Number.isNaN(percentage) || percentage <= 0 || percentage > 100) {
-                                    toast.error('Informe um percentual entre 1 e 100.');
+                                if (!selectedSingleRow) {
+                                    toast.error('Selecione exatamente 1 titulo.');
 
                                     return;
                                 }
 
-                                const rowsToSettle = selectedRows.filter(
-                                    (row) => row.status === 'pending' || row.status === 'partial',
-                                );
+                                const amount = parseCurrencyInput(partialAmountInput);
 
-                                void Promise.allSettled(
-                                    rowsToSettle.map((row) =>
-                                        partialSettleAccountPayable.mutateAsync({
-                                            id: Number(row.id),
-                                            amount: Number(
-                                                (
-                                                    ((row.amount - (payables.find((entry) => entry.id === Number(row.id))?.amount_paid ?? 0)) *
-                                                        percentage) /
-                                                    100
-                                                ).toFixed(2),
-                                            ),
-                                            paid_at: new Date().toISOString().slice(0, 10),
-                                            paid_method: 'pix',
-                                        }),
-                                    ),
-                                ).then((results) => {
-                                    const failed = results.filter(
-                                        (result) => result.status === 'rejected',
-                                    ).length;
+                                if (amount <= 0) {
+                                    toast.error('Informe um valor valido para pagar.');
 
-                                    if (failed > 0) {
-                                        toast.error(`${failed} pagamento(s) parcial(is) falharam.`);
-                                    } else {
-                                        toast.success('Pagamento percentual aplicado com sucesso.');
+                                    return;
+                                }
+
+                                if (amount > selectedSingleRow.remaining_balance) {
+                                    toast.error('Valor acima do saldo restante da parcela.');
+
+                                    return;
+                                }
+
+                                void partialSettleAccountPayable
+                                    .mutateAsync({
+                                        id: Number(selectedSingleRow.id),
+                                        amount,
+                                        paid_at: new Date().toISOString().slice(0, 10),
+                                        paid_method: 'pix',
+                                    })
+                                    .then(() => {
+                                        toast.success('Baixa parcial aplicada com sucesso.');
                                         setSelectedIds(new Set());
                                         setIsPartialDialogOpen(false);
-                                    }
-                                });
+                                    });
                             }}
                         >
-                            Aplicar
+                            Concluir
                         </Button>
                     </DialogFooter>
                 </DialogContent>
