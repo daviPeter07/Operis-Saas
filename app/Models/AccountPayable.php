@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'description',
     'due_date',
     'amount',
+    'amount_paid',
     'status',
     'paid_at',
     'paid_method',
@@ -34,6 +35,7 @@ class AccountPayable extends Model
             'due_date' => 'date',
             'entry_date' => 'date',
             'amount' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
             'paid_at' => 'datetime',
         ];
     }

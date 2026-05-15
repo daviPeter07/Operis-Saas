@@ -50,6 +50,8 @@ class AccountReceivableResource extends ApiResource
             'item' => $this->item ?? $this->resolveSaleItemSummary(),
             'description' => $this->description,
             'amount' => $this->amount,
+            'amount_paid' => $this->amount_paid,
+            'remaining_balance' => max(0, (float) $this->amount - (float) ($this->amount_paid ?? 0)),
             'status' => $this->status,
             'received_at' => $this->received_at,
         ];

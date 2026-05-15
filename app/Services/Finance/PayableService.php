@@ -51,6 +51,7 @@ class PayableService
                     'description' => sprintf('Compra #%d - Parcela %d/%d (boleto)', $purchase->id, $index, $installments),
                     'due_date' => $dueDate,
                     'amount' => $currentCents / 100,
+                    'amount_paid' => $isPaid ? ($currentCents / 100) : 0,
                     'status' => $isPaid ? 'paid' : 'pending',
                     'paid_at' => $isPaid ? now() : null,
                     'paid_method' => $isPaid ? $purchase->payment_method : null,
@@ -73,6 +74,7 @@ class PayableService
             'description' => sprintf('Compra #%d', $purchase->id),
             'due_date' => $dueDate,
             'amount' => $purchase->total,
+            'amount_paid' => $isPaid ? $purchase->total : 0,
             'status' => $isPaid ? 'paid' : 'pending',
             'paid_at' => $isPaid ? now() : null,
             'paid_method' => $isPaid ? $purchase->payment_method : null,
@@ -116,6 +118,7 @@ class PayableService
                     'description' => $data['description'] ?? null,
                     'due_date' => $dueDate,
                     'amount' => $currentCents / 100,
+                    'amount_paid' => $isPaid ? ($currentCents / 100) : 0,
                     'status' => $isPaid ? 'paid' : 'pending',
                     'paid_at' => $isPaid ? $entryDate : null,
                     'paid_method' => $paymentMethod,
@@ -136,6 +139,7 @@ class PayableService
             'description' => $data['description'] ?? null,
             'due_date' => $data['due_date'],
             'amount' => $data['amount'],
+            'amount_paid' => $isPaid ? $data['amount'] : 0,
             'status' => $isPaid ? 'paid' : 'pending',
             'paid_at' => $isPaid ? ($data['entry_date']) : null,
             'paid_method' => $paymentMethod,
@@ -168,6 +172,7 @@ class PayableService
 
             $payable->update([
                 'status' => 'paid',
+                'amount_paid' => $payable->amount,
                 'paid_at' => $data['paid_at'],
                 'paid_method' => $data['paid_method'],
                 'payment_notes' => $data['payment_notes'] ?? null,
@@ -181,7 +186,7 @@ class PayableService
                 return $payable->refresh();
             }
 
-            $hasOpenPayables = $purchase->payables()->where('status', 'pending')->exists();
+            $hasOpenPayables = $purchase->payables()->whereIn('status', ['pending', 'partial'])->exists();
 
             if ($hasOpenPayables) {
                 return $payable->refresh();
@@ -204,6 +209,7 @@ class PayableService
 
             $payable->update([
                 'status' => 'pending',
+                'amount_paid' => 0,
                 'paid_at' => null,
                 'paid_method' => null,
                 'payment_notes' => null,
@@ -217,7 +223,7 @@ class PayableService
                 return $payable->refresh();
             }
 
-            $hasOpenPayables = $purchase->payables()->where('status', 'pending')->exists();
+            $hasOpenPayables = $purchase->payables()->whereIn('status', ['pending', 'partial'])->exists();
 
             if ($purchase->status === PurchaseStatus::Completed->value && $hasOpenPayables) {
                 $purchase->update(['status' => PurchaseStatus::Pending->value]);
@@ -258,8 +264,12 @@ class PayableService
             $targetStatus = match ($purchaseStatus) {
                 PurchaseStatus::Completed->value => 'paid',
                 PurchaseStatus::Cancelled->value => 'cancelled',
-                default => 'pending',
+                default => null,
             };
+
+            if ($targetStatus === null) {
+                continue;
+            }
 
             if ($payable->status === $targetStatus) {
                 continue;
@@ -267,6 +277,7 @@ class PayableService
 
             $payable->update([
                 'status' => $targetStatus,
+                'amount_paid' => $targetStatus === 'paid' ? $payable->amount : $payable->amount_paid,
                 'paid_at' => $targetStatus === 'paid' ? ($payable->paid_at ?? now()) : null,
                 'paid_method' => $targetStatus === 'paid' ? ($payable->paid_method ?? $payable->purchase?->payment_method) : null,
             ]);
@@ -296,5 +307,66 @@ class PayableService
         }
 
         return sprintf('%s +%d item(ns)', $items->first(), $items->count() - 1);
+    }
+
+    public function settlePartial(AccountPayable $payable, int $userId, array $data): AccountPayable
+    {
+        return DB::transaction(function () use ($payable, $data): AccountPayable {
+            if ($payable->status === 'cancelled') {
+                throw ValidationException::withMessages([
+                    'payable' => 'Conta a pagar cancelada nao pode receber pagamento parcial.',
+                ]);
+            }
+
+            $remaining = max(0, (float) $payable->amount - (float) ($payable->amount_paid ?? 0));
+            $amount = (float) $data['amount'];
+
+            if ($remaining <= 0) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Conta a pagar ja esta totalmente quitada.',
+                ]);
+            }
+
+            if ($amount > $remaining) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Valor informado excede o saldo restante da conta.',
+                ]);
+            }
+
+            $newAmountPaid = min((float) $payable->amount, (float) ($payable->amount_paid ?? 0) + $amount);
+            $isFullySettled = round($newAmountPaid, 2) >= round((float) $payable->amount, 2);
+
+            $payable->update([
+                'amount_paid' => $newAmountPaid,
+                'status' => $isFullySettled ? 'paid' : 'partial',
+                'paid_at' => $data['paid_at'],
+                'paid_method' => $data['paid_method'],
+                'payment_notes' => $data['payment_notes'] ?? $payable->payment_notes,
+            ]);
+
+            if (! $payable->purchase_id) {
+                return $payable->refresh();
+            }
+
+            $purchase = Purchase::query()
+                ->with(['payables:id,purchase_id,status'])
+                ->find($payable->purchase_id);
+
+            if (! $purchase) {
+                return $payable->refresh();
+            }
+
+            $hasOpenPayables = $purchase->payables()
+                ->whereIn('status', ['pending', 'partial'])
+                ->exists();
+
+            $purchase->update([
+                'status' => $hasOpenPayables
+                    ? PurchaseStatus::Pending->value
+                    : PurchaseStatus::Completed->value,
+            ]);
+
+            return $payable->refresh();
+        });
     }
 }

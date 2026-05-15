@@ -2,6 +2,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     useAccountPayables,
     useCreateManualAccountPayable,
     useSettleAccountPayable,
@@ -61,6 +68,7 @@ export function AccountsPayableModule() {
         typeof window !== 'undefined'
             ? new URLSearchParams(window.location.search).get('status')
             : null;
+    const [statusFilter, setStatusFilter] = useState(initialStatusFilter ?? '');
     const { data: payables = [], isPending: isPayablesPending } =
         useAccountPayables();
     const { data: suppliers = [] } = useSuppliers();
@@ -107,11 +115,11 @@ export function AccountsPayableModule() {
 
     const rows: PayableRow[] = payables
         .filter((payable) => {
-            if (!initialStatusFilter) {
+            if (!statusFilter) {
                 return true;
             }
 
-            return payable.status === initialStatusFilter;
+            return payable.status === statusFilter;
         })
         .map((payable) => ({
             id: String(payable.id),
@@ -147,7 +155,9 @@ export function AccountsPayableModule() {
     const handleConfirmPayment = () => {
         const ids = rows
             .filter(
-                (row) => selectedIds.has(row.id) && row.status === 'pending',
+                (row) =>
+                    selectedIds.has(row.id) &&
+                    (row.status === 'pending' || row.status === 'partial'),
             )
             .map((row) => Number(row.id));
 
@@ -376,7 +386,9 @@ export function AccountsPayableModule() {
                             </p>
                         )}
                     </div>
-                    {(selectedAction === 'pending' || batchAction === 'pending') && (
+                    {(selectedAction === 'pending' ||
+                        selectedAction === 'partial' ||
+                        batchAction === 'pending') && (
                         <button
                             onClick={() => void handleConfirmPayment()}
                             disabled={isProcessingPayableAction}
@@ -400,6 +412,24 @@ export function AccountsPayableModule() {
                     )}
                 </div>
             )}
+            <div className="flex justify-end">
+                <Select
+                    value={statusFilter || 'all'}
+                    onValueChange={(value) =>
+                        setStatusFilter(value === 'all' ? '' : value)
+                    }
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os status</SelectItem>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="partial">Parcial</SelectItem>
+                        <SelectItem value="paid">Pago</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
             <GenericTable
                 data={rows}
                 columns={columns}

@@ -16,12 +16,19 @@ type SettleAccountReceivablePayload = {
     received_at: string;
 };
 
+type PartialSettleAccountReceivablePayload = {
+    amount: number;
+    received_at: string;
+};
+
 function normalizeAccountReceivable(
     accountReceivable: AccountReceivable,
 ): AccountReceivable {
     return {
         ...accountReceivable,
         amount: toNumber(accountReceivable.amount),
+        amount_paid: toNumber(accountReceivable.amount_paid),
+        remaining_balance: toNumber(accountReceivable.remaining_balance),
     };
 }
 
@@ -79,6 +86,18 @@ class AccountReceivableService extends ApiService<AccountReceivable> {
         const response = await apiClient.post<AccountReceivable>(
             `/account-receivables/${id}/unsettle`,
             {},
+        );
+
+        return normalizeAccountReceivable(response.data);
+    }
+
+    async partialSettle(
+        id: number,
+        payload: PartialSettleAccountReceivablePayload,
+    ): Promise<AccountReceivable> {
+        const response = await apiClient.post<AccountReceivable>(
+            `/account-receivables/${id}/partial-settle`,
+            payload,
         );
 
         return normalizeAccountReceivable(response.data);

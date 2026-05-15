@@ -9,7 +9,9 @@ export interface AccountPayable {
     description: string | null;
     due_date: string;
     amount: number;
-    status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+    amount_paid: number;
+    remaining_balance: number;
+    status: 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
     paid_at: string | null;
     paid_method: string | null;
     payment_notes: string | null;

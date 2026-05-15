@@ -25,7 +25,7 @@ class UpdatePurchaseRequest extends FormRequest
             'due_date' => ['nullable', 'date'],
             'status' => ['sometimes', 'in:pending,completed'],
             'payment_method' => ['required', 'in:cash,pix,card,installment,boleto'],
-            'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120'],
+            'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120,150'],
             'update_product_cost' => ['sometimes', 'boolean'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('company_id', $companyId)],

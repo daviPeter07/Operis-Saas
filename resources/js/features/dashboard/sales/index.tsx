@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -112,6 +119,7 @@ export function SalesModule() {
         typeof window !== 'undefined'
             ? new URLSearchParams(window.location.search).get('status')
             : null;
+    const [statusFilter, setStatusFilter] = useState(initialStatusFilter ?? '');
     const [isCreateOpen, setIsCreateOpen] = useState(() => {
         const params = new URLSearchParams(window.location.search);
 
@@ -292,8 +300,8 @@ export function SalesModule() {
         () =>
             sales
                 .filter((sale) => {
-                    if (initialStatusFilter) {
-                        return sale.status === initialStatusFilter;
+                    if (statusFilter) {
+                        return sale.status === statusFilter;
                     }
 
                     return sale.status !== 'cancelled';
@@ -358,7 +366,7 @@ export function SalesModule() {
                         installments: sale.installments ?? 1,
                     };
                 }),
-        [brandMap, customerNameById, initialStatusFilter, productById, sales],
+        [brandMap, customerNameById, productById, sales, statusFilter],
     );
 
     const handleFilteredDataChange = useCallback((nextRows: SaleRow[]) => {
@@ -558,6 +566,24 @@ export function SalesModule() {
         <div className="space-y-5">
             <SalesHeader metrics={metrics} />
 
+            <div className="flex justify-end">
+                <Select
+                    value={statusFilter || 'all'}
+                    onValueChange={(value) =>
+                        setStatusFilter(value === 'all' ? '' : value)
+                    }
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os status</SelectItem>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="completed">Concluido</SelectItem>
+                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
             <GenericTable
                 data={rows}
                 columns={columns}

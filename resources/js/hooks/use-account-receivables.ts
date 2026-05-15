@@ -26,6 +26,12 @@ type SettlePayload = {
     received_at: string;
 };
 
+type PartialSettlePayload = {
+    id: number;
+    amount: number;
+    received_at: string;
+};
+
 async function invalidateRelatedQueries(
     queryClient: QueryClient,
 ): Promise<void> {
@@ -172,6 +178,21 @@ export function useUnsettleAccountReceivable() {
                     context.previous,
                 );
             }
+        },
+    });
+}
+
+export function usePartialSettleAccountReceivable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: PartialSettlePayload) =>
+            accountReceivableService.partialSettle(payload.id, {
+                amount: payload.amount,
+                received_at: payload.received_at,
+            }),
+        onSuccess: () => {
+            scheduleInvalidateRelatedQueries(queryClient);
         },
     });
 }

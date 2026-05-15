@@ -7,6 +7,7 @@ type StatusBadgeProps = {
 
 const statusClassMap: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-800',
+    partial: 'bg-blue-100 text-blue-800',
     completed: 'bg-emerald-100 text-emerald-800',
     received: 'bg-emerald-100 text-emerald-800',
     paid: 'bg-emerald-100 text-emerald-800',

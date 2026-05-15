@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'item',
     'description',
     'amount',
+    'amount_paid',
     'status',
     'received_at',
 ])]
@@ -31,6 +32,7 @@ class AccountReceivable extends Model
             'entry_date' => 'date',
             'due_date' => 'date',
             'amount' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
             'received_at' => 'datetime',
         ];
     }

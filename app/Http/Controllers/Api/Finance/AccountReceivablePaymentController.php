@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Finance\AccountReceivablePartialSettleRequest;
 use App\Http\Requests\Finance\AccountReceivableSettleRequest;
 use App\Http\Requests\Finance\AccountReceivableUnsettleRequest;
 use App\Http\Resources\Finance\AccountReceivableResource;
@@ -38,6 +39,22 @@ class AccountReceivablePaymentController extends Controller
         $receivable = $this->receivableService->unsettle(
             $accountReceivable,
             (int) $user->id,
+        );
+
+        return response()->json([
+            'data' => AccountReceivableResource::make($receivable),
+        ]);
+    }
+
+    public function partial(AccountReceivablePartialSettleRequest $request, AccountReceivable $accountReceivable): JsonResponse
+    {
+        $this->authorize('update', $accountReceivable);
+        $user = $request->user();
+
+        $receivable = $this->receivableService->settlePartial(
+            $accountReceivable,
+            (int) $user->id,
+            $request->validated(),
         );
 
         return response()->json([

@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useAccountPayables } from '@/hooks/use-account-payables';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
@@ -74,6 +81,11 @@ function hasSamePurchaseMetricsRows(
 }
 
 export function PurchasesModule() {
+    const initialStatusFilter =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('status')
+            : null;
+    const [statusFilter, setStatusFilter] = useState(initialStatusFilter ?? '');
     const { data: purchases = [], isPending: isPurchasesPending } =
         usePurchases();
     const { data: payables = [] } = useAccountPayables();
@@ -147,6 +159,13 @@ export function PurchasesModule() {
 
     const rows: PurchaseRow[] = purchases
         .filter((purchase) => purchase.status !== 'cancelled')
+        .filter((purchase) => {
+            if (!statusFilter) {
+                return true;
+            }
+
+            return purchase.status === statusFilter;
+        })
         .map((purchase) => {
             const productNames = Array.from(
                 new Set(
@@ -380,11 +399,12 @@ export function PurchasesModule() {
             payment_method: paymentMethod,
             boleto_term_days:
                 paymentMethod === 'boleto'
-                    ? (Number(purchase.boletoTermDays ?? 30) as
+                      ? (Number(purchase.boletoTermDays ?? 30) as
                           | 30
                           | 60
                           | 90
-                          | 120)
+                          | 120
+                          | 150)
                     : undefined,
             status: (purchase.status === 'completed'
                 ? 'completed'
@@ -417,6 +437,23 @@ export function PurchasesModule() {
         <div className="space-y-5">
             <PurchaseHeader metrics={metrics} />
 
+            <div className="flex justify-end">
+                <Select
+                    value={statusFilter || 'all'}
+                    onValueChange={(value) =>
+                        setStatusFilter(value === 'all' ? '' : value)
+                    }
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os status</SelectItem>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="completed">Concluido</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
             <GenericTable
                 data={rows}
                 columns={columns}

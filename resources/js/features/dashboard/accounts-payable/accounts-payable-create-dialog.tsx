@@ -408,7 +408,7 @@ export function AccountsPayableCreateDialog({
                                                 );
                                             }
                                         }}
-                                        className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                                        className="grid grid-cols-2 gap-2 sm:grid-cols-5"
                                     >
                                         <ToggleGroupItem
                                             value="30"
@@ -437,6 +437,13 @@ export function AccountsPayableCreateDialog({
                                             className="rounded-md border"
                                         >
                                             120 dias
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="150"
+                                            variant="outline"
+                                            className="rounded-md border"
+                                        >
+                                            150 dias
                                         </ToggleGroupItem>
                                     </ToggleGroup>
                                 </div>

@@ -248,12 +248,13 @@ export function PurchaseCheckoutPanel({
 setBoletoTermDays(value);
 }
                                     }}
-                                    className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                                    className="grid grid-cols-2 gap-2 sm:grid-cols-5"
                                 >
                                     <ToggleGroupItem value="30" variant="outline" className="rounded-md border">30 dias</ToggleGroupItem>
                                     <ToggleGroupItem value="60" variant="outline" className="rounded-md border">60 dias</ToggleGroupItem>
                                     <ToggleGroupItem value="90" variant="outline" className="rounded-md border">90 dias</ToggleGroupItem>
                                     <ToggleGroupItem value="120" variant="outline" className="rounded-md border">120 dias</ToggleGroupItem>
+                                    <ToggleGroupItem value="150" variant="outline" className="rounded-md border">150 dias</ToggleGroupItem>
                                 </ToggleGroup>
                             </CardContent>
                         </Card>

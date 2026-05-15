@@ -2,6 +2,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     useAccountReceivables,
     useCreateManualAccountReceivable,
     useSettleAccountReceivable,
@@ -60,6 +67,7 @@ export function AccountsReceivableModule() {
         typeof window !== 'undefined'
             ? new URLSearchParams(window.location.search).get('status')
             : null;
+    const [statusFilter, setStatusFilter] = useState(initialStatusFilter ?? '');
     const { data: receivables = [], isPending: isReceivablesPending } =
         useAccountReceivables();
     const { data: customers = [], isPending: isCustomersPending } =
@@ -88,11 +96,11 @@ export function AccountsReceivableModule() {
 
     const rows: ReceivableRow[] = receivables
         .filter((receivable) => {
-            if (!initialStatusFilter) {
+            if (!statusFilter) {
                 return true;
             }
 
-            return receivable.status === initialStatusFilter;
+            return receivable.status === statusFilter;
         })
         .map((receivable) => ({
             id: String(receivable.id),
@@ -128,7 +136,9 @@ export function AccountsReceivableModule() {
     const handleConfirmReceipt = () => {
         const ids = rows
             .filter(
-                (row) => selectedIds.has(row.id) && row.status === 'pending',
+                (row) =>
+                    selectedIds.has(row.id) &&
+                    (row.status === 'pending' || row.status === 'partial'),
             )
             .map((row) => Number(row.id));
 
@@ -370,7 +380,9 @@ export function AccountsReceivableModule() {
                             </p>
                         )}
                     </div>
-                    {(selectedAction === 'pending' || batchAction === 'pending') && (
+                    {(selectedAction === 'pending' ||
+                        selectedAction === 'partial' ||
+                        batchAction === 'pending') && (
                         <button
                             onClick={() => void handleConfirmReceipt()}
                             disabled={isProcessingReceiptAction}
@@ -395,6 +407,24 @@ export function AccountsReceivableModule() {
                     )}
                 </div>
             )}
+            <div className="flex justify-end">
+                <Select
+                    value={statusFilter || 'all'}
+                    onValueChange={(value) =>
+                        setStatusFilter(value === 'all' ? '' : value)
+                    }
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os status</SelectItem>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="partial">Parcial</SelectItem>
+                        <SelectItem value="received">Recebido</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
             <GenericTable
                 data={rows}
                 columns={columns}

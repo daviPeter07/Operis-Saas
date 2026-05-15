@@ -27,7 +27,7 @@ class StoreAccountPayableRequest extends FormRequest
             'entry_date' => ['required', 'date'],
             'due_date' => ['required', 'date', 'after_or_equal:entry_date'],
             'payment_method' => ['required', 'in:cash,pix,card,installment,boleto'],
-            'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120'],
+            'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120,150'],
             'status' => ['required', 'in:pending,paid'],
         ];
     }

@@ -40,6 +40,14 @@ type SettlePayload = {
     payment_notes?: string;
 };
 
+type PartialSettlePayload = {
+    id: number;
+    amount: number;
+    paid_at: string;
+    paid_method: 'cash' | 'pix' | 'card' | 'installment';
+    payment_notes?: string;
+};
+
 type CreateManualPayload = {
     supplier_id: number;
     item: string;
@@ -141,6 +149,23 @@ export function useUnsettleAccountPayable() {
             if (context?.previous) {
                 queryClient.setQueryData(accountPayablesQueryKey, context.previous);
             }
+        },
+    });
+}
+
+export function usePartialSettleAccountPayable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: PartialSettlePayload) =>
+            accountPayableService.partialSettle(payload.id, {
+                amount: payload.amount,
+                paid_at: payload.paid_at,
+                paid_method: payload.paid_method,
+                payment_notes: payload.payment_notes,
+            }),
+        onSuccess: () => {
+            scheduleInvalidateRelatedQueries(queryClient);
         },
     });
 }

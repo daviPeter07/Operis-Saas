@@ -10,6 +10,13 @@ type SettleAccountPayablePayload = {
     payment_notes?: string;
 };
 
+type PartialSettleAccountPayablePayload = {
+    amount: number;
+    paid_at: string;
+    paid_method: 'cash' | 'pix' | 'card' | 'installment';
+    payment_notes?: string;
+};
+
 type CreateManualAccountPayablePayload = {
     supplier_id: number;
     item: string;
@@ -27,6 +34,8 @@ function normalizeAccountPayable(
     return {
         ...accountPayable,
         amount: toNumber(accountPayable.amount),
+        amount_paid: toNumber(accountPayable.amount_paid),
+        remaining_balance: toNumber(accountPayable.remaining_balance),
     };
 }
 
@@ -66,6 +75,18 @@ class AccountPayableService extends ApiService<AccountPayable> {
         const response = await apiClient.post<AccountPayable>(
             `/account-payables/${id}/unsettle`,
             {},
+        );
+
+        return normalizeAccountPayable(response.data);
+    }
+
+    async partialSettle(
+        id: number,
+        payload: PartialSettleAccountPayablePayload,
+    ): Promise<AccountPayable> {
+        const response = await apiClient.post<AccountPayable>(
+            `/account-payables/${id}/partial-settle`,
+            payload,
         );
 
         return normalizeAccountPayable(response.data);

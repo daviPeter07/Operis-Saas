@@ -38,6 +38,8 @@ class AccountPayableResource extends ApiResource
             'description' => $this->description,
             'due_date' => $this->due_date?->toDateString(),
             'amount' => $this->amount,
+            'amount_paid' => $this->amount_paid,
+            'remaining_balance' => max(0, (float) $this->amount - (float) ($this->amount_paid ?? 0)),
             'status' => $this->status,
             'paid_at' => $this->paid_at,
             'paid_method' => $this->paid_method,

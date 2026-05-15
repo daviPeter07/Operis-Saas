@@ -52,6 +52,7 @@ class ReceivableService
                 'item' => $this->resolveSaleItemSummary($sale),
                 'description' => null,
                 'amount' => $installmentAmount,
+                'amount_paid' => $isCompletedSale ? $installmentAmount : 0,
                 'status' => $isCompletedSale ? FinancialStatus::Received->value : FinancialStatus::Pending->value,
                 'received_at' => $isCompletedSale ? now() : null,
             ]);
@@ -68,6 +69,7 @@ class ReceivableService
                 'item' => 'Entrada',
                 'description' => 'Entrada no crediario',
                 'amount' => $crediarioEntry,
+                'amount_paid' => $crediarioEntry,
                 'status' => FinancialStatus::Received->value,
                 'received_at' => now(),
             ]);
@@ -92,7 +94,7 @@ class ReceivableService
             ->whereIn('status', [SaleStatus::Pending->value, SaleStatus::Completed->value])
             ->doesntHave('receivables')
             ->get()
-            ->each(fn(Sale $sale) => $this->regenerateFromSale($sale));
+            ->each(fn (Sale $sale) => $this->regenerateFromSale($sale));
     }
 
     public function createManual(int $companyId, array $data): void
@@ -107,6 +109,7 @@ class ReceivableService
             'item' => $data['item'],
             'description' => $data['description'] ?? null,
             'amount' => $data['amount'],
+            'amount_paid' => 0,
             'status' => FinancialStatus::Pending->value,
             'received_at' => null,
         ]);
@@ -141,6 +144,7 @@ class ReceivableService
 
             $receivable->update([
                 'status' => FinancialStatus::Received->value,
+                'amount_paid' => $receivable->amount,
                 'received_at' => $data['received_at'],
             ]);
 
@@ -179,6 +183,7 @@ class ReceivableService
 
             $receivable->update([
                 'status' => FinancialStatus::Pending->value,
+                'amount_paid' => 0,
                 'received_at' => null,
             ]);
 
@@ -210,7 +215,7 @@ class ReceivableService
 
         $receivables = AccountReceivable::query()
             ->whereNotNull('sale_id')
-            ->when($companyId !== null, fn($query) => $query->where('company_id', $companyId))
+            ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
             ->with('sale:id,status')
             ->get();
 
@@ -225,8 +230,12 @@ class ReceivableService
             $targetStatus = match ($saleStatus) {
                 SaleStatus::Completed->value => FinancialStatus::Received->value,
                 SaleStatus::Cancelled->value => FinancialStatus::Cancelled->value,
-                default => FinancialStatus::Pending->value,
+                default => null,
             };
+
+            if ($targetStatus === null) {
+                continue;
+            }
 
             if ($receivable->status === $targetStatus) {
                 continue;
@@ -234,6 +243,9 @@ class ReceivableService
 
             $receivable->update([
                 'status' => $targetStatus,
+                'amount_paid' => $targetStatus === FinancialStatus::Received->value
+                    ? $receivable->amount
+                    : $receivable->amount_paid,
                 'received_at' => $targetStatus === FinancialStatus::Received->value
                     ? ($receivable->received_at ?? now())
                     : null,
@@ -248,6 +260,65 @@ class ReceivableService
     public function resolveCrediarioDueDate(string $date, int $termDays): string
     {
         return Carbon::parse($date)->addDays(max(1, $termDays))->toDateString();
+    }
+
+    public function settlePartial(AccountReceivable $receivable, int $userId, array $data): AccountReceivable
+    {
+        return DB::transaction(function () use ($receivable, $data): AccountReceivable {
+            if ($receivable->status === FinancialStatus::Cancelled->value) {
+                throw ValidationException::withMessages([
+                    'receivable' => 'Conta a receber cancelada nao pode receber baixa parcial.',
+                ]);
+            }
+
+            $remaining = max(0, (float) $receivable->amount - (float) ($receivable->amount_paid ?? 0));
+            $amount = (float) $data['amount'];
+
+            if ($remaining <= 0) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Conta a receber ja esta totalmente quitada.',
+                ]);
+            }
+
+            if ($amount > $remaining) {
+                throw ValidationException::withMessages([
+                    'amount' => 'Valor informado excede o saldo restante da conta.',
+                ]);
+            }
+
+            $newAmountPaid = min((float) $receivable->amount, (float) ($receivable->amount_paid ?? 0) + $amount);
+            $isFullySettled = round($newAmountPaid, 2) >= round((float) $receivable->amount, 2);
+
+            $receivable->update([
+                'amount_paid' => $newAmountPaid,
+                'status' => $isFullySettled ? FinancialStatus::Received->value : FinancialStatus::Partial->value,
+                'received_at' => $data['received_at'],
+            ]);
+
+            if (! $receivable->sale_id) {
+                return $receivable->refresh();
+            }
+
+            $sale = Sale::query()
+                ->with('receivables:id,sale_id,status')
+                ->find($receivable->sale_id);
+
+            if (! $sale) {
+                return $receivable->refresh();
+            }
+
+            $hasOpenReceivables = $sale->receivables()
+                ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
+                ->exists();
+
+            $sale->update([
+                'status' => $hasOpenReceivables
+                    ? SaleStatus::Pending->value
+                    : SaleStatus::Completed->value,
+            ]);
+
+            return $receivable->refresh();
+        });
     }
 
     private function resolveSaleItemSummary(Sale $sale): ?string

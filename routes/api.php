@@ -52,7 +52,7 @@ Route::middleware([
     'company.member',
     'company.verified',
 ])->group(function (): void {
-    Route::get('context/ping', static fn() => response()->json(['ok' => true]))->name('api.context.ping');
+    Route::get('context/ping', static fn () => response()->json(['ok' => true]))->name('api.context.ping');
     Route::apiResource('customers', CustomerController::class);
     Route::post('customers/import', CustomerImportController::class)->name('api.customers.import');
     Route::apiResource('suppliers', SupplierController::class);
@@ -67,10 +67,12 @@ Route::middleware([
     Route::post('sales/{sale}/cancel', SaleCancelController::class)->name('api.sales.cancel');
     Route::apiResource('account-receivables', AccountReceivableController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
     Route::post('account-receivables/{accountReceivable}/settle', AccountReceivablePaymentController::class)->name('api.account-receivables.settle');
+    Route::post('account-receivables/{accountReceivable}/partial-settle', [AccountReceivablePaymentController::class, 'partial'])->name('api.account-receivables.partial-settle');
     Route::post('account-receivables/{accountReceivable}/unsettle', [AccountReceivablePaymentController::class, 'reverse'])->name('api.account-receivables.unsettle');
     Route::apiResource('purchases', PurchaseController::class);
     Route::post('purchases/{purchase}/cancel', PurchaseCancelController::class)->name('api.purchases.cancel');
     Route::apiResource('account-payables', AccountPayableController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
     Route::post('account-payables/{accountPayable}/settle', AccountPayablePaymentController::class)->name('api.account-payables.settle');
+    Route::post('account-payables/{accountPayable}/partial-settle', [AccountPayablePaymentController::class, 'partial'])->name('api.account-payables.partial-settle');
     Route::post('account-payables/{accountPayable}/unsettle', [AccountPayablePaymentController::class, 'reverse'])->name('api.account-payables.unsettle');
 });

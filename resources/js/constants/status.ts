@@ -1,5 +1,6 @@
 export const STATUS_LABELS: Record<string, string> = {
     pending: 'Pendente',
+    partial: 'Parcial',
     completed: 'Concluido',
     received: 'Recebido',
     paid: 'Pago',
