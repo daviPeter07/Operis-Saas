@@ -1,6 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -14,6 +24,7 @@ import {
     useSettleAccountReceivable,
     useUpdateAccountReceivable,
     useUnsettleAccountReceivable,
+    usePartialSettleAccountReceivable,
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
@@ -75,6 +86,7 @@ export function AccountsReceivableModule() {
     const createManualReceivable = useCreateManualAccountReceivable();
     const updateAccountReceivable = useUpdateAccountReceivable();
     const settleAccountReceivable = useSettleAccountReceivable();
+    const partialSettleAccountReceivable = usePartialSettleAccountReceivable();
     const unsettleAccountReceivable = useUnsettleAccountReceivable();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -87,6 +99,8 @@ export function AccountsReceivableModule() {
         count: number;
         total: number;
     } | null>(null);
+    const [isPartialDialogOpen, setIsPartialDialogOpen] = useState(false);
+    const [partialPercentage, setPartialPercentage] = useState('10');
 
     const customerNameById = useMemo(
         () =>
@@ -237,7 +251,12 @@ export function AccountsReceivableModule() {
     const isProcessingReceiptAction =
         isBatchProcessing ||
         settleAccountReceivable.isPending ||
-        unsettleAccountReceivable.isPending;
+        unsettleAccountReceivable.isPending ||
+        partialSettleAccountReceivable.isPending;
+
+    const selectedPendingOrPartialRows = selectedRows.filter(
+        (row) => row.status === 'pending' || row.status === 'partial',
+    );
 
     const handleFilteredDataChange = useCallback((nextRows: ReceivableRow[]) => {
         setFilteredRows((previous) =>
@@ -383,7 +402,18 @@ export function AccountsReceivableModule() {
                     {(selectedAction === 'pending' ||
                         selectedAction === 'partial' ||
                         batchAction === 'pending') && (
-                        <button
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsPartialDialogOpen(true)}
+                                disabled={
+                                    isProcessingReceiptAction ||
+                                    selectedPendingOrPartialRows.length === 0
+                                }
+                            >
+                                Receber %
+                            </Button>
+                            <button
                             onClick={() => void handleConfirmReceipt()}
                             disabled={isProcessingReceiptAction}
                             className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -391,7 +421,8 @@ export function AccountsReceivableModule() {
                             {isProcessingReceiptAction
                                 ? 'Processando...'
                                 : 'Marcar como Recebida'}
-                        </button>
+                            </button>
+                        </div>
                     )}
                     {(selectedAction === 'received' ||
                         batchAction === 'received') && (
@@ -516,6 +547,88 @@ export function AccountsReceivableModule() {
                     />
                 )}
             />
+
+            <Dialog
+                open={isPartialDialogOpen}
+                onOpenChange={setIsPartialDialogOpen}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Recebimento percentual</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                            Aplicar percentual sobre o saldo restante dos titulos selecionados.
+                        </p>
+                        <div className="space-y-2">
+                            <Label htmlFor="receivable-percentage">Percentual (%)</Label>
+                            <Input
+                                id="receivable-percentage"
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={partialPercentage}
+                                onChange={(event) =>
+                                    setPartialPercentage(event.currentTarget.value)
+                                }
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsPartialDialogOpen(false)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                const percentage = Number(partialPercentage);
+
+                                if (Number.isNaN(percentage) || percentage <= 0 || percentage > 100) {
+                                    toast.error('Informe um percentual entre 1 e 100.');
+
+                                    return;
+                                }
+
+                                const rowsToSettle = selectedRows.filter(
+                                    (row) => row.status === 'pending' || row.status === 'partial',
+                                );
+
+                                void Promise.allSettled(
+                                    rowsToSettle.map((row) =>
+                                        partialSettleAccountReceivable.mutateAsync({
+                                            id: Number(row.id),
+                                            amount: Number(
+                                                (
+                                                    ((row.amount - (receivables.find((entry) => entry.id === Number(row.id))?.amount_paid ?? 0)) *
+                                                        percentage) /
+                                                    100
+                                                ).toFixed(2),
+                                            ),
+                                            received_at: new Date().toISOString().slice(0, 10),
+                                        }),
+                                    ),
+                                ).then((results) => {
+                                    const failed = results.filter(
+                                        (result) => result.status === 'rejected',
+                                    ).length;
+
+                                    if (failed > 0) {
+                                        toast.error(`${failed} baixa(s) percentual(is) falharam.`);
+                                    } else {
+                                        toast.success('Recebimento percentual aplicado com sucesso.');
+                                        setSelectedIds(new Set());
+                                        setIsPartialDialogOpen(false);
+                                    }
+                                });
+                            }}
+                        >
+                            Aplicar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

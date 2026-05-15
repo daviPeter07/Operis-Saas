@@ -418,6 +418,12 @@ export function ClientCreateDialog(props: ClientCreateDialogProps) {
                                                     <SelectItem value="90">
                                                         90 dias
                                                     </SelectItem>
+                                                    <SelectItem value="120">
+                                                        120 dias
+                                                    </SelectItem>
+                                                    <SelectItem value="150">
+                                                        150 dias
+                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>

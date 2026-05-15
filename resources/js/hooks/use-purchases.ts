@@ -14,7 +14,7 @@ type CreatePurchaseInput = {
     due_date?: string;
     status?: 'pending' | 'completed';
     payment_method: 'cash' | 'pix' | 'card' | 'installment' | 'boleto';
-    boleto_term_days?: 30 | 60 | 90 | 120;
+    boleto_term_days?: 30 | 60 | 90 | 120 | 150;
     update_product_cost?: boolean;
     items: Array<{
         product_id: number;
