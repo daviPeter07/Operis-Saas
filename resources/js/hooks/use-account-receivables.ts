@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { accountReceivableService } from '@/services/account-receivables';
 import { productsQueryKey } from './use-products';
-import { salesQueryKey } from './use-sales';
 import { purchasesQueryKey } from './use-purchases';
+import { salesQueryKey } from './use-sales';
 
 export const accountReceivablesQueryKey = ['account-receivables'] as const;
 const accountPayablesQueryKey = ['account-payables'] as const;

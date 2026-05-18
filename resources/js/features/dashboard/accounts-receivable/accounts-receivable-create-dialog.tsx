@@ -68,6 +68,7 @@ export function AccountsReceivableCreateDialog({
     } = useForm<Record<string, string>>({ mode: 'onSubmit' });
     const isEditMode = mode === 'edit';
 
+    /* eslint-disable react-hooks/set-state-in-effect */
     useEffect(() => {
         if (open && initialData) {
             setCustomerId(String(initialData.customer_id));
@@ -86,6 +87,7 @@ export function AccountsReceivableCreateDialog({
             );
         }
     }, [customers, initialData, open]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const filteredCustomers = useMemo(() => {
         const normalizedQuery = customerSearch.trim().toLowerCase();

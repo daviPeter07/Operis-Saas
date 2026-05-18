@@ -3,15 +3,13 @@ import {
     BarChart3,
     TrendingUp,
     Package,
-    AlertTriangle,
-    XCircle,
     DollarSign,
     CreditCard,
     Users,
-    MapPin,
     ShoppingCart,
     Tag,
     ArrowRight,
+    UserSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -59,20 +57,6 @@ const reports = [
         color: 'bg-teal-500',
     },
     {
-        slug: 'proximos-vencer',
-        title: 'Próximos de Vencer',
-        description: 'Produtos próximos do vencimento',
-        icon: AlertTriangle,
-        color: 'bg-yellow-500',
-    },
-    {
-        slug: 'perdas',
-        title: 'Perdas',
-        description: 'Baixas por motivo',
-        icon: XCircle,
-        color: 'bg-red-500',
-    },
-    {
         slug: 'inadimplencia',
         title: 'Inadimplência',
         description: 'Clientes com parcelas atrasadas',
@@ -94,10 +78,10 @@ const reports = [
         color: 'bg-violet-500',
     },
     {
-        slug: 'clientes-cidade',
-        title: 'Clientes por Cidade',
-        description: 'Clientes filtrados por cidade',
-        icon: MapPin,
+        slug: 'comprador-especifico',
+        title: 'Comprador Específico',
+        description: 'Resumo e histórico por cliente',
+        icon: UserSearch,
         color: 'bg-emerald-500',
     },
 ];

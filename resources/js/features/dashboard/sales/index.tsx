@@ -1,13 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/common/status-badge';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,7 +11,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { SalesDialog } from '@/components/sales-dialog/sales-dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useBrands, useCreateBrand } from '@/hooks/use-brands';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
@@ -189,6 +189,7 @@ export function SalesModule() {
             }
 
             const stock = maybeError.errors?.stock;
+
             if (Array.isArray(stock) && typeof stock[0] === 'string') {
                 return stock[0];
             }
@@ -521,6 +522,7 @@ export function SalesModule() {
                     ),
                 );
                 setStockWarningOpen(true);
+
                 throw { message: '__stock_warning__' };
             }
 

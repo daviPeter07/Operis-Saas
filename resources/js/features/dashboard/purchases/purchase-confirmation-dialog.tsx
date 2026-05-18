@@ -63,19 +63,16 @@ export function PurchaseConfirmationDialog({
     items,
     onConfirm,
 }: PurchaseConfirmationDialogProps) {
-    const [status, setStatus] = React.useState<'pending' | 'completed'>(
-        'pending',
+    const [status, setStatus] = React.useState<'pending' | 'completed' | null>(
+        null,
     );
-
-    React.useEffect(() => {
-        if (open && purchaseDraft) {
-            setStatus(purchaseDraft.status as 'pending' | 'completed');
-        }
-    }, [open, purchaseDraft]);
 
     if (!purchaseDraft) {
         return null;
     }
+
+    const effectiveStatus =
+        status ?? (purchaseDraft.status as 'pending' | 'completed');
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,7 +144,7 @@ export function PurchaseConfirmationDialog({
                         <Label>Situação da compra</Label>
                         <ToggleGroup
                             type="single"
-                            value={status}
+                            value={effectiveStatus}
                             onValueChange={(value) => {
                                 if (
                                     value === 'pending' ||
@@ -193,7 +190,9 @@ export function PurchaseConfirmationDialog({
                     </Button>
                     <Button
                         type="button"
-                        onClick={() => onConfirm({ ...purchaseDraft, status })}
+                        onClick={() =>
+                            onConfirm({ ...purchaseDraft, status: effectiveStatus })
+                        }
                     >
                         Confirmar compra
                     </Button>

@@ -4,7 +4,6 @@ import type {
     ClientForm,
     ClientPersonType,
 } from '@/types/dashboard-forms';
-import { composeSupplierAddress } from '@/utils/suppliers';
 
 export function inferPersonType(document: string | null): ClientPersonType {
     const numericDocument = (document ?? '').replace(/\D/g, '');

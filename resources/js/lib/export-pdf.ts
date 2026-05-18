@@ -12,6 +12,7 @@ export interface ExportPDFOptions {
     fileName?: string;
     title?: string;
     orientation?: 'portrait' | 'landscape';
+    summary?: Array<{ label: string; value: string }>;
 }
 
 export function exportToPDF<T extends Record<string, unknown>>(
@@ -23,6 +24,7 @@ export function exportToPDF<T extends Record<string, unknown>>(
         fileName = 'export',
         title = 'Relatório',
         orientation = 'portrait',
+        summary = [],
     } = options;
 
     const doc = new jsPDF({ orientation });
@@ -33,6 +35,15 @@ export function exportToPDF<T extends Record<string, unknown>>(
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Gerado em: ${formatDate(new Date())}`, 14, 30);
+
+    let startY = 35;
+
+    if (summary.length > 0) {
+        summary.forEach((item, index) => {
+            doc.text(`${item.label}: ${item.value}`, 14, 36 + index * 5);
+        });
+        startY = 40 + summary.length * 5;
+    }
 
     const tableData = data.map((row) =>
         columns.map((col) => {
@@ -64,7 +75,7 @@ export function exportToPDF<T extends Record<string, unknown>>(
     autoTable(doc, {
         head: [columns.map((col) => col.header)],
         body: tableData,
-        startY: 35,
+        startY,
         theme: 'striped',
         headStyles: {
             fillColor: [51, 51, 51],

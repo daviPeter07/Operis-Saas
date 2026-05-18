@@ -23,8 +23,6 @@ import { useSuppliers } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
 import {
     formatCurrencyBR,
-    formatDateBR,
-    formatDateTimeBR,
     formatDateTimeManaus,
 } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
@@ -315,7 +313,12 @@ export default function DashboardPage() {
         ]
             .filter((item) => item.time)
             .sort((a, b) => b.sortAt - a.sortAt)
-            .map(({ sortAt, ...item }) => item)
+            .map((item) => {
+                const normalized = { ...item };
+                delete normalized.sortAt;
+
+                return normalized;
+            })
             .slice(0, 5);
     }, [
         activeSales,

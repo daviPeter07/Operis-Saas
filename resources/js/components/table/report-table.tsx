@@ -39,6 +39,7 @@ export interface ReportTableProps<T extends Record<string, unknown>> {
 export function ReportTable<T extends Record<string, unknown>>({
     data,
     columns,
+    title,
     onSearchChange,
     onExportExcel,
     onExportPDF,
@@ -68,6 +69,9 @@ export function ReportTable<T extends Record<string, unknown>>({
 
     return (
         <div className={cn('space-y-4', className)}>
+            <div>
+                <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            </div>
             <TableToolbar
                 searchValue={search}
                 onSearchChange={setSearch}

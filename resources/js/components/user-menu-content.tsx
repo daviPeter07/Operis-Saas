@@ -7,10 +7,10 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
+import { withAppBasePath } from '@/constants/workspace';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { settings } from '@/routes/dashboard';
-import { withAppBasePath } from '@/constants/workspace';
 import type { User } from '@/types';
 
 type Props = {

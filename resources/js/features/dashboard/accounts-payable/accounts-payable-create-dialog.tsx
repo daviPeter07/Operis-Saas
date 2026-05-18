@@ -75,6 +75,7 @@ export function AccountsPayableCreateDialog({
         );
     }, [supplierSearch, suppliers]);
 
+    /* eslint-disable react-hooks/set-state-in-effect */
     useEffect(() => {
         if (open && initialData) {
             setSupplierId(String(initialData.supplier_id));
@@ -97,6 +98,7 @@ export function AccountsPayableCreateDialog({
             setBoletoTermDays(String(initialData.boleto_term_days ?? 30));
         }
     }, [initialData, open, suppliers]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const resetForm = () => {
         setSupplierSearch('');

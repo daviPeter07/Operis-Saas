@@ -3,17 +3,14 @@ import {
     BarChart3,
     TrendingUp,
     Package,
-    XCircle,
     DollarSign,
     CreditCard,
     Users,
-    MapPin,
     ShoppingCart,
     Tag,
     ChevronRight,
-    Clock3,
+    UserSearch,
 } from 'lucide-react';
-import { ComingSoonOverlay } from '@/components/coming-soon-overlay';
 import { cn } from '@/lib/utils';
 
 const reportCategories = [
@@ -45,18 +42,6 @@ const reportCategories = [
                 description: 'Vendas agrupadas por marca',
                 icon: BarChart3,
             },
-            {
-                slug: 'pagamentos-metodo',
-                title: 'Pagamentos por Método',
-                description: 'Pagamentos por método de pagamento',
-                icon: CreditCard,
-            },
-            {
-                slug: 'maiores-compradores',
-                title: 'Maiores Compradores',
-                description: 'Clientes que mais compraram',
-                icon: Users,
-            },
         ],
     },
     {
@@ -75,11 +60,23 @@ const reportCategories = [
                 description: 'Totais de estoque por marca',
                 icon: BarChart3,
             },
+        ],
+    },
+    {
+        category: 'Financeiro',
+        color: 'bg-orange-500',
+        reports: [
             {
-                slug: 'perdas',
-                title: 'Perdas',
-                description: 'Baixas por motivo',
-                icon: XCircle,
+                slug: 'pagamentos-metodo',
+                title: 'Pagamentos por Método',
+                description: 'Pagamentos por método de pagamento',
+                icon: CreditCard,
+            },
+            {
+                slug: 'inadimplencia',
+                title: 'Inadimplência',
+                description: 'Clientes com parcelas atrasadas',
+                icon: DollarSign,
             },
         ],
     },
@@ -88,16 +85,16 @@ const reportCategories = [
         color: 'bg-orange-500',
         reports: [
             {
-                slug: 'inadimplencia',
-                title: 'Inadimplência',
-                description: 'Clientes com parcelas atrasadas',
-                icon: DollarSign,
+                slug: 'maiores-compradores',
+                title: 'Maiores Compradores',
+                description: 'Clientes que mais compraram',
+                icon: Users,
             },
             {
-                slug: 'clientes-cidade',
-                title: 'Clientes por Cidade',
-                description: 'Clientes filtrados por cidade',
-                icon: MapPin,
+                slug: 'comprador-especifico',
+                title: 'Comprador Específico',
+                description: 'Histórico e resumo por comprador',
+                icon: UserSearch,
             },
         ],
     },
@@ -105,55 +102,48 @@ const reportCategories = [
 
 export function ReportsModule() {
     return (
-        <div className="relative">
-            <div className={cn('pointer-events-none space-y-8 opacity-40')}>
-                {reportCategories.map((category) => (
-                    <div key={category.category}>
-                        <div className="mb-3 flex items-center gap-2">
-                            <span
-                                className={cn(
-                                    'h-3 w-3 rounded-full',
-                                    category.color,
-                                )}
-                            />
-                            <h2 className="text-lg font-semibold">
-                                {category.category}
-                            </h2>
-                        </div>
-                        <div className="space-y-2">
-                            {category.reports.map((report) => {
-                                const Icon = report.icon;
-
-                                return (
-                                    <Link
-                                        key={report.slug}
-                                        href={`/dashboard/reports/${report.slug}`}
-                                        className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-                                    >
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                                            <Icon className="h-5 w-5 text-foreground" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="font-medium text-card-foreground">
-                                                {report.title}
-                                            </h3>
-                                            <p className="text-sm text-muted-foreground">
-                                                {report.description}
-                                            </p>
-                                        </div>
-                                        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-                                    </Link>
-                                );
-                            })}
-                        </div>
+        <div className="space-y-8">
+            {reportCategories.map((category) => (
+                <div key={category.category}>
+                    <div className="mb-3 flex items-center gap-2">
+                        <span
+                            className={cn(
+                                'h-3 w-3 rounded-full',
+                                category.color,
+                            )}
+                        />
+                        <h2 className="text-lg font-semibold">
+                            {category.category}
+                        </h2>
                     </div>
-                ))}
-            </div>
+                    <div className="space-y-2">
+                        {category.reports.map((report) => {
+                            const Icon = report.icon;
 
-            <ComingSoonOverlay
-                title="Relatórios em breve"
-                description="Estamos preparando uma área para você gerenciar membros, funções e acessos da equipe de forma simples, segura e organizada."
-            />
+                            return (
+                                <Link
+                                    key={report.slug}
+                                    href={`/dashboard/reports/${report.slug}`}
+                                    className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                                >
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                        <Icon className="h-5 w-5 text-foreground" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-medium text-card-foreground">
+                                            {report.title}
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {report.description}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }

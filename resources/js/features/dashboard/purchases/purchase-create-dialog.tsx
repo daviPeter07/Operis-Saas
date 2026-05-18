@@ -23,7 +23,6 @@ import type { SalesLineItem } from '@/types/sales-dialog';
 import { computePurchaseTotals } from '@/utils/dashboard-financial';
 import {
     applyFieldMask,
-    onlyDigits,
     parseMaskedFieldValue,
 } from '@/utils/form-fields';
 import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
@@ -217,8 +216,6 @@ export function PurchaseCreateDialog({
     );
     const createBrand = useCreateBrand();
     const createCategory = useCreateCategory();
-    const isEditMode = mode === 'edit';
-
     const purchaseItems = React.useMemo(
         () =>
             (initialItems ?? []).map((item) => ({
@@ -229,6 +226,7 @@ export function PurchaseCreateDialog({
         [initialItems],
     );
 
+    /* eslint-disable react-hooks/set-state-in-effect */
     React.useEffect(() => {
         if (open) {
             if (mode === 'edit' && initialData) {
@@ -256,7 +254,7 @@ export function PurchaseCreateDialog({
                     setPaymentMethod('pix');
                 }
             } else {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
+                 
                 setProductSearch('');
                 setItems([]);
                 setIsScannerReady(false);
@@ -272,6 +270,7 @@ export function PurchaseCreateDialog({
             }
         }
     }, [initialData, initialItems, mode, open, purchaseItems]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const visibleProducts = React.useMemo(() => {
         const normalized = productSearch.trim().toLowerCase();

@@ -2,6 +2,7 @@ import {
     createContext,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useState,
 } from 'react';
@@ -56,7 +57,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         quickActions: defaultWorkspaceQuickActions,
     });
 
-    useMemo(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    useEffect(() => {
         if (isLoading) {
             return;
         }
@@ -89,6 +91,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             quickActions: defaultWorkspaceQuickActions,
         });
     }, [currentUser, isLoading]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const switchCompany = useCallback(
         (companyId: string) => {

@@ -2,9 +2,9 @@ import { Form } from '@inertiajs/react';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { withAppBasePath } from '@/constants/workspace';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
-import { withAppBasePath } from '@/constants/workspace';
 
 export default function VerifyEmailPageContent({
     status,
