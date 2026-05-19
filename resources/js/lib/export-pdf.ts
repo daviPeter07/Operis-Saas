@@ -28,21 +28,49 @@ export function exportToPDF<T extends Record<string, unknown>>(
     } = options;
 
     const doc = new jsPDF({ orientation });
+    const primaryColor: [number, number, number] = [249, 115, 22];
+    const primaryDark: [number, number, number] = [194, 65, 12];
+    const softBg: [number, number, number] = [255, 247, 237];
 
     doc.setFontSize(16);
-    doc.text(title, 14, 22);
+    doc.setTextColor(...primaryDark);
+    doc.text(title, 14, 20);
+
+    doc.setDrawColor(...primaryColor);
+    doc.setLineWidth(0.8);
+    doc.line(14, 23, doc.internal.pageSize.getWidth() - 14, 23);
 
     doc.setFontSize(10);
-    doc.setTextColor(100);
+    doc.setTextColor(90);
     doc.text(`Gerado em: ${formatDate(new Date())}`, 14, 30);
 
     let startY = 35;
 
     if (summary.length > 0) {
+        const lineHeight = 6;
+        const summaryTop = 34;
+        const summaryHeight = summary.length * lineHeight + 6;
+
+        doc.setFillColor(...softBg);
+        doc.roundedRect(
+            14,
+            summaryTop,
+            doc.internal.pageSize.getWidth() - 28,
+            summaryHeight,
+            2,
+            2,
+            'F',
+        );
+
         summary.forEach((item, index) => {
-            doc.text(`${item.label}: ${item.value}`, 14, 36 + index * 5);
+            const y = summaryTop + 6 + index * lineHeight;
+            doc.setTextColor(...primaryDark);
+            doc.text(`${item.label}:`, 18, y);
+            doc.setTextColor(60);
+            doc.text(item.value, 68, y);
         });
-        startY = 40 + summary.length * 5;
+
+        startY = summaryTop + summaryHeight + 6;
     }
 
     const tableData = data.map((row) =>
@@ -78,16 +106,22 @@ export function exportToPDF<T extends Record<string, unknown>>(
         startY,
         theme: 'striped',
         headStyles: {
-            fillColor: [51, 51, 51],
+            fillColor: primaryColor,
             textColor: 255,
             fontSize: 10,
             fontStyle: 'bold',
         },
         bodyStyles: {
             fontSize: 9,
+            textColor: [45, 45, 45],
+            lineColor: [253, 186, 116],
+            lineWidth: 0.1,
         },
         alternateRowStyles: {
-            fillColor: [245, 245, 245],
+            fillColor: softBg,
+        },
+        styles: {
+            cellPadding: 2.2,
         },
         margin: { top: 10, right: 14, bottom: 20, left: 14 },
     });
@@ -120,8 +154,11 @@ export function exportSimplePDF(
     } = options;
 
     const doc = new jsPDF({ orientation });
+    const primaryColor: [number, number, number] = [249, 115, 22];
+    const softBg: [number, number, number] = [255, 247, 237];
 
     doc.setFontSize(16);
+    doc.setTextColor(194, 65, 12);
     doc.text(title, 14, 22);
 
     autoTable(doc, {
@@ -130,12 +167,18 @@ export function exportSimplePDF(
         startY: 30,
         theme: 'striped',
         headStyles: {
-            fillColor: [51, 51, 51],
+            fillColor: primaryColor,
             textColor: 255,
             fontSize: 10,
         },
         bodyStyles: {
             fontSize: 9,
+            textColor: [45, 45, 45],
+            lineColor: [253, 186, 116],
+            lineWidth: 0.1,
+        },
+        alternateRowStyles: {
+            fillColor: softBg,
         },
     });
 
