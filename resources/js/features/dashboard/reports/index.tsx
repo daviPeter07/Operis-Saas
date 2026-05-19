@@ -11,6 +11,7 @@ import {
     ChevronRight,
     UserSearch,
 } from 'lucide-react';
+import { withAppBasePath } from '@/constants/workspace';
 import { cn } from '@/lib/utils';
 
 const reportCategories = [
@@ -123,7 +124,9 @@ export function ReportsModule() {
                             return (
                                 <Link
                                     key={report.slug}
-                                    href={`/dashboard/reports/${report.slug}`}
+                                    href={withAppBasePath(
+                                        `/dashboard/reports/${report.slug}`,
+                                    )}
                                     className="flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
                                 >
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">

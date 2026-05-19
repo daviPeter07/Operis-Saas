@@ -11,6 +11,7 @@ import {
     ArrowRight,
     UserSearch,
 } from 'lucide-react';
+import { withAppBasePath } from '@/constants/workspace';
 import { cn } from '@/lib/utils';
 
 const reports = [
@@ -100,7 +101,9 @@ export function ReportsIndex({ className }: ReportsIndexProps) {
                     return (
                         <Link
                             key={report.slug}
-                            href={`/dashboard/reports/${report.slug}`}
+                            href={withAppBasePath(
+                                `/dashboard/reports/${report.slug}`,
+                            )}
                             className="group relative overflow-hidden rounded-xl border bg-card p-5 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
                         >
                             <div className="flex items-center justify-between">
