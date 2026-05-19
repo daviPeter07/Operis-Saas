@@ -1,9 +1,13 @@
+import { Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 import * as React from 'react';
+import { DatePickerInput } from '@/components/date/date-picker-input';
 import { ReportSummaryCards } from '@/components/table/report-summary-cards';
 import { ReportTable } from '@/components/table/report-table';
 import type { ReportColumn } from '@/components/table/report-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { withAppBasePath } from '@/constants/workspace';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
@@ -784,27 +788,31 @@ export function ReportPage({ slug }: ReportPageProps) {
 
     return (
         <div className="space-y-4">
+            <div className="flex items-center justify-start">
+                <Link
+                    href={withAppBasePath('/dashboard/reports')}
+                    className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground hover:bg-muted"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar para relatórios
+                </Link>
+            </div>
+
             <div className="grid gap-3 rounded-lg border p-4 md:grid-cols-4">
                 <div className="space-y-1">
                     <Label htmlFor="report-start-date">Data inicial</Label>
-                    <Input
-                        id="report-start-date"
-                        type="date"
+                    <DatePickerInput
                         value={startDate}
-                        onChange={(event) =>
-                            setStartDate(event.currentTarget.value)
-                        }
+                        onChange={setStartDate}
+                        placeholder="Selecione a data inicial"
                     />
                 </div>
                 <div className="space-y-1">
                     <Label htmlFor="report-end-date">Data final</Label>
-                    <Input
-                        id="report-end-date"
-                        type="date"
+                    <DatePickerInput
                         value={endDate}
-                        onChange={(event) =>
-                            setEndDate(event.currentTarget.value)
-                        }
+                        onChange={setEndDate}
+                        placeholder="Selecione a data final"
                     />
                 </div>
                 {slug === 'comprador-especifico' ? (
@@ -862,6 +870,7 @@ export function ReportPage({ slug }: ReportPageProps) {
                     )
                 }
             />
+
         </div>
     );
 }

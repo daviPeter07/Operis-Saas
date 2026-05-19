@@ -1,4 +1,6 @@
+import { BarChart3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export type ReportSummaryCard = {
     title: string;
@@ -15,30 +17,39 @@ export function ReportSummaryCards({ cards }: ReportSummaryCardsProps) {
     }
 
     return (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {cards.map((card, index) => (
                 <Card
                     key={card.title}
-                    className="border-border/60 bg-card/80 backdrop-blur-sm"
+                    className={cn(
+                        'overflow-hidden border-border bg-card shadow-sm',
+                        'transition-shadow hover:shadow-md',
+                    )}
                 >
-                    <CardContent className="space-y-1 p-4">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            {card.title}
-                        </p>
-                        <p
-                            className={[
-                                'text-xl font-semibold',
+                    <CardContent className="flex items-center justify-between gap-4 px-5 py-4">
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium text-muted-foreground">
+                                {card.title}
+                            </p>
+                            <p className="text-2xl leading-none font-black tracking-tight text-foreground">
+                                {card.value}
+                            </p>
+                        </div>
+
+                        <div
+                            className={cn(
+                                'flex h-10 w-10 items-center justify-center rounded-full ring-1',
                                 index % 4 === 0
-                                    ? 'text-orange-600'
+                                    ? 'bg-orange-500/15 text-orange-500 ring-orange-500/25'
                                     : index % 4 === 1
-                                      ? 'text-emerald-600'
+                                      ? 'bg-emerald-500/15 text-emerald-500 ring-emerald-500/25'
                                       : index % 4 === 2
-                                        ? 'text-sky-600'
-                                        : 'text-violet-600',
-                            ].join(' ')}
+                                        ? 'bg-sky-500/15 text-sky-500 ring-sky-500/25'
+                                        : 'bg-violet-500/15 text-violet-500 ring-violet-500/25',
+                            )}
                         >
-                            {card.value}
-                        </p>
+                            <BarChart3 className="h-6 w-6" />
+                        </div>
                     </CardContent>
                 </Card>
             ))}
