@@ -21,6 +21,7 @@ import {
 import {
     useAccountReceivables,
     useCreateManualAccountReceivable,
+    useDeleteAccountReceivable,
     useSettleAccountReceivable,
     useUpdateAccountReceivable,
     useUnsettleAccountReceivable,
@@ -90,6 +91,7 @@ export function AccountsReceivableModule() {
         useCustomers();
     const createManualReceivable = useCreateManualAccountReceivable();
     const updateAccountReceivable = useUpdateAccountReceivable();
+    const deleteAccountReceivable = useDeleteAccountReceivable();
     const settleAccountReceivable = useSettleAccountReceivable();
     const partialSettleAccountReceivable = usePartialSettleAccountReceivable();
     const unsettleAccountReceivable = useUnsettleAccountReceivable();
@@ -574,6 +576,9 @@ export function AccountsReceivableModule() {
                         }}
                     />
                 )}
+                onDelete={async (row) => {
+                    await deleteAccountReceivable.mutateAsync(Number(row.id));
+                }}
             />
 
             <Dialog

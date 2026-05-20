@@ -21,6 +21,7 @@ import {
 import {
     useAccountPayables,
     useCreateManualAccountPayable,
+    useDeleteAccountPayable,
     useSettleAccountPayable,
     useUpdateAccountPayable,
     useUnsettleAccountPayable,
@@ -90,6 +91,7 @@ export function AccountsPayableModule() {
     const { data: suppliers = [] } = useSuppliers();
     const createManualPayable = useCreateManualAccountPayable();
     const updateAccountPayable = useUpdateAccountPayable();
+    const deleteAccountPayable = useDeleteAccountPayable();
 
     const settleAccountPayable = useSettleAccountPayable();
     const unsettleAccountPayable = useUnsettleAccountPayable();
@@ -565,6 +567,9 @@ export function AccountsPayableModule() {
                         }}
                     />
                 )}
+                onDelete={async (row) => {
+                    await deleteAccountPayable.mutateAsync(Number(row.id));
+                }}
             />
 
             <Dialog

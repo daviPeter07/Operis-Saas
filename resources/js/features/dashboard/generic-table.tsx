@@ -627,8 +627,13 @@ export function GenericTable<T extends { id: string }>({
                                                     onEdit={() =>
                                                         handleEdit(row)
                                                     }
-                                                    onDelete={() =>
-                                                        handleDelete(row)
+                                                    onDelete={
+                                                        onDelete
+                                                            ? () =>
+                                                                  handleDelete(
+                                                                      row,
+                                                                  )
+                                                            : undefined
                                                     }
                                                     showPrint={showPrint}
                                                 />
@@ -821,9 +826,13 @@ export function GenericTable<T extends { id: string }>({
                 }
                 onConfirm={async () => {
                     try {
-                        if (selectedRow) {
-                            await onDelete?.(selectedRow);
+                        if (!selectedRow || !onDelete) {
+                            setIsDeleteOpen(false);
+
+                            return;
                         }
+
+                        await onDelete(selectedRow);
 
                         toast.success(
                             `${title}: registro excluido com sucesso.`,
