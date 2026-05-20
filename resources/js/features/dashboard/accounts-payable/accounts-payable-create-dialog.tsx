@@ -34,6 +34,25 @@ import { SupplierCreateDialog } from '../suppliers/supplier-create-dialog';
 
 const today = todayString();
 
+function calculateBoletoDueDate(entryDate: string, termDays: number): string {
+    const installments = Math.max(1, Math.ceil(termDays / 30));
+    const [year, month, day] = entryDate.split('-').map(Number);
+    const baseDate = new Date(Date.UTC(year, month - 1, day));
+    const dueDate = new Date(baseDate);
+
+    dueDate.setUTCMonth(dueDate.getUTCMonth() + installments);
+
+    if (dueDate.getUTCDate() !== day) {
+        dueDate.setUTCDate(0);
+    }
+
+    const dueYear = dueDate.getUTCFullYear();
+    const dueMonth = String(dueDate.getUTCMonth() + 1).padStart(2, '0');
+    const dueDay = String(dueDate.getUTCDate()).padStart(2, '0');
+
+    return `${dueYear}-${dueMonth}-${dueDay}`;
+}
+
 export function AccountsPayableCreateDialog({
     open,
     onOpenChange,
@@ -399,14 +418,15 @@ export function AccountsPayableCreateDialog({
                                             if (value) {
                                                 setBoletoTermDays(value);
                                                 const days = Number(value);
-                                                const newDueDate = new Date();
-                                                newDueDate.setDate(
-                                                    newDueDate.getDate() + days,
-                                                );
+                                                const entryDateBase =
+                                                    initialData?.entry_date ??
+                                                    today;
+
                                                 setDueDate(
-                                                    newDueDate
-                                                        .toISOString()
-                                                        .slice(0, 10),
+                                                    calculateBoletoDueDate(
+                                                        entryDateBase,
+                                                        days,
+                                                    ),
                                                 );
                                             }
                                         }}

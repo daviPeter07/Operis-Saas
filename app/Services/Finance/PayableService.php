@@ -95,17 +95,17 @@ class PayableService
         $boletoTermDays = $data['boleto_term_days'] ?? null;
 
         if ($paymentMethod === 'boleto') {
-            $installments = 2;
+            $installments = $this->resolveBoletoInstallments($boletoTermDays);
             $entryDate = $data['entry_date'];
             $totalCents = (int) round((float) $data['amount'] * 100);
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;
 
-            $baseDateObj = Carbon::parse($entryDate, 'America/Sao_Paulo');
+            $baseDateObj = Carbon::parse($entryDate, 'America/Sao_Paulo')->startOfDay();
 
             for ($index = 1; $index <= $installments; $index++) {
                 $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);
-                $dueDate = $baseDateObj->copy()->addDays(30 * $index)->toDateString();
+                $dueDate = $baseDateObj->copy()->addMonthsNoOverflow($index)->toDateString();
 
                 $this->payables->create([
                     'company_id' => $companyId,
@@ -145,6 +145,13 @@ class PayableService
             'paid_method' => $paymentMethod,
             'payment_notes' => $data['description'] ?? null,
         ]);
+    }
+
+    private function resolveBoletoInstallments(?int $termDays): int
+    {
+        $days = max(30, (int) ($termDays ?? 60));
+
+        return max(1, (int) ceil($days / 30));
     }
 
     public function update(AccountPayable $payable, array $data): AccountPayable

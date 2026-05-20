@@ -26,6 +26,7 @@ type CreateManualAccountPayablePayload = {
     due_date: string;
     payment_method: 'cash' | 'pix' | 'card' | 'installment' | 'boleto';
     status: 'pending' | 'paid';
+    boleto_term_days?: 30 | 60 | 90 | 120 | 150;
 };
 
 function normalizeAccountPayable(
