@@ -20,6 +20,7 @@ import type { ThermalPaperWidth } from '@/utils/sale-documents';
 import {
     buildSaleDocumentPreviewHtml,
     downloadSaleInvoicePdf,
+    printSaleThermalReceipt,
 } from '@/utils/sale-documents';
 
 type PreviewMode = 'digital' | 'thermal';
@@ -181,9 +182,15 @@ export function SaleDocumentPreviewDialog({
                                         if (sale) {
                                             try {
                                                 if (!isWebSerialSupported()) {
-                                                    throw new Error(
-                                                        'Seu navegador nao suporta Web Serial. Use Chrome ou Edge para imprimir na termica sem software auxiliar.',
+                                                    printSaleThermalReceipt(
+                                                        sale,
+                                                        paperWidth,
                                                     );
+                                                    toast.success(
+                                                        'Abrindo impressao do Windows com layout termico.',
+                                                    );
+
+                                                    return;
                                                 }
 
                                                 await printSaleThermalReceiptWithWebSerial(
@@ -195,12 +202,19 @@ export function SaleDocumentPreviewDialog({
                                                     'Comprovante enviado para a impressora.',
                                                 );
                                             } catch (error) {
+                                                printSaleThermalReceipt(
+                                                    sale,
+                                                    paperWidth,
+                                                );
+
                                                 const message =
                                                     error instanceof Error
                                                         ? error.message
-                                                        : 'Falha ao imprimir na termica.';
+                                                        : 'Falha ao imprimir diretamente na termica.';
 
-                                                toast.error(message);
+                                                toast.warning(
+                                                    `${message} Abrindo impressao do Windows com layout termico.`,
+                                                );
                                             }
                                         }
                                     }}
