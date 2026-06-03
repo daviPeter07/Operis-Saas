@@ -31,6 +31,10 @@ import type {
     CustomRange,
     Period,
 } from '@/features/dashboard/overview/period-filter';
+import {
+    normalizeDateString,
+    resolveDateRange,
+} from '@/features/dashboard/overview/period-range';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
@@ -899,79 +903,4 @@ export function GenericTable<T extends { id: string }>({
             )}
         </div>
     );
-}
-
-function normalizeDateString(value: unknown): string | null {
-    if (typeof value !== 'string' || !value) {
-        return null;
-    }
-
-    const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
-
-    return match ? match[1] : null;
-}
-
-function formatDateOffset(days: number): string {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() - days);
-
-    return date.toISOString().slice(0, 10);
-}
-
-function resolveDateRange(
-    period: Period,
-    customRange: CustomRange,
-): { from: string; to: string } | null {
-    const today = formatDateOffset(0);
-
-    if (period === '7d') {
-        return { from: formatDateOffset(6), to: today };
-    }
-
-    if (period === '30d') {
-        return { from: formatDateOffset(29), to: today };
-    }
-
-    if (period === '90d') {
-        return { from: formatDateOffset(89), to: today };
-    }
-
-    if (period === '12m') {
-        const date = new Date();
-        date.setHours(0, 0, 0, 0);
-        date.setMonth(date.getMonth() - 12);
-
-        return { from: date.toISOString().slice(0, 10), to: today };
-    }
-
-    if (period === 'next-month') {
-        const from = new Date();
-        from.setHours(0, 0, 0, 0);
-
-        const to = new Date(from);
-        const baseDay = to.getDate();
-        to.setDate(1);
-        to.setMonth(to.getMonth() + 1);
-        const lastDayOfMonth = new Date(
-            to.getFullYear(),
-            to.getMonth() + 1,
-            0,
-        ).getDate();
-        to.setDate(Math.min(baseDay, lastDayOfMonth));
-
-        return {
-            from: from.toISOString().slice(0, 10),
-            to: to.toISOString().slice(0, 10),
-        };
-    }
-
-    if (period === 'custom' && customRange.from && customRange.to) {
-        return {
-            from: customRange.from,
-            to: customRange.to,
-        };
-    }
-
-    return null;
 }

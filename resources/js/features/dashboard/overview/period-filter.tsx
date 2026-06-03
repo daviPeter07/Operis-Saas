@@ -4,6 +4,7 @@ import { DatePickerInput } from '@/components/date/date-picker-input';
 import { Button } from '@/components/ui/button';
 
 export type Period =
+    | 'current-month'
     | '7d'
     | '30d'
     | '90d'
@@ -21,9 +22,11 @@ interface PeriodFilterProps {
     period: Period;
     customRange: CustomRange;
     onPeriodChange: (period: Period, customRange?: CustomRange) => void;
+    periodOptions?: Period[];
 }
 
 const periodLabels: Record<Period, string> = {
+    'current-month': 'Mês atual',
     '7d': 'Últimos 7 dias',
     '30d': 'Últimos 30 dias',
     '90d': 'Últimos 90 dias',
@@ -37,6 +40,7 @@ export function PeriodFilter({
     period,
     customRange,
     onPeriodChange,
+    periodOptions = ['7d', '30d', '90d', '12m', 'next-month', 'all'],
 }: PeriodFilterProps) {
     const [open, setOpen] = useState(false);
     const [draftRange, setDraftRange] = useState<CustomRange>(customRange);
@@ -85,26 +89,20 @@ export function PeriodFilter({
 
             {open && (
                 <div className="absolute top-full right-0 z-50 mt-2 min-w-56 rounded-lg border bg-card py-2 shadow-lg">
-                    {(
-                        ['7d', '30d', '90d', '12m', 'next-month', 'all'] as Period[]
-                    ).map(
-                        (item) => (
-                            <button
-                                key={item}
-                                className={`w-full px-4 py-2 text-left text-xs hover:bg-muted ${
-                                    period === item
-                                        ? 'font-medium text-accent'
-                                        : ''
-                                }`}
-                                onClick={() => {
-                                    onPeriodChange(item);
-                                    setOpen(false);
-                                }}
-                            >
-                                {periodLabels[item]}
-                            </button>
-                        ),
-                    )}
+                    {periodOptions.map((item) => (
+                        <button
+                            key={item}
+                            className={`w-full px-4 py-2 text-left text-xs hover:bg-muted ${
+                                period === item ? 'font-medium text-accent' : ''
+                            }`}
+                            onClick={() => {
+                                onPeriodChange(item);
+                                setOpen(false);
+                            }}
+                        >
+                            {periodLabels[item]}
+                        </button>
+                    ))}
 
                     <div className="mx-4 my-2 h-px bg-border" />
 

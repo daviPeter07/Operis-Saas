@@ -9,6 +9,11 @@ import type {
     Period,
 } from '@/features/dashboard/overview/period-filter';
 import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
+import {
+    getCurrentMonthRange,
+    normalizeDateString,
+    resolveDateRange,
+} from '@/features/dashboard/overview/period-range';
 import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
 import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
 import { PageContent } from '@/features/dashboard/page-content';
@@ -28,7 +33,6 @@ import {
 import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
 import { calculateSalesProfit } from '@/utils/sale-profit';
-import { todayString } from '@/utils/sales-dialog';
 
 function dateToLabel(date: string): string {
     const [year, month, day] = date.split('-');
@@ -104,11 +108,10 @@ export default function DashboardPage() {
         isSuppliersPending;
 
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
-    const [period, setPeriod] = useState<Period>('30d');
-    const [customRange, setCustomRange] = useState<CustomRange>({
-        from: todayString(30),
-        to: todayString(),
-    });
+    const [period, setPeriod] = useState<Period>('current-month');
+    const [customRange, setCustomRange] = useState<CustomRange>(
+        getCurrentMonthRange(),
+    );
 
     const userName = auth.user?.name ?? 'usuário';
     const alertNavigationMap = useAlertNavigationMap();
@@ -136,13 +139,30 @@ export default function DashboardPage() {
         () => purchases.filter((purchase) => purchase.status !== 'cancelled'),
         [purchases],
     );
+    const salesRange = useMemo(
+        () => resolveDateRange(period, customRange),
+        [customRange, period],
+    );
+    const salesInPeriod = useMemo(() => {
+        if (!salesRange) {
+            return activeSales;
+        }
+
+        return activeSales.filter((sale) => {
+            const saleDate = normalizeDateString(sale.date ?? sale.createdAt);
+
+            return saleDate
+                ? saleDate >= salesRange.from && saleDate <= salesRange.to
+                : false;
+        });
+    }, [activeSales, salesRange]);
     const totalProfit = useMemo(
-        () => calculateSalesProfit(activeSales),
-        [activeSales],
+        () => calculateSalesProfit(salesInPeriod),
+        [salesInPeriod],
     );
 
     const metrics = useMemo(() => {
-        const salesTotal = activeSales.reduce(
+        const salesTotal = salesInPeriod.reduce(
             (sum, sale) => sum + toNumber(sale.total),
             0,
         );
@@ -191,7 +211,7 @@ export default function DashboardPage() {
                 iconRing: 'ring-red-600/20',
             },
         ];
-    }, [activeSales, payables, receivables, totalProfit]);
+    }, [payables, receivables, salesInPeriod, totalProfit]);
 
     const activities = useMemo(() => {
         const userName = auth.user?.name ?? 'Usuário';
@@ -313,12 +333,14 @@ export default function DashboardPage() {
         ]
             .filter((item) => item.time)
             .sort((a, b) => b.sortAt - a.sortAt)
-            .map((item) => {
-                const normalized = { ...item };
-                delete normalized.sortAt;
-
-                return normalized;
-            })
+            .map((item) => ({
+                id: item.id,
+                type: item.type,
+                responsible: item.responsible,
+                description: item.description,
+                time: item.time,
+                ...('amount' in item ? { amount: item.amount } : {}),
+            }))
             .slice(0, 5);
     }, [
         activeSales,
@@ -356,10 +378,10 @@ export default function DashboardPage() {
     );
 
     const charts = useMemo(() => {
-        const salesSeries = activeSales
+        const salesSeries = salesInPeriod
             .slice(-12)
             .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
-        const profitSeries = activeSales.slice(-12).map((sale) => ({
+        const profitSeries = salesInPeriod.slice(-12).map((sale) => ({
             date: sale.date,
             value: calculateSalesProfit([sale]),
         }));
@@ -395,7 +417,7 @@ export default function DashboardPage() {
                 })),
             },
         ];
-    }, [activeSales]);
+    }, [salesInPeriod]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>
@@ -410,6 +432,15 @@ export default function DashboardPage() {
                             <PeriodFilter
                                 period={period}
                                 customRange={customRange}
+                                periodOptions={[
+                                    'current-month',
+                                    '7d',
+                                    '30d',
+                                    '90d',
+                                    '12m',
+                                    'next-month',
+                                    'all',
+                                ]}
                                 onPeriodChange={(
                                     nextPeriod,
                                     nextCustomRange,

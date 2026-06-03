@@ -36,6 +36,7 @@ function parseQueryParams(search: string) {
     const params = new URLSearchParams(search);
     const periodParam = params.get('period');
     const period: Period =
+        periodParam === 'current-month' ||
         periodParam === '7d' ||
         periodParam === '30d' ||
         periodParam === '90d' ||
