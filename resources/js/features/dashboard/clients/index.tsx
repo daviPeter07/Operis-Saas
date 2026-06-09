@@ -164,7 +164,6 @@ export function ClientsModule() {
                 columns={columns}
                 title="Clientes"
                 loading={isCustomersPending}
-                routeUrl="/dashboard/clients"
                 sortableColumns={[
                     { key: 'name', type: 'text' },
                     { key: 'email', type: 'text' },
