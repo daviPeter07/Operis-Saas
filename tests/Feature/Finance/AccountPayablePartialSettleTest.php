@@ -51,7 +51,12 @@ test('account payable supports partial settlement', function () {
         'amount' => 25,
         'paid_at' => now()->toDateString(),
         'paid_method' => 'pix',
-    ])->assertOk();
+    ])->assertOk()
+        ->assertJsonPath('data.total_amount', fn (mixed $value) => (float) $value === 100.0)
+        ->assertJsonPath('data.amount', fn (mixed $value) => (float) $value === 75.0)
+        ->assertJsonPath('data.remaining_balance', fn (mixed $value) => (float) $value === 75.0)
+        ->assertJsonPath('data.amount_paid', fn (mixed $value) => (float) $value === 25.0)
+        ->assertJsonPath('data.status', 'partial');
 
     expect($payable->fresh()->status)->toBe('partial')
         ->and((float) $payable->fresh()->amount_paid)->toBe(25.0);
@@ -60,7 +65,12 @@ test('account payable supports partial settlement', function () {
         'amount' => 75,
         'paid_at' => now()->toDateString(),
         'paid_method' => 'pix',
-    ])->assertOk();
+    ])->assertOk()
+        ->assertJsonPath('data.total_amount', fn (mixed $value) => (float) $value === 100.0)
+        ->assertJsonPath('data.amount', fn (mixed $value) => (float) $value === 0.0)
+        ->assertJsonPath('data.remaining_balance', fn (mixed $value) => (float) $value === 0.0)
+        ->assertJsonPath('data.amount_paid', fn (mixed $value) => (float) $value === 100.0)
+        ->assertJsonPath('data.status', 'paid');
 
     expect($payable->fresh()->status)->toBe('paid')
         ->and((float) $payable->fresh()->amount_paid)->toBe(100.0);

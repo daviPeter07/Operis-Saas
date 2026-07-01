@@ -53,7 +53,12 @@ test('account receivable supports partial settlement', function () {
     $this->actingAs($user)->postJson("/api/account-receivables/{$receivable->id}/partial-settle", [
         'amount' => 40,
         'received_at' => now()->toDateString(),
-    ])->assertOk();
+    ])->assertOk()
+        ->assertJsonPath('data.total_amount', fn (mixed $value) => (float) $value === 100.0)
+        ->assertJsonPath('data.amount', fn (mixed $value) => (float) $value === 60.0)
+        ->assertJsonPath('data.remaining_balance', fn (mixed $value) => (float) $value === 60.0)
+        ->assertJsonPath('data.amount_paid', fn (mixed $value) => (float) $value === 40.0)
+        ->assertJsonPath('data.status', 'partial');
 
     expect($receivable->fresh()->status)->toBe('partial')
         ->and((float) $receivable->fresh()->amount_paid)->toBe(40.0);
@@ -61,7 +66,12 @@ test('account receivable supports partial settlement', function () {
     $this->actingAs($user)->postJson("/api/account-receivables/{$receivable->id}/partial-settle", [
         'amount' => 60,
         'received_at' => now()->toDateString(),
-    ])->assertOk();
+    ])->assertOk()
+        ->assertJsonPath('data.total_amount', fn (mixed $value) => (float) $value === 100.0)
+        ->assertJsonPath('data.amount', fn (mixed $value) => (float) $value === 0.0)
+        ->assertJsonPath('data.remaining_balance', fn (mixed $value) => (float) $value === 0.0)
+        ->assertJsonPath('data.amount_paid', fn (mixed $value) => (float) $value === 100.0)
+        ->assertJsonPath('data.status', 'received');
 
     expect($receivable->fresh()->status)->toBe('received')
         ->and((float) $receivable->fresh()->amount_paid)->toBe(100.0);

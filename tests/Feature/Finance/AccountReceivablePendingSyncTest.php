@@ -62,6 +62,10 @@ test('account receivables index backfills missing pending sale receivable', func
         ->assertOk()
         ->assertJsonPath('data.0.sale_id', $sale->id)
         ->assertJsonPath('data.0.item', 'Produto')
+        ->assertJsonPath('data.0.total_amount', fn (mixed $value) => (float) $value === 30.0)
+        ->assertJsonPath('data.0.amount', fn (mixed $value) => (float) $value === 30.0)
+        ->assertJsonPath('data.0.remaining_balance', fn (mixed $value) => (float) $value === 30.0)
+        ->assertJsonPath('data.0.amount_paid', fn (mixed $value) => (float) $value === 0.0)
         ->assertJsonPath('data.0.status', 'pending');
 
     $this->assertDatabaseCount('account_receivables', 1);

@@ -59,6 +59,10 @@ test('account payables index backfills missing pending purchase payable', functi
     $this->actingAs($user)->getJson('/api/account-payables')
         ->assertOk()
         ->assertJsonPath('data.0.purchase_id', $purchase->id)
+        ->assertJsonPath('data.0.total_amount', fn (mixed $value) => (float) $value === 20.0)
+        ->assertJsonPath('data.0.amount', fn (mixed $value) => (float) $value === 20.0)
+        ->assertJsonPath('data.0.remaining_balance', fn (mixed $value) => (float) $value === 20.0)
+        ->assertJsonPath('data.0.amount_paid', fn (mixed $value) => (float) $value === 0.0)
         ->assertJsonPath('data.0.status', 'pending');
 
     $this->assertDatabaseCount('account_payables', 1);

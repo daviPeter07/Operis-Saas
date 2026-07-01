@@ -70,7 +70,9 @@ function hasSameReceivableMetricsRows(
         if (
             prevRow.id !== nextRow.id ||
             prevRow.status !== nextRow.status ||
-            prevRow.amount !== nextRow.amount
+            prevRow.total_amount !== nextRow.total_amount ||
+            prevRow.amount_paid !== nextRow.amount_paid ||
+            prevRow.remaining_balance !== nextRow.remaining_balance
         ) {
             return false;
         }
@@ -146,6 +148,14 @@ export function AccountsReceivableModule() {
             received_at: receivable.received_at,
         }));
 
+    const resolveRowActionAmount = (row: ReceivableRow): number => {
+        if (row.status === 'pending' || row.status === 'partial') {
+            return row.remaining_balance;
+        }
+
+        return row.total_amount;
+    };
+
     const handleSelectOne = (id: string, checked: boolean) => {
         const next = new Set(selectedIds);
 
@@ -176,7 +186,10 @@ export function AccountsReceivableModule() {
         setIsBatchProcessing(true);
         setProcessingSnapshot({
             count: selectedForAction.length,
-            total: selectedForAction.reduce((sum, row) => sum + row.amount, 0),
+            total: selectedForAction.reduce(
+                (sum, row) => sum + resolveRowActionAmount(row),
+                0,
+            ),
         });
 
         void Promise.allSettled(
@@ -223,7 +236,10 @@ export function AccountsReceivableModule() {
         setIsBatchProcessing(true);
         setProcessingSnapshot({
             count: selectedForAction.length,
-            total: selectedForAction.reduce((sum, row) => sum + row.amount, 0),
+            total: selectedForAction.reduce(
+                (sum, row) => sum + resolveRowActionAmount(row),
+                0,
+            ),
         });
 
         void Promise.allSettled(
@@ -256,7 +272,10 @@ export function AccountsReceivableModule() {
         selectedRows.length > 0 && selectedStatuses.size === 1
             ? selectedRows[0].status
             : null;
-    const totalValue = selectedRows.reduce((sum, row) => sum + row.amount, 0);
+    const totalValue = selectedRows.reduce(
+        (sum, row) => sum + resolveRowActionAmount(row),
+        0,
+    );
     const displaySelectedCount = processingSnapshot?.count ?? totalSelected;
     const displayTotalValue = processingSnapshot?.total ?? totalValue;
     const isProcessingReceiptAction =
@@ -291,11 +310,17 @@ export function AccountsReceivableModule() {
         return {
             totalTitles: baseRows.length,
             pendingAmount: baseRows
-                .filter((row) => row.status === 'pending')
-                .reduce((sum, row) => sum + row.amount, 0),
+                .filter(
+                    (row) =>
+                        row.status === 'pending' || row.status === 'partial',
+                )
+                .reduce((sum, row) => sum + row.remaining_balance, 0),
             receivedAmount: baseRows
-                .filter((row) => row.status === 'received')
-                .reduce((sum, row) => sum + row.amount, 0),
+                .filter(
+                    (row) =>
+                        row.status === 'received' || row.status === 'partial',
+                )
+                .reduce((sum, row) => sum + row.amount_paid, 0),
         };
     }, [filteredRows]);
 
@@ -368,9 +393,9 @@ export function AccountsReceivableModule() {
                 row.sale_id ? `Venda #${row.sale_id}` : 'Manual',
         },
         {
-            key: 'amount',
+            key: 'total_amount',
             header: 'Valor',
-            render: (val: unknown) => formatCurrencyBR(Number(val)),
+            render: (value: unknown) => formatCurrencyBR(Number(value)),
         },
         {
             key: 'status',
@@ -543,7 +568,7 @@ export function AccountsReceivableModule() {
                             customer_id: row.customer_id ?? 0,
                             item: row.item ?? '',
                             description: row.description,
-                            amount: row.amount,
+                            amount: row.total_amount,
                             entry_date:
                                 row.entry_date ??
                                 new Date().toISOString().slice(0, 10),
