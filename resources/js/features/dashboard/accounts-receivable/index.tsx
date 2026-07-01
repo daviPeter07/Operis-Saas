@@ -316,11 +316,8 @@ export function AccountsReceivableModule() {
                 )
                 .reduce((sum, row) => sum + row.remaining_balance, 0),
             receivedAmount: baseRows
-                .filter(
-                    (row) =>
-                        row.status === 'received' || row.status === 'partial',
-                )
-                .reduce((sum, row) => sum + row.amount_paid, 0),
+                .filter((row) => row.status === 'received')
+                .reduce((sum, row) => sum + row.total_amount, 0),
         };
     }, [filteredRows]);
 
