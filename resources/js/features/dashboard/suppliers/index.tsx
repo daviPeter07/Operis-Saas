@@ -10,6 +10,7 @@ import type { Column } from '../generic-table';
 import { SupplierCreateDialog } from './supplier-create-dialog';
 
 type SupplierRow = {
+    createdAt?: string | null;
     id: string;
     name: string;
     email: string;
@@ -71,6 +72,7 @@ export function SuppliersModule() {
         personType: supplier.person_type,
         city: '',
         status: supplier.status,
+        createdAt: supplier.createdAt ?? null,
     }));
 
     const handleCreate = async (data: {
@@ -98,6 +100,7 @@ export function SuppliersModule() {
     return (
         <GenericTable
             data={rows}
+            dateFilterKey="createdAt"
             columns={columns}
             title="Fornecedores"
             loading={isSuppliersPending}

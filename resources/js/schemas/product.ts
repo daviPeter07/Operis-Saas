@@ -11,4 +11,6 @@ export interface Product {
     status: 'active' | 'inactive';
     category_id: number;
     brand_id: number | null;
+    /** Registration date ("YYYY-MM-DD HH:mm:ss"), used by the period filter. */
+    createdAt?: string | null;
 }

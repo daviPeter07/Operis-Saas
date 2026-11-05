@@ -16,6 +16,7 @@ import type { Column } from '../generic-table';
 import { ProductDialog } from './product-dialog';
 
 type ProductRow = {
+    createdAt?: string | null;
     id: string;
     name: string;
     sku: string;
@@ -103,6 +104,7 @@ export function InventoryModule() {
             category_id: product.category_id,
             brand_id: product.brand_id,
             categoryName: categoryNameById.get(product.category_id) || '-',
+            createdAt: product.createdAt ?? null,
             brandName: brandNameById.get(product.brand_id ?? 0) || 'Sem marca',
             status: product.status,
         }));
@@ -215,6 +217,7 @@ export function InventoryModule() {
             </div>
             <GenericTable
                 data={rows}
+                dateFilterKey="createdAt"
                 columns={columns}
                 title="Estoque"
                 loading={

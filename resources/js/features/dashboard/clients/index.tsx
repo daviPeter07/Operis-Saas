@@ -16,6 +16,7 @@ import type { Column } from '../generic-table';
 import { ClientCreateDialog } from './client-create-dialog';
 
 type ClientRow = {
+    createdAt?: string | null;
     id: string;
     name: string;
     email: string;
@@ -81,6 +82,7 @@ export function ClientsModule() {
             credit_term_days: customer.credit_term_days,
             open_crediario_count: openReceivables.length,
             open_crediario_value: availableCredit,
+            createdAt: customer.createdAt ?? null,
         };
     });
 
@@ -122,8 +124,7 @@ export function ClientsModule() {
         {
             key: 'open_crediario_value',
             header: 'Credito disponivel',
-            render: (value: unknown) =>
-                formatCurrencyBR(Number(value || 0)),
+            render: (value: unknown) => formatCurrencyBR(Number(value || 0)),
         },
         {
             key: 'credit_term_days',
@@ -151,9 +152,15 @@ export function ClientsModule() {
             phone: String(data.phone || '').trim(),
             document: String(data.document || '').trim(),
             person_type: data.person_type || 'pf',
-            credit_enabled: Boolean((data as Partial<ClientRow>).credit_enabled),
-            credit_limit: Number((data as Partial<ClientRow>).credit_limit || 0),
-            credit_term_days: Number((data as Partial<ClientRow>).credit_term_days || 30),
+            credit_enabled: Boolean(
+                (data as Partial<ClientRow>).credit_enabled,
+            ),
+            credit_limit: Number(
+                (data as Partial<ClientRow>).credit_limit || 0,
+            ),
+            credit_term_days: Number(
+                (data as Partial<ClientRow>).credit_term_days || 30,
+            ),
         });
     };
 
@@ -161,6 +168,7 @@ export function ClientsModule() {
         <>
             <GenericTable
                 data={rows}
+                dateFilterKey="createdAt"
                 columns={columns}
                 title="Clientes"
                 loading={isCustomersPending}
@@ -210,7 +218,9 @@ export function ClientsModule() {
                     }}
                     onSuccess={() => {
                         setTimeout(() => {
-                            queryClient.invalidateQueries({ queryKey: customersQueryKey });
+                            queryClient.invalidateQueries({
+                                queryKey: customersQueryKey,
+                            });
                         }, 100);
                     }}
                 />

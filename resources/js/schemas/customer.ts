@@ -8,6 +8,8 @@ export interface Customer {
     credit_enabled: boolean;
     credit_limit: number;
     credit_term_days: number;
+    /** Registration date ("YYYY-MM-DD HH:mm:ss"), used by the period filter. */
+    createdAt?: string | null;
 }
 
 export interface CreateCustomerInput {

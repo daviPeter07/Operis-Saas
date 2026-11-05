@@ -9,6 +9,7 @@ import type { Column } from '../generic-table';
 import { BrandEditDialog } from './brand-edit-dialog';
 
 export type BrandRow = {
+    createdAt?: string | null;
     id: string;
     name: string;
     status: 'active' | 'inactive';
@@ -59,12 +60,14 @@ export function BrandsModule() {
         id: String(brand.id),
         name: brand.name,
         status: brand.status,
+        createdAt: brand.createdAt ?? null,
     }));
 
     return (
         <>
             <GenericTable
                 data={rows}
+                dateFilterKey="createdAt"
                 columns={columns}
                 title="Marcas"
                 loading={isBrandsPending}
