@@ -60,7 +60,7 @@ export function DemoSection() {
                     className="relative mt-14 pb-24 sm:pb-16 lg:mr-[-6%]"
                 >
                     <Safari
-                        url="dgcomputer.com.br/operis"
+                        url="suaempresa.com.br/operis"
                         className="rounded-xl shadow-[0_30px_70px_-35px_rgb(0_0_0/0.45)]"
                     >
                         <ScaledScreen {...desktopScreenSize}>

@@ -12,9 +12,8 @@ export function HeroSection() {
                     </h1>
                     <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-neutral-600">
                         O Operis registra a venda, baixa o estoque, gera as
-                        parcelas do crediário e imprime o cupom. É o sistema que
-                        a DG Computer usa todos os dias, no computador e no
-                        celular.
+                        parcelas do crediário e imprime o cupom. Tudo isso no
+                        computador ou no celular, sem instalar nada.
                     </p>
                     <div className="mt-9 flex flex-wrap gap-3">
                         <LandingButton href={landingLinks.register}>
@@ -24,9 +23,6 @@ export function HeroSection() {
                             Ver o sistema
                         </LandingButton>
                     </div>
-                    <p className="mt-6 text-sm text-neutral-500">
-                        R$ 300 por ano, com todos os módulos incluídos.
-                    </p>
                 </div>
 
                 <div className="rounded-[2rem] bg-dg-paper px-3 py-8 sm:px-10 sm:py-10">

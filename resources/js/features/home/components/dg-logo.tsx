@@ -42,18 +42,13 @@ type OperisBrandProps = {
     className?: string;
 };
 
-/** Operis wordmark signed by DG Computer, used in the header and footer. */
+/** Operis wordmark with the logo mark, used in the header and footer. */
 export function OperisBrand({ className }: OperisBrandProps) {
     return (
         <span className={cn('inline-flex items-center gap-2.5', className)}>
             <DgLogoMark className="h-8" />
-            <span className="flex flex-col leading-none">
-                <span className="font-display text-xl font-bold tracking-tight text-dg-ink">
-                    Operis
-                </span>
-                <span className="mt-1 text-[0.7rem] text-neutral-500">
-                    por DG Computer
-                </span>
+            <span className="font-display text-xl font-bold tracking-tight text-dg-ink">
+                Operis
             </span>
         </span>
     );

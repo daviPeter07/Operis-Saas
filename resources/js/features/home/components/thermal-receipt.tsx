@@ -97,7 +97,7 @@ export function ThermalReceipt() {
                     className="bg-white px-4 pt-7 pb-8 font-mono text-[11.5px] leading-relaxed text-neutral-600 shadow-[0_12px_30px_-20px_rgb(0_0_0/0.45)] sm:px-5 sm:text-[12.5px]"
                 >
                     <p className="text-center font-bold tracking-wide text-neutral-900">
-                        DG COMPUTER
+                        SUA EMPRESA
                     </p>
                     <p className="text-center">Venda nº 1042</p>
                     <p className="text-center">05/11/2026 14:32</p>

@@ -4,7 +4,7 @@ import { login, register } from '@/routes';
 export const landingLinks = {
     login: withAppBasePath(login().url),
     register: withAppBasePath(register().url),
-    dgComputer: 'https://www.dgcomputer.com.br',
+    syncforge: 'https://syncforge-business.vercel.app',
 } as const;
 
 export const landingNavigation = [

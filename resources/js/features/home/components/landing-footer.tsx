@@ -11,8 +11,8 @@ export function LandingFooter() {
                 <div>
                     <OperisBrand />
                     <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-600">
-                        Sistema de gestão de vendas, estoque e financeiro usado
-                        pela DG Computer.
+                        Sistema de gestão de vendas, estoque e financeiro para a
+                        sua empresa.
                     </p>
                 </div>
 
@@ -55,16 +55,6 @@ export function LandingFooter() {
                                 Criar conta
                             </a>
                         </li>
-                        <li>
-                            <a
-                                href={landingLinks.dgComputer}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={footerLinkClassName}
-                            >
-                                Site da DG Computer
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -72,10 +62,20 @@ export function LandingFooter() {
             <div className="border-t border-neutral-200">
                 <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-sm text-neutral-500 sm:flex-row sm:justify-between sm:px-6">
                     <p>
-                        © {new Date().getFullYear()} DG Computer. Todos os
-                        direitos reservados.
+                        © {new Date().getFullYear()} Operis. Todos os direitos
+                        reservados.
                     </p>
-                    <p>Desenvolvido pela SyncForge</p>
+                    <p>
+                        Desenvolvido pela{' '}
+                        <a
+                            href={landingLinks.syncforge}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-md font-semibold text-dg-ink underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-dg-orange/60"
+                        >
+                            SyncForge
+                        </a>
+                    </p>
                 </div>
             </div>
         </footer>
