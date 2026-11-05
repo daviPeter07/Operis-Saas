@@ -51,6 +51,9 @@ When changing any of these flows, check the stock and financial effects together
 ### Base path
 Production is served under a `/operis` path prefix on the host domain, so Laravel itself sees `/api/...` (`config/api.php`) while the browser calls `/operis/api` (`resources/js/config/api.ts`). Vite `base` comes from `VITE_APP_BASE_PATH` (default `/operis`). Keep URLs relative to these settings rather than hardcoding `/`.
 
+### Public landing page & SEO
+`/` renders the landing (`resources/js/features/home/`) for guests and redirects signed-in users to the dashboard. SEO text, keywords and the FAQ live in `config/landing.php`; the FAQ is sent to the page as an Inertia prop and also printed as FAQPage JSON-LD by `resources/views/partials/landing-seo.blade.php`, so both always match. Meta/Open Graph tags are server-rendered (no SSR). `public/robots.txt`, `llms.txt`, `og-image.png` (source: `docs/brand/og-image.html`) and the favicons are copied to the web dir on deploy; crawlers only read robots.txt at the **domain root**.
+
 ### Dev auth bypass
 `BypassAuth` (web middleware) auto-logs in the first user when `BYPASS_AUTH=true` in `.env`.
 

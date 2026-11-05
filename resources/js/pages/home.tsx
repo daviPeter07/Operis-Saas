@@ -1,16 +1,22 @@
 import { Head } from '@inertiajs/react';
+import type { FrequentlyAskedQuestion } from '@/features/home/constants';
 import LandingPage from '@/features/home/landing-page';
 
-export default function Home() {
+type HomeProps = {
+    seoTitle: string;
+    faq: FrequentlyAskedQuestion[];
+};
+
+/**
+ * Public landing page. Description, Open Graph and structured data are
+ * rendered by the server (resources/views/partials/landing-seo.blade.php)
+ * so crawlers see them without running JavaScript.
+ */
+export default function Home({ seoTitle, faq }: HomeProps) {
     return (
         <>
-            <Head title="Sistema de gestão para lojas">
-                <meta
-                    name="description"
-                    content="Operis: vendas, crediário, estoque, contas a pagar e a receber e cupom térmico num sistema só, no computador e no celular."
-                />
-            </Head>
-            <LandingPage />
+            <Head title={seoTitle} />
+            <LandingPage faq={faq} />
         </>
     );
 }

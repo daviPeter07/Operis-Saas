@@ -4,10 +4,14 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from '@/components/ui/accordion';
-import { frequentlyAskedQuestions } from '../constants';
+import type { FrequentlyAskedQuestion } from '../constants';
 import { SectionHeading } from './section-heading';
 
-export function FaqSection() {
+type FaqSectionProps = {
+    questions: FrequentlyAskedQuestion[];
+};
+
+export function FaqSection({ questions }: FaqSectionProps) {
     return (
         <section
             id="duvidas"
@@ -24,7 +28,7 @@ export function FaqSection() {
                     collapsible
                     className="mx-auto mt-12 max-w-3xl border-t border-neutral-200"
                 >
-                    {frequentlyAskedQuestions.map(({ question, answer }) => (
+                    {questions.map(({ question, answer }) => (
                         <AccordionItem
                             key={question}
                             value={question}

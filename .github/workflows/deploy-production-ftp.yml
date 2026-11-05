@@ -61,6 +61,7 @@ jobs:
       - name: Build frontend
         env:
           VITE_APP_BASE_PATH: /operis
+          VITE_APP_NAME: Operis
         run: pnpm run build
 
       - name: Package release
