@@ -117,7 +117,7 @@ jobs:
           DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
           status=$(curl --silent --show-error --max-time 600 -o response.json -w '%{http_code}' \
-            -X POST -H "X-Deploy-Token: $DEPLOY_TOKEN" "$DEPLOY_URL")
+            -A 'OperisDeploy/1.0' --data-urlencode "token=$DEPLOY_TOKEN" "$DEPLOY_URL")
           sed 's/\\n/\n/g' response.json
           echo
           test "$status" = "200" || { echo "Deploy falhou: HTTP $status"; exit 1; }

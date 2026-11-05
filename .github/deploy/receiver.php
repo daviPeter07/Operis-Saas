@@ -114,7 +114,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     respond(405, false, 'Method not allowed');
 }
 
-$providedToken = (string) ($_SERVER['HTTP_X_DEPLOY_TOKEN'] ?? '');
+// Sent as a form field: the host's ModSecurity rejects body-less POST requests.
+$providedToken = (string) ($_POST['token'] ?? $_SERVER['HTTP_X_DEPLOY_TOKEN'] ?? '');
 
 if ($providedToken === '' || ! hash_equals(DEPLOY_TOKEN_SHA256, hash('sha256', $providedToken))) {
     respond(403, false, 'Forbidden');
