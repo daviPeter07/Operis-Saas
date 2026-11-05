@@ -1,2 +1,5 @@
+allowBuilds:
+  core-js: true
+  unrs-resolver: true
 publicHoistPattern:
   - '@inertiajs/core'
