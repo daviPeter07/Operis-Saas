@@ -89,12 +89,6 @@ return [
     */
     'updates' => [
         [
-            'date' => '2026-11-05',
-            'type' => 'correcao',
-            'title' => 'Acesso também sem o www',
-            'description' => 'O Operis agora abre normalmente pelo endereço dgcomputer.com.br/operis, sem precisar digitar o www.',
-        ],
-        [
             'date' => '2026-07-01',
             'type' => 'melhoria',
             'title' => 'Valor original das contas sempre visível',
