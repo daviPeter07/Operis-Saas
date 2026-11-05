@@ -7,7 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { withAppBasePath } from '@/constants/workspace';
 import { register } from '@/routes';
+import { store as loginStore } from '@/routes/login';
 import { request } from '@/routes/password';
 
 type Props = {
@@ -30,7 +32,7 @@ export default function LoginPageContent({
             )}
 
             <Form
-                action="/operis/login"
+                action={withAppBasePath(loginStore().url)}
                 method="post"
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-6"
