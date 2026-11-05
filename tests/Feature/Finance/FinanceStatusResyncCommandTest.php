@@ -83,7 +83,8 @@ test('finance resync command aligns receivables and payables status with sales a
 
     expect($receivable->fresh()->status)->toBe('received')
         ->and($receivable->fresh()->received_at)->not->toBeNull()
-        ->and($payable->fresh()->status)->toBe('pending')
-        ->and($payable->fresh()->paid_at)->toBeNull()
-        ->and($payable->fresh()->paid_method)->toBeNull();
+        // Payables of a pending purchase keep their own status: installments can be settled individually.
+        ->and($payable->fresh()->status)->toBe('paid')
+        ->and($payable->fresh()->paid_at)->not->toBeNull()
+        ->and($payable->fresh()->paid_method)->toBe('pix');
 });

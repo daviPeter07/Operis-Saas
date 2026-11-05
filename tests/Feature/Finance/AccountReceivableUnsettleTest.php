@@ -49,7 +49,7 @@ test('account receivable can be unsettled and reopen pending sale', function () 
         'status' => 'active',
     ]);
 
-    $saleId = $this->actingAs($user)->postJson('/operis/api/sales', [
+    $saleId = $this->actingAs($user)->postJson('/api/sales', [
         'customer_id' => $customer->id,
         'date' => now()->toDateString(),
         'payment_method' => 'crediario',
@@ -66,11 +66,11 @@ test('account receivable can be unsettled and reopen pending sale', function () 
         ->where('status', 'pending')
         ->firstOrFail();
 
-    $this->actingAs($user)->postJson("/operis/api/account-receivables/{$receivable->id}/settle", [
+    $this->actingAs($user)->postJson("/api/account-receivables/{$receivable->id}/settle", [
         'received_at' => now()->toDateString(),
     ])->assertOk();
 
-    $this->actingAs($user)->postJson("/operis/api/account-receivables/{$receivable->id}/unsettle")
+    $this->actingAs($user)->postJson("/api/account-receivables/{$receivable->id}/unsettle")
         ->assertOk();
 
     expect($receivable->fresh()->status)->toBe('pending')
