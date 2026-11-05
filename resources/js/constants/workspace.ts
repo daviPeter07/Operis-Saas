@@ -4,7 +4,8 @@ import type {
     WorkspaceRole,
 } from '@/types/workspace';
 
-const envBasePath = (import.meta.env.VITE_APP_BASE_PATH as string | undefined) ?? '/operis';
+const envBasePath =
+    (import.meta.env.VITE_APP_BASE_PATH as string | undefined) ?? '/operis';
 const normalizedBasePath = envBasePath
     ? `/${envBasePath.replace(/^\/+|\/+$/g, '')}`
     : '';
@@ -87,15 +88,15 @@ export const defaultWorkspaceNavigation: WorkspaceModule[] = [
         shortcut: '0',
     },
     {
-        key: 'team',
-        label: 'Equipe',
-        href: withAppBasePath('/dashboard/team'),
-        status: 'available',
-    },
-    {
         key: 'reports',
         label: 'Relatórios',
         href: withAppBasePath('/dashboard/reports'),
+        status: 'available',
+    },
+    {
+        key: 'team',
+        label: 'Equipe',
+        href: withAppBasePath('/dashboard/team'),
         status: 'available',
     },
     {

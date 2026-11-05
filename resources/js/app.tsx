@@ -28,7 +28,9 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        // Shown right away so navigation never feels unresponsive.
+        delay: 0,
+        color: '#f97316',
     },
 });
 

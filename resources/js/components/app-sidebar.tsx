@@ -12,6 +12,7 @@ import {
     Truck,
     Users,
     UsersRound,
+    Loader2,
     Warehouse,
 } from 'lucide-react';
 import * as React from 'react';
@@ -27,6 +28,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import {
     Tooltip,
@@ -55,7 +57,7 @@ const navMetaByModule: Record<
     },
     inventory: {
         icon: Warehouse,
-        description: 'Monitore estoque, entradas, saÃ­das e rupturas.',
+        description: 'Monitore estoque, entradas, saídas e rupturas.',
     },
     sales: {
         icon: TrendingUp,
@@ -63,7 +65,7 @@ const navMetaByModule: Record<
     },
     purchases: {
         icon: ShoppingCart,
-        description: 'Controle compras e acompanhe pedidos de reposiÃ§Ã£o.',
+        description: 'Controle compras e acompanhe pedidos de reposição.',
     },
     clients: {
         icon: Users,
@@ -72,15 +74,15 @@ const navMetaByModule: Record<
     },
     suppliers: {
         icon: Truck,
-        description: 'Organize fornecedores e histÃ³rico de abastecimento.',
+        description: 'Organize fornecedores e histórico de abastecimento.',
     },
     brands: {
         icon: Award,
-        description: 'Gerencie marcas vinculadas ao catÃ¡logo da operaÃ§Ã£o.',
+        description: 'Gerencie marcas vinculadas ao catálogo da operação.',
     },
     categories: {
         icon: Tags,
-        description: 'Agrupe produtos por categorias para facilitar a gestÃ£o.',
+        description: 'Agrupe produtos por categorias para facilitar a gestão.',
     },
     'accounts-receivable': {
         icon: CreditCard,
@@ -96,16 +98,44 @@ const navMetaByModule: Record<
     },
     reports: {
         icon: BarChart3,
-        description: 'Analise relatÃ³rios operacionais e financeiros.',
+        description: 'Analise relatórios operacionais e financeiros.',
     },
     settings: {
         icon: Settings,
-        description: 'Ajuste preferÃªncias e configuraÃ§Ãµes da empresa.',
+        description: 'Ajuste preferências e configurações da empresa.',
     },
 };
 
+/** Path of the page being loaded after a navigation click, so the item can show progress. */
+function usePendingNavigationPath(): string | null {
+    const [pendingPath, setPendingPath] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        // Links prefetch on hover; only real clicks should show the spinner.
+        const stopStart = router.on('start', (event) => {
+            if (!event.detail.visit.prefetch) {
+                setPendingPath(event.detail.visit.url.pathname);
+            }
+        });
+        const stopFinish = router.on('finish', (event) => {
+            if (!event.detail.visit.prefetch) {
+                setPendingPath(null);
+            }
+        });
+
+        return () => {
+            stopStart();
+            stopFinish();
+        };
+    }, []);
+
+    return pendingPath;
+}
+
 export function AppSidebar() {
     const { navigation } = useWorkspace();
+    const { isMobile, setOpenMobile } = useSidebar();
+    const pendingPath = usePendingNavigationPath();
 
     const navigationShortcuts = React.useMemo(() => {
         return new Map(
@@ -163,7 +193,7 @@ export function AppSidebar() {
     }, [navigationShortcuts]);
 
     const renderShortcutBadge = (shortcut?: string) => {
-        if (!shortcut) {
+        if (!shortcut || isMobile) {
             return null;
         }
 
@@ -203,8 +233,12 @@ export function AppSidebar() {
                                 return null;
                             }
 
+                            const isPending =
+                                pendingPath === navigationItem.href &&
+                                pendingPath !== location.pathname;
                             const isActive =
-                                navigationItem.href === location.pathname;
+                                navigationItem.href === location.pathname ||
+                                isPending;
                             const Icon = meta.icon;
 
                             return (
@@ -214,23 +248,35 @@ export function AppSidebar() {
                                             <Link
                                                 href={navigationItem.href}
                                                 prefetch
+                                                aria-busy={isPending}
+                                                onClick={() => {
+                                                    if (isMobile) {
+                                                        setOpenMobile(false);
+                                                    }
+                                                }}
                                                 className={`relative flex items-center gap-3 rounded-xl px-3 py-2 pr-9 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:pr-0 ${
                                                     isActive
                                                         ? 'bg-sidebar-accent text-accent shadow-[0_0_0_1px_hsl(var(--sidebar-border))]'
                                                         : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground hover:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)]'
                                                 } `}
                                             >
-                                                <Icon className="h-4 w-4 shrink-0" />
+                                                {isPending ? (
+                                                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                                                ) : (
+                                                    <Icon className="h-4 w-4 shrink-0" />
+                                                )}
                                                 <span className="truncate group-data-[collapsible=icon]:hidden">
                                                     {navigationItem.label}
                                                 </span>
-                                                {renderShortcutBadge(
-                                                    navigationItem.shortcut,
-                                                )}
+                                                {!isPending &&
+                                                    renderShortcutBadge(
+                                                        navigationItem.shortcut,
+                                                    )}
                                             </Link>
                                         </SidebarMenuItem>
                                     </TooltipTrigger>
                                     <TooltipContent
+                                        hidden={isMobile}
                                         side="right"
                                         align="center"
                                         className="max-w-64 rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 text-sidebar-foreground shadow-xl"
