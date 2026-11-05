@@ -9,6 +9,7 @@ export const landingLinks = {
 
 export const landingNavigation = [
     { label: 'Demonstração', href: '#demonstracao' },
+    { label: 'Atualizações', href: '#atualizacoes' },
     { label: 'Preço', href: '#preco' },
     { label: 'Dúvidas', href: '#duvidas' },
 ] as const;
@@ -32,6 +33,16 @@ export const promotionalPlan = {
 export type FrequentlyAskedQuestion = {
     question: string;
     answer: string;
+};
+
+/** "Últimas atualizações" entries come from config/landing.php (3 most recent). */
+export type LandingUpdateType = 'novidade' | 'melhoria' | 'correcao';
+
+export type LandingUpdate = {
+    date: string;
+    type: LandingUpdateType;
+    title: string;
+    description: string;
 };
 
 export function formatCurrency(value: number): string {

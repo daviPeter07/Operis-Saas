@@ -9,7 +9,10 @@ const formatWholeCurrency = (value: number): string =>
 /** Single pricing card, based on the middle card of Magic UI Pro "pricing-3". */
 export function PricingSection() {
     return (
-        <section id="preco" className="scroll-mt-16 bg-white py-20 sm:py-28">
+        <section
+            id="preco"
+            className="scroll-mt-16 border-t border-neutral-200 bg-white py-20 sm:py-28"
+        >
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
                 <SectionHeading
                     title="Um plano, o sistema inteiro"
