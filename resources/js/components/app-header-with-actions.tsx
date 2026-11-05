@@ -10,6 +10,8 @@ import {
     Sun,
     Moon,
 } from 'lucide-react';
+import { Fragment } from 'react';
+import type { ReactNode } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,20 +45,24 @@ export function AppHeaderWithActions({
     const { appearance, updateAppearance } = useAppearance();
     const handleAction = (actionKey: string) => {
         const routes: Record<string, string> = {
-                'create-client': withAppBasePath(
-                    '/dashboard/clients?action=create-client',
-                ),
-                'create-sale': withAppBasePath('/dashboard/sales?action=create-sale'),
-                'create-purchase': withAppBasePath(
-                    '/dashboard/purchases?action=create-purchase',
-                ),
-                'create-expense': withAppBasePath(
-                    '/dashboard/accounts-payable?action=create-expense',
-                ),
-                'create-brand': withAppBasePath('/dashboard/brands?action=create-brand'),
-                'create-category': withAppBasePath(
-                    '/dashboard/categories?action=create-category',
-                ),
+            'create-client': withAppBasePath(
+                '/dashboard/clients?action=create-client',
+            ),
+            'create-sale': withAppBasePath(
+                '/dashboard/sales?action=create-sale',
+            ),
+            'create-purchase': withAppBasePath(
+                '/dashboard/purchases?action=create-purchase',
+            ),
+            'create-expense': withAppBasePath(
+                '/dashboard/accounts-payable?action=create-expense',
+            ),
+            'create-brand': withAppBasePath(
+                '/dashboard/brands?action=create-brand',
+            ),
+            'create-category': withAppBasePath(
+                '/dashboard/categories?action=create-category',
+            ),
         };
 
         if (routes[actionKey]) {
@@ -88,8 +94,8 @@ export function AppHeaderWithActions({
                     <Moon className="h-4 w-4" />
                 )}
             </Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            <div className="hidden md:block">
+                <QuickActionsMenu onAction={handleAction} align="end">
                     <Button
                         size="sm"
                         className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
@@ -97,23 +103,62 @@ export function AppHeaderWithActions({
                         <Plus className="mr-2 h-4 w-4" />
                         Adicionar
                     </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                    {quickActions.map((action, index) => (
-                        <>
-                            <DropdownMenuItem
-                                key={action.key}
-                                className="cursor-pointer"
-                                onClick={() => handleAction(action.key)}
-                            >
-                                <action.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                                {action.label}
-                            </DropdownMenuItem>
-                            {index === 2 && <DropdownMenuSeparator />}
-                        </>
-                    ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                </QuickActionsMenu>
+            </div>
+
+            {/* Mobile: the same actions in a floating button at the bottom right. */}
+            <div className="fixed right-5 bottom-6 z-40 md:hidden">
+                <QuickActionsMenu
+                    onAction={handleAction}
+                    align="end"
+                    side="top"
+                >
+                    <Button
+                        size="icon"
+                        aria-label="Adicionar"
+                        className="size-14 rounded-full bg-black text-white shadow-lg shadow-black/30 hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
+                    >
+                        <Plus className="size-6" />
+                    </Button>
+                </QuickActionsMenu>
+            </div>
         </header>
+    );
+}
+
+function QuickActionsMenu({
+    children,
+    onAction,
+    align,
+    side = 'bottom',
+}: {
+    children: ReactNode;
+    onAction: (actionKey: string) => void;
+    align: 'start' | 'end';
+    side?: 'top' | 'bottom';
+}) {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+            <DropdownMenuContent
+                align={align}
+                side={side}
+                sideOffset={8}
+                className="w-52"
+            >
+                {quickActions.map((action, index) => (
+                    <Fragment key={action.key}>
+                        <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => onAction(action.key)}
+                        >
+                            <action.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {action.label}
+                        </DropdownMenuItem>
+                        {index === 2 && <DropdownMenuSeparator />}
+                    </Fragment>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }

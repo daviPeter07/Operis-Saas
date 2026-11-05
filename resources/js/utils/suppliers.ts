@@ -1,3 +1,4 @@
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import type { UiSupplier } from '@/types/dashboard-entities';
 import type { SupplierForm } from '@/types/dashboard-forms';
 
@@ -40,6 +41,6 @@ export function createSupplierRecord(data: UiSupplier): UiSupplier {
         city: String(data.city || '').trim(),
         state: String(data.state || '').trim(),
         address: String(data.address || '').trim(),
-        createdAt: new Date().toISOString().slice(0, 10),
+        createdAt: todayInAppTimeZone(),
     };
 }

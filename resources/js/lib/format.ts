@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PAYMENT_METHOD_LABELS } from '@/constants/payment-methods';
 import { STATUS_LABELS } from '@/constants/status';
+import { formatInstantInAppTimeZone } from '@/lib/app-timezone';
 
 export function formatDateBR(dateString: string): string {
     const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
@@ -91,25 +92,16 @@ export function formatDateTimeManaus(dateTimeString: string): string {
         const minutes = Number(dateTimeMatch[5]);
         const seconds = Number(dateTimeMatch[6] || '0');
 
-        // Create date in São Paulo timezone
-        const spDate = new Date(year, month - 1, day, hours, minutes, seconds);
-
-        // Convert to Manaus timezone (UTC-4, São Paulo is UTC-3, so Manaus is 1 hour behind)
-        const manausDate = new Date(spDate.getTime() - 60 * 60 * 1000);
-
-        return format(manausDate, 'dd/MM/yyyy HH:mm', { locale: ptBR });
+        // The API already sends Manaus wall-clock time (config app.business_timezone).
+        return format(
+            new Date(year, month - 1, day, hours, minutes, seconds),
+            'dd/MM/yyyy HH:mm',
+            { locale: ptBR },
+        );
     }
 
-    const parsed = new Date(dateTimeString);
-
-    if (Number.isNaN(parsed.getTime())) {
-        return dateTimeString;
-    }
-
-    // Convert to Manaus timezone
-    const manausDate = new Date(parsed.getTime() - 60 * 60 * 1000);
-
-    return format(manausDate, 'dd/MM/yyyy HH:mm', { locale: ptBR });
+    // Instants with an offset (e.g. "2026-11-06T01:30:00.000000Z") are converted to Manaus.
+    return formatInstantInAppTimeZone(dateTimeString) ?? dateTimeString;
 }
 
 export function formatCurrencyBR(value: number): string {

@@ -13,6 +13,7 @@ import { ProductDialog } from '@/features/dashboard/inventory/product-dialog';
 import { SupplierCreateDialog } from '@/features/dashboard/suppliers/supplier-create-dialog';
 import { useCreateBrand } from '@/hooks/use-brands';
 import { useCreateCategory } from '@/hooks/use-categories';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import type { UiPurchase } from '@/types/dashboard-entities';
 import type { UiProduct } from '@/types/dashboard-entities';
 import type {
@@ -21,10 +22,7 @@ import type {
 } from '@/types/dashboard-forms';
 import type { SalesLineItem } from '@/types/sales-dialog';
 import { computePurchaseTotals } from '@/utils/dashboard-financial';
-import {
-    applyFieldMask,
-    parseMaskedFieldValue,
-} from '@/utils/form-fields';
+import { applyFieldMask, parseMaskedFieldValue } from '@/utils/form-fields';
 import { PurchaseCheckoutPanel } from './purchase-checkout-panel';
 import { PurchaseConfirmationDialog } from './purchase-confirmation-dialog';
 
@@ -195,9 +193,8 @@ export function PurchaseCreateDialog({
         id: string;
         name: string;
     } | null>(null);
-    const [purchaseDate, setPurchaseDate] = React.useState(
-        new Date().toISOString().slice(0, 10),
-    );
+    const [purchaseDate, setPurchaseDate] =
+        React.useState(todayInAppTimeZone());
     const [calendarOpen, setCalendarOpen] = React.useState(false);
     const [paymentMethod, setPaymentMethod] = React.useState<
         'money' | 'pix' | 'card' | 'boleto'
@@ -254,14 +251,13 @@ export function PurchaseCreateDialog({
                     setPaymentMethod('pix');
                 }
             } else {
-                 
                 setProductSearch('');
                 setItems([]);
                 setIsScannerReady(false);
                 setSupplierSearch('');
                 setSelectedSupplierId('');
                 setCreatedSupplier(null);
-                setPurchaseDate(new Date().toISOString().slice(0, 10));
+                setPurchaseDate(todayInAppTimeZone());
                 setCalendarOpen(false);
                 setPaymentMethod('pix');
                 setCardType('debit');
@@ -303,7 +299,7 @@ export function PurchaseCreateDialog({
                       city: '',
                       state: '',
                       address: '',
-                      createdAt: new Date().toISOString().slice(0, 10),
+                      createdAt: todayInAppTimeZone(),
                   },
               ]
             : suppliers;
@@ -331,7 +327,7 @@ export function PurchaseCreateDialog({
                       city: '',
                       state: '',
                       address: '',
-                      createdAt: new Date().toISOString().slice(0, 10),
+                      createdAt: todayInAppTimeZone(),
                   }
                 : null) ??
             null,
@@ -661,7 +657,7 @@ export function PurchaseCreateDialog({
                         price: Number(data.sale_price || 0),
                         stock: Number(data.stock || 0),
                         minStock: Number(data.min_stock || 0),
-                        createdAt: new Date().toISOString().slice(0, 10),
+                        createdAt: todayInAppTimeZone(),
                     });
 
                     handleAddFromCatalog(created.id);

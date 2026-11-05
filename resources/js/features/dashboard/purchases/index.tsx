@@ -20,6 +20,7 @@ import {
     useUpdatePurchase,
 } from '@/hooks/use-purchases';
 import { useSuppliers } from '@/hooks/use-suppliers';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import {
     formatDateBR,
     formatCurrencyBR,
@@ -125,7 +126,7 @@ export function PurchasesModule() {
                 city: '',
                 state: '',
                 address: '',
-                createdAt: new Date().toISOString().slice(0, 10),
+                createdAt: todayInAppTimeZone(),
             })),
         [suppliers],
     );
@@ -143,7 +144,7 @@ export function PurchasesModule() {
                 cost: Number(product.cost ?? 0),
                 stock: Number(product.stock ?? 0),
                 minStock: Number(product.min_stock ?? 0),
-                createdAt: new Date().toISOString().slice(0, 10),
+                createdAt: todayInAppTimeZone(),
             })),
         [products],
     );
@@ -193,7 +194,9 @@ export function PurchasesModule() {
             );
             const totalInstallments =
                 relatedPayables[0]?.total_installments ??
-                (purchase.payment_method === 'boleto' ? relatedPayables.length : null);
+                (purchase.payment_method === 'boleto'
+                    ? relatedPayables.length
+                    : null);
 
             return {
                 id: String(purchase.id),
@@ -391,7 +394,7 @@ export function PurchasesModule() {
 
         return {
             supplier_id: supplierId,
-            date: purchase.createdAt || new Date().toISOString().slice(0, 10),
+            date: purchase.createdAt || todayInAppTimeZone(),
             due_date:
                 paymentMethod === 'boleto'
                     ? undefined
@@ -399,7 +402,7 @@ export function PurchasesModule() {
             payment_method: paymentMethod,
             boleto_term_days:
                 paymentMethod === 'boleto'
-                      ? (Number(purchase.boletoTermDays ?? 30) as
+                    ? (Number(purchase.boletoTermDays ?? 30) as
                           | 30
                           | 60
                           | 90
@@ -550,7 +553,7 @@ export function PurchasesModule() {
                                 createdAt:
                                     purchase.date ??
                                     purchase.createdAt?.slice(0, 10) ??
-                                    new Date().toISOString().slice(0, 10),
+                                    todayInAppTimeZone(),
                                 items: purchase.items?.length,
                             }}
                             initialItems={(purchase.items ?? []).map(

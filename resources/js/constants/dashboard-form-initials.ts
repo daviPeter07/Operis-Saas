@@ -1,10 +1,11 @@
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import type {
     ClientForm,
     FinancialEntryForm,
     SupplierForm,
 } from '@/types/dashboard-forms';
 
-const today = new Date().toISOString().slice(0, 10);
+const today = todayInAppTimeZone();
 
 export const initialPurchaseForm: FinancialEntryForm = {
     supplierName: '',

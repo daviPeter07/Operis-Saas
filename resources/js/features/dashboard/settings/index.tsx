@@ -75,7 +75,8 @@ export function SettingsModule() {
                                 <div
                                     className="flex h-14 w-14 items-center justify-center rounded-xl text-white"
                                     style={{
-                                        backgroundColor: currentCompany.primaryColor,
+                                        backgroundColor:
+                                            currentCompany.primaryColor,
                                     }}
                                 >
                                     <Building2 className="h-7 w-7" />
@@ -232,7 +233,7 @@ export function SettingsModule() {
                                         <Globe className="mr-1 inline h-3 w-3" />
                                         Fuso Horário
                                     </Label>
-                                    <Select defaultValue="America/Sao_Paulo">
+                                    <Select defaultValue="America/Manaus">
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>

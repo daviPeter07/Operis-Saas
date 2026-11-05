@@ -6,4 +6,6 @@ export interface Supplier {
     document: string | null;
     person_type: 'pf' | 'pj';
     status: 'active' | 'inactive';
+    /** Registration date ("YYYY-MM-DD HH:mm:ss"), used by the period filter. */
+    createdAt?: string | null;
 }

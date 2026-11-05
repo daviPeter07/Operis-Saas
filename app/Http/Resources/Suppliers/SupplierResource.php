@@ -22,7 +22,7 @@ class SupplierResource extends ApiResource
             'document' => $this->document,
             'person_type' => $this->person_type,
             'status' => $this->status,
-            'createdAt' => $this->created_at?->clone()->setTimezone('America/Sao_Paulo')->format('Y-m-d H:i:s'),
+            'createdAt' => $this->created_at?->clone()->setTimezone(config('app.business_timezone'))->format('Y-m-d H:i:s'),
         ];
     }
 }

@@ -82,7 +82,7 @@ class SaleService
 
                     foreach ($receivablesToSettle as $receivable) {
                         $this->receivableService->settle($receivable, $userId, [
-                            'received_at' => now()->toDateString(),
+                            'received_at' => now(config('app.business_timezone'))->toDateString(),
                         ]);
                     }
                 }
@@ -164,7 +164,7 @@ class SaleService
 
                     foreach ($receivablesToSettle as $receivable) {
                         $this->receivableService->settle($receivable, $userId, [
-                            'received_at' => now()->toDateString(),
+                            'received_at' => now(config('app.business_timezone'))->toDateString(),
                         ]);
                     }
                 }

@@ -13,6 +13,7 @@ import type { Column } from '../generic-table';
 import { CategoryEditDialog } from './category-edit-dialog';
 
 export type CategoryRow = {
+    createdAt?: string | null;
     id: string;
     name: string;
     status: 'active' | 'inactive';
@@ -66,12 +67,14 @@ export function CategoriesModule() {
         id: String(category.id),
         name: category.name,
         status: category.status,
+        createdAt: category.createdAt ?? null,
     }));
 
     return (
         <>
             <GenericTable
                 data={rows}
+                dateFilterKey="createdAt"
                 columns={columns}
                 title="Categorias"
                 loading={isCategoriesPending}

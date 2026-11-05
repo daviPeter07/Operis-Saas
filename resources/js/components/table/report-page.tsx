@@ -15,6 +15,7 @@ import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
 import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import { exportToExcelWithColumns, formatCurrency } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
 import { formatDateBR, translatePaymentMethod } from '@/lib/format';
@@ -520,7 +521,7 @@ export function ReportPage({ slug }: ReportPageProps) {
         }
 
         if (slug === 'inadimplencia') {
-            const today = new Date().toISOString().slice(0, 10);
+            const today = todayInAppTimeZone();
             const rows = receivables
                 .filter(
                     (item) =>
@@ -870,7 +871,6 @@ export function ReportPage({ slug }: ReportPageProps) {
                     )
                 }
             />
-
         </div>
     );
 }
