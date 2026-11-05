@@ -1,15 +1,16 @@
 import { Head } from '@inertiajs/react';
-import HomePageContent from '@/features/home/home-page-content';
+import LandingPage from '@/features/home/landing-page';
 
-type Props = {
-    message: string;
-};
-
-export default function Home({ message }: Props) {
+export default function Home() {
     return (
         <>
-            <Head title="Home" />
-            <HomePageContent message={message} />
+            <Head title="Sistema de gestão para lojas">
+                <meta
+                    name="description"
+                    content="Operis: vendas, crediário, estoque, contas a pagar e a receber e cupom térmico num sistema só, no computador e no celular."
+                />
+            </Head>
+            <LandingPage />
         </>
     );
 }
