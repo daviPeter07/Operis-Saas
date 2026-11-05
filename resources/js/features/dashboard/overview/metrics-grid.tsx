@@ -1,14 +1,24 @@
 import {
-    TrendingUp,
-    Receipt,
+    ArrowDownRight,
+    ArrowUpRight,
     CreditCard,
+    Minus,
+    Receipt,
     ShoppingCart,
+    TrendingUp,
     Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import type { PeriodComparison } from './period-range';
 
-interface Metric {
+export interface MetricTrend extends PeriodComparison {
+    /** e.g. "vs. mês passado" */
+    comparisonLabel: string;
+}
+
+export interface Metric {
     id: string;
     label: string;
     value: string;
@@ -16,6 +26,10 @@ interface Metric {
     color: string;
     iconBackground: string;
     iconRing: string;
+    /** Growth compared with the previous period (sales and profit). */
+    trend?: MetricTrend;
+    /** Short context line when a trend does not apply (e.g. overdue count). */
+    detail?: { text: string; tone: 'neutral' | 'warning' };
 }
 
 interface MetricsGridProps {
@@ -29,6 +43,46 @@ const iconMap: Record<string, LucideIcon> = {
     CreditCard,
     Wallet,
 };
+
+function formatPercent(percent: number): string {
+    const formatted = Math.abs(percent).toLocaleString('pt-BR', {
+        maximumFractionDigits: Math.abs(percent) < 10 ? 1 : 0,
+    });
+
+    return `${percent >= 0 ? '+' : '-'}${formatted}%`;
+}
+
+function TrendLine({ trend }: { trend: MetricTrend }) {
+    const Icon =
+        trend.direction === 'up'
+            ? ArrowUpRight
+            : trend.direction === 'down'
+              ? ArrowDownRight
+              : Minus;
+
+    return (
+        <p className="mt-2 flex flex-wrap items-center gap-x-1 text-[11px] leading-tight sm:text-xs">
+            <span
+                className={cn(
+                    'inline-flex items-center gap-0.5 font-semibold',
+                    trend.direction === 'up' &&
+                        'text-emerald-600 dark:text-emerald-400',
+                    trend.direction === 'down' &&
+                        'text-red-600 dark:text-red-400',
+                    trend.direction === 'flat' && 'text-muted-foreground',
+                )}
+            >
+                <Icon aria-hidden className="size-3.5" />
+                {trend.percent !== null
+                    ? formatPercent(trend.percent)
+                    : 'Sem variação'}
+            </span>
+            <span className="text-muted-foreground">
+                {trend.comparisonLabel}
+            </span>
+        </p>
+    );
+}
 
 export function MetricsGrid({ metrics }: MetricsGridProps) {
     return (
@@ -51,10 +105,25 @@ export function MetricsGrid({ metrics }: MetricsGridProps) {
                                     />
                                 </div>
                             </div>
-                            <div className="flex items-end justify-between gap-2 sm:gap-3">
+                            <div>
                                 <span className="text-lg leading-none font-bold text-foreground sm:text-xl">
                                     {metric.value}
                                 </span>
+                                {metric.trend && (
+                                    <TrendLine trend={metric.trend} />
+                                )}
+                                {!metric.trend && metric.detail && (
+                                    <p
+                                        className={cn(
+                                            'mt-2 text-[11px] leading-tight sm:text-xs',
+                                            metric.detail.tone === 'warning'
+                                                ? 'font-semibold text-red-600 dark:text-red-400'
+                                                : 'text-muted-foreground',
+                                        )}
+                                    >
+                                        {metric.detail.text}
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

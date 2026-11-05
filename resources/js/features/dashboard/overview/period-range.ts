@@ -37,7 +37,9 @@ export function normalizeDateString(value: unknown): string | null {
     return match ? match[1] : null;
 }
 
-export function getCurrentMonthRange(referenceDate: Date = new Date()): DateRange {
+export function getCurrentMonthRange(
+    referenceDate: Date = new Date(),
+): DateRange {
     const to = atStartOfDay(referenceDate);
     const from = new Date(to);
     from.setDate(1);
@@ -105,4 +107,138 @@ export function resolveDateRange(
     }
 
     return null;
+}
+
+function parseDate(value: string): Date {
+    const [year, month, day] = value.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
+}
+
+function daysBetween(from: string, to: string): number {
+    return Math.round(
+        (parseDate(to).getTime() - parseDate(from).getTime()) / 86_400_000,
+    );
+}
+
+/**
+ * The period right before `range`, used to say whether a KPI grew.
+ * Current month compares with the same days of last month; rolling and custom
+ * periods compare with the window of the same length just before them.
+ * Returns null when a comparison makes no sense (all time, next month).
+ */
+export function resolvePreviousRange(
+    period: Period,
+    range: DateRange | null,
+): DateRange | null {
+    if (!range || period === 'all' || period === 'next-month') {
+        return null;
+    }
+
+    if (period === 'current-month') {
+        const current = parseDate(range.to);
+        const lastDayOfPreviousMonth = new Date(
+            current.getFullYear(),
+            current.getMonth(),
+            0,
+        ).getDate();
+        const from = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+        const to = new Date(
+            current.getFullYear(),
+            current.getMonth() - 1,
+            Math.min(current.getDate(), lastDayOfPreviousMonth),
+        );
+
+        return { from: formatDate(from), to: formatDate(to) };
+    }
+
+    const length = daysBetween(range.from, range.to);
+    const to = parseDate(range.from);
+    to.setDate(to.getDate() - 1);
+    const from = new Date(to);
+    from.setDate(from.getDate() - length);
+
+    return { from: formatDate(from), to: formatDate(to) };
+}
+
+export interface PeriodComparison {
+    direction: 'up' | 'down' | 'flat';
+    /** Percent change, or null when the previous period was zero. */
+    percent: number | null;
+}
+
+export function comparePeriods(
+    current: number,
+    previous: number,
+): PeriodComparison {
+    if (previous === 0) {
+        return {
+            direction: current > 0 ? 'up' : current < 0 ? 'down' : 'flat',
+            percent: null,
+        };
+    }
+
+    const percent = ((current - previous) / Math.abs(previous)) * 100;
+
+    return {
+        direction:
+            Math.abs(percent) < 0.05 ? 'flat' : percent > 0 ? 'up' : 'down',
+        percent,
+    };
+}
+
+export interface SeriesBucket {
+    key: string;
+    label: string;
+}
+
+/**
+ * Buckets for the overview charts: one per day for ranges up to 62 days,
+ * otherwise one per month, always covering the whole range (empty days count as 0).
+ */
+export function buildSeriesBuckets(range: DateRange): SeriesBucket[] {
+    const buckets: SeriesBucket[] = [];
+
+    if (daysBetween(range.from, range.to) <= 61) {
+        const cursor = parseDate(range.from);
+        const end = parseDate(range.to);
+
+        while (cursor <= end) {
+            const key = formatDate(cursor);
+            buckets.push({
+                key,
+                label: `${key.slice(8, 10)}/${key.slice(5, 7)}`,
+            });
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
+        return buckets;
+    }
+
+    const cursor = parseDate(range.from);
+    cursor.setDate(1);
+    const end = parseDate(range.to);
+
+    while (cursor <= end) {
+        const key = formatDate(cursor).slice(0, 7);
+        buckets.push({ key, label: `${key.slice(5, 7)}/${key.slice(2, 4)}` });
+        cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return buckets;
+}
+
+/** Bucket key of a date (YYYY-MM-DD) for the given buckets (daily or monthly). */
+export function bucketKeyFor(date: string, buckets: SeriesBucket[]): string {
+    return buckets[0]?.key.length === 7 ? date.slice(0, 7) : date;
+}
+
+/** Human-readable range, e.g. "01/11/2026 a 05/11/2026". */
+export function formatRangeLabel(range: DateRange): string {
+    const toBr = (value: string) =>
+        `${value.slice(8, 10)}/${value.slice(5, 7)}/${value.slice(0, 4)}`;
+
+    return range.from === range.to
+        ? toBr(range.from)
+        : `${toBr(range.from)} a ${toBr(range.to)}`;
 }

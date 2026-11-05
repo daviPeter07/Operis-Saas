@@ -1,6 +1,15 @@
-import { DollarSign, ShoppingCart, Users, Package, Truck } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import {
+    ChevronRight,
+    DollarSign,
+    Package,
+    ShoppingCart,
+    Truck,
+    Users,
+} from 'lucide-react';
 import { EmptyState } from '@/components/table/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { withAppBasePath } from '@/constants/workspace';
 
 interface Activity {
     id: string;
@@ -22,6 +31,15 @@ const iconMap = {
     client: Users,
     product: Package,
     supplier: Truck,
+};
+
+/** Module each activity opens when clicked. */
+const hrefMap = {
+    sale: withAppBasePath('/dashboard/sales'),
+    purchase: withAppBasePath('/dashboard/purchases'),
+    client: withAppBasePath('/dashboard/clients'),
+    product: withAppBasePath('/dashboard/inventory'),
+    supplier: withAppBasePath('/dashboard/suppliers'),
 };
 
 const colorMap = {
@@ -91,9 +109,10 @@ export function RecentActivity({ activities, isPending }: RecentActivityProps) {
                     const colorClass = colorMap[activity.type];
 
                     return (
-                        <div
+                        <Link
                             key={activity.id}
-                            className="flex items-center gap-4 rounded-xl border border-border/70 px-4 py-4 transition-colors hover:bg-muted/30"
+                            href={hrefMap[activity.type]}
+                            className="group flex cursor-pointer items-center gap-4 rounded-xl border border-border/70 px-4 py-4 transition-colors outline-none hover:border-accent/50 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <div className={`rounded-lg p-2 ${colorClass}`}>
                                 <Icon className="h-4 w-4" />
@@ -103,7 +122,7 @@ export function RecentActivity({ activities, isPending }: RecentActivityProps) {
                                     <p className="truncate font-medium">
                                         {activity.description}
                                     </p>
-                                    <span className="truncate text-xs text-muted-foreground">
+                                    <span className="hidden truncate text-xs text-muted-foreground sm:inline">
                                         por {activity.responsible}
                                     </span>
                                 </div>
@@ -116,7 +135,11 @@ export function RecentActivity({ activities, isPending }: RecentActivityProps) {
                                     {activity.amount}
                                 </span>
                             )}
-                        </div>
+                            <ChevronRight
+                                aria-hidden
+                                className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
+                            />
+                        </Link>
                     );
                 })}
             </div>

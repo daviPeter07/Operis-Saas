@@ -1,272 +1,289 @@
-import { useState } from 'react';
+import { CalendarDays } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ChartPoint {
-    date: string;
+    key: string;
     label: string;
     value: number;
 }
 
-interface OverviewChart {
+export interface OverviewChart {
     id: 'vendas' | 'lucro';
     title: string;
     summary: string;
-    description: string;
     color: string;
     series: ChartPoint[];
 }
 
 interface ChartsPanelProps {
     charts: OverviewChart[];
+    /** Period chosen in the date filter, e.g. "Mês atual: 01/11/2026 a 05/11/2026". */
+    periodLabel: string;
 }
 
-export function ChartsPanel({ charts }: ChartsPanelProps) {
+/** Sales on top and profit below, on every screen size. */
+export function ChartsPanel({ charts, periodLabel }: ChartsPanelProps) {
     return (
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6">
             {charts.map((chart) => (
-                <LineChartCard key={chart.id} chart={chart} />
+                <LineChartCard
+                    key={chart.id}
+                    chart={chart}
+                    periodLabel={periodLabel}
+                />
             ))}
         </div>
     );
 }
 
-function LineChartCard({ chart }: { chart: OverviewChart }) {
-    const [hoveredPoint, setHoveredPoint] = useState<{
-        x: number;
-        y: number;
-        label: string;
-        value: number;
-        bandStart: number;
-        bandWidth: number;
-    } | null>(null);
-    const width = Math.max(720, chart.series.length * 72);
-    const height = 240;
-    const paddingX = 20;
-    const paddingTop = 12;
-    const paddingBottom = 24;
-    const gridLines = 4;
+const chartHeight = 240;
+const paddingX = 12;
+const paddingTop = 14;
+const paddingBottom = 10;
+
+/** Width of the drawing area, so the chart always fits without horizontal scroll. */
+function useContainerWidth() {
+    const ref = useRef<HTMLDivElement>(null);
+    const [width, setWidth] = useState(0);
+
+    useEffect(() => {
+        const element = ref.current;
+
+        if (!element) {
+            return;
+        }
+
+        const observer = new ResizeObserver(([entry]) =>
+            setWidth(Math.round(entry.contentRect.width)),
+        );
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, []);
+
+    return { ref, width };
+}
+
+function LineChartCard({
+    chart,
+    periodLabel,
+}: {
+    chart: OverviewChart;
+    periodLabel: string;
+}) {
+    const { ref, width } = useContainerWidth();
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
     const values = chart.series.map((point) => point.value);
-    const maxValue = Math.max(...values);
-    const minValue = Math.min(...values);
+    const maxValue = Math.max(0, ...values);
+    const minValue = Math.min(0, ...values);
     const range = Math.max(maxValue - minValue, 1);
+    const drawableWidth = Math.max(width - paddingX * 2, 1);
+    const drawableHeight = chartHeight - paddingTop - paddingBottom;
+    const step = drawableWidth / Math.max(chart.series.length - 1, 1);
 
-    const points = chart.series.map((point, index) => {
-        const x =
+    const points = chart.series.map((point, index) => ({
+        ...point,
+        x:
             paddingX +
-            (index * (width - paddingX * 2)) /
-                Math.max(chart.series.length - 1, 1);
-        const normalized = (point.value - minValue) / range;
-        const y =
-            height -
-            paddingBottom -
-            normalized * (height - paddingTop - paddingBottom);
+            (chart.series.length === 1 ? drawableWidth / 2 : index * step),
+        y:
+            paddingTop +
+            drawableHeight -
+            ((point.value - minValue) / range) * drawableHeight,
+    }));
 
-        return { ...point, x, y };
-    });
+    const linePath = points
+        .map(
+            (point, index) =>
+                `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`,
+        )
+        .join(' ');
+    const areaPath =
+        points.length > 1
+            ? `${linePath} L ${points[points.length - 1].x} ${paddingTop + drawableHeight} L ${points[0].x} ${paddingTop + drawableHeight} Z`
+            : '';
+    const gridLines = [0, 0.25, 0.5, 0.75, 1];
+    const hovered = hoveredIndex !== null ? points[hoveredIndex] : null;
+    const hasData = values.some((value) => value !== 0);
 
-    const hoverBands = points.map((point, index) => {
-        const previousX = points[index - 1]?.x ?? paddingX;
-        const nextX = points[index + 1]?.x ?? width - paddingX;
-        const bandStart = index === 0 ? paddingX : (previousX + point.x) / 2;
-        const bandEnd =
-            index === points.length - 1
-                ? width - paddingX
-                : (point.x + nextX) / 2;
-
-        return {
-            ...point,
-            bandStart,
-            bandWidth: bandEnd - bandStart,
-        };
-    });
-
-    const linePath = buildLinePath(points);
-    const axisValues = Array.from({ length: gridLines + 1 }).map((_, index) => {
-        const ratio = (gridLines - index) / gridLines;
-
-        return Math.round(minValue + range * ratio);
-    });
+    // Show at most ~6 x-axis labels on phones and ~10 on larger screens.
+    const maxLabels = width < 480 ? 5 : 10;
+    const labelEvery = Math.max(1, Math.ceil(points.length / maxLabels));
 
     return (
-        <div className="rounded-2xl border bg-card p-3 sm:p-6">
-            <div className="mb-4 flex items-start justify-between gap-2 sm:mb-6 sm:gap-4">
-                <div>
+        <div className="rounded-2xl border bg-card p-4 sm:p-6">
+            <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-foreground sm:text-base">
                         {chart.title}
                     </h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground sm:mt-1 sm:text-sm">
-                        {chart.description}
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
+                        <CalendarDays
+                            aria-hidden
+                            className="size-3.5 shrink-0"
+                        />
+                        {periodLabel}
                     </p>
                 </div>
-                <div className="text-right">
-                    <p className="text-lg font-bold text-foreground sm:text-2xl">
-                        {chart.summary}
-                    </p>
-                </div>
+                <p className="shrink-0 text-lg font-bold text-foreground sm:text-2xl">
+                    {chart.summary}
+                </p>
             </div>
 
-            <div className="relative pl-10 sm:pl-14">
-                <div className="pointer-events-none absolute top-2 left-0 flex h-[200px] w-9 flex-col justify-between text-left text-[10px] text-muted-foreground sm:h-[320px] sm:w-11 sm:text-[11px]">
-                    {axisValues.map((value, index) => (
-                        <span key={index}>{formatAxisValue(value)}</span>
+            <div className="flex gap-2 sm:gap-3">
+                <div
+                    aria-hidden
+                    className="flex w-12 shrink-0 flex-col justify-between py-1 text-right text-[10px] text-muted-foreground sm:w-16 sm:text-[11px]"
+                    style={{ height: chartHeight }}
+                >
+                    {gridLines.map((ratio) => (
+                        <span key={ratio}>
+                            {hasData
+                                ? formatAxisValue(maxValue - range * ratio)
+                                : ''}
+                        </span>
                     ))}
                 </div>
 
-                <div className="min-w-0 overflow-x-auto">
-                    <div style={{ minWidth: `${width}px` }}>
-                        <div className="relative">
-                            <svg
-                                viewBox={`0 0 ${width} ${height}`}
-                                className="h-[200px] w-full sm:h-[320px]"
-                                aria-hidden="true"
-                            >
-                                {Array.from({ length: gridLines + 1 }).map(
-                                    (_, index) => {
-                                        const y =
-                                            paddingTop +
-                                            (index *
-                                                (height -
-                                                    paddingTop -
-                                                    paddingBottom)) /
-                                                gridLines;
+                <div ref={ref} className="relative min-w-0 flex-1">
+                    {width > 0 && (
+                        <svg
+                            width={width}
+                            height={chartHeight}
+                            role="img"
+                            aria-label={`${chart.title}: ${chart.summary}`}
+                            onMouseLeave={() => setHoveredIndex(null)}
+                        >
+                            {gridLines.map((ratio) => (
+                                <line
+                                    key={ratio}
+                                    x1={paddingX}
+                                    x2={width - paddingX}
+                                    y1={paddingTop + drawableHeight * ratio}
+                                    y2={paddingTop + drawableHeight * ratio}
+                                    stroke="currentColor"
+                                    strokeDasharray="4 6"
+                                    className="text-border"
+                                />
+                            ))}
 
-                                        return (
-                                            <line
-                                                key={index}
-                                                x1={paddingX}
-                                                y1={y}
-                                                x2={width - paddingX}
-                                                y2={y}
-                                                stroke="currentColor"
-                                                strokeDasharray="4 6"
-                                                className="text-border/70"
-                                            />
-                                        );
-                                    },
-                                )}
-
-                                {hoveredPoint ? (
-                                    <rect
-                                        x={hoveredPoint.bandStart}
-                                        y={paddingTop}
-                                        width={hoveredPoint.bandWidth}
-                                        height={
-                                            height - paddingTop - paddingBottom
-                                        }
-                                        rx="14"
-                                        fill="currentColor"
-                                        className="text-orange-500/10"
-                                    />
-                                ) : null}
-
+                            {hasData && areaPath && (
+                                <path
+                                    d={areaPath}
+                                    fill={chart.color}
+                                    fillOpacity={0.1}
+                                />
+                            )}
+                            {hasData && (
                                 <path
                                     d={linePath}
                                     fill="none"
                                     stroke={chart.color}
-                                    strokeWidth="3"
+                                    strokeWidth={2.5}
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                 />
+                            )}
 
-                                {hoverBands.map((point) => (
-                                    <g key={point.date}>
-                                        <rect
-                                            x={point.bandStart}
-                                            y={paddingTop}
-                                            width={point.bandWidth}
-                                            height={
-                                                height -
-                                                paddingTop -
-                                                paddingBottom
-                                            }
-                                            fill="transparent"
-                                            onMouseEnter={() =>
-                                                setHoveredPoint({
-                                                    x: point.x,
-                                                    y: point.y,
-                                                    label: point.label,
-                                                    value: point.value,
-                                                    bandStart: point.bandStart,
-                                                    bandWidth: point.bandWidth,
-                                                })
-                                            }
-                                            onMouseLeave={() =>
-                                                setHoveredPoint(null)
-                                            }
-                                        />
-                                        <circle
-                                            cx={point.x}
-                                            cy={point.y}
-                                            r={
-                                                hoveredPoint?.label ===
-                                                point.label
-                                                    ? '5'
-                                                    : '3.5'
-                                            }
-                                            fill="transparent"
-                                        />
-                                        <circle
-                                            cx={point.x}
-                                            cy={point.y}
-                                            r={
-                                                hoveredPoint?.label ===
-                                                point.label
-                                                    ? '5'
-                                                    : '3.5'
-                                            }
-                                            fill={chart.color}
-                                            onMouseEnter={() =>
-                                                setHoveredPoint({
-                                                    x: point.x,
-                                                    y: point.y,
-                                                    label: point.label,
-                                                    value: point.value,
-                                                    bandStart: point.bandStart,
-                                                    bandWidth: point.bandWidth,
-                                                })
-                                            }
-                                            onMouseLeave={() =>
-                                                setHoveredPoint(null)
-                                            }
-                                        />
-                                    </g>
+                            {hovered && (
+                                <line
+                                    x1={hovered.x}
+                                    x2={hovered.x}
+                                    y1={paddingTop}
+                                    y2={paddingTop + drawableHeight}
+                                    stroke="currentColor"
+                                    className="text-muted-foreground/40"
+                                />
+                            )}
+                            {hasData &&
+                                points.map((point, index) => (
+                                    <circle
+                                        key={point.key}
+                                        cx={point.x}
+                                        cy={point.y}
+                                        r={hoveredIndex === index ? 5 : 3}
+                                        fill={chart.color}
+                                        opacity={
+                                            hoveredIndex === index ||
+                                            points.length <= 31
+                                                ? 1
+                                                : 0
+                                        }
+                                    />
                                 ))}
-                            </svg>
 
-                            {hoveredPoint ? (
-                                <div
-                                    className="pointer-events-none absolute rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-lg"
-                                    style={getTooltipStyle(
-                                        hoveredPoint,
-                                        width,
-                                        height,
-                                    )}
-                                >
-                                    <p className="font-semibold text-foreground">
-                                        {hoveredPoint.label}
-                                    </p>
-                                    <p className="mt-1 text-muted-foreground">
-                                        {formatCurrency(hoveredPoint.value)}
-                                    </p>
-                                </div>
-                            ) : null}
-                        </div>
+                            {/* Invisible columns that pick the nearest point (mouse and touch). */}
+                            {hasData &&
+                                points.map((point, index) => (
+                                    <rect
+                                        key={`hit-${point.key}`}
+                                        x={point.x - step / 2}
+                                        y={0}
+                                        width={Math.max(step, 8)}
+                                        height={chartHeight}
+                                        fill="transparent"
+                                        onMouseEnter={() =>
+                                            setHoveredIndex(index)
+                                        }
+                                        onTouchStart={() =>
+                                            setHoveredIndex(index)
+                                        }
+                                    />
+                                ))}
+                        </svg>
+                    )}
 
-                        <div
-                            className="mt-3 flex"
-                            style={{ width: `${width}px` }}
+                    {!hasData && width > 0 && (
+                        <p
+                            className="absolute inset-x-0 top-0 flex items-center justify-center text-center text-sm text-muted-foreground"
+                            style={{ height: chartHeight }}
                         >
-                            {chart.series.map((point) => (
+                            <span className="bg-card px-3">
+                                Nenhuma venda no período selecionado.
+                            </span>
+                        </p>
+                    )}
+
+                    {hovered && (
+                        <div
+                            className="pointer-events-none absolute rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-lg"
+                            style={{
+                                left: Math.min(
+                                    Math.max(hovered.x, 56),
+                                    width - 56,
+                                ),
+                                top: Math.max(hovered.y - 12, 0),
+                                transform: 'translate(-50%, -100%)',
+                            }}
+                        >
+                            <p className="font-semibold text-foreground">
+                                {hovered.label}
+                            </p>
+                            <p className="mt-0.5 text-muted-foreground">
+                                {formatCurrency(hovered.value)}
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="relative mt-2 h-4" aria-hidden>
+                        {points.map((point, index) =>
+                            index % labelEvery === 0 ||
+                            index === points.length - 1 ? (
                                 <span
-                                    key={point.date}
-                                    className="text-center text-xs whitespace-nowrap text-muted-foreground"
+                                    key={point.key}
+                                    className="absolute -translate-x-1/2 text-[10px] whitespace-nowrap text-muted-foreground sm:text-xs"
                                     style={{
-                                        width: `${width / chart.series.length}px`,
+                                        left: Math.min(
+                                            Math.max(point.x, 16),
+                                            width - 16,
+                                        ),
                                     }}
                                 >
                                     {point.label}
                                 </span>
-                            ))}
-                        </div>
+                            ) : null,
+                        )}
                     </div>
                 </div>
             </div>
@@ -278,7 +295,6 @@ function formatCurrency(value: number): string {
     return value.toLocaleString('pt-BR', {
         style: 'currency',
         currency: 'BRL',
-        maximumFractionDigits: 0,
     });
 }
 
@@ -286,39 +302,7 @@ function formatAxisValue(value: number): string {
     return value.toLocaleString('pt-BR', {
         style: 'currency',
         currency: 'BRL',
-        maximumFractionDigits: 0,
+        notation: 'compact',
+        maximumFractionDigits: 1,
     });
-}
-
-function getTooltipStyle(
-    hoveredPoint: {
-        x: number;
-        y: number;
-        bandStart: number;
-        bandWidth: number;
-    },
-    width: number,
-    height: number,
-): React.CSSProperties {
-    const centerX =
-        ((hoveredPoint.bandStart + hoveredPoint.bandWidth / 2) / width) * 100;
-    const placeBelow = hoveredPoint.y < 72;
-
-    return {
-        left: `${centerX}%`,
-        top: `${(hoveredPoint.y / height) * 100}%`,
-        transform: placeBelow
-            ? 'translate(-50%, 14px)'
-            : 'translate(-50%, -115%)',
-    };
-}
-
-function buildLinePath(points: Array<{ x: number; y: number }>): string {
-    if (points.length === 0) {
-        return '';
-    }
-
-    return points.reduce((path, point, index) => {
-        return `${path}${index === 0 ? 'M' : ' L'} ${point.x} ${point.y}`;
-    }, '');
 }
