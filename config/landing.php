@@ -81,6 +81,52 @@ return [
     ],
 
     /*
+    | "Últimas atualizações" section. The landing shows the 3 most recent
+    | entries (sorted by date). Write for the customer, not in commit language.
+    | type: novidade | melhoria | correcao
+    |
+    | @var list<array{date: string, type: string, title: string, description: string}>
+    */
+    'updates' => [
+        [
+            'date' => '2026-11-05',
+            'type' => 'correcao',
+            'title' => 'Acesso também sem o www',
+            'description' => 'O Operis agora abre normalmente pelo endereço dgcomputer.com.br/operis, sem precisar digitar o www.',
+        ],
+        [
+            'date' => '2026-07-01',
+            'type' => 'melhoria',
+            'title' => 'Valor original das contas sempre visível',
+            'description' => 'Contas pagas em partes mostram o valor total original, quanto já foi pago e quanto ainda falta.',
+        ],
+        [
+            'date' => '2026-06-03',
+            'type' => 'melhoria',
+            'title' => 'Escolha o período do painel',
+            'description' => 'Veja os números da visão geral do mês atual, do próximo mês, de todo o período ou de datas que você definir.',
+        ],
+        [
+            'date' => '2026-06-01',
+            'type' => 'novidade',
+            'title' => 'Cupom na impressora térmica',
+            'description' => 'Imprima o cupom da venda direto na impressora térmica do caixa, em papel de 58 ou 80 mm.',
+        ],
+        [
+            'date' => '2026-05-20',
+            'type' => 'novidade',
+            'title' => 'Compras no boleto parcelado',
+            'description' => 'Ao lançar uma compra no boleto, as parcelas e os vencimentos vão sozinhos para contas a pagar.',
+        ],
+        [
+            'date' => '2026-05-18',
+            'type' => 'novidade',
+            'title' => 'Relatórios com exportação',
+            'description' => 'Relatórios de vendas, estoque e inadimplência, com exportação para Excel e PDF.',
+        ],
+    ],
+
+    /*
     | @var list<array{question: string, answer: string}>
     */
     'faq' => [

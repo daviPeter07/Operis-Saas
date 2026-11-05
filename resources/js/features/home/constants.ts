@@ -34,6 +34,16 @@ export type FrequentlyAskedQuestion = {
     answer: string;
 };
 
+/** "Últimas atualizações" entries come from config/landing.php (3 most recent). */
+export type LandingUpdateType = 'novidade' | 'melhoria' | 'correcao';
+
+export type LandingUpdate = {
+    date: string;
+    type: LandingUpdateType;
+    title: string;
+    description: string;
+};
+
 export function formatCurrency(value: number): string {
     return value.toLocaleString('pt-BR', {
         style: 'currency',

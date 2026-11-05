@@ -6,14 +6,16 @@ import { HeroSection } from './components/hero-section';
 import { LandingFooter } from './components/landing-footer';
 import { LandingHeader } from './components/landing-header';
 import { PricingSection } from './components/pricing-section';
-import type { FrequentlyAskedQuestion } from './constants';
+import { UpdatesSection } from './components/updates-section';
+import type { FrequentlyAskedQuestion, LandingUpdate } from './constants';
 
-/** Public landing page. It is light-only: the user's dark theme does not apply here. */
 type LandingPageProps = {
     faq: FrequentlyAskedQuestion[];
+    updates: LandingUpdate[];
 };
 
-export default function LandingPage({ faq }: LandingPageProps) {
+/** Public landing page. It is light-only: the user's dark theme does not apply here. */
+export default function LandingPage({ faq, updates }: LandingPageProps) {
     useLayoutEffect(() => lockLightTheme(), []);
 
     return (
@@ -22,6 +24,7 @@ export default function LandingPage({ faq }: LandingPageProps) {
             <main className="flex-1">
                 <HeroSection />
                 <DemoSection />
+                <UpdatesSection updates={updates} />
                 <PricingSection />
                 <FaqSection questions={faq} />
             </main>
