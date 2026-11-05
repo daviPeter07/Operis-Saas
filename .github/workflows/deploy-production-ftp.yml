@@ -111,6 +111,14 @@ jobs:
           upload release.zip "${FTP_REPO_PATH%/}/storage/app/deploy/release.zip"
           upload _deploy.php "${FTP_WEB_PATH%/}/_deploy.php"
 
+          list() {
+            echo "--- FTP listing: /$1"
+            curl --silent --show-error --ssl-reqd --insecure --list-only \
+              --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$FTP_PORT/$1" || true
+          }
+          list ""
+          list "${FTP_WEB_PATH%/}/"
+
       - name: Run deploy on server
         env:
           DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
