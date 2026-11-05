@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -8,8 +9,13 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return Inertia::render('home');
+    return Inertia::render('home', [
+        'seoTitle' => config('landing.seo.title'),
+        'faq' => config('landing.faq'),
+    ]);
 })->name('home');
+
+Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::middleware(['auth'])->group(function (): void {
     Route::inertia('dashboard', 'dashboard/index')->name('dashboard');

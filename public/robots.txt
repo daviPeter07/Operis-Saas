@@ -1,2 +1,15 @@
+# Operis, o sistema de gestão da DG Computer
+# Buscadores só leem o robots.txt da raiz do domínio (https://www.dgcomputer.com.br/robots.txt).
+# Este arquivo documenta as regras do Operis; copie o conteúdo abaixo para a raiz do domínio.
+
 User-agent: *
-Disallow:
+Allow: /operis/$
+Allow: /operis/login
+Allow: /operis/register
+Allow: /operis/og-image.png
+Allow: /operis/llms.txt
+Disallow: /operis/dashboard
+Disallow: /operis/api/
+Disallow: /operis/_deploy.php
+
+Sitemap: https://www.dgcomputer.com.br/operis/sitemap.xml
