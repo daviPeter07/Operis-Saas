@@ -1,8 +1,17 @@
 import { Link } from '@inertiajs/react';
-import { BarChart3, CheckCircle2, LockKeyhole, UsersRound } from 'lucide-react';
+import {
+    ArrowLeft,
+    BarChart3,
+    CheckCircle2,
+    LockKeyhole,
+    UsersRound,
+} from 'lucide-react';
 import OperisLogoIcon from '@/components/operis-logo-icon';
-import { home } from '@/routes';
+import { withAppBasePath } from '@/constants/workspace';
 import type { AuthLayoutProps } from '@/types';
+
+/** Public landing page: /operis/ in production, / in local development. */
+const landingUrl = withAppBasePath('/');
 
 export default function AuthSplitLayout({
     children,
@@ -15,7 +24,7 @@ export default function AuthSplitLayout({
                 <aside className="hidden flex-col justify-between border-r border-zinc-800 bg-black p-8 lg:flex">
                     <div>
                         <Link
-                            href={home()}
+                            href={landingUrl}
                             className="inline-flex items-center gap-3 text-lg font-semibold text-white"
                         >
                             <div className="flex size-10 items-center justify-center rounded-lg bg-accent text-black">
@@ -65,15 +74,24 @@ export default function AuthSplitLayout({
                     </div>
 
                     <p className="text-xs text-zinc-500">
-                        © {new Date().getFullYear()} Operis. Todos os direitos reservados.
+                        © {new Date().getFullYear()} Operis. Todos os direitos
+                        reservados.
                     </p>
                 </aside>
 
                 <div className="flex items-center justify-center bg-zinc-950 p-6 sm:p-8 lg:p-10">
                     <div className="w-full max-w-sm">
+                        <Link
+                            href={landingUrl}
+                            className="mb-8 inline-flex items-center gap-2 rounded-md text-sm font-medium text-zinc-400 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-accent"
+                        >
+                            <ArrowLeft aria-hidden className="size-4" />
+                            Voltar ao início
+                        </Link>
+
                         <div className="mb-8 flex justify-center lg:hidden">
                             <Link
-                                href={home()}
+                                href={landingUrl}
                                 className="inline-flex items-center gap-3"
                             >
                                 <div className="flex size-11 items-center justify-center rounded-lg bg-accent text-black">
