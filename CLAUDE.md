@@ -56,6 +56,9 @@ Local development: `.env` holds the dev settings (`APP_URL=http://localhost:8000
 ### Public landing page & SEO
 `/` renders the landing (`resources/js/features/home/`) for guests and redirects signed-in users to the dashboard. SEO text, keywords, the FAQ and the "Últimas atualizações" entries (`updates`, the 3 newest are shown; write them for customers) live in `config/landing.php`; the FAQ is sent to the page as an Inertia prop and also printed as FAQPage JSON-LD by `resources/views/partials/landing-seo.blade.php`, so both always match. Meta/Open Graph tags are server-rendered (no SSR). `public/robots.txt`, `llms.txt`, `og-image.png` (source: `docs/brand/og-image.html`) and the favicons are copied to the web dir on deploy; crawlers only read robots.txt at the **domain root**.
 
+### Keeping "Últimas atualizações" current
+Whenever a change is significant for customers (a new feature, a noticeable improvement, or a fix they would notice), add an entry to `updates` in `config/landing.php` in the same change: `date` (YYYY-MM-DD of the change), `type` (`novidade` | `melhoria` | `correcao`), a short `title` and a one-sentence `description` written for the customer (no technical/commit language, no promises the code does not keep). Internal work (refactors, tests, deploy, tooling) does not go there. The landing shows the 3 newest automatically.
+
 ### Dev auth bypass
 `BypassAuth` (web middleware) auto-logs in the first user when `BYPASS_AUTH=true` in `.env`.
 

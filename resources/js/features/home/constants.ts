@@ -9,7 +9,6 @@ export const landingLinks = {
 
 export const landingNavigation = [
     { label: 'Demonstração', href: '#demonstracao' },
-    { label: 'Atualizações', href: '#atualizacoes' },
     { label: 'Preço', href: '#preco' },
     { label: 'Dúvidas', href: '#duvidas' },
 ] as const;
