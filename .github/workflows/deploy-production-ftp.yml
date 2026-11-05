@@ -1,4 +1,17 @@
-name: Deploy Production (FTP)
+name: Deploy Production
+
+# Builds a single release zip, uploads it over FTPS and triggers
+# .github/deploy/receiver.php on the server, which swaps the files and runs
+# migrations/caches (the cPanel host has no SSH).
+#
+# Required secrets (environment "production"):
+#   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, FTP_PORT (optional, default 21)
+#   FTP_REPO_PATH     FTP path of the Laravel app (e.g. repositories/Operis-Saas)
+#   FTP_WEB_PATH      FTP path of the public dir (e.g. public_html/dg/operis)
+#   DEPLOY_APP_PATH   absolute server path of the app (e.g. /home/<user>/repositories/Operis-Saas)
+#   DEPLOY_TOKEN      long random string shared with the receiver
+#   DEPLOY_URL        e.g. https://www.dgcomputer.com.br/operis/_deploy.php
+#   PROD_HEALTHCHECK_URL (optional) e.g. https://www.dgcomputer.com.br/operis/up
 
 on:
   push:
@@ -7,14 +20,17 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: production-deploy-ftp-main
-  cancel-in-progress: true
+  group: production-deploy
+  cancel-in-progress: false
 
 jobs:
-  validate:
-    name: Validate Build
+  deploy:
+    name: Build and deploy
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment: production
+    env:
+      PROD_HEALTHCHECK_URL: ${{ secrets.PROD_HEALTHCHECK_URL }}
 
     steps:
       - name: Checkout
@@ -23,7 +39,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: '8.4'
           tools: composer:v2
 
       - name: Setup Node
@@ -37,94 +53,78 @@ jobs:
           version: 10
 
       - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+        run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader --no-dev
 
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build frontend
+        env:
+          VITE_APP_BASE_PATH: /operis
         run: pnpm run build
 
-  deploy:
-    name: Deploy via FTP
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment: production
-    needs: validate
-    env:
-      PROD_HEALTHCHECK_URL: ${{ secrets.PROD_HEALTHCHECK_URL }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          tools: composer:v2
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Build deploy artifact
+      - name: Package release
         run: |
-          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
-          pnpm install --frozen-lockfile
-          pnpm run build
+          php_version_id=$(grep -oE 'PHP_VERSION_ID >= [0-9]+' vendor/composer/platform_check.php | grep -oE '[0-9]+$' || echo 0)
+          printf '{"commit":"%s","php_version_id":%s,"built_at":"%s"}\n' \
+            "$GITHUB_SHA" "$php_version_id" "$(date -u +%FT%TZ)" > release-meta.json
 
-      - name: Sync repository directory
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 21 }}
-          protocol: ftps
-          local-dir: ./
-          server-dir: ${{ secrets.FTP_REPO_PATH }}/
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*/**
-            **/.github/**
-            **/node_modules/**
-            **/tests/**
-            **/storage/**
-            **/.env
-            **/.env.*
-            **/public_html/**
+          zip -qr release.zip \
+            app bootstrap config database lang public resources/views routes vendor \
+            artisan composer.json composer.lock release-meta.json \
+            -x 'public/hot' 'public/build.zip' 'public/storage' 'bootstrap/cache/*.php'
 
-      - name: Sync public directory
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 21 }}
-          protocol: ftps
-          local-dir: ./public/
-          server-dir: ${{ secrets.FTP_WEB_PATH }}/
-          dangerous-clean-slate: false
-          exclude: |
-            **/index.php
+          # bootstrap/cache/packages.php and services.php must match the --no-dev install
+          for cached in bootstrap/cache/packages.php bootstrap/cache/services.php; do
+            if [ -f "$cached" ]; then zip -q release.zip "$cached"; fi
+          done
+          ls -lh release.zip
+
+      - name: Prepare receiver
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          DEPLOY_APP_PATH: ${{ secrets.DEPLOY_APP_PATH }}
+        run: |
+          test -n "$DEPLOY_TOKEN" || { echo "Secret DEPLOY_TOKEN ausente"; exit 1; }
+          test -n "$DEPLOY_APP_PATH" || { echo "Secret DEPLOY_APP_PATH ausente"; exit 1; }
+          token_hash=$(printf '%s' "$DEPLOY_TOKEN" | sha256sum | cut -d' ' -f1)
+          sed -e "s|__DEPLOY_TOKEN_SHA256__|$token_hash|" \
+              -e "s|__DEPLOY_APP_PATH__|$DEPLOY_APP_PATH|" \
+              .github/deploy/receiver.php > _deploy.php
+          php -l _deploy.php
+
+      - name: Upload over FTPS
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.FTP_PORT || '21' }}
+          FTP_REPO_PATH: ${{ secrets.FTP_REPO_PATH }}
+          FTP_WEB_PATH: ${{ secrets.FTP_WEB_PATH }}
+        run: |
+          upload() {
+            # --insecure: shared cPanel hosts often serve a certificate for another hostname
+            curl --fail --silent --show-error --ssl-reqd --insecure --ftp-create-dirs \
+              --retry 3 --user "$FTP_USERNAME:$FTP_PASSWORD" \
+              -T "$1" "ftp://$FTP_SERVER:$FTP_PORT/$2"
+          }
+          upload release.zip "${FTP_REPO_PATH%/}/storage/app/deploy/release.zip"
+          upload _deploy.php "${FTP_WEB_PATH%/}/_deploy.php"
+
+      - name: Run deploy on server
+        env:
+          DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          status=$(curl --silent --show-error --max-time 600 -o response.json -w '%{http_code}' \
+            -X POST -H "X-Deploy-Token: $DEPLOY_TOKEN" "$DEPLOY_URL")
+          sed 's/\\n/\n/g' response.json
+          echo
+          test "$status" = "200" || { echo "Deploy falhou: HTTP $status"; exit 1; }
 
       - name: Healthcheck
         if: ${{ env.PROD_HEALTHCHECK_URL != '' }}
         run: |
           code=$(curl -k -L -s -o /dev/null -w '%{http_code}' "$PROD_HEALTHCHECK_URL")
-          case "$code" in
-            200|204|301|302|401|403)
-              echo "Healthcheck OK: HTTP $code"
-              ;;
-            *)
-              echo "Healthcheck failed: HTTP $code"
-              exit 1
-              ;;
-          esac
+          echo "Healthcheck: HTTP $code"
+          test "$code" = "200"
