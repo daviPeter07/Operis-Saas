@@ -41,12 +41,19 @@ const isDarkMode = (appearance: Appearance): boolean => {
     return appearance === 'dark' || (appearance === 'system' && prefersDark());
 };
 
+/**
+ * Pages such as the public landing page are light-only. The lock is set on
+ * <html data-theme-lock="light"> (server-side for the first load, see app.blade.php).
+ */
+const isLightThemeLocked = (): boolean =>
+    document.documentElement.dataset.themeLock === 'light';
+
 const applyTheme = (appearance: Appearance): void => {
     if (typeof document === 'undefined') {
         return;
     }
 
-    const isDark = isDarkMode(appearance);
+    const isDark = !isLightThemeLocked() && isDarkMode(appearance);
 
     document.documentElement.classList.toggle('dark', isDark);
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
@@ -85,6 +92,20 @@ export function initializeTheme(): void {
 
     // Set up system theme change listener
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+}
+
+/**
+ * Forces the light theme while the calling page is mounted and restores the
+ * user's appearance afterwards. Returns the cleanup function.
+ */
+export function lockLightTheme(): () => void {
+    document.documentElement.dataset.themeLock = 'light';
+    applyTheme(currentAppearance);
+
+    return () => {
+        delete document.documentElement.dataset.themeLock;
+        applyTheme(currentAppearance);
+    };
 }
 
 export function useAppearance(): UseAppearanceReturn {

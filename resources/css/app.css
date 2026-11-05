@@ -12,6 +12,13 @@
         'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
+    /* Public landing page (DG Computer brand) */
+    --font-display:
+        'Bricolage Grotesque', 'Poppins', ui-sans-serif, system-ui, sans-serif;
+    --color-dg-orange: #f69323;
+    --color-dg-ink: #2b2b2b;
+    --color-dg-paper: #f6f5f3;
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);

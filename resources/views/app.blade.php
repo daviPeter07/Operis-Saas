@@ -1,5 +1,6 @@
+@php($isLightOnlyPage = ($page['component'] ?? null) === 'home')
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ! $isLightOnlyPage && ($appearance ?? 'system') == 'dark']) @if ($isLightOnlyPage) data-theme-lock="light" @endif>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +10,7 @@
             (function() {
                 const appearance = '{{ $appearance ?? "system" }}';
 
-                if (appearance === 'system') {
+                if (appearance === 'system' && document.documentElement.dataset.themeLock !== 'light') {
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
                     if (prefersDark) {
@@ -36,6 +37,9 @@
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700" rel="stylesheet" />
+        @if ($isLightOnlyPage)
+            <link href="https://fonts.bunny.net/css?family=bricolage-grotesque:600,700,800" rel="stylesheet" />
+        @endif
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
