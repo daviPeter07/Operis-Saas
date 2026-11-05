@@ -28,6 +28,7 @@ import {
     usePartialSettleAccountReceivable,
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { GenericTable } from '../generic-table';
@@ -140,7 +141,8 @@ export function AccountsReceivableModule() {
             total_amount: receivable.total_amount ?? receivable.amount,
             amount: receivable.amount,
             amount_paid: receivable.amount_paid ?? 0,
-            remaining_balance: receivable.remaining_balance ?? receivable.amount,
+            remaining_balance:
+                receivable.remaining_balance ?? receivable.amount,
             item_quantity: receivable.item_quantity ?? null,
             due_date: receivable.due_date,
             entry_date: receivable.entry_date,
@@ -196,7 +198,7 @@ export function AccountsReceivableModule() {
             ids.map((id) =>
                 settleAccountReceivable.mutateAsync({
                     id,
-                    received_at: new Date().toISOString().slice(0, 10),
+                    received_at: todayInAppTimeZone(),
                 }),
             ),
         ).then((results) => {
@@ -296,13 +298,16 @@ export function AccountsReceivableModule() {
         ? Math.max(0, selectedSingleRow.remaining_balance - partialAmountNumber)
         : 0;
 
-    const handleFilteredDataChange = useCallback((nextRows: ReceivableRow[]) => {
-        setFilteredRows((previous) =>
-            hasSameReceivableMetricsRows(previous, nextRows)
-                ? previous
-                : nextRows,
-        );
-    }, []);
+    const handleFilteredDataChange = useCallback(
+        (nextRows: ReceivableRow[]) => {
+            setFilteredRows((previous) =>
+                hasSameReceivableMetricsRows(previous, nextRows)
+                    ? previous
+                    : nextRows,
+            );
+        },
+        [],
+    );
 
     const metrics = useMemo(() => {
         const baseRows = filteredRows;
@@ -433,12 +438,13 @@ export function AccountsReceivableModule() {
                         <p className="text-sm text-muted-foreground">
                             Total: {formatCurrencyBR(displayTotalValue)}
                         </p>
-                        {!isProcessingReceiptAction && selectedAction === null && (
-                            <p className="text-sm text-amber-600">
-                                Selecione apenas títulos com o mesmo status para
-                                aplicar a ação.
-                            </p>
-                        )}
+                        {!isProcessingReceiptAction &&
+                            selectedAction === null && (
+                                <p className="text-sm text-amber-600">
+                                    Selecione apenas títulos com o mesmo status
+                                    para aplicar a ação.
+                                </p>
+                            )}
                     </div>
                     {(selectedAction === 'pending' ||
                         selectedAction === 'partial' ||
@@ -447,7 +453,10 @@ export function AccountsReceivableModule() {
                             <Button
                                 variant="outline"
                                 onClick={() => {
-                                    if (selectedPendingOrPartialRows.length !== 1) {
+                                    if (
+                                        selectedPendingOrPartialRows.length !==
+                                        1
+                                    ) {
                                         toast.error(
                                             'Selecione exatamente 1 titulo para baixa parcial.',
                                         );
@@ -466,13 +475,13 @@ export function AccountsReceivableModule() {
                                 Receber percentual
                             </Button>
                             <button
-                            onClick={() => void handleConfirmReceipt()}
-                            disabled={isProcessingReceiptAction}
-                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {isProcessingReceiptAction
-                                ? 'Processando...'
-                                : 'Marcar como Recebida'}
+                                onClick={() => void handleConfirmReceipt()}
+                                disabled={isProcessingReceiptAction}
+                                className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isProcessingReceiptAction
+                                    ? 'Processando...'
+                                    : 'Marcar como Recebida'}
                             </button>
                         </div>
                     )}
@@ -541,7 +550,7 @@ export function AccountsReceivableModule() {
                             city: '',
                             state: '',
                             address: '',
-                            createdAt: new Date().toISOString().slice(0, 10),
+                            createdAt: todayInAppTimeZone(),
                             creditEnabled: customer.credit_enabled,
                             creditLimit: Number(customer.credit_limit ?? 0),
                             creditTermDays: Number(
@@ -566,9 +575,7 @@ export function AccountsReceivableModule() {
                             item: row.item ?? '',
                             description: row.description,
                             amount: row.total_amount,
-                            entry_date:
-                                row.entry_date ??
-                                new Date().toISOString().slice(0, 10),
+                            entry_date: row.entry_date ?? todayInAppTimeZone(),
                         }}
                         customers={customers.map((customer) => ({
                             id: String(customer.id),
@@ -579,7 +586,7 @@ export function AccountsReceivableModule() {
                             city: '',
                             state: '',
                             address: '',
-                            createdAt: new Date().toISOString().slice(0, 10),
+                            createdAt: todayInAppTimeZone(),
                             creditEnabled: customer.credit_enabled,
                             creditLimit: Number(customer.credit_limit ?? 0),
                             creditTermDays: Number(
@@ -615,20 +622,34 @@ export function AccountsReceivableModule() {
                         <div className="space-y-3 text-sm">
                             <div className="grid grid-cols-2 gap-2">
                                 <p className="text-muted-foreground">Cliente</p>
-                                <p className="font-medium">{selectedSingleRow.customer_name}</p>
+                                <p className="font-medium">
+                                    {selectedSingleRow.customer_name}
+                                </p>
                                 <p className="text-muted-foreground">Produto</p>
-                                <p className="font-medium">{selectedSingleRow.item ?? '-'}</p>
-                                <p className="text-muted-foreground">Quantidade</p>
+                                <p className="font-medium">
+                                    {selectedSingleRow.item ?? '-'}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Quantidade
+                                </p>
                                 <p className="font-medium">
                                     {selectedSingleRow.item_quantity ?? '-'}
                                 </p>
-                                <p className="text-muted-foreground">Valor total</p>
-                                <p className="font-medium">
-                                    {formatCurrencyBR(selectedSingleRow.total_amount)}
+                                <p className="text-muted-foreground">
+                                    Valor total
                                 </p>
-                                <p className="text-muted-foreground">Saldo restante</p>
                                 <p className="font-medium">
-                                    {formatCurrencyBR(selectedSingleRow.remaining_balance)}
+                                    {formatCurrencyBR(
+                                        selectedSingleRow.total_amount,
+                                    )}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Saldo restante
+                                </p>
+                                <p className="font-medium">
+                                    {formatCurrencyBR(
+                                        selectedSingleRow.remaining_balance,
+                                    )}
                                 </p>
                             </div>
                             <div className="space-y-2">
@@ -669,21 +690,30 @@ export function AccountsReceivableModule() {
                         <Button
                             onClick={() => {
                                 if (!selectedSingleRow) {
-                                    toast.error('Selecione exatamente 1 titulo.');
+                                    toast.error(
+                                        'Selecione exatamente 1 titulo.',
+                                    );
 
                                     return;
                                 }
 
-                                const amount = parseCurrencyInput(partialAmountInput);
+                                const amount =
+                                    parseCurrencyInput(partialAmountInput);
 
                                 if (amount <= 0) {
-                                    toast.error('Informe um valor valido para receber.');
+                                    toast.error(
+                                        'Informe um valor valido para receber.',
+                                    );
 
                                     return;
                                 }
 
-                                if (amount > selectedSingleRow.remaining_balance) {
-                                    toast.error('Valor acima do saldo restante da parcela.');
+                                if (
+                                    amount > selectedSingleRow.remaining_balance
+                                ) {
+                                    toast.error(
+                                        'Valor acima do saldo restante da parcela.',
+                                    );
 
                                     return;
                                 }
@@ -697,7 +727,9 @@ export function AccountsReceivableModule() {
                                             .slice(0, 10),
                                     })
                                     .then(() => {
-                                        toast.success('Baixa parcial aplicada com sucesso.');
+                                        toast.success(
+                                            'Baixa parcial aplicada com sucesso.',
+                                        );
                                         setSelectedIds(new Set());
                                         setIsPartialDialogOpen(false);
                                     });

@@ -30,8 +30,8 @@ class PayableService
             // Determine number of installments based on boleto term days (30 days per installment)
             $termDays = $purchase->boleto_term_days ?? 60; // default 60 days → 2 installments
             $installments = (int) ceil($termDays / 30);
-            // Parse the stored date as a local date in America/Sao_Paulo without shifting the day
-            $baseDate = Carbon::parse((string) $purchase->date, 'America/Sao_Paulo')->startOfDay();
+            // Parse the stored date as a local date in the business timezone (Manaus) without shifting the day
+            $baseDate = Carbon::parse((string) $purchase->date, config('app.business_timezone'))->startOfDay();
             $totalCents = (int) round((float) $purchase->total * 100);
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;
@@ -101,7 +101,7 @@ class PayableService
             $baseInstallmentCents = intdiv($totalCents, $installments);
             $remainderCents = $totalCents % $installments;
 
-            $baseDateObj = Carbon::parse($entryDate, 'America/Sao_Paulo')->startOfDay();
+            $baseDateObj = Carbon::parse($entryDate, config('app.business_timezone'))->startOfDay();
 
             for ($index = 1; $index <= $installments; $index++) {
                 $currentCents = $baseInstallmentCents + ($index <= $remainderCents ? 1 : 0);

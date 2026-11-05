@@ -30,6 +30,7 @@ import {
     useSales,
     useUpdateSale,
 } from '@/hooks/use-sales';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import {
     formatCurrencyBR,
     formatDateBR,
@@ -235,7 +236,7 @@ export function SalesModule() {
                             (sum, receivable) => sum + receivable.amount,
                             0,
                         ),
-                createdAt: new Date().toISOString().slice(0, 10),
+                createdAt: todayInAppTimeZone(),
             })),
         [customers, receivables],
     );
@@ -253,7 +254,7 @@ export function SalesModule() {
                 cost: Number(product.cost ?? 0),
                 stock: Number(product.stock ?? 0),
                 minStock: Number(product.min_stock ?? 0),
-                createdAt: new Date().toISOString().slice(0, 10),
+                createdAt: todayInAppTimeZone(),
             })),
         [products],
     );
@@ -496,7 +497,9 @@ export function SalesModule() {
             first_installment_date: useInstallments
                 ? sale.firstInstallmentDate
                 : undefined,
-            installment_value: useInstallments ? sale.installmentValue : undefined,
+            installment_value: useInstallments
+                ? sale.installmentValue
+                : undefined,
             crediario_entry:
                 sale.paymentMethod === 'crediario'
                     ? Number(sale.crediarioEntry ?? 0)
@@ -513,7 +516,10 @@ export function SalesModule() {
             await createSale.mutateAsync(payload);
             toast.success('Venda criada com sucesso.');
         } catch (error) {
-            if (!options.allowNegativeStock && isStockInsufficientError(error)) {
+            if (
+                !options.allowNegativeStock &&
+                isStockInsufficientError(error)
+            ) {
                 setPendingSaleAction({ mode: 'create', payload });
                 setStockWarningMessage(
                     resolveErrorMessage(
@@ -555,7 +561,7 @@ export function SalesModule() {
             cost: Number(createdProduct.cost ?? 0),
             stock: Number(createdProduct.stock ?? 0),
             minStock: Number(createdProduct.min_stock ?? 0),
-            createdAt: new Date().toISOString().slice(0, 10),
+            createdAt: todayInAppTimeZone(),
         };
 
         setDialogProducts((previous) => [mappedProduct, ...previous]);
@@ -693,8 +699,8 @@ export function SalesModule() {
                                     if (
                                         error &&
                                         typeof error === 'object' &&
-                                        (error as { message?: string }).message ===
-                                            '__stock_warning__'
+                                        (error as { message?: string })
+                                            .message === '__stock_warning__'
                                     ) {
                                         return;
                                     }
@@ -792,36 +798,35 @@ export function SalesModule() {
                         const useInstallments = isCrediario || isCardCredit;
 
                         const payload: SaleMutationPayload = {
-                                customer_id: customerId,
-                                date: sale.createdAt || todayString(),
-                                payment_method: paymentMethod as
-                                    | 'cash'
-                                    | 'pix'
-                                    | 'card_debit'
-                                    | 'card_credit'
-                                    | 'crediario',
-                                status:
-                                    sale.status === 'completed'
-                                        ? 'completed'
-                                        : 'pending',
-                                installments: useInstallments
-                                    ? sale.installments
-                                    : undefined,
-                                first_installment_date: useInstallments
-                                    ? sale.firstInstallmentDate
-                                    : undefined,
-                                installment_value: useInstallments
-                                    ? sale.installmentValue
-                                    : undefined,
-                                crediario_entry: isCrediario
-                                    ? Number(sale.crediarioEntry ?? 0)
-                                    : undefined,
-                                allow_negative_stock: undefined,
-                                items,
-                            };
+                            customer_id: customerId,
+                            date: sale.createdAt || todayString(),
+                            payment_method: paymentMethod as
+                                | 'cash'
+                                | 'pix'
+                                | 'card_debit'
+                                | 'card_credit'
+                                | 'crediario',
+                            status:
+                                sale.status === 'completed'
+                                    ? 'completed'
+                                    : 'pending',
+                            installments: useInstallments
+                                ? sale.installments
+                                : undefined,
+                            first_installment_date: useInstallments
+                                ? sale.firstInstallmentDate
+                                : undefined,
+                            installment_value: useInstallments
+                                ? sale.installmentValue
+                                : undefined,
+                            crediario_entry: isCrediario
+                                ? Number(sale.crediarioEntry ?? 0)
+                                : undefined,
+                            allow_negative_stock: undefined,
+                            items,
+                        };
 
                         try {
-
                             await updateSale.mutateAsync({
                                 id: Number(editSale.id),
                                 data: payload,
@@ -888,7 +893,9 @@ export function SalesModule() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Estoque negativo</DialogTitle>
-                        <DialogDescription>{stockWarningMessage}</DialogDescription>
+                        <DialogDescription>
+                            {stockWarningMessage}
+                        </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                         <Button

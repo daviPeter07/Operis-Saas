@@ -36,6 +36,7 @@ import {
     resolveDateRange,
 } from '@/features/dashboard/overview/period-range';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
+import { nowInAppTimeZone } from '@/lib/app-timezone';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
 import { cn } from '@/lib/utils';
@@ -253,7 +254,11 @@ export function GenericTable<T extends { id: string }>({
         }
 
         if (dateFilterKey && period !== 'all') {
-            const range = resolveDateRange(period, customRange);
+            const range = resolveDateRange(
+                period,
+                customRange,
+                nowInAppTimeZone(),
+            );
 
             if (range) {
                 result = result.filter((item) => {

@@ -71,6 +71,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Business Timezone
+    |--------------------------------------------------------------------------
+    |
+    | The business operates in Manaus (Amazonas). Timestamps are stored in UTC
+    | (see "timezone" above); dates and times shown to users, "today" and due
+    | date calculations use this zone. Fixed on purpose: it does not come from
+    | the environment. Keep in sync with resources/js/lib/app-timezone.ts.
+    |
+    */
+
+    'business_timezone' => 'America/Manaus',
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

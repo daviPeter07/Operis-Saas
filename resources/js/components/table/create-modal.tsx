@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import { cn } from '@/lib/utils';
 import {
     applyFieldMask,
@@ -167,7 +168,7 @@ export function CreateModal<T extends Record<string, unknown>>({
     };
 
     const buildDefaultFormData = React.useCallback(() => {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = todayInAppTimeZone();
         const defaults: Record<string, unknown> = {};
 
         fields.forEach((field) => {
@@ -371,7 +372,8 @@ export function CreateModal<T extends Record<string, unknown>>({
         const value = String(formData[field.name] ?? '');
         const resolvedLabel = getFieldLabel(field);
         const barcodeField = isBarcodeField(field.name, resolvedLabel);
-        const codeField = !barcodeField && isCodeField(field.name, resolvedLabel);
+        const codeField =
+            !barcodeField && isCodeField(field.name, resolvedLabel);
 
         if (field.searchable) {
             return (
@@ -592,7 +594,9 @@ export function CreateModal<T extends Record<string, unknown>>({
                                         {renderFieldControl(field)}
                                         {errors[field.name]?.message ? (
                                             <p className="text-xs text-destructive">
-                                                {String(errors[field.name]?.message)}
+                                                {String(
+                                                    errors[field.name]?.message,
+                                                )}
                                             </p>
                                         ) : null}
                                     </div>

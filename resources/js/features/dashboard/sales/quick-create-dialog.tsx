@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import { cn } from '@/lib/utils';
 import type {
     QuickCreateField,
@@ -44,7 +45,7 @@ interface QuickCreateDialogProps<TResult> {
 }
 
 function todayString(): string {
-    return new Date().toISOString().slice(0, 10);
+    return todayInAppTimeZone();
 }
 
 function defaultValuesForFields(

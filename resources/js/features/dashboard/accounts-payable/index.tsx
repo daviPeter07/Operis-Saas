@@ -28,6 +28,7 @@ import {
     usePartialSettleAccountPayable,
 } from '@/hooks/use-account-payables';
 import { useSuppliers } from '@/hooks/use-suppliers';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { UiSupplier } from '@/types/dashboard-entities';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
@@ -123,12 +124,15 @@ export function AccountsPayableModule() {
                 city: '',
                 state: '',
                 address: '',
-                createdAt: new Date().toISOString().slice(0, 10),
+                createdAt: todayInAppTimeZone(),
             })),
         [suppliers],
     );
 
-    const dialogSupplierOptions = useMemo(() => mappedSuppliers, [mappedSuppliers]);
+    const dialogSupplierOptions = useMemo(
+        () => mappedSuppliers,
+        [mappedSuppliers],
+    );
 
     const supplierNameById = useMemo(
         () =>
@@ -215,7 +219,7 @@ export function AccountsPayableModule() {
             ids.map((id) =>
                 settleAccountPayable.mutateAsync({
                     id,
-                    paid_at: new Date().toISOString().slice(0, 10),
+                    paid_at: todayInAppTimeZone(),
                     paid_method: 'pix',
                 }),
             ),
@@ -444,12 +448,13 @@ export function AccountsPayableModule() {
                         <p className="text-sm text-muted-foreground">
                             Total: {formatCurrencyBR(displayTotalValue)}
                         </p>
-                        {!isProcessingPayableAction && selectedAction === null && (
-                            <p className="text-sm text-amber-600">
-                                Selecione apenas títulos com o mesmo status para
-                                aplicar a ação.
-                            </p>
-                        )}
+                        {!isProcessingPayableAction &&
+                            selectedAction === null && (
+                                <p className="text-sm text-amber-600">
+                                    Selecione apenas títulos com o mesmo status
+                                    para aplicar a ação.
+                                </p>
+                            )}
                     </div>
                     {(selectedAction === 'pending' ||
                         selectedAction === 'partial' ||
@@ -458,7 +463,10 @@ export function AccountsPayableModule() {
                             <Button
                                 variant="outline"
                                 onClick={() => {
-                                    if (selectedPendingOrPartialRows.length !== 1) {
+                                    if (
+                                        selectedPendingOrPartialRows.length !==
+                                        1
+                                    ) {
                                         toast.error(
                                             'Selecione exatamente 1 titulo para pagamento parcial.',
                                         );
@@ -477,13 +485,13 @@ export function AccountsPayableModule() {
                                 Pagar percentual
                             </Button>
                             <button
-                            onClick={() => void handleConfirmPayment()}
-                            disabled={isProcessingPayableAction}
-                            className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {isProcessingPayableAction
-                                ? 'Processando...'
-                                : 'Marcar como Paga'}
+                                onClick={() => void handleConfirmPayment()}
+                                disabled={isProcessingPayableAction}
+                                className="inline-flex h-9 items-center justify-center rounded-md bg-gray-600 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isProcessingPayableAction
+                                    ? 'Processando...'
+                                    : 'Marcar como Paga'}
                             </button>
                         </div>
                     )}
@@ -569,7 +577,7 @@ export function AccountsPayableModule() {
                             item: row.item ?? '',
                             description: row.description,
                             amount: row.total_amount,
-                            entry_date: new Date().toISOString().slice(0, 10),
+                            entry_date: todayInAppTimeZone(),
                             due_date: row.due_date,
                             payment_method:
                                 row.paid_method === 'cash' ||
@@ -610,21 +618,37 @@ export function AccountsPayableModule() {
                     {selectedSingleRow ? (
                         <div className="space-y-3 text-sm">
                             <div className="grid grid-cols-2 gap-2">
-                                <p className="text-muted-foreground">Fornecedor</p>
-                                <p className="font-medium">{selectedSingleRow.supplier_name}</p>
+                                <p className="text-muted-foreground">
+                                    Fornecedor
+                                </p>
+                                <p className="font-medium">
+                                    {selectedSingleRow.supplier_name}
+                                </p>
                                 <p className="text-muted-foreground">Produto</p>
-                                <p className="font-medium">{selectedSingleRow.item ?? '-'}</p>
-                                <p className="text-muted-foreground">Quantidade</p>
+                                <p className="font-medium">
+                                    {selectedSingleRow.item ?? '-'}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Quantidade
+                                </p>
                                 <p className="font-medium">
                                     {selectedSingleRow.item_quantity ?? '-'}
                                 </p>
-                                <p className="text-muted-foreground">Valor total</p>
-                                <p className="font-medium">
-                                    {formatCurrencyBR(selectedSingleRow.total_amount)}
+                                <p className="text-muted-foreground">
+                                    Valor total
                                 </p>
-                                <p className="text-muted-foreground">Saldo restante</p>
                                 <p className="font-medium">
-                                    {formatCurrencyBR(selectedSingleRow.remaining_balance)}
+                                    {formatCurrencyBR(
+                                        selectedSingleRow.total_amount,
+                                    )}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Saldo restante
+                                </p>
+                                <p className="font-medium">
+                                    {formatCurrencyBR(
+                                        selectedSingleRow.remaining_balance,
+                                    )}
                                 </p>
                             </div>
                             <div className="space-y-2">
@@ -665,21 +689,30 @@ export function AccountsPayableModule() {
                         <Button
                             onClick={() => {
                                 if (!selectedSingleRow) {
-                                    toast.error('Selecione exatamente 1 titulo.');
+                                    toast.error(
+                                        'Selecione exatamente 1 titulo.',
+                                    );
 
                                     return;
                                 }
 
-                                const amount = parseCurrencyInput(partialAmountInput);
+                                const amount =
+                                    parseCurrencyInput(partialAmountInput);
 
                                 if (amount <= 0) {
-                                    toast.error('Informe um valor valido para pagar.');
+                                    toast.error(
+                                        'Informe um valor valido para pagar.',
+                                    );
 
                                     return;
                                 }
 
-                                if (amount > selectedSingleRow.remaining_balance) {
-                                    toast.error('Valor acima do saldo restante da parcela.');
+                                if (
+                                    amount > selectedSingleRow.remaining_balance
+                                ) {
+                                    toast.error(
+                                        'Valor acima do saldo restante da parcela.',
+                                    );
 
                                     return;
                                 }
@@ -688,11 +721,13 @@ export function AccountsPayableModule() {
                                     .mutateAsync({
                                         id: Number(selectedSingleRow.id),
                                         amount,
-                                        paid_at: new Date().toISOString().slice(0, 10),
+                                        paid_at: todayInAppTimeZone(),
                                         paid_method: 'pix',
                                     })
                                     .then(() => {
-                                        toast.success('Baixa parcial aplicada com sucesso.');
+                                        toast.success(
+                                            'Baixa parcial aplicada com sucesso.',
+                                        );
                                         setSelectedIds(new Set());
                                         setIsPartialDialogOpen(false);
                                     });

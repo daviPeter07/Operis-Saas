@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import type { UiCustomer } from '@/types/dashboard-entities';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 
@@ -29,7 +30,7 @@ type ManualAccountReceivableDialogProps = {
     }) => Promise<void>;
 };
 
-const today = new Date().toISOString().slice(0, 10);
+const today = todayInAppTimeZone();
 
 export function ManualAccountReceivableDialog({
     open,
@@ -145,7 +146,9 @@ export function ManualAccountReceivableDialog({
                     }}
                 >
                     <div className="grid gap-2">
-                        <Label>Cliente <span className="text-red-600">*</span></Label>
+                        <Label>
+                            Cliente <span className="text-red-600">*</span>
+                        </Label>
                         <SearchableSelect
                             value={customerId}
                             searchValue={customerSearch}
@@ -182,10 +185,9 @@ export function ManualAccountReceivableDialog({
                                 id="manual-receivable-item"
                                 value={item}
                                 onChange={(event) => {
-                                        setItem(event.currentTarget.value);
-                                        clearErrors('item');
-                                    }
-                                }
+                                    setItem(event.currentTarget.value);
+                                    clearErrors('item');
+                                }}
                                 placeholder="Ex.: ajuste comercial"
                                 required
                             />
@@ -205,10 +207,13 @@ export function ManualAccountReceivableDialog({
                                 type="text"
                                 value={amount}
                                 onChange={(event) => {
-                                        setAmount(formatCurrencyInput(event.currentTarget.value));
-                                        clearErrors('amount');
-                                    }
-                                }
+                                    setAmount(
+                                        formatCurrencyInput(
+                                            event.currentTarget.value,
+                                        ),
+                                    );
+                                    clearErrors('amount');
+                                }}
                                 placeholder="R$ 0,00"
                                 required
                             />
@@ -235,7 +240,9 @@ export function ManualAccountReceivableDialog({
                     </div>
 
                     <div className="grid gap-2">
-                        <Label>Data <span className="text-red-600">*</span></Label>
+                        <Label>
+                            Data <span className="text-red-600">*</span>
+                        </Label>
                         <DatePickerInput
                             value={entryDate}
                             onChange={(value) => {

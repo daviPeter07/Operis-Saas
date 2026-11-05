@@ -23,7 +23,7 @@ class SitemapController extends Controller
      */
     public function __invoke(): Response
     {
-        $lastModified = now()->toDateString();
+        $lastModified = now(config('app.business_timezone'))->toDateString();
 
         $entries = collect(self::PUBLIC_PAGES)
             ->map(fn (array $page): string => sprintf(

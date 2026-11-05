@@ -1,8 +1,5 @@
-import type {
-    UiCustomer,
-    UiProduct,
-    UiSale,
-} from '@/types/dashboard-entities';
+import { nowInAppTimeZone } from '@/lib/app-timezone';
+import type { UiCustomer, UiProduct, UiSale } from '@/types/dashboard-entities';
 import type { QuickCreateField } from '@/types/quick-create';
 import type { SaleDiscountType, SalesLineItem } from '@/types/sales-dialog';
 
@@ -26,11 +23,7 @@ export const paymentMethodOptions: Array<{
 ];
 
 export function todayString(daysAgo = 0): string {
-    const brazilNow = new Date(
-        new Date().toLocaleString('en-US', {
-            timeZone: 'America/Sao_Paulo',
-        }),
-    );
+    const brazilNow = nowInAppTimeZone();
 
     brazilNow.setHours(0, 0, 0, 0);
     brazilNow.setDate(brazilNow.getDate() - daysAgo);
@@ -143,11 +136,26 @@ export function buildClientFields(clients: UiCustomer[]): QuickCreateField[] {
         { name: 'name', label: 'Nome', type: 'text', required: true },
         { name: 'email', label: 'Email', type: 'text' },
         { name: 'phone', label: 'Telefone', type: 'text', mask: 'phone' },
-        { name: 'document', label: 'Documento', type: 'text', mask: 'document' },
+        {
+            name: 'document',
+            label: 'Documento',
+            type: 'text',
+            mask: 'document',
+        },
         { name: 'city', label: 'Cidade', type: 'select', options: cityOptions },
-        { name: 'state', label: 'Estado', type: 'select', options: stateOptions },
+        {
+            name: 'state',
+            label: 'Estado',
+            type: 'select',
+            options: stateOptions,
+        },
         { name: 'address', label: 'Endereco', type: 'text' },
-        { name: 'createdAt', label: 'Data de cadastro', type: 'date', required: true },
+        {
+            name: 'createdAt',
+            label: 'Data de cadastro',
+            type: 'date',
+            required: true,
+        },
     ];
 }
 
@@ -161,7 +169,12 @@ export function buildProductFields(products: UiProduct[]): QuickCreateField[] {
     ).map((value) => ({ value, label: value }));
 
     return [
-        { name: 'name', label: 'Nome do produto', type: 'text', required: true },
+        {
+            name: 'name',
+            label: 'Nome do produto',
+            type: 'text',
+            required: true,
+        },
         { name: 'sku', label: 'Codigo interno', type: 'text', required: true },
         { name: 'barcode', label: 'Codigo de barras', type: 'text' },
         {
@@ -196,8 +209,23 @@ export function buildProductFields(products: UiProduct[]): QuickCreateField[] {
             required: true,
             mask: 'currency',
         },
-        { name: 'stock', label: 'Estoque inicial', type: 'number', required: true },
-        { name: 'minStock', label: 'Estoque minimo', type: 'number', required: true },
-        { name: 'createdAt', label: 'Data de cadastro', type: 'date', required: true },
+        {
+            name: 'stock',
+            label: 'Estoque inicial',
+            type: 'number',
+            required: true,
+        },
+        {
+            name: 'minStock',
+            label: 'Estoque minimo',
+            type: 'number',
+            required: true,
+        },
+        {
+            name: 'createdAt',
+            label: 'Data de cadastro',
+            type: 'date',
+            required: true,
+        },
     ];
 }

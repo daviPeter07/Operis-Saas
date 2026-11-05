@@ -1,3 +1,4 @@
+import { todayInAppTimeZone } from '@/lib/app-timezone';
 import type { UiCustomer } from '@/types/dashboard-entities';
 import type {
     ClientCreateDialogPayload,
@@ -11,7 +12,9 @@ export function inferPersonType(document: string | null): ClientPersonType {
     return numericDocument.length > 11 ? 'pj' : 'pf';
 }
 
-export function inferClientPersonType(document: string | null): ClientPersonType {
+export function inferClientPersonType(
+    document: string | null,
+): ClientPersonType {
     return inferPersonType(document);
 }
 
@@ -27,7 +30,7 @@ export function createClientRecord(
         city: String(data.city || '').trim(),
         state: String(data.state || '').trim(),
         address: String(data.address || '').trim(),
-        createdAt: new Date().toISOString().slice(0, 10),
+        createdAt: todayInAppTimeZone(),
     };
 }
 
