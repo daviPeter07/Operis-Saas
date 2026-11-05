@@ -55,5 +55,6 @@ Production is served under a `/operis` path prefix on the host domain, so Larave
 `BypassAuth` (web middleware) auto-logs in the first user when `BYPASS_AUTH=true` in `.env`.
 
 ## Deployment & commits
-- Push to `main` triggers `.github/workflows/deploy-production-ftp.yml` (build validation + FTP deploy to production) — be deliberate about what lands on `main`.
+- Push to `main` deploys to production (cPanel, FTP only — no SSH) via `.github/workflows/deploy-production-ftp.yml`: CI builds a single `release.zip` (code + `vendor` + `public/build`), uploads it plus `.github/deploy/receiver.php` (as `_deploy.php` in the web dir), then POSTs to the receiver, which swaps app dirs, copies public assets (preserving the server's `index.php`/`.htaccess`) and runs `migrate --force`, `optimize`, `queue:restart`. Be deliberate about what lands on `main`; new migrations run automatically on deploy.
+- Server layout: app at `~/repositories/Operis-Saas`, web dir `~/public_html/dg/operis` (https://www.dgcomputer.com.br/operis). Previous release is kept in `storage/app/deploy/previous` for manual rollback.
 - Commit messages follow `.agents/skills/commit-convention.md`: `type(area): summary` with types `feat|fix|docs|chore`, plus a bulleted body listing what changed.
