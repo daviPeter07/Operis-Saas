@@ -124,7 +124,15 @@ jobs:
 
       - name: Healthcheck
         if: ${{ env.PROD_HEALTHCHECK_URL != '' }}
+        env:
+          DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
         run: |
           code=$(curl -k -L -s -o /dev/null -w '%{http_code}' "$PROD_HEALTHCHECK_URL")
           echo "Healthcheck: HTTP $code"
           test "$code" = "200"
+
+          # The public landing page at the app root must answer too.
+          home_url="${DEPLOY_URL%/_deploy.php}/"
+          home_code=$(curl -k -s -o /dev/null -w '%{http_code}' "$home_url")
+          echo "Landing page: HTTP $home_code"
+          test "$home_code" = "200"

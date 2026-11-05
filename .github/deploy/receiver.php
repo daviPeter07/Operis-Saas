@@ -245,10 +245,14 @@ try {
     $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
     $kernel->bootstrap();
 
+    // Routes are intentionally not cached: with the app served from a subdirectory
+    // (/operis), Laravel's compiled route matcher answers 405 for the root URL "/operis/".
     $commands = [
         ['optimize:clear', []],
         ['migrate', ['--force' => true]],
-        ['optimize', []],
+        ['config:cache', []],
+        ['event:cache', []],
+        ['view:cache', []],
         ['queue:restart', []],
     ];
 
