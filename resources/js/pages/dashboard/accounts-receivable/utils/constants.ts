@@ -1,5 +1,13 @@
 import { Link } from '@inertiajs/react';
-import { CircleCheck, Coins, ListChecks } from 'lucide-react';
+import {
+    Banknote,
+    CalendarClock,
+    CircleCheck,
+    Coins,
+    CreditCard,
+    ListChecks,
+    QrCode,
+} from 'lucide-react';
 import { createElement } from 'react';
 import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
@@ -7,6 +15,7 @@ import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { FieldOption } from '@/utils/form-fields';
 import { ReceivableStatusChip } from '../components/receivable-status-chip';
 import type {
+    ManualPaymentOption,
     ReceivableDialogText,
     ReceivableRow,
     ReceivableStatus,
@@ -180,27 +189,52 @@ export const RECEIVABLE_LIMITS = {
     descriptionLength: 1000,
 } as const;
 
+// Same labels as a sale; card is the older method still present in past records.
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
     cash: 'Dinheiro',
     pix: 'PIX',
+    card_debit: 'Cartão de débito',
+    card_credit: 'Cartão de crédito',
+    crediario: 'Crediário',
     card: 'Cartão',
-    boleto: 'Boleto',
 };
 
-export const MANUAL_PAYMENT_OPTIONS: FieldOption[] = [
-    { value: 'pix', label: 'PIX' },
-    { value: 'cash', label: 'Dinheiro' },
-    { value: 'card', label: 'Cartão' },
-    { value: 'boleto', label: 'Boleto' },
+// Same options as the sale checkout.
+export const MANUAL_PAYMENT_OPTIONS: ManualPaymentOption[] = [
+    { value: 'cash', label: 'Dinheiro', hint: 'Na hora', icon: Banknote },
+    { value: 'pix', label: 'PIX', hint: 'Transferência', icon: QrCode },
+    {
+        value: 'card',
+        label: 'Cartão',
+        hint: 'Débito ou crédito',
+        icon: CreditCard,
+    },
+    {
+        value: 'crediario',
+        label: 'Crediário',
+        hint: 'Em parcelas',
+        icon: CalendarClock,
+    },
 ];
+
+export const CARD_TYPE_OPTIONS: FieldOption[] = [
+    { value: 'debit', label: 'Débito' },
+    { value: 'credit', label: 'Crédito' },
+];
+
+// Mirrors StoreAccountReceivableRequest (installments 1 to 24, like a sale).
+export const CREDIARIO_INSTALLMENT_OPTIONS: FieldOption[] = Array.from(
+    { length: 24 },
+    (_, index) => ({ value: String(index + 1), label: `${index + 1}x` }),
+);
+
+// The first crediário installment defaults to 30 days after the entry, like a sale.
+export const CREDIARIO_FIRST_DUE_DAYS = 30;
 
 export const MANUAL_STATUS_OPTIONS: FieldOption[] = [
     { value: 'pending', label: 'Pendente' },
     { value: 'received', label: 'Recebida' },
 ];
-
-// Mirrors StoreAccountReceivableRequest: one boleto per 30 days, due month by month.
-export const BOLETO_TERMS = [30, 60, 90, 120, 150] as const;
 
 export const RECEIVABLE_DIALOG_TEXT: Record<
     'create' | 'edit',

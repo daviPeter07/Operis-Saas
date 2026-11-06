@@ -20,7 +20,7 @@ export function addMonthsKeepingDay(date: string, months: number): string {
     return format(target, 'yyyy-MM-dd');
 }
 
-// Same split as createManual in PayableService and ReceivableService: one boleto per 30
+// Same split as PayableService::createManual: one boleto per 30
 // days of term, due month by month after the entry date, leftover cents on the first ones.
 export function splitManualBoletos(
     total: number,

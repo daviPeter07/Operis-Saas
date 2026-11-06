@@ -41,9 +41,31 @@ export type ReceivablesShowPageProps = {
     receivableId: number;
 };
 
-export type ManualPaymentMethod = 'cash' | 'pix' | 'card' | 'boleto';
+// What the form shows (card splits into debit/credit), like the sale checkout.
+export type ManualPaymentMethod = 'cash' | 'pix' | 'card' | 'crediario';
 
-export type BoletoTerm = 30 | 60 | 90 | 120 | 150;
+// What the API stores, the same values as a sale.
+export type ReceivablePaymentMethod =
+    | 'cash'
+    | 'pix'
+    | 'card_debit'
+    | 'card_credit'
+    | 'crediario';
+
+export type CardType = 'debit' | 'credit';
+
+export type ManualPaymentOption = {
+    value: ManualPaymentMethod;
+    label: string;
+    hint: string;
+    icon: LucideIcon;
+};
+
+export type CrediarioInstallment = {
+    number: number;
+    dueDate: string;
+    amount: number;
+};
 
 export type ReceivableFormValues = {
     customer_id: string;
@@ -52,7 +74,8 @@ export type ReceivableFormValues = {
     entry_date: string;
     due_date: string;
     payment_method: ManualPaymentMethod;
-    boleto_term_days: '30' | '60' | '90' | '120' | '150';
+    card_type: CardType;
+    installments: string;
     status: 'pending' | 'received';
     description: string;
 };
@@ -64,9 +87,9 @@ export type ReceivableSubmitData = {
     amount: number;
     entry_date: string;
     due_date: string;
-    payment_method: ManualPaymentMethod;
+    payment_method: ReceivablePaymentMethod;
     status: 'pending' | 'received';
-    boleto_term_days?: BoletoTerm;
+    installments?: number;
 };
 
 export type ReceivableDialogText = {

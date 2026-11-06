@@ -26,8 +26,9 @@ class StoreAccountReceivableRequest extends FormRequest
             'amount' => ['required', 'numeric', 'gt:0'],
             'entry_date' => ['required', 'date'],
             'due_date' => ['required', 'date', 'after_or_equal:entry_date'],
-            'payment_method' => ['required', 'in:cash,pix,card,boleto'],
-            'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120,150'],
+            // Same methods as a sale. For crediário, due_date is the first installment.
+            'payment_method' => ['required', 'in:cash,pix,card_debit,card_credit,crediario'],
+            'installments' => ['required_if:payment_method,crediario', 'nullable', 'integer', 'min:1', 'max:24'],
             'status' => ['required', 'in:pending,received'],
         ];
     }

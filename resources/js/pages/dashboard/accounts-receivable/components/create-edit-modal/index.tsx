@@ -35,6 +35,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     useCreateManualAccountReceivable,
     useUpdateAccountReceivable,
@@ -48,15 +49,18 @@ import {
     parseCurrencyInput,
     toFieldOptions,
 } from '@/utils/form-fields';
-import { splitManualBoletos } from '@/utils/manual-boletos';
 import {
-    BOLETO_TERMS,
+    CARD_TYPE_OPTIONS,
+    CREDIARIO_FIRST_DUE_DAYS,
+    CREDIARIO_INSTALLMENT_OPTIONS,
     MANUAL_PAYMENT_OPTIONS,
     MANUAL_STATUS_OPTIONS,
     RECEIVABLE_DIALOG_TEXT,
     RECEIVABLE_MESSAGES,
 } from '../../utils/constants';
 import {
+    addDaysToDate,
+    splitCrediario,
     toNewClientData,
     toReceivableFormValues,
     toReceivableSubmitData,
@@ -83,19 +87,46 @@ export function CreateEditModal({
     });
     const isEdit = Boolean(receivable);
     const text = RECEIVABLE_DIALOG_TEXT[isEdit ? 'edit' : 'create'];
-    const [paymentMethod, boletoTerm, amount, entryDate] = useWatch({
+    const [paymentMethod, installments, amount, entryDate, dueDate] = useWatch({
         control: form.control,
-        name: ['payment_method', 'boleto_term_days', 'amount', 'entry_date'],
+        name: [
+            'payment_method',
+            'installments',
+            'amount',
+            'entry_date',
+            'due_date',
+        ],
     });
-    // Payment method, boletos and status only apply when the account is created.
-    const isBoleto = !isEdit && paymentMethod === 'boleto';
-    const boletos = isBoleto
-        ? splitManualBoletos(
+    // Payment method, installments and status only apply when the account is created.
+    const isCrediario = !isEdit && paymentMethod === 'crediario';
+    const crediarioInstallments = isCrediario
+        ? splitCrediario(
               parseCurrencyInput(amount),
-              Number(boletoTerm),
-              entryDate,
+              Number(installments),
+              dueDate,
           )
         : [];
+
+    const changePaymentMethod = (value: string) => {
+        const option = MANUAL_PAYMENT_OPTIONS.find(
+            (candidate) => candidate.value === value,
+        );
+
+        if (!option) {
+            return;
+        }
+
+        form.setValue('payment_method', option.value, { shouldDirty: true });
+
+        // Like a sale, the first crediário installment defaults to 30 days after the entry.
+        if (option.value === 'crediario' && dueDate <= entryDate) {
+            form.setValue(
+                'due_date',
+                addDaysToDate(entryDate, CREDIARIO_FIRST_DUE_DAYS),
+                { shouldValidate: true },
+            );
+        }
+    };
 
     useEffect(() => {
         if (open) {
@@ -258,201 +289,239 @@ export function CreateEditModal({
                                 />
 
                                 {isEdit ? null : (
-                                    <>
-                                        <FormField
-                                            control={form.control}
-                                            name="payment_method"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        Forma de pagamento
-                                                    </FormLabel>
-                                                    <Select
-                                                        value={field.value}
-                                                        onValueChange={
-                                                            field.onChange
-                                                        }
+                                    <FormItem className="sm:col-span-2">
+                                        <FormLabel>
+                                            Forma de pagamento
+                                        </FormLabel>
+                                        <ToggleGroup
+                                            type="single"
+                                            value={paymentMethod}
+                                            onValueChange={changePaymentMethod}
+                                            aria-label="Forma de pagamento"
+                                            className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4"
+                                        >
+                                            {MANUAL_PAYMENT_OPTIONS.map(
+                                                ({
+                                                    value,
+                                                    label,
+                                                    hint,
+                                                    icon: Icon,
+                                                }) => (
+                                                    <ToggleGroupItem
+                                                        key={value}
+                                                        value={value}
+                                                        variant="outline"
+                                                        className="flex h-auto flex-col items-center gap-1 rounded-xl border px-2 py-3"
                                                     >
-                                                        <FormControl>
-                                                            <SelectTrigger className="w-full">
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {MANUAL_PAYMENT_OPTIONS.map(
-                                                                (option) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            option.value
-                                                                        }
-                                                                        value={
-                                                                            option.value
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            option.label
-                                                                        }
-                                                                    </SelectItem>
-                                                                ),
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
+                                                        <Icon
+                                                            aria-hidden
+                                                            className="size-5"
+                                                        />
+                                                        <span className="text-sm font-semibold">
+                                                            {label}
+                                                        </span>
+                                                        <span className="text-[11px] font-normal opacity-75">
+                                                            {hint}
+                                                        </span>
+                                                    </ToggleGroupItem>
+                                                ),
                                             )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="status"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        Situação
-                                                    </FormLabel>
-                                                    <Select
-                                                        value={field.value}
-                                                        onValueChange={
-                                                            field.onChange
-                                                        }
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger className="w-full">
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {MANUAL_STATUS_OPTIONS.map(
-                                                                (option) => (
-                                                                    <SelectItem
-                                                                        key={
-                                                                            option.value
-                                                                        }
-                                                                        value={
-                                                                            option.value
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            option.label
-                                                                        }
-                                                                    </SelectItem>
-                                                                ),
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </>
+                                        </ToggleGroup>
+                                    </FormItem>
                                 )}
 
-                                {isBoleto ? (
+                                {!isEdit && paymentMethod === 'card' ? (
                                     <FormField
                                         control={form.control}
-                                        name="boleto_term_days"
+                                        name="card_type"
                                         render={({ field }) => (
                                             <FormItem className="sm:col-span-2">
-                                                <FormLabel>Boletos</FormLabel>
-                                                <div
-                                                    role="radiogroup"
-                                                    aria-label="Quantidade de boletos"
-                                                    className="grid grid-cols-5 gap-2"
-                                                >
-                                                    {BOLETO_TERMS.map(
-                                                        (term) => {
-                                                            const count =
-                                                                term / 30;
-                                                            const isSelected =
-                                                                field.value ===
-                                                                String(term);
-
-                                                            return (
-                                                                <button
-                                                                    key={term}
-                                                                    type="button"
-                                                                    role="radio"
-                                                                    aria-checked={
-                                                                        isSelected
-                                                                    }
-                                                                    onClick={() =>
-                                                                        field.onChange(
-                                                                            String(
-                                                                                term,
-                                                                            ),
-                                                                        )
-                                                                    }
-                                                                    className={
-                                                                        isSelected
-                                                                            ? 'cursor-pointer rounded-lg border border-accent bg-accent/10 py-2 text-center'
-                                                                            : 'cursor-pointer rounded-lg border py-2 text-center hover:bg-muted'
-                                                                    }
-                                                                >
-                                                                    <span className="block text-lg leading-none font-black">
-                                                                        {count}
-                                                                    </span>
-                                                                    <span className="text-[11px] text-muted-foreground">
-                                                                        {count ===
-                                                                        1
-                                                                            ? 'boleto'
-                                                                            : 'boletos'}
-                                                                    </span>
-                                                                </button>
+                                                <FormLabel>
+                                                    Tipo no cartão
+                                                </FormLabel>
+                                                <ToggleGroup
+                                                    type="single"
+                                                    value={field.value}
+                                                    onValueChange={(value) => {
+                                                        if (
+                                                            value === 'debit' ||
+                                                            value === 'credit'
+                                                        ) {
+                                                            field.onChange(
+                                                                value,
                                                             );
-                                                        },
+                                                        }
+                                                    }}
+                                                    className="grid grid-cols-2 gap-2"
+                                                >
+                                                    {CARD_TYPE_OPTIONS.map(
+                                                        (option) => (
+                                                            <ToggleGroupItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                                variant="outline"
+                                                                className="rounded-md border"
+                                                            >
+                                                                {option.label}
+                                                            </ToggleGroupItem>
+                                                        ),
                                                     )}
-                                                </div>
-                                                <ul className="divide-y rounded-lg border text-sm">
-                                                    {boletos.map((boleto) => (
-                                                        <li
-                                                            key={boleto.number}
-                                                            className="flex items-center justify-between gap-3 px-3 py-2"
-                                                        >
-                                                            <span className="text-muted-foreground">
-                                                                {boleto.number}º
-                                                                boleto · vence{' '}
-                                                                {formatDateBR(
-                                                                    boleto.dueDate,
-                                                                )}
-                                                            </span>
-                                                            <span className="font-medium tabular-nums">
-                                                                {formatCurrencyBR(
-                                                                    boleto.amount,
-                                                                )}
-                                                            </span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Um boleto por mês, a partir
-                                                    da data de lançamento.
-                                                </p>
+                                                </ToggleGroup>
                                             </FormItem>
                                         )}
                                     />
-                                ) : (
+                                ) : null}
+
+                                {isCrediario ? (
                                     <FormField
                                         control={form.control}
-                                        name="due_date"
+                                        name="installments"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>
-                                                    Vencimento <RequiredMark />
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <DatePickerInput
-                                                        value={field.value}
-                                                        onChange={
-                                                            field.onChange
-                                                        }
-                                                        placeholder="Selecionar data"
-                                                    />
-                                                </FormControl>
+                                                <FormLabel>Parcelas</FormLabel>
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={
+                                                        field.onChange
+                                                    }
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {CREDIARIO_INSTALLMENT_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value
+                                                                    }
+                                                                    value={
+                                                                        option.value
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        option.label
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                ) : null}
+
+                                <FormField
+                                    control={form.control}
+                                    name="due_date"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                {isCrediario
+                                                    ? '1ª parcela'
+                                                    : 'Vencimento'}{' '}
+                                                <RequiredMark />
+                                            </FormLabel>
+                                            <FormControl>
+                                                <DatePickerInput
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    placeholder="Selecionar data"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {isEdit || isCrediario ? null : (
+                                    <FormField
+                                        control={form.control}
+                                        name="status"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Situação</FormLabel>
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={
+                                                        field.onChange
+                                                    }
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {MANUAL_STATUS_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value
+                                                                    }
+                                                                    value={
+                                                                        option.value
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        option.label
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                 )}
+
+                                {crediarioInstallments.length > 0 ? (
+                                    <div className="grid gap-2 sm:col-span-2">
+                                        <ul className="divide-y rounded-lg border text-sm">
+                                            {crediarioInstallments.map(
+                                                (installment) => (
+                                                    <li
+                                                        key={installment.number}
+                                                        className="flex items-center justify-between gap-3 px-3 py-2"
+                                                    >
+                                                        <span className="text-muted-foreground">
+                                                            Parcela{' '}
+                                                            {installment.number}
+                                                            /
+                                                            {
+                                                                crediarioInstallments.length
+                                                            }{' '}
+                                                            · vence{' '}
+                                                            {formatDateBR(
+                                                                installment.dueDate,
+                                                            )}
+                                                        </span>
+                                                        <span className="font-medium tabular-nums">
+                                                            {formatCurrencyBR(
+                                                                installment.amount,
+                                                            )}
+                                                        </span>
+                                                    </li>
+                                                ),
+                                            )}
+                                        </ul>
+                                        <p className="text-xs text-muted-foreground">
+                                            Uma parcela por mês a partir da 1ª.
+                                            Elas ficam em aberto até o cliente
+                                            pagar, como no crediário da venda.
+                                        </p>
+                                    </div>
+                                ) : null}
 
                                 <FormField
                                     control={form.control}

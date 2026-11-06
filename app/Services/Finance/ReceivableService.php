@@ -115,10 +115,16 @@ class ReceivableService
      * boleto is split into one per 30 days of term, due month by month after the entry date,
      * with the leftover cents on the first ones; "received" creates it already settled.
      */
+    /**
+     * A manual account takes the same payment methods as a sale. Crediário is split like
+     * a sale's (floor in cents, leftover on the last one), month by month from due_date,
+     * and always starts open; the other methods make one account.
+     */
     public function createManual(int $companyId, array $data): void
     {
-        $isReceived = ($data['status'] ?? 'pending') === FinancialStatus::Received->value;
         $paymentMethod = $data['payment_method'] ?? null;
+        $isCrediario = $paymentMethod === 'crediario';
+        $isReceived = ! $isCrediario && ($data['status'] ?? 'pending') === FinancialStatus::Received->value;
         $base = [
             'company_id' => $companyId,
             'customer_id' => $data['customer_id'],
@@ -131,7 +137,7 @@ class ReceivableService
             'payment_method' => $paymentMethod,
         ];
 
-        if ($paymentMethod !== 'boleto') {
+        if (! $isCrediario) {
             $this->receivables->create([
                 ...$base,
                 'installment_number' => null,
@@ -144,22 +150,22 @@ class ReceivableService
             return;
         }
 
-        $installments = max(1, (int) ceil(max(30, (int) ($data['boleto_term_days'] ?? 30)) / 30));
+        $installments = max(1, (int) ($data['installments'] ?? 1));
         $totalCents = (int) round((float) $data['amount'] * 100);
         $baseCents = intdiv($totalCents, $installments);
-        $remainderCents = $totalCents % $installments;
-        $entryDate = Carbon::parse($data['entry_date'], config('app.business_timezone'))->startOfDay();
+        $firstDueDate = Carbon::parse($data['due_date'], config('app.business_timezone'))->startOfDay();
 
-        for ($index = 1; $index <= $installments; $index++) {
-            $amount = ($baseCents + ($index <= $remainderCents ? 1 : 0)) / 100;
+        for ($index = 0; $index < $installments; $index++) {
+            $isLast = $index === $installments - 1;
+            $amount = ($isLast ? $totalCents - $baseCents * ($installments - 1) : $baseCents) / 100;
 
             $this->receivables->create([
                 ...$base,
-                'installment_number' => $index,
+                'installment_number' => $index + 1,
                 'total_installments' => $installments,
-                'due_date' => $entryDate->copy()->addMonthsNoOverflow($index)->toDateString(),
+                'due_date' => $firstDueDate->copy()->addMonthsNoOverflow($index)->toDateString(),
                 'amount' => $amount,
-                'amount_paid' => $isReceived ? $amount : 0,
+                'amount_paid' => 0,
             ]);
         }
     }

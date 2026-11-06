@@ -285,7 +285,7 @@ As duas telas ganharam o mesmo padrão das outras: filtros em cada coluna, pági
 - **Cadastro de conta:**
   - formulário novo, com busca de cliente/fornecedor e "Cadastrar" pelo nome digitado;
   - em contas a pagar no boleto, aparece a lista dos boletos com o vencimento e o valor de cada um, igual ao que vai ser criado.
-  - contas a receber ganhou os mesmos campos de contas a pagar: forma de pagamento (Dinheiro, PIX, Cartão ou Boleto), situação (Pendente ou Recebida), vencimento e boletos de 1 a 5, um por mês a partir do lançamento. Antes, a conta a receber manual era lançada sem vencimento nem forma de pagamento.
+  - contas a receber ganhou forma de pagamento, igual à da venda: Dinheiro, PIX, Cartão (débito ou crédito) ou Crediário. No crediário, escolha de 1 a 24 parcelas e a data da 1ª, e aparece a lista com o vencimento e o valor de cada uma (uma por mês, os centavos que sobram vão na última, como na venda). As parcelas ficam em aberto até o cliente pagar. Nas outras formas, informe o vencimento e se já foi recebida. Antes, a conta a receber manual era lançada sem vencimento nem forma de pagamento.
 - **Colunas:** Lançamento e Vencimento vêm primeiro, lado a lado.
 - **Origem clicável:** "Venda #26" ou "Compra #22" na coluna Origem abre a venda ou a compra direto, sem passar pelos detalhes da conta.
 - **De vendas e compras para as contas:** nos detalhes da venda, o card "Parcelas" virou "Contas a receber", igual ao card "Contas a pagar" da compra. Os dois têm o botão "Ver em contas a receber/pagar", que abre a tabela já filtrada só com as contas daquela venda ou compra (com um aviso e o botão "Ver todas"), e cada parcela abre os detalhes da conta.

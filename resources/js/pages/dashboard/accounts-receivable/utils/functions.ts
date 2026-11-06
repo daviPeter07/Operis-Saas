@@ -18,6 +18,7 @@ import { toNumber } from '@/services/normalizers';
 import type { BreadcrumbItem, ServerValidationError } from '@/types';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { addMonthsKeepingDay } from '@/utils/manual-boletos';
+import { splitInstallments } from '@/utils/sale-installments';
 import {
     AMOUNT_COLUMN,
     CUSTOMER_COLUMN,
@@ -35,7 +36,7 @@ import {
 } from './constants';
 import type {
     ApiParams,
-    BoletoTerm,
+    CrediarioInstallment,
     NewClientData,
     ReceivableFormValues,
     ReceivableRow,
@@ -236,7 +237,8 @@ export function toReceivableFormValues(
             entry_date: today,
             due_date: today,
             payment_method: 'pix',
-            boleto_term_days: '30',
+            card_type: 'debit',
+            installments: '1',
             status: 'pending',
             description: '',
         };
@@ -256,7 +258,8 @@ export function toReceivableFormValues(
         entry_date: receivable.entry_date ?? today,
         due_date: receivable.due_date ?? receivable.entry_date ?? today,
         payment_method: 'pix',
-        boleto_term_days: '30',
+        card_type: 'debit',
+        installments: '1',
         status: receivable.status === 'received' ? 'received' : 'pending',
         description: receivable.description ?? '',
     };
@@ -265,8 +268,7 @@ export function toReceivableFormValues(
 export function toReceivableSubmitData(
     values: ReceivableFormValues,
 ): ReceivableSubmitData {
-    const isBoleto = values.payment_method === 'boleto';
-    const term = Number(values.boleto_term_days) as BoletoTerm;
+    const isCrediario = values.payment_method === 'crediario';
 
     return {
         customer_id: Number(values.customer_id),
@@ -274,14 +276,44 @@ export function toReceivableSubmitData(
         description: values.description.trim() || undefined,
         amount: parseCurrencyInput(values.amount),
         entry_date: values.entry_date,
-        // A boleto account is due on its last boleto (the API splits it month by month).
-        due_date: isBoleto
-            ? addMonthsKeepingDay(values.entry_date, Math.ceil(term / 30))
-            : values.due_date,
-        payment_method: values.payment_method,
-        status: values.status,
-        boleto_term_days: isBoleto ? term : undefined,
+        due_date: values.due_date,
+        payment_method:
+            values.payment_method === 'card'
+                ? `card_${values.card_type}`
+                : values.payment_method,
+        // Crediário installments start open, like a sale's.
+        status: isCrediario ? 'pending' : values.status,
+        installments: isCrediario ? Number(values.installments) : undefined,
     };
+}
+
+// Same split as ReceivableService::createManual and a sale: floor in cents, leftover on
+// the last installment, due month by month from the first one.
+export function splitCrediario(
+    total: number,
+    installments: number,
+    firstDueDate: string,
+): CrediarioInstallment[] {
+    if (total <= 0 || !firstDueDate) {
+        return [];
+    }
+
+    return splitInstallments(total, installments).map((amount, index) => ({
+        number: index + 1,
+        dueDate: addMonthsKeepingDay(firstDueDate, index),
+        amount,
+    }));
+}
+
+export function addDaysToDate(date: string, days: number): string {
+    const [year, month, day] = date.split('-').map(Number);
+    const target = new Date(year, month - 1, day + days);
+
+    return [
+        target.getFullYear(),
+        String(target.getMonth() + 1).padStart(2, '0'),
+        String(target.getDate()).padStart(2, '0'),
+    ].join('-');
 }
 
 async function runForEach(

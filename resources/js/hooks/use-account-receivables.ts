@@ -61,9 +61,9 @@ type CreateManualReceivableInput = {
     amount: number;
     entry_date: string;
     due_date: string;
-    payment_method: 'cash' | 'pix' | 'card' | 'boleto';
+    payment_method: 'cash' | 'pix' | 'card_debit' | 'card_credit' | 'crediario';
     status: 'pending' | 'received';
-    boleto_term_days?: 30 | 60 | 90 | 120 | 150;
+    installments?: number;
 };
 
 export function useCreateManualAccountReceivable() {

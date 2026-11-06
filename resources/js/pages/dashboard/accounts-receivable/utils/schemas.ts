@@ -24,12 +24,15 @@ export const receivableFormSchema = z
             ),
         entry_date: z.string().min(1, MESSAGES.required),
         due_date: z.string(),
-        payment_method: z.enum(['cash', 'pix', 'card', 'boleto'], {
+        payment_method: z.enum(['cash', 'pix', 'card', 'crediario'], {
             error: MESSAGES.chooseOption,
         }),
-        boleto_term_days: z.enum(['30', '60', '90', '120', '150'], {
-            error: MESSAGES.chooseOption,
-        }),
+        card_type: z.enum(['debit', 'credit']),
+        installments: z.string().refine((value) => {
+            const count = Number(value);
+
+            return Number.isInteger(count) && count >= 1 && count <= 24;
+        }, MESSAGES.chooseOption),
         status: z.enum(['pending', 'received'], {
             error: MESSAGES.chooseOption,
         }),
@@ -41,11 +44,10 @@ export const receivableFormSchema = z
                 maxLengthMessage(RECEIVABLE_LIMITS.descriptionLength),
             ),
     })
-    // The API asks for a due date on or after the entry date (a boleto computes its own).
+    // The API asks for a due date (the first installment on crediário) on or after the entry date.
     .refine(
         (values) =>
-            values.payment_method === 'boleto' ||
-            (values.due_date !== '' && values.due_date >= values.entry_date),
+            values.due_date !== '' && values.due_date >= values.entry_date,
         {
             message: 'O vencimento precisa ser no lançamento ou depois.',
             path: ['due_date'],

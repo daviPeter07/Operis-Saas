@@ -56,22 +56,46 @@ test('manual account receivable can be created without sale relation', function 
         'payment_method' => 'pix',
     ]);
 
-    // A boleto is split month by month, leftover cents on the first one.
+    // Crediário is split like a sale: floor in cents, leftover on the last one, month by
+    // month from the first installment (clamped to the month end), always open.
     $this->actingAs($user)->postJson('/api/account-receivables', [
         'customer_id' => $customer->id,
-        'item' => 'Parcelado no boleto',
+        'item' => 'Parcelado no crediario',
         'amount' => 100,
-        'entry_date' => '2026-05-06',
-        'due_date' => '2026-05-06',
-        'payment_method' => 'boleto',
-        'boleto_term_days' => 90,
-        'status' => 'pending',
+        'entry_date' => '2026-01-06',
+        'due_date' => '2026-01-31',
+        'payment_method' => 'crediario',
+        'installments' => 3,
+        'status' => 'received',
     ])->assertCreated();
 
-    $boletos = AccountReceivable::query()->where('item', 'Parcelado no boleto')->orderBy('installment_number')->get();
-    expect($boletos->pluck('amount')->all())->toBe(['33.34', '33.33', '33.33'])
-        ->and($boletos->map(fn ($boleto) => $boleto->due_date->toDateString())->all())->toBe(['2026-06-06', '2026-07-06', '2026-08-06'])
-        ->and($boletos->pluck('total_installments')->unique()->all())->toBe([3]);
+    $installments = AccountReceivable::query()->where('item', 'Parcelado no crediario')->orderBy('installment_number')->get();
+    expect($installments->pluck('amount')->all())->toBe(['33.33', '33.33', '33.34'])
+        ->and($installments->map(fn ($installment) => $installment->due_date->toDateString())->all())->toBe(['2026-01-31', '2026-02-28', '2026-03-31'])
+        ->and($installments->pluck('total_installments')->unique()->all())->toBe([3])
+        ->and($installments->pluck('status')->unique()->all())->toBe(['pending'])
+        ->and($installments->pluck('payment_method')->unique()->all())->toBe(['crediario']);
+
+    // Crediário needs the number of installments; boleto is not a receivable method.
+    $this->actingAs($user)->postJson('/api/account-receivables', [
+        'customer_id' => $customer->id,
+        'item' => 'Sem parcelas',
+        'amount' => 100,
+        'entry_date' => '2026-05-06',
+        'due_date' => '2026-06-06',
+        'payment_method' => 'crediario',
+        'status' => 'pending',
+    ])->assertUnprocessable()->assertJsonValidationErrors('installments');
+
+    $this->actingAs($user)->postJson('/api/account-receivables', [
+        'customer_id' => $customer->id,
+        'item' => 'Boleto',
+        'amount' => 100,
+        'entry_date' => '2026-05-06',
+        'due_date' => '2026-06-06',
+        'payment_method' => 'boleto',
+        'status' => 'pending',
+    ])->assertUnprocessable()->assertJsonValidationErrors('payment_method');
 
     // Saved as received: settled on the entry date.
     $this->actingAs($user)->postJson('/api/account-receivables', [
@@ -80,7 +104,7 @@ test('manual account receivable can be created without sale relation', function 
         'amount' => 50,
         'entry_date' => '2026-05-06',
         'due_date' => '2026-05-06',
-        'payment_method' => 'cash',
+        'payment_method' => 'card_debit',
         'status' => 'received',
     ])->assertCreated();
 
