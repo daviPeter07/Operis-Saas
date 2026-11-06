@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ClientCreateDialog } from '@/features/dashboard/clients/client-create-dialog';
-import { ProductDialog } from '@/features/dashboard/inventory/product-dialog';
 import { useSalesDialog } from '@/hooks/use-sales-dialog';
+import { ProductDialog } from '@/pages/dashboard/inventory/components/create-edit-modal';
 import type { UiProduct as Product } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';

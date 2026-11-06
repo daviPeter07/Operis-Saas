@@ -1,4 +1,4 @@
-import { PageContent } from '@/features/dashboard/page-content';
+import { PageContent } from '@/components/page-content';
 import { SettingsModule } from '@/features/dashboard/settings';
 import AppLayout from '@/layouts/app-layout';
 

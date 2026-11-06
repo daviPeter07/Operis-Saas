@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PageContent } from '@/features/dashboard/page-content';
+import { PageContent } from '@/components/page-content';
 import { SalesModule } from '@/features/dashboard/sales';
 import AppLayout from '@/layouts/app-layout';
 

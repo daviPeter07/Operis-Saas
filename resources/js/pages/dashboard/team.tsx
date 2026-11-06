@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { PageContent } from '@/features/dashboard/page-content';
+import { PageContent } from '@/components/page-content';
 import { AdminRequestPage, TeamModule } from '@/features/dashboard/team';
 import AppLayout from '@/layouts/app-layout';
 
