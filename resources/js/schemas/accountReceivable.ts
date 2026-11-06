@@ -1,6 +1,7 @@
 export interface AccountReceivable {
     id: number;
     customer_id: number | null;
+    customer_name?: string | null;
     sale_id: number | null;
     installment_number: number | null;
     total_installments: number | null;

@@ -93,35 +93,6 @@ export type PurchaseCreateDialogProps = {
     initialItems?: PurchaseLineItem[];
 };
 
-export type AccountsPayableCreateDialogProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSubmit: (data: {
-        supplier_id: number;
-        item: string;
-        description?: string;
-        amount: number;
-        entry_date: string;
-        due_date: string;
-        payment_method: 'cash' | 'pix' | 'card' | 'boleto';
-        status: 'pending' | 'paid';
-        boleto_term_days?: number;
-    }) => void;
-    suppliers: UiSupplier[];
-    mode?: 'create' | 'edit';
-    initialData?: {
-        supplier_id: number;
-        item: string;
-        description?: string | null;
-        amount: number;
-        entry_date: string;
-        due_date: string;
-        payment_method: 'cash' | 'pix' | 'card' | 'boleto';
-        status: 'pending' | 'paid';
-        boleto_term_days?: number | null;
-    };
-};
-
 export type SupplierForm = {
     name: string;
     personType: 'pf' | 'pj';

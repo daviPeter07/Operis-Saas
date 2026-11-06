@@ -42,8 +42,14 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('dashboard/purchases/{purchase}', fn (int $purchase) => Inertia::render('dashboard/purchases/show', ['purchaseId' => $purchase]))
         ->whereNumber('purchase')
         ->name('dashboard.purchases.show');
-    Route::inertia('dashboard/accounts-receivable', 'dashboard/accounts-receivable')->name('dashboard.accounts-receivable');
-    Route::inertia('dashboard/accounts-payable', 'dashboard/accounts-payable')->name('dashboard.accounts-payable');
+    Route::inertia('dashboard/accounts-receivable', 'dashboard/accounts-receivable/index')->name('dashboard.accounts-receivable');
+    Route::get('dashboard/accounts-receivable/{receivable}', fn (int $receivable) => Inertia::render('dashboard/accounts-receivable/show', ['receivableId' => $receivable]))
+        ->whereNumber('receivable')
+        ->name('dashboard.accounts-receivable.show');
+    Route::inertia('dashboard/accounts-payable', 'dashboard/accounts-payable/index')->name('dashboard.accounts-payable');
+    Route::get('dashboard/accounts-payable/{payable}', fn (int $payable) => Inertia::render('dashboard/accounts-payable/show', ['payableId' => $payable]))
+        ->whereNumber('payable')
+        ->name('dashboard.accounts-payable.show');
     Route::inertia('dashboard/team', 'dashboard/team')->name('dashboard.team');
     Route::inertia('dashboard/reports', 'dashboard/reports')->name('dashboard.reports');
     Route::inertia('dashboard/reports/vendas', 'dashboard/reports/vendas')->name('dashboard.reports.vendas');
