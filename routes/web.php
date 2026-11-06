@@ -38,7 +38,10 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('dashboard/inventory/{product}', fn (int $product) => Inertia::render('dashboard/inventory/show', ['productId' => $product]))
         ->whereNumber('product')
         ->name('dashboard.inventory.show');
-    Route::inertia('dashboard/purchases', 'dashboard/purchases')->name('dashboard.purchases');
+    Route::inertia('dashboard/purchases', 'dashboard/purchases/index')->name('dashboard.purchases');
+    Route::get('dashboard/purchases/{purchase}', fn (int $purchase) => Inertia::render('dashboard/purchases/show', ['purchaseId' => $purchase]))
+        ->whereNumber('purchase')
+        ->name('dashboard.purchases.show');
     Route::inertia('dashboard/accounts-receivable', 'dashboard/accounts-receivable')->name('dashboard.accounts-receivable');
     Route::inertia('dashboard/accounts-payable', 'dashboard/accounts-payable')->name('dashboard.accounts-payable');
     Route::inertia('dashboard/team', 'dashboard/team')->name('dashboard.team');

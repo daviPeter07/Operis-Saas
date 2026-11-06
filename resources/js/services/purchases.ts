@@ -13,6 +13,11 @@ function normalizePurchase(purchase: Purchase): Purchase {
             purchase.boleto_term_days === undefined
                 ? purchase.boleto_term_days
                 : toNumber(purchase.boleto_term_days),
+        payables: purchase.payables?.map((payable) => ({
+            ...payable,
+            amount: toNumber(payable.amount),
+            amount_paid: toNumber(payable.amount_paid),
+        })),
         items: purchase.items?.map((item) => ({
             ...item,
             quantity: toNumber(item.quantity),
