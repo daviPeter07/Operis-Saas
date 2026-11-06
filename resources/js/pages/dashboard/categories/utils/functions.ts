@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { withAppBasePath } from '@/constants/workspace';
 import { categoriesQueryKey } from '@/hooks/use-categories';
 import type { Category } from '@/schemas/category';
 import { categoryService } from '@/services/categories';
@@ -31,6 +32,10 @@ export function toCategoryRow(category: Category): CategoryRow {
         category,
         name: category.name,
         status: category.status,
+        productsCount: category.products_count ?? 0,
+        productsUrl: withAppBasePath(
+            `/dashboard/inventory?category_id=${category.id}`,
+        ),
     };
 }
 

@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyUser;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Testing\TestResponse;
@@ -128,4 +130,30 @@ test('categories from other companies never appear', function () {
     expect(listCategories(['filter' => ['name' => 'perif']])->json('data.*.name'))
         ->not->toContain('Periféricos de outra empresa')
         ->and(listCategories()->json('meta.total'))->toBe(4);
+});
+
+test('each category counts its active products and sorts by that count', function () {
+    $brand = Brand::query()->create(['company_id' => $this->company->id, 'name' => 'Marca', 'status' => 'active']);
+    $makeProduct = fn (string $category, string $sku, string $status = 'active') => Product::query()->create([
+        'company_id' => $this->company->id,
+        'category_id' => Category::query()->where('name', $category)->value('id'),
+        'brand_id' => $brand->id,
+        'name' => "Produto {$sku}",
+        'sku' => $sku,
+        'sale_price' => 10,
+        'cost' => 5,
+        'stock' => 1,
+        'status' => $status,
+    ]);
+    $makeProduct('Monitores', 'M-1');
+    $makeProduct('Monitores', 'M-2');
+    $makeProduct('Monitores', 'M-3', 'inactive');
+    $makeProduct('Acessórios', 'A-1');
+
+    $response = listCategories(['sort' => 'products_count', 'direction' => 'desc']);
+
+    expect($response->json('data.0.name'))->toBe('Monitores')
+        ->and($response->json('data.0.products_count'))->toBe(2)
+        ->and($response->json('data.1.name'))->toBe('Acessórios')
+        ->and($response->json('data.1.products_count'))->toBe(1);
 });

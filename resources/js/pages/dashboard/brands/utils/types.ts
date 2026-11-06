@@ -9,6 +9,8 @@ export type BrandRow = {
     brand: Brand;
     name: string;
     status: Brand['status'];
+    productsCount: number;
+    productsUrl: string;
 };
 
 export type BrandForm = z.infer<typeof brandFormSchema>;

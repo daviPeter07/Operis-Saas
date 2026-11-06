@@ -11,7 +11,7 @@ class IndexBrandRequest extends TableIndexRequest
      */
     protected function sortable(): array
     {
-        return ['name', 'created_at'];
+        return ['name', 'products_count', 'created_at'];
     }
 
     /**

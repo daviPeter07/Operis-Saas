@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyUser;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Testing\TestResponse;
@@ -128,4 +130,28 @@ test('brands from other companies never appear', function () {
     expect(listBrands(['filter' => ['name' => 'logi']])->json('data.*.name'))
         ->not->toContain('Logitech de outra empresa')
         ->and(listBrands()->json('meta.total'))->toBe(4);
+});
+
+test('each brand counts its active products and sorts by that count', function () {
+    $category = Category::query()->create(['company_id' => $this->company->id, 'name' => 'Categoria', 'status' => 'active']);
+    $makeProduct = fn (string $brand, string $sku, string $status = 'active') => Product::query()->create([
+        'company_id' => $this->company->id,
+        'category_id' => $category->id,
+        'brand_id' => Brand::query()->where('name', $brand)->value('id'),
+        'name' => "Produto {$sku}",
+        'sku' => $sku,
+        'sale_price' => 10,
+        'cost' => 5,
+        'stock' => 1,
+        'status' => $status,
+    ]);
+    $makeProduct('Logitech', 'L-1');
+    $makeProduct('Logitech', 'L-2');
+    $makeProduct('Logitech', 'L-3', 'inactive');
+
+    $response = listBrands(['sort' => 'products_count', 'direction' => 'desc']);
+
+    expect($response->json('data.0.name'))->toBe('Logitech')
+        ->and($response->json('data.0.products_count'))->toBe(2)
+        ->and($response->json('data.1.products_count'))->toBe(0);
 });

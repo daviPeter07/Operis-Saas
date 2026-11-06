@@ -12,6 +12,7 @@ import {
     BRANDS_FILTER_KEYS,
     BRANDS_TITLE,
     BRAND_COLUMNS,
+    BRAND_EXPORT_COLUMNS,
     CREATE_BRAND_ACTION,
 } from './utils/constants';
 import { fetchAllBrands, toBrandRow, useBrandsPage } from './utils/functions';
@@ -31,6 +32,7 @@ export default function BrandsPage() {
                 <ServerTable
                     title={BRANDS_TITLE}
                     columns={BRAND_COLUMNS}
+                    exportColumns={BRAND_EXPORT_COLUMNS}
                     rows={(brandsPage.data?.data ?? []).map(toBrandRow)}
                     total={brandsPage.data?.meta.total ?? 0}
                     lastPage={brandsPage.data?.meta.last_page ?? 1}

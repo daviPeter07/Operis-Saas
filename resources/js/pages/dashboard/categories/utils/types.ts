@@ -9,6 +9,8 @@ export type CategoryRow = {
     category: Category;
     name: string;
     status: Category['status'];
+    productsCount: number;
+    productsUrl: string;
 };
 
 export type CategoryForm = z.infer<typeof categoryFormSchema>;

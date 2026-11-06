@@ -12,6 +12,7 @@ import {
     CATEGORIES_FILTER_KEYS,
     CATEGORIES_TITLE,
     CATEGORY_COLUMNS,
+    CATEGORY_EXPORT_COLUMNS,
     CREATE_CATEGORY_ACTION,
 } from './utils/constants';
 import {
@@ -39,6 +40,7 @@ export default function CategoriesPage() {
                 <ServerTable
                     title={CATEGORIES_TITLE}
                     columns={CATEGORY_COLUMNS}
+                    exportColumns={CATEGORY_EXPORT_COLUMNS}
                     rows={(categoriesPage.data?.data ?? []).map(toCategoryRow)}
                     total={categoriesPage.data?.meta.total ?? 0}
                     lastPage={categoriesPage.data?.meta.last_page ?? 1}

@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { withAppBasePath } from '@/constants/workspace';
 import { brandsQueryKey } from '@/hooks/use-brands';
 import type { Brand } from '@/schemas/brand';
 import { brandService } from '@/services/brands';
@@ -29,6 +30,10 @@ export function toBrandRow(brand: Brand): BrandRow {
         brand,
         name: brand.name,
         status: brand.status,
+        productsCount: brand.products_count ?? 0,
+        productsUrl: withAppBasePath(
+            `/dashboard/inventory?brand_id=${brand.id}`,
+        ),
     };
 }
 

@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Brand;
 use App\Repositories\Contracts\BrandRepositoryInterface;
 use App\Support\Tables\TableQuery;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BrandRepository implements BrandRepositoryInterface
@@ -17,11 +18,14 @@ class BrandRepository implements BrandRepositoryInterface
             return $query->latest()->paginate();
         }
 
+        // Same rule as the inventory list, which the count links to: active products only.
+        $query->withCount(['products' => fn (Builder $products) => $products->where('status', 'active')]);
+
         $tableQuery
             ->applyTextFilters($query, ['name' => 'name'])
             ->applyExactFilters($query, ['status' => 'status'])
             ->applyDateRange($query, 'created_at', isTimestamp: true)
-            ->applySort($query, ['name' => 'name', 'created_at' => 'created_at']);
+            ->applySort($query, ['name' => 'name', 'products_count' => 'products_count', 'created_at' => 'created_at']);
 
         return $tableQuery->paginate($query);
     }
