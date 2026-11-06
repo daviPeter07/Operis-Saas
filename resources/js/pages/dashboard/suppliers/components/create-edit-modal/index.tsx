@@ -23,18 +23,18 @@ import {
 } from '../../utils/functions';
 import { supplierFormSchema } from '../../utils/schemas';
 import type {
-    SupplierCreateDialogProps,
+    CreateEditModalProps,
     SupplierFormValues,
 } from '../../utils/types';
 import { SupplierFields } from './supplier-fields';
 
 // Also used by the purchase and accounts payable dialogs to create a supplier on the spot.
-export function SupplierCreateDialog({
+export function CreateEditModal({
     open,
     onOpenChange,
     onSuccess,
     supplier,
-}: SupplierCreateDialogProps) {
+}: CreateEditModalProps) {
     const createSupplier = useCreateSupplier();
     const updateSupplier = useUpdateSupplier();
     const form = useForm<SupplierFormValues>({

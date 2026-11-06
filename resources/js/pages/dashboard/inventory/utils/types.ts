@@ -1,7 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import type { z } from 'zod';
-import type { Brand } from '@/schemas/brand';
-import type { Category } from '@/schemas/category';
 import type { Product } from '@/schemas/product';
 import type { FieldOption } from '@/utils/form-fields';
 import type { productFormSchema, quickCreateSchema } from './schemas';
@@ -49,6 +47,8 @@ export type CreateEditModalProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     product?: Product | null;
+    // Other screens (sale, purchase) save the product their own way.
+    onSubmit?: (data: ProductDialogSubmitData) => Promise<void>;
 };
 
 export type ProductDetailsProps = {
@@ -81,18 +81,6 @@ export type ProductDialogSubmitData = {
     min_stock: number;
     category_id: number;
     brand_id: number | null;
-};
-
-export type ProductDialogProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    mode: ProductDialogMode;
-    initialData?: Partial<ProductDialogForm>;
-    brands: FieldOption[];
-    categories: FieldOption[];
-    onCreateBrand: (name: string) => Promise<Brand>;
-    onCreateCategory: (name: string) => Promise<Category>;
-    onSubmit: (data: ProductDialogSubmitData) => Promise<void>;
 };
 
 export type ProductDialogText = {

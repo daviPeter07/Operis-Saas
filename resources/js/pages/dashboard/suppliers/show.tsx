@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDeleteSupplier } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
-import { SupplierCreateDialog } from './components/create-edit-modal';
+import { CreateEditModal } from './components/create-edit-modal';
 import { SupplierDetails } from './components/supplier-details';
 import {
     DELETE_SUPPLIER_DIALOG,
@@ -113,7 +113,7 @@ function ShowContent({ supplierId }: SuppliersShowPageProps) {
 
             <SupplierDetails supplier={supplier} />
 
-            <SupplierCreateDialog
+            <CreateEditModal
                 open={isEditOpen}
                 onOpenChange={setIsEditOpen}
                 supplier={supplier}

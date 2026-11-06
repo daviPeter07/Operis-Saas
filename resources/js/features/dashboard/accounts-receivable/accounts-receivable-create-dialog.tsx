@@ -18,7 +18,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ClientCreateDialog } from '@/pages/dashboard/clients/components/create-edit-modal';
+import { CreateEditModal as ClientCreateEditModal } from '@/pages/dashboard/clients/components/create-edit-modal';
 import type { UiCustomer } from '@/types/dashboard-entities';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { todayString } from '@/utils/sales-dialog';
@@ -325,7 +325,7 @@ export function AccountsReceivableCreateDialog({
                 </DialogContent>
             </Dialog>
 
-            <ClientCreateDialog
+            <ClientCreateEditModal
                 open={clientCreateOpen}
                 onOpenChange={setClientCreateOpen}
                 onSuccess={({ id, name }) => {

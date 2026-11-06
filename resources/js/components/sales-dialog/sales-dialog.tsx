@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useSalesDialog } from '@/hooks/use-sales-dialog';
-import { ClientCreateDialog } from '@/pages/dashboard/clients/components/create-edit-modal';
-import { ProductDialog } from '@/pages/dashboard/inventory/components/create-edit-modal';
+import { CreateEditModal as ClientCreateEditModal } from '@/pages/dashboard/clients/components/create-edit-modal';
+import { CreateEditModal as ProductCreateEditModal } from '@/pages/dashboard/inventory/components/create-edit-modal';
 import type { UiProduct as Product } from '@/types/dashboard-entities';
 import type { SalesRecord } from '@/types/sales-dialog';
 import type { SalesDialogProps } from '@/types/sales-dialog-component';
@@ -21,11 +21,7 @@ export function SalesDialog({
     onSubmit,
     clients,
     products,
-    brands,
-    categories,
     onCreateProduct,
-    onCreateBrand,
-    onCreateCategory,
     defaultTab = 'catalog',
 }: SalesDialogProps) {
     const {
@@ -388,7 +384,7 @@ export function SalesDialog({
                     onConfirm={confirmAddProductFromCatalog}
                 />
 
-                <ClientCreateDialog
+                <ClientCreateEditModal
                     open={clientCreateOpen}
                     onOpenChange={setClientCreateOpen}
                     onSuccess={(client) => {
@@ -396,7 +392,7 @@ export function SalesDialog({
                     }}
                 />
 
-                <ClientCreateDialog
+                <ClientCreateEditModal
                     open={clientLimitEditorOpen}
                     onOpenChange={setClientLimitEditorOpen}
                     initialData={
@@ -428,14 +424,9 @@ export function SalesDialog({
                     }}
                 />
 
-                <ProductDialog
+                <ProductCreateEditModal
                     open={productCreateOpen}
                     onOpenChange={setProductCreateOpen}
-                    mode="create"
-                    brands={brands}
-                    categories={categories}
-                    onCreateBrand={onCreateBrand}
-                    onCreateCategory={onCreateCategory}
                     onSubmit={async (values) => {
                         const createdProduct: Product =
                             await onCreateProduct(values);

@@ -33,7 +33,7 @@ import { productFormSchema } from '../../utils/schemas';
 import type {
     CreateEditModalProps,
     ProductDialogForm,
-    ProductDialogProps,
+    ProductDialogSubmitData,
     QuickCreateState,
     QuickCreateType,
 } from '../../utils/types';
@@ -43,17 +43,22 @@ import { PriceFields } from './price-fields';
 import { QuickCreateDialog } from './quick-create-dialog';
 import { StockField } from './stock-field';
 
-export function ProductDialog({
+export function CreateEditModal({
     open,
     onOpenChange,
-    mode,
-    initialData,
-    brands,
-    categories,
-    onCreateBrand,
-    onCreateCategory,
+    product,
     onSubmit,
-}: ProductDialogProps) {
+}: CreateEditModalProps) {
+    const { data: brands = [] } = useBrands();
+    const { data: categories = [] } = useCategories();
+    const createBrand = useCreateBrand();
+    const createCategory = useCreateCategory();
+    const createProduct = useCreateProduct();
+    const updateProduct = useUpdateProduct();
+    const initialData = useMemo(
+        () => (product ? toProductFormValues(product) : undefined),
+        [product],
+    );
     const form = useForm<ProductDialogForm>({
         resolver: zodResolver(productFormSchema),
         mode: 'onTouched',
@@ -61,7 +66,7 @@ export function ProductDialog({
     });
     const [quickCreate, setQuickCreate] =
         useState<QuickCreateState>(CLOSED_QUICK_CREATE);
-    const text = PRODUCT_DIALOG_TEXT[mode];
+    const text = PRODUCT_DIALOG_TEXT[product ? 'edit' : 'create'];
 
     useEffect(() => {
         if (open) {
@@ -69,9 +74,19 @@ export function ProductDialog({
         }
     }, [form, initialData, open]);
 
+    const save = async (data: ProductDialogSubmitData) => {
+        if (onSubmit) {
+            await onSubmit(data);
+        } else if (product) {
+            await updateProduct.mutateAsync({ ...data, id: product.id });
+        } else {
+            await createProduct.mutateAsync(data);
+        }
+    };
+
     const submit = form.handleSubmit(async (values) => {
         try {
-            await onSubmit(toProductSubmitData(values));
+            await save(toProductSubmitData(values));
             onOpenChange(false);
         } catch (error) {
             showServerErrors(form, error, SAVE_PRODUCT_ERROR);
@@ -83,12 +98,18 @@ export function ProductDialog({
         name: string,
     ) => {
         if (type === 'brand') {
-            const brand = await onCreateBrand(name);
+            const brand = await createBrand.mutateAsync({
+                name,
+                status: 'active',
+            });
             form.setValue('brand_id', String(brand.id), {
                 shouldValidate: true,
             });
         } else {
-            const category = await onCreateCategory(name);
+            const category = await createCategory.mutateAsync({
+                name,
+                status: 'active',
+            });
             form.setValue('category_id', String(category.id), {
                 shouldValidate: true,
             });
@@ -113,8 +134,8 @@ export function ProductDialog({
                     <form onSubmit={submit} className="space-y-5">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <IdentificationFields
-                                brands={brands}
-                                categories={categories}
+                                brands={toFieldOptions(brands)}
+                                categories={toFieldOptions(categories)}
                                 onQuickCreate={(type, name = '') =>
                                     setQuickCreate({ type, name })
                                 }
@@ -159,51 +180,5 @@ export function ProductDialog({
                 />
             </DialogContent>
         </Dialog>
-    );
-}
-
-export function CreateEditModal({
-    open,
-    onOpenChange,
-    product,
-}: CreateEditModalProps) {
-    const { data: brands = [] } = useBrands();
-    const { data: categories = [] } = useCategories();
-    const createBrand = useCreateBrand();
-    const createCategory = useCreateCategory();
-    const createProduct = useCreateProduct();
-    const updateProduct = useUpdateProduct();
-    const initialData = useMemo(
-        () => (product ? toProductFormValues(product) : undefined),
-        [product],
-    );
-
-    return (
-        <ProductDialog
-            open={open}
-            onOpenChange={onOpenChange}
-            mode={product ? 'edit' : 'create'}
-            initialData={initialData}
-            brands={toFieldOptions(brands)}
-            categories={toFieldOptions(categories)}
-            onCreateBrand={(name) =>
-                createBrand.mutateAsync({ name, status: 'active' })
-            }
-            onCreateCategory={(name) =>
-                createCategory.mutateAsync({ name, status: 'active' })
-            }
-            onSubmit={async (data) => {
-                if (product) {
-                    await updateProduct.mutateAsync({
-                        ...data,
-                        id: product.id,
-                    });
-
-                    return;
-                }
-
-                await createProduct.mutateAsync(data);
-            }}
-        />
     );
 }

@@ -36,7 +36,7 @@ export type SupplierDialogText = {
     submit: string;
 };
 
-export type SupplierCreateDialogProps = {
+export type CreateEditModalProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: (supplier: Supplier) => void;

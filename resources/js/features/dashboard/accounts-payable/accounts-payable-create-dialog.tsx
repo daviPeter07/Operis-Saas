@@ -27,7 +27,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { SupplierCreateDialog } from '@/pages/dashboard/suppliers/components/create-edit-modal';
+import { CreateEditModal as SupplierCreateEditModal } from '@/pages/dashboard/suppliers/components/create-edit-modal';
 import type { AccountsPayableCreateDialogProps } from '@/types/dashboard-forms';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { todayString } from '@/utils/sales-dialog';
@@ -509,7 +509,7 @@ export function AccountsPayableCreateDialog({
                 </DialogContent>
             </Dialog>
 
-            <SupplierCreateDialog
+            <SupplierCreateEditModal
                 open={supplierCreateOpen}
                 onOpenChange={setSupplierCreateOpen}
                 onSuccess={({ id, name }) => {

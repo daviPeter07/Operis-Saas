@@ -5,7 +5,7 @@ import { useServerTableState } from '@/hooks/use-server-table-state';
 import { useDeleteSupplier } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
 import type { Supplier } from '@/schemas/supplier';
-import { SupplierCreateDialog } from './components/create-edit-modal';
+import { CreateEditModal } from './components/create-edit-modal';
 import {
     EXPORT_COLUMNS,
     SUPPLIERS_BREADCRUMB,
@@ -57,13 +57,13 @@ export default function SuppliersPage() {
                     }
                 />
 
-                <SupplierCreateDialog
+                <CreateEditModal
                     open={isCreateOpen}
                     onOpenChange={setIsCreateOpen}
                 />
 
                 {editingSupplier ? (
-                    <SupplierCreateDialog
+                    <CreateEditModal
                         open
                         onOpenChange={(open) =>
                             !open && setEditingSupplier(null)

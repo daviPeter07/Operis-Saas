@@ -6,20 +6,24 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import type { ClientCreateDialogProps } from '@/types/dashboard-forms';
 import { CLIENT_DIALOG_TEXT } from '../../utils/constants';
 import { toInitialData } from '../../utils/functions';
 import type { CreateEditModalProps } from '../../utils/types';
 import { ClientForm } from './client-form';
 
-// Also used by the sales and receivables screens to create a client or edit its store credit.
-export function ClientCreateDialog({
+// Also used by the sales and receivables screens, which pass initialData and onSuccess.
+export function CreateEditModal({
     open,
     onOpenChange,
-    onSuccess,
+    customer,
     initialData,
-}: ClientCreateDialogProps) {
-    const text = CLIENT_DIALOG_TEXT[initialData?.id ? 'edit' : 'create'];
+    onSuccess,
+}: CreateEditModalProps) {
+    const data = useMemo(
+        () => initialData ?? (customer ? toInitialData(customer) : undefined),
+        [customer, initialData],
+    );
+    const text = CLIENT_DIALOG_TEXT[data?.id ? 'edit' : 'create'];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -30,7 +34,7 @@ export function ClientCreateDialog({
                 </DialogHeader>
 
                 <ClientForm
-                    initialData={initialData}
+                    initialData={data}
                     text={text}
                     onCancel={() => onOpenChange(false)}
                     onSaved={(client) => {
@@ -40,24 +44,5 @@ export function ClientCreateDialog({
                 />
             </DialogContent>
         </Dialog>
-    );
-}
-
-export function CreateEditModal({
-    open,
-    onOpenChange,
-    customer,
-}: CreateEditModalProps) {
-    const initialData = useMemo(
-        () => (customer ? toInitialData(customer) : undefined),
-        [customer],
-    );
-
-    return (
-        <ClientCreateDialog
-            open={open}
-            onOpenChange={onOpenChange}
-            initialData={initialData}
-        />
     );
 }
