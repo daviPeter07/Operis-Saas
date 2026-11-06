@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Purchases;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Purchases\IndexPurchaseRequest;
 use App\Http\Requests\Purchases\StorePurchaseRequest;
 use App\Http\Requests\Purchases\UpdatePurchaseRequest;
 use App\Http\Resources\Purchases\PurchaseResource;
@@ -18,10 +19,10 @@ class PurchaseController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexPurchaseRequest $request): AnonymousResourceCollection
     {
         return PurchaseResource::collection(
-            $this->purchaseService->list(auth()->user()->current_company_id)
+            $this->purchaseService->list(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 
@@ -46,7 +47,7 @@ class PurchaseController extends Controller
     {
         $this->authorize('view', $purchase);
 
-        return response()->json(['data' => PurchaseResource::make($purchase->load(['items.product.category', 'items.product.brand']))]);
+        return response()->json(['data' => PurchaseResource::make($purchase->load(['supplier', 'payables', 'items.product.category', 'items.product.brand']))]);
     }
 
     /**
