@@ -19,6 +19,19 @@ class SaleHistoryService
         $this->record($sale, SaleEventType::Created, 'Venda registrada', (float) $sale->total);
     }
 
+    /**
+     * Sets or clears delivered_at; marking the sale as delivered goes to the history.
+     */
+    public function syncDelivery(Sale $sale, bool $delivered): void
+    {
+        if ($delivered && $sale->delivered_at === null) {
+            $sale->forceFill(['delivered_at' => now()])->save();
+            $this->record($sale, SaleEventType::Delivered, 'Venda marcada como entregue', null);
+        } elseif (! $delivered && $sale->delivered_at !== null) {
+            $sale->forceFill(['delivered_at' => null])->save();
+        }
+    }
+
     public function recordUpdated(Sale $sale): void
     {
         $this->record($sale, SaleEventType::Updated, 'Venda editada', (float) $sale->total);

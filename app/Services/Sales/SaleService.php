@@ -44,7 +44,10 @@ class SaleService
                 ? SaleStatus::Pending->value
                 : ($data['status'] ?? SaleStatus::Pending->value);
 
-            $sale = $this->sales->createForCompany($companyId, $this->saleAttributes($data, $status));
+            $sale = $this->sales->createForCompany($companyId, [
+                ...$this->saleAttributes($data, $status),
+                'notes' => $data['notes'] ?? null,
+            ]);
 
             $this->syncItems($sale, $data['items']);
             $sale->load('customer');
@@ -53,6 +56,7 @@ class SaleService
             $this->receivableService->regenerateFromSale($sale);
             $this->history->recordCreated($sale);
             $this->history->recordCheckoutPayments($sale);
+            $this->history->syncDelivery($sale, (bool) ($data['delivered'] ?? false));
 
             if ($paymentMethod === 'crediario') {
                 $this->settlePaidInstallments($sale, $userId, $data);
@@ -100,7 +104,11 @@ class SaleService
                 ? SaleStatus::Pending->value
                 : ($data['status'] ?? $sale->status ?? SaleStatus::Pending->value);
 
-            $sale = $this->sales->update($sale, $this->saleAttributes($data, $nextStatus));
+            // Notes and delivery are only changed when the request sends them.
+            $sale = $this->sales->update($sale, [
+                ...$this->saleAttributes($data, $nextStatus),
+                ...(array_key_exists('notes', $data) ? ['notes' => $data['notes']] : []),
+            ]);
 
             $sale->items()->delete();
             $this->syncItems($sale, $data['items']);
@@ -109,6 +117,10 @@ class SaleService
 
             $this->receivableService->regenerateFromSale($sale);
             $this->history->recordUpdated($sale);
+
+            if (array_key_exists('delivered', $data)) {
+                $this->history->syncDelivery($sale, (bool) $data['delivered']);
+            }
             // Receivables are rebuilt on every edit: only payments this edit adds go to the history.
             $this->history->recordCheckoutPayments(
                 $sale,

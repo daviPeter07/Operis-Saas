@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'first_installment_date',
     'installment_value',
     'crediario_entry',
+    'notes',
 ])]
 class Sale extends Model
 {
@@ -39,6 +40,7 @@ class Sale extends Model
             'total' => 'decimal:2',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'delivered_at' => 'datetime',
             'installments' => 'integer',
             'first_installment_date' => 'date',
             'installment_value' => 'decimal:2',

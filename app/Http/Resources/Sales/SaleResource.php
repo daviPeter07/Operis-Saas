@@ -29,11 +29,13 @@ class SaleResource extends ApiResource
             'status' => $this->status,
             'completed_at' => $this->businessTime($this->completed_at),
             'cancelled_at' => $this->businessTime($this->cancelled_at),
+            'delivered_at' => $this->businessTime($this->delivered_at),
             'payment_method' => $this->payment_method,
             'installments' => $this->installments,
             'first_installment_date' => $this->first_installment_date?->toDateString(),
             'installment_value' => $this->installment_value,
             'crediario_entry' => $this->crediario_entry,
+            'notes' => $this->notes,
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item): array => [
                 'id' => $item->id,
                 'product_id' => $item->product_id,

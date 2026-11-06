@@ -32,6 +32,8 @@ class UpdateSaleRequest extends FormRequest
             'installment_value' => ['nullable', 'numeric', 'min:0'],
             'crediario_entry' => ['nullable', 'numeric', 'min:0.01'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'delivered' => ['sometimes', 'boolean'],
             'paid_installments' => ['nullable', 'array'],
             'paid_installments.*' => ['integer', 'min:1', 'max:24'],
             'allow_negative_stock' => ['sometimes', 'boolean'],

@@ -9,4 +9,5 @@ enum SaleEventType: string
     case PaymentReceived = 'payment_received';
     case Completed = 'completed';
     case Cancelled = 'cancelled';
+    case Delivered = 'delivered';
 }
