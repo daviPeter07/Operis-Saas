@@ -82,12 +82,15 @@ export const SALE_STATUS_CHIP_CLASS: Record<SaleStatus, string> = {
     cancelled: 'bg-red-500/10 text-red-700 ring-red-500/25 dark:text-red-300',
 };
 
+// card and installment are older methods still present in past sales.
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
     cash: 'Dinheiro',
     pix: 'PIX',
     card_debit: 'Cartão de débito',
     card_credit: 'Cartão de crédito',
     crediario: 'Crediário',
+    card: 'Cartão',
+    installment: 'Parcelado',
 };
 
 export const PAYMENT_METHOD_OPTIONS: FieldOption[] = Object.entries(

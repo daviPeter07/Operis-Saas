@@ -27,7 +27,7 @@ class IndexSaleRequest extends TableIndexRequest
             'category_id' => ['integer'],
             'brand_id' => ['integer'],
             'status' => [Rule::enum(SaleStatus::class)],
-            'payment_method' => [Rule::in(['cash', 'pix', 'card_debit', 'card_credit', 'crediario'])],
+            'payment_method' => [Rule::in(['cash', 'pix', 'card_debit', 'card_credit', 'crediario', 'card', 'installment'])],
         ];
     }
 }

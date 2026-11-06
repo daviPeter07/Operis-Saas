@@ -270,3 +270,10 @@ test('only lists sales of the current company', function () {
         ->and($ids)->toEqualCanonicalizing([$this->cashSale->id, $this->crediarioSale->id])
         ->and(listedSaleIds(['sort' => 'total', 'direction' => 'desc'])[0])->toBe($this->cardSale->id);
 });
+
+test('older payment methods can still be filtered', function () {
+    $legacySale = makeListingSale($this->company, ['date' => '2026-10-01', 'payment_method' => 'installment', 'status' => 'completed'], [[Product::query()->where('company_id', $this->company->id)->first(), 1, 30]]);
+
+    expect(listedSaleIds(['filter' => ['payment_method' => 'installment']]))->toBe([$legacySale->id])
+        ->and(listedSaleIds(['filter' => ['payment_method' => 'card']]))->toBe([]);
+});
