@@ -4,15 +4,16 @@ namespace App\Services\Products;
 
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ProductService
 {
     public function __construct(private readonly ProductRepositoryInterface $products) {}
 
-    public function list(int $companyId): LengthAwarePaginator
+    public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
     {
-        return $this->products->paginateByCompany($companyId);
+        return $this->products->paginateByCompany($companyId, $tableQuery);
     }
 
     public function create(int $companyId, array $data): Product

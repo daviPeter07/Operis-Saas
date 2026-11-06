@@ -7,8 +7,12 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         () =>
             new QueryClient({
                 defaultOptions: {
+                    // Data stays fresh for 5 minutes and is kept for 30, so coming back
+                    // to a page shows it at once. Every save invalidates the lists it
+                    // changes, so the cache never hides the user's own changes.
                     queries: {
-                        staleTime: 60 * 1000,
+                        staleTime: 5 * 60 * 1000,
+                        gcTime: 30 * 60 * 1000,
                         refetchOnWindowFocus: false,
                     },
                 },

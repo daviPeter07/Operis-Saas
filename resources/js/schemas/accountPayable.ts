@@ -1,6 +1,7 @@
 export interface AccountPayable {
     id: number;
     supplier_id: number | null;
+    supplier_name?: string | null;
     purchase_id: number | null;
     installment_number: number | null;
     total_installments: number | null;

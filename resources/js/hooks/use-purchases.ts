@@ -8,7 +8,7 @@ export const payablesQueryKey = ['account-payables'] as const;
 const receivablesQueryKey = ['account-receivables'] as const;
 const salesQueryKey = ['sales'] as const;
 
-type CreatePurchaseInput = {
+export type PurchaseMutationInput = {
     supplier_id: number | null;
     date: string;
     due_date?: string;
@@ -16,6 +16,9 @@ type CreatePurchaseInput = {
     payment_method: 'cash' | 'pix' | 'card' | 'installment' | 'boleto';
     boleto_term_days?: 30 | 60 | 90 | 120 | 150;
     update_product_cost?: boolean;
+    notes?: string | null;
+    // Boleto numbers already paid (1 to 5); the purchase completes when all are paid.
+    paid_installments?: number[];
     items: Array<{
         product_id: number;
         quantity: number;
@@ -23,7 +26,8 @@ type CreatePurchaseInput = {
     }>;
 };
 
-type UpdatePurchaseInput = CreatePurchaseInput;
+type CreatePurchaseInput = PurchaseMutationInput;
+type UpdatePurchaseInput = PurchaseMutationInput;
 
 export function usePurchases() {
     return useQuery({

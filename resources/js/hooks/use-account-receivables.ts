@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { accountReceivableService } from '@/services/account-receivables';
+import { customersQueryKey } from './use-customers';
 import { productsQueryKey } from './use-products';
 import { purchasesQueryKey } from './use-purchases';
 import { salesQueryKey } from './use-sales';
@@ -41,6 +41,8 @@ async function invalidateRelatedQueries(
         queryClient.invalidateQueries({ queryKey: productsQueryKey }),
         queryClient.invalidateQueries({ queryKey: purchasesQueryKey }),
         queryClient.invalidateQueries({ queryKey: accountPayablesQueryKey }),
+        // Open balance (crediário limit) changes with each settlement.
+        queryClient.invalidateQueries({ queryKey: customersQueryKey }),
     ]);
 }
 
@@ -61,6 +63,10 @@ type CreateManualReceivableInput = {
     description?: string;
     amount: number;
     entry_date: string;
+    due_date: string;
+    payment_method: 'cash' | 'pix' | 'card_debit' | 'card_credit' | 'crediario';
+    status: 'pending' | 'received';
+    installments?: number;
 };
 
 export function useCreateManualAccountReceivable() {
@@ -228,15 +234,12 @@ export function useDeleteAccountReceivable() {
                     context.previous,
                 );
             }
-
-            toast.error('Erro ao deletar conta a receber');
         },
         onSuccess: () => {
             // Ensure fresh data from server
             void queryClient.invalidateQueries({
                 queryKey: accountReceivablesQueryKey,
             });
-            toast.success('Conta a receber deletada com sucesso');
         },
     });
 }

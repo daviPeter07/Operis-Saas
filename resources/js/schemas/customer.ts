@@ -4,10 +4,15 @@ export interface Customer {
     email: string;
     phone: string;
     document: string;
+    person_type: 'pf' | 'pj';
     status: 'active' | 'inactive';
     credit_enabled: boolean;
     credit_limit: number;
     credit_term_days: number;
+    /** Sum of receivables not yet received or cancelled; sent by the table listing and the details. */
+    open_balance?: number;
+    /** Registration date ("YYYY-MM-DD HH:mm:ss"), used by the period filter. */
+    createdAt?: string | null;
 }
 
 export interface CreateCustomerInput {
@@ -15,6 +20,7 @@ export interface CreateCustomerInput {
     email: string;
     phone?: string;
     document?: string;
+    person_type?: 'pf' | 'pj';
     credit_enabled?: boolean;
     credit_limit?: number;
     credit_term_days?: number;

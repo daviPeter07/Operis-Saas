@@ -10,6 +10,8 @@ type DatePickerInputProps = {
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string;
+    /** Side of the field the calendar lines up with; use "end" near the right edge. */
+    align?: 'start' | 'end';
 };
 
 export function DatePickerInput({
@@ -17,6 +19,7 @@ export function DatePickerInput({
     onChange,
     placeholder,
     className,
+    align = 'start',
 }: DatePickerInputProps) {
     const [open, setOpen] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -73,7 +76,9 @@ export function DatePickerInput({
             <Input type="hidden" value={value} onChange={() => {}} readOnly />
 
             {open ? (
-                <div className="absolute z-50 mt-2 rounded-md border bg-background p-2 shadow-lg">
+                <div
+                    className={`absolute z-50 mt-2 rounded-md border bg-background p-2 shadow-lg ${align === 'end' ? 'right-0' : 'left-0'}`}
+                >
                     <Calendar
                         mode="single"
                         selected={selectedDate}

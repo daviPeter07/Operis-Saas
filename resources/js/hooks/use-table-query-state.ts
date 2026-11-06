@@ -1,9 +1,6 @@
 import { router } from '@inertiajs/react';
 import * as React from 'react';
-import type {
-    CustomRange,
-    Period,
-} from '@/features/dashboard/overview/period-filter';
+import type { CustomRange, Period } from '@/components/filters/period-filter';
 
 export type TableQueryState = {
     search: string;
@@ -37,6 +34,7 @@ function parseQueryParams(search: string) {
     const periodParam = params.get('period');
     const period: Period =
         periodParam === 'current-month' ||
+        periodParam === 'previous-month' ||
         periodParam === '7d' ||
         periodParam === '30d' ||
         periodParam === '90d' ||

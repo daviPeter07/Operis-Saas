@@ -1,10 +1,7 @@
-import type {
-    ClientForm,
-    FinancialEntryForm,
-    SupplierForm,
-} from '@/types/dashboard-forms';
+import { todayInAppTimeZone } from '@/lib/app-timezone';
+import type { ClientForm, FinancialEntryForm } from '@/types/dashboard-forms';
 
-const today = new Date().toISOString().slice(0, 10);
+const today = todayInAppTimeZone();
 
 export const initialPurchaseForm: FinancialEntryForm = {
     supplierName: '',
@@ -30,20 +27,6 @@ export const initialAccountsPayableForm: FinancialEntryForm = {
     firstInstallmentDate: today,
     status: 'pending',
     createdAt: today,
-};
-
-export const initialSupplierForm: SupplierForm = {
-    name: '',
-    personType: 'pj',
-    email: '',
-    phone: '',
-    document: '',
-    state: '',
-    city: '',
-    street: '',
-    neighborhood: '',
-    number: '',
-    zipCode: '',
 };
 
 export const initialClientForm: ClientForm = {

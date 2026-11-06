@@ -4,23 +4,29 @@ namespace App\Models;
 
 use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable([
     'company_id',
     'customer_id',
     'date',
     'subtotal',
+    'discount',
     'total',
     'status',
+    'completed_at',
+    'cancelled_at',
     'payment_method',
     'installments',
     'first_installment_date',
     'installment_value',
     'crediario_entry',
+    'notes',
 ])]
 class Sale extends Model
 {
@@ -31,12 +37,77 @@ class Sale extends Model
         return [
             'date' => 'date',
             'subtotal' => 'decimal:2',
+            'discount' => 'decimal:2',
             'total' => 'decimal:2',
+            'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'delivered_at' => 'datetime',
             'installments' => 'integer',
             'first_installment_date' => 'date',
             'installment_value' => 'decimal:2',
             'crediario_entry' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Adds the `profit` column: what the items earn over their cost, minus the discount.
+     * Computed in SQL so listings can sort and paginate by it.
+     */
+    public function scopeWithProfit(Builder $query): void
+    {
+        if ($query->getQuery()->columns === null) {
+            $query->select('sales.*');
+        }
+
+        $query->selectRaw(
+            '(select coalesce(sum(sale_items.quantity * (sale_items.unit_price - sale_items.unit_cost)), 0)'
+            .' from sale_items where sale_items.sale_id = sales.id) - sales.discount as profit'
+        );
+    }
+
+    /**
+     * Same formula as scopeWithProfit, reusing the SQL value when the query selected it.
+     */
+    public function profitAmount(): float
+    {
+        if (array_key_exists('profit', $this->getAttributes())) {
+            return round((float) $this->getAttributes()['profit'], 2);
+        }
+
+        $items = $this->relationLoaded('items') ? $this->items : $this->items()->get();
+        $margin = $items->sum(fn (SaleItem $item): float => (float) $item->quantity * ((float) $item->unit_price - (float) $item->unit_cost));
+
+        return round($margin - (float) $this->discount, 2);
+    }
+
+    /**
+     * What is still to be received: the open balance (amount - amount_paid) of the sale's
+     * pending and partial receivables. Entries and installments already paid are out.
+     */
+    public function scopeWithOpenAmount(Builder $query): void
+    {
+        if ($query->getQuery()->columns === null) {
+            $query->select('sales.*');
+        }
+
+        $query->selectRaw(
+            '(select coalesce(sum(account_receivables.amount - account_receivables.amount_paid), 0)'
+            ." from account_receivables where account_receivables.sale_id = sales.id and account_receivables.status in ('pending', 'partial')) as open_amount"
+        );
+    }
+
+    /**
+     * Same value as scopeWithOpenAmount, reusing the SQL value when the query selected it.
+     */
+    public function openAmount(): float
+    {
+        if (array_key_exists('open_amount', $this->getAttributes())) {
+            return round((float) $this->getAttributes()['open_amount'], 2);
+        }
+
+        return round((float) $this->receivables()
+            ->whereIn('status', ['pending', 'partial'])
+            ->sum(DB::raw('amount - amount_paid')), 2);
     }
 
     public function customer(): BelongsTo
@@ -57,5 +128,13 @@ class Sale extends Model
     public function receivables(): HasMany
     {
         return $this->hasMany(AccountReceivable::class);
+    }
+
+    /**
+     * History, oldest first.
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(SaleEvent::class)->orderBy('occurred_at')->orderBy('id');
     }
 }

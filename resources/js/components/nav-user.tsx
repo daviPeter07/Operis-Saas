@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronsUpDown, Building2 } from 'lucide-react';
 import { useState } from 'react';
+import { CompanySwitcherModal } from '@/components/company-switcher-modal';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,8 +17,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { CompanySwitcherModal } from '@/features/dashboard/layout/company-switcher-modal';
-import { useWorkspace } from '@/features/dashboard/workspace-context';
+import { useWorkspace } from '@/components/workspace-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export function NavUser() {

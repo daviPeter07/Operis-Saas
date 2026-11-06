@@ -18,6 +18,8 @@ class BrandResource extends ApiResource
             'id' => $this->id,
             'name' => $this->name,
             'status' => $this->status,
+            'products_count' => $this->whenCounted('products'),
+            'createdAt' => $this->created_at?->clone()->setTimezone(config('app.business_timezone'))->format('Y-m-d H:i:s'),
         ];
     }
 }

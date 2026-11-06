@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/react';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -19,16 +20,20 @@ createInertiaApp({
     strictMode: true,
     withApp(app) {
         return (
-            <TooltipProvider delayDuration={0}>
-                <QueryProvider>
-                    {app}
-                    <Toaster />
-                </QueryProvider>
-            </TooltipProvider>
+            <NuqsAdapter>
+                <TooltipProvider delayDuration={0}>
+                    <QueryProvider>
+                        {app}
+                        <Toaster />
+                    </QueryProvider>
+                </TooltipProvider>
+            </NuqsAdapter>
         );
     },
     progress: {
-        color: '#4B5563',
+        // Shown right away so navigation never feels unresponsive.
+        delay: 0,
+        color: '#f97316',
     },
 });
 

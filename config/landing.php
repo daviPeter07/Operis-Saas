@@ -81,6 +81,148 @@ return [
     ],
 
     /*
+    | "Últimas atualizações" section. The landing shows the 3 most recent
+    | entries (sorted by date). Write for the customer, not in commit language.
+    | type: novidade | melhoria | correcao
+    |
+    | @var list<array{date: string, type: string, title: string, description: string}>
+    */
+    'updates' => [
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Total a receber das vendas',
+            'description' => 'O card de vendas agora soma só o que falta receber das parcelas em aberto, sem contar entradas e parcelas que o cliente já pagou.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Alertas e atividades da Visão Geral',
+            'description' => 'Pagamentos atrasados agora conta as contas vencidas, cada alerta ou atividade abre a lista já filtrada no que foi clicado, e a tabela avisa o filtro com um botão para ver tudo.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Tabelas sem rolagem lateral e Visão Geral mais rápida',
+            'description' => 'As tabelas cabem na tela com o nome inteiro dos produtos e a pesquisa marcada, e a Visão Geral abre mais rápido e mostra quando está atualizando.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Vendas pagas e total recebido',
+            'description' => 'Vendas com todas as parcelas recebidas agora aparecem como concluídas, e o total recebido passa a contar as contas recebidas antes de 15 de maio.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'novidade',
+            'title' => 'Histórico da compra e contas ligadas',
+            'description' => 'Veja nos detalhes da compra cada boleto pago, edição e cancelamento, abra a venda ou a compra direto pela conta e filtre o período pelo mês anterior.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Contas a receber e a pagar com filtros e detalhes',
+            'description' => 'Filtre as contas por cliente, fornecedor, descrição, origem e status, abra os detalhes de cada uma e dê baixa em várias de uma vez pela barra de seleção.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Crediário sem entrada',
+            'description' => 'A entrada do crediário agora é opcional: sem ela, o valor total da venda é dividido nas parcelas.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'novidade',
+            'title' => 'Comprovante em PDF no tamanho do cupom',
+            'description' => 'Salve o comprovante da venda em PDF de 80 mm, igual ao cupom da impressora térmica, para enviar ao cliente, e marque no cadastro da compra quais boletos já foram pagos.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Compras em etapas e boletos mais claros',
+            'description' => 'Registre a compra em 4 passos, cadastre o fornecedor pela busca e veja, antes de salvar, quantos boletos serão gerados com a data e o valor de cada um.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Observações e pagamentos das compras preservados',
+            'description' => 'As observações da compra agora ficam salvas, e editar uma compra não desfaz mais os boletos que já foram pagos.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Comprovante da venda em PDF mais completo',
+            'description' => 'O PDF do comprovante mostra se a venda está paga ou pendente, o desconto, quanto já foi pago e, no crediário, cada parcela com o vencimento.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Cadastro de venda em etapas',
+            'description' => 'Registre a venda em 4 passos (produtos, cliente e carrinho, pagamento e resumo), com a confirmação na tela de cada produto adicionado e o total do carrinho sempre à vista.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Desconto e crediário corretos nas vendas',
+            'description' => 'O desconto aplicado no caixa agora é salvo na venda e entra no total, nas parcelas e na entrada do crediário, e cancelar uma venda devolve o estoque e cancela as parcelas em aberto.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Vendas com filtros por coluna e página de detalhes',
+            'description' => 'Filtre as vendas por cliente, produto, categoria, marca, status e forma de pagamento, e veja cada venda numa página própria com itens, parcelas e o histórico de tudo o que aconteceu com ela.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Clientes, fornecedores, categorias e marcas com filtros por coluna',
+            'description' => 'Filtre e ordene essas listas direto em cada coluna, veja os detalhes de clientes e fornecedores numa página própria e abra os produtos de uma categoria ou marca com um clique.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Tipo do cliente e crédito disponível corretos',
+            'description' => 'O tipo de pessoa (física ou jurídica) escolhido no cadastro do cliente agora é salvo, e o crédito disponível do crediário considera todas as contas em aberto.',
+        ],
+        [
+            'date' => '2026-11-05',
+            'type' => 'melhoria',
+            'title' => 'Estoque com filtros por coluna e página do produto',
+            'description' => 'Filtre e ordene o estoque direto em cada coluna e veja todos os dados de um produto, com lucro e margem, na página dele.',
+        ],
+        [
+            'date' => '2026-07-01',
+            'type' => 'melhoria',
+            'title' => 'Valor original das contas sempre visível',
+            'description' => 'Contas pagas em partes mostram o valor total original, quanto já foi pago e quanto ainda falta.',
+        ],
+        [
+            'date' => '2026-06-03',
+            'type' => 'melhoria',
+            'title' => 'Escolha o período do painel',
+            'description' => 'Veja os números da visão geral do mês atual, do próximo mês, de todo o período ou de datas que você definir.',
+        ],
+        [
+            'date' => '2026-06-01',
+            'type' => 'novidade',
+            'title' => 'Cupom na impressora térmica',
+            'description' => 'Imprima o cupom da venda direto na impressora térmica do caixa, em papel de 58 ou 80 mm.',
+        ],
+        [
+            'date' => '2026-05-20',
+            'type' => 'novidade',
+            'title' => 'Compras no boleto parcelado',
+            'description' => 'Ao lançar uma compra no boleto, as parcelas e os vencimentos vão sozinhos para contas a pagar.',
+        ],
+        [
+            'date' => '2026-05-18',
+            'type' => 'novidade',
+            'title' => 'Relatórios com exportação',
+            'description' => 'Relatórios de vendas, estoque e inadimplência, com exportação para Excel e PDF.',
+        ],
+    ],
+
+    /*
     | @var list<array{question: string, answer: string}>
     */
     'faq' => [

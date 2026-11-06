@@ -8,7 +8,7 @@ type CreateCustomerInput = {
     email: string;
     phone: string;
     document: string;
-    person_type?: string;
+    person_type?: 'pf' | 'pj';
     credit_enabled?: boolean;
     credit_limit?: number;
     credit_term_days?: number;
@@ -35,6 +35,7 @@ export function useCreateCustomer() {
                 email: payload.email,
                 phone: payload.phone,
                 document: payload.document,
+                person_type: payload.person_type ?? 'pf',
                 status: 'active',
                 credit_enabled: payload.credit_enabled ?? false,
                 credit_limit: payload.credit_limit ?? 0,
@@ -64,6 +65,7 @@ export function useUpdateCustomer() {
                 email: data.email,
                 phone: data.phone,
                 document: data.document,
+                person_type: data.person_type ?? 'pf',
                 status: data.status,
                 credit_enabled: data.credit_enabled ?? false,
                 credit_limit: data.credit_limit ?? 0,

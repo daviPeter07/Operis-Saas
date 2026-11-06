@@ -219,3 +219,17 @@ export function isCodeField(fieldName: string, fieldLabel: string): boolean {
         target.includes('code')
     );
 }
+
+export function toFieldOptions(
+    items: Array<{ id: number; name: string }>,
+): FieldOption[] {
+    return items.map((item) => ({ value: String(item.id), label: item.name }));
+}
+
+export function formatDocumentDisplay(document: string | null): string {
+    return document?.trim() ? formatDocumentInput(document) : '-';
+}
+
+export function formatPhoneDisplay(phone: string | null): string {
+    return phone?.trim() ? formatPhoneInput(phone) : '-';
+}

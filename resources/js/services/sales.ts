@@ -8,13 +8,38 @@ function normalizeSale(sale: Sale): Sale {
     return {
         ...sale,
         subtotal: toNumber(sale.subtotal),
+        discount: toNumber(sale.discount),
         total: toNumber(sale.total),
+        profit:
+            sale.profit === undefined || sale.profit === null
+                ? undefined
+                : toNumber(sale.profit),
+        installment_value:
+            sale.installment_value === undefined ||
+            sale.installment_value === null
+                ? sale.installment_value
+                : toNumber(sale.installment_value),
+        open_amount:
+            sale.open_amount === undefined || sale.open_amount === null
+                ? undefined
+                : toNumber(sale.open_amount),
+        crediario_entry:
+            sale.crediario_entry === undefined || sale.crediario_entry === null
+                ? sale.crediario_entry
+                : toNumber(sale.crediario_entry),
         items: sale.items?.map((item) => ({
             ...item,
             quantity: toNumber(item.quantity),
             unit_price: toNumber(item.unit_price),
             unit_cost: toNumber(item.unit_cost),
             subtotal: toNumber(item.subtotal),
+        })),
+        history: sale.history?.map((entry) => ({
+            ...entry,
+            amount:
+                entry.amount === null || entry.amount === undefined
+                    ? null
+                    : toNumber(entry.amount),
         })),
     };
 }

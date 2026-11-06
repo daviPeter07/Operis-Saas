@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Brands;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Brands\IndexBrandRequest;
 use App\Http\Requests\Brands\StoreBrandRequest;
 use App\Http\Requests\Brands\UpdateBrandRequest;
 use App\Http\Resources\Brands\BrandResource;
@@ -18,10 +19,10 @@ class BrandController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexBrandRequest $request): AnonymousResourceCollection
     {
         return BrandResource::collection(
-            $this->brandService->list(auth()->user()->current_company_id)
+            $this->brandService->list(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 

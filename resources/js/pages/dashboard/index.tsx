@@ -2,21 +2,16 @@ import { router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/dashboard-header';
-import { ChartsPanel } from '@/features/dashboard/overview/charts-panel';
-import { MetricsGrid } from '@/features/dashboard/overview/metrics-grid';
-import type {
-    CustomRange,
-    Period,
-} from '@/features/dashboard/overview/period-filter';
-import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
-import {
-    getCurrentMonthRange,
-    normalizeDateString,
-    resolveDateRange,
-} from '@/features/dashboard/overview/period-range';
-import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
-import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
-import { PageContent } from '@/features/dashboard/page-content';
+import type { CustomRange, Period } from '@/components/filters/period-filter';
+import { PeriodFilter, periodLabels } from '@/components/filters/period-filter';
+import { AlertsPanel } from '@/components/overview/alerts-panel';
+import { ChartsPanel } from '@/components/overview/charts-panel';
+import type { Metric } from '@/components/overview/metrics-grid';
+import { MetricsGrid } from '@/components/overview/metrics-grid';
+import { RecentActivity } from '@/components/overview/recent-activity';
+import { ViewSwitcher } from '@/components/overview/view-switcher';
+import { PageContent } from '@/components/page-content';
+import { Spinner } from '@/components/ui/spinner';
 import { useAccountPayables } from '@/hooks/use-account-payables';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
@@ -26,18 +21,32 @@ import { usePurchases } from '@/hooks/use-purchases';
 import { useSales } from '@/hooks/use-sales';
 import { useSuppliers } from '@/hooks/use-suppliers';
 import AppLayout from '@/layouts/app-layout';
-import {
-    formatCurrencyBR,
-    formatDateTimeManaus,
-} from '@/lib/format';
+import { nowInAppTimeZone, todayInAppTimeZone } from '@/lib/app-timezone';
+import { formatCurrencyBR, formatDateTimeManaus } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
+import {
+    bucketKeyFor,
+    buildSeriesBuckets,
+    comparePeriods,
+    formatComparisonRange,
+    formatRangeLabel,
+    getCurrentMonthRange,
+    normalizeDateString,
+    resolveDateRange,
+    resolvePreviousRange,
+} from '@/utils/period-range';
+import type { DateRange } from '@/utils/period-range';
 import { calculateSalesProfit } from '@/utils/sale-profit';
 
-function dateToLabel(date: string): string {
-    const [year, month, day] = date.split('-');
+type DatedSale = { date?: string | null; createdAt?: string | null };
 
-    return `${day}/${month}/${year.slice(2)}`;
+function saleDateOf(sale: DatedSale): string | null {
+    return normalizeDateString(sale.date ?? sale.createdAt);
+}
+
+function isWithinRange(date: string | null, range: DateRange): boolean {
+    return date !== null && date >= range.from && date <= range.to;
 }
 
 function toActivityTimestamp(dateTime: string | undefined): number {
@@ -80,6 +89,98 @@ function toActivityTimestamp(dateTime: string | undefined): number {
     return parsedDate.getTime();
 }
 
+type KpiFeedback = Pick<Metric, 'trend' | 'detail'>;
+
+interface KpiFeedbackInput {
+    salesCount: number;
+    salesTotal: number;
+    profit: number;
+    previousSalesTotal: number;
+    previousProfit: number;
+    /** e.g. "no mês passado"; null when the period has nothing to compare with. */
+    previousPeriodName: string | null;
+    comparisonLabel: string;
+}
+
+function formatSalesCount(count: number): string {
+    return `${count} ${count === 1 ? 'venda' : 'vendas'}`;
+}
+
+function formatMargin(profit: number, salesTotal: number): string {
+    const margin = salesTotal > 0 ? (profit / salesTotal) * 100 : 0;
+
+    return `Margem de ${margin.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
+}
+
+/** Growth vs. the previous period when it can be measured, otherwise a useful fact. */
+function salesFeedback(input: KpiFeedbackInput): KpiFeedback {
+    if (input.salesCount === 0) {
+        return {
+            detail: { text: 'Nenhuma venda no período', tone: 'neutral' },
+        };
+    }
+
+    if (input.previousPeriodName === null) {
+        return {
+            detail: {
+                text: `${formatSalesCount(input.salesCount)} no período`,
+                tone: 'neutral',
+            },
+        };
+    }
+
+    if (input.previousSalesTotal === 0) {
+        return {
+            detail: {
+                text: `${formatSalesCount(input.salesCount)}, nenhuma ${input.previousPeriodName}`,
+                tone: 'neutral',
+            },
+        };
+    }
+
+    return {
+        trend: {
+            ...comparePeriods(input.salesTotal, input.previousSalesTotal),
+            comparisonLabel: input.comparisonLabel,
+        },
+    };
+}
+
+function profitFeedback(input: KpiFeedbackInput): KpiFeedback {
+    if (input.salesCount === 0) {
+        return {
+            detail: {
+                text: 'Sem vendas para calcular o lucro',
+                tone: 'neutral',
+            },
+        };
+    }
+
+    const margin = formatMargin(input.profit, input.salesTotal);
+
+    if (input.previousPeriodName === null) {
+        return {
+            detail: { text: `${margin} sobre as vendas`, tone: 'neutral' },
+        };
+    }
+
+    if (input.previousProfit === 0) {
+        return {
+            detail: {
+                text: `${margin}, sem lucro ${input.previousPeriodName}`,
+                tone: 'neutral',
+            },
+        };
+    }
+
+    return {
+        trend: {
+            ...comparePeriods(input.profit, input.previousProfit),
+            comparisonLabel: input.comparisonLabel,
+        },
+    };
+}
+
 export default function DashboardPage() {
     const { auth } = usePage().props as {
         auth: {
@@ -89,28 +190,41 @@ export default function DashboardPage() {
         };
     };
 
-    const { data: sales = [], isPending: isSalesPending } = useSales();
-    const { data: purchases = [], isPending: isPurchasesPending } =
-        usePurchases();
-    const { data: receivables = [] } = useAccountReceivables();
-    const { data: payables = [] } = useAccountPayables();
-    const { data: customers = [], isPending: isCustomersPending } =
-        useCustomers();
-    const { data: products = [], isPending: isProductsPending } = useProducts();
-    const { data: suppliers = [], isPending: isSuppliersPending } =
-        useSuppliers();
+    const salesQuery = useSales();
+    const purchasesQuery = usePurchases();
+    const receivablesQuery = useAccountReceivables();
+    const payablesQuery = useAccountPayables();
+    const customersQuery = useCustomers();
+    const productsQuery = useProducts();
+    const suppliersQuery = useSuppliers();
+    const { data: sales = [] } = salesQuery;
+    const { data: purchases = [] } = purchasesQuery;
+    const { data: receivables = [] } = receivablesQuery;
+    const { data: payables = [] } = payablesQuery;
+    const { data: customers = [] } = customersQuery;
+    const { data: products = [] } = productsQuery;
+    const { data: suppliers = [] } = suppliersQuery;
+    const overviewQueries = [
+        salesQuery,
+        purchasesQuery,
+        receivablesQuery,
+        payablesQuery,
+        customersQuery,
+        productsQuery,
+        suppliersQuery,
+    ];
 
-    const isActivitiesPending =
-        isSalesPending ||
-        isPurchasesPending ||
-        isCustomersPending ||
-        isProductsPending ||
-        isSuppliersPending;
+    // First load: skeletons. Later refreshes (after a change elsewhere or when the
+    // cache gets old) keep the numbers on screen with an "Atualizando" hint.
+    const isLoading = overviewQueries.some((query) => query.isPending);
+    const isRefreshing =
+        !isLoading && overviewQueries.some((query) => query.isFetching);
+    const isActivitiesPending = isLoading;
 
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
     const [period, setPeriod] = useState<Period>('current-month');
     const [customRange, setCustomRange] = useState<CustomRange>(
-        getCurrentMonthRange(),
+        getCurrentMonthRange(nowInAppTimeZone()),
     );
 
     const userName = auth.user?.name ?? 'usuário';
@@ -140,7 +254,7 @@ export default function DashboardPage() {
         [purchases],
     );
     const salesRange = useMemo(
-        () => resolveDateRange(period, customRange),
+        () => resolveDateRange(period, customRange, nowInAppTimeZone()),
         [customRange, period],
     );
     const salesInPeriod = useMemo(() => {
@@ -148,30 +262,84 @@ export default function DashboardPage() {
             return activeSales;
         }
 
-        return activeSales.filter((sale) => {
-            const saleDate = normalizeDateString(sale.date ?? sale.createdAt);
-
-            return saleDate
-                ? saleDate >= salesRange.from && saleDate <= salesRange.to
-                : false;
-        });
+        return activeSales.filter((sale) =>
+            isWithinRange(saleDateOf(sale), salesRange),
+        );
     }, [activeSales, salesRange]);
     const totalProfit = useMemo(
         () => calculateSalesProfit(salesInPeriod),
         [salesInPeriod],
     );
+    const previousRange = useMemo(
+        () => resolvePreviousRange(period, salesRange),
+        [period, salesRange],
+    );
+    const salesInPreviousPeriod = useMemo(
+        () =>
+            previousRange
+                ? activeSales.filter((sale) =>
+                      isWithinRange(saleDateOf(sale), previousRange),
+                  )
+                : [],
+        [activeSales, previousRange],
+    );
+    const periodLabel = useMemo(() => {
+        const name = periodLabels[period];
 
-    const metrics = useMemo(() => {
+        return salesRange ? `${name}: ${formatRangeLabel(salesRange)}` : name;
+    }, [period, salesRange]);
+
+    const metrics = useMemo((): Metric[] => {
+        const today = todayInAppTimeZone();
         const salesTotal = salesInPeriod.reduce(
             (sum, sale) => sum + toNumber(sale.total),
             0,
         );
-        const receivableTotal = receivables
-            .filter((r) => r.status !== 'received')
-            .reduce((sum, r) => sum + toNumber(r.amount), 0);
-        const payableTotal = payables
-            .filter((p) => p.status !== 'paid')
-            .reduce((sum, p) => sum + toNumber(p.amount), 0);
+        const openReceivables = receivables.filter(
+            (r) => r.status !== 'received' && r.status !== 'cancelled',
+        );
+        const openPayables = payables.filter(
+            (p) => p.status !== 'paid' && p.status !== 'cancelled',
+        );
+        const receivableTotal = openReceivables.reduce(
+            (sum, r) => sum + toNumber(r.amount),
+            0,
+        );
+        const payableTotal = openPayables.reduce(
+            (sum, p) => sum + toNumber(p.amount),
+            0,
+        );
+        const overdueReceivables = openReceivables.filter(
+            (r) => r.due_date !== null && r.due_date.slice(0, 10) < today,
+        ).length;
+        const overduePayables = openPayables.filter(
+            (p) => p.due_date !== null && p.due_date.slice(0, 10) < today,
+        ).length;
+        const feedbackInput: KpiFeedbackInput = {
+            salesCount: salesInPeriod.length,
+            salesTotal,
+            profit: totalProfit,
+            previousSalesTotal: salesInPreviousPeriod.reduce(
+                (sum, sale) => sum + toNumber(sale.total),
+                0,
+            ),
+            previousProfit: calculateSalesProfit(salesInPreviousPeriod),
+            // The exact window compared, so "Mês atual" reads "vs. 01/10 a 06/10"
+            // (the same days of last month) instead of looking like the whole month.
+            previousPeriodName: previousRange
+                ? `de ${formatComparisonRange(previousRange)}`
+                : null,
+            comparisonLabel: previousRange
+                ? `vs. ${formatComparisonRange(previousRange)}`
+                : '',
+        };
+        const overdueDetail = (count: number) =>
+            count > 0
+                ? {
+                      text: `${count} ${count === 1 ? 'vencida' : 'vencidas'}`,
+                      tone: 'warning' as const,
+                  }
+                : { text: 'Nenhuma vencida', tone: 'neutral' as const };
 
         return [
             {
@@ -182,6 +350,7 @@ export default function DashboardPage() {
                 color: 'text-orange-500',
                 iconBackground: 'bg-orange-500/12',
                 iconRing: 'ring-orange-500/20',
+                ...salesFeedback(feedbackInput),
             },
             {
                 id: 'lucro',
@@ -191,6 +360,7 @@ export default function DashboardPage() {
                 color: 'text-green-600',
                 iconBackground: 'bg-green-600/12',
                 iconRing: 'ring-green-600/20',
+                ...profitFeedback(feedbackInput),
             },
             {
                 id: 'contas_a_receber',
@@ -200,6 +370,12 @@ export default function DashboardPage() {
                 color: 'text-blue-500',
                 iconBackground: 'bg-blue-500/12',
                 iconRing: 'ring-blue-500/20',
+                detail: overdueDetail(overdueReceivables),
+                scopeNote: {
+                    label: 'Todo o período',
+                    description:
+                        'Não muda com o filtro de período: soma todas as contas a receber em aberto, de qualquer data.',
+                },
             },
             {
                 id: 'contas_a_pagar',
@@ -209,9 +385,22 @@ export default function DashboardPage() {
                 color: 'text-red-600',
                 iconBackground: 'bg-red-600/12',
                 iconRing: 'ring-red-600/20',
+                detail: overdueDetail(overduePayables),
+                scopeNote: {
+                    label: 'Todo o período',
+                    description:
+                        'Não muda com o filtro de período: soma todas as contas a pagar em aberto, de qualquer data.',
+                },
             },
         ];
-    }, [payables, receivables, salesInPeriod, totalProfit]);
+    }, [
+        payables,
+        previousRange,
+        receivables,
+        salesInPeriod,
+        salesInPreviousPeriod,
+        totalProfit,
+    ]);
 
     const activities = useMemo(() => {
         const userName = auth.user?.name ?? 'Usuário';
@@ -225,6 +414,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((sale) => ({
                 id: `sale-${sale.id}`,
+                recordId: sale.id,
                 type: 'sale' as const,
                 responsible: userName,
                 description: `Venda #${sale.id} - ${sale.customer_name ?? 'Sem cliente'}`,
@@ -242,6 +432,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((purchase) => ({
                 id: `purchase-${purchase.id}`,
+                recordId: purchase.id,
                 type: 'purchase' as const,
                 responsible: userName,
                 description: `Compra #${purchase.id}`,
@@ -265,6 +456,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((customer) => ({
                 id: `client-${customer.id}`,
+                recordId: customer.id,
                 type: 'client' as const,
                 responsible: userName,
                 description: `Novo cliente: ${customer.name}`,
@@ -289,6 +481,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((supplier) => ({
                 id: `supplier-${supplier.id}`,
+                recordId: supplier.id,
                 type: 'supplier' as const,
                 responsible: userName,
                 description: `Novo fornecedor: ${supplier.name}`,
@@ -313,6 +506,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((product) => ({
                 id: `product-${product.id}`,
+                recordId: product.id,
                 type: 'product' as const,
                 responsible: userName,
                 description: `Novo produto: ${product.name}`,
@@ -335,6 +529,7 @@ export default function DashboardPage() {
             .sort((a, b) => b.sortAt - a.sortAt)
             .map((item) => ({
                 id: item.id,
+                recordId: item.recordId,
                 type: item.type,
                 responsible: item.responsible,
                 description: item.description,
@@ -354,9 +549,15 @@ export default function DashboardPage() {
     const alerts = useMemo(
         () => [
             {
+                // Open accounts payable past their due date (no "overdue" status exists).
                 id: 'late-payments',
                 label: 'Pagamentos atrasados',
-                value: payables.filter((p) => p.status === 'overdue').length,
+                value: payables.filter(
+                    (p) =>
+                        (p.status === 'pending' || p.status === 'partial') &&
+                        p.due_date !== null &&
+                        p.due_date.slice(0, 10) < todayInAppTimeZone(),
+                ).length,
             },
             {
                 id: 'orders-to-pay',
@@ -366,58 +567,86 @@ export default function DashboardPage() {
             {
                 id: 'purchases-to-pay',
                 label: 'Compras a pagar',
-                value: activePurchases.filter((p) => p.status === 'pending').length,
+                value: activePurchases.filter((p) => p.status === 'pending')
+                    .length,
             },
             {
                 id: 'out-of-stock-products',
                 label: 'Produtos sem estoque',
-                value: products.filter((p) => p.stock <= 0).length,
+                // The inventory lists active products only.
+                value: products.filter(
+                    (p) => p.status === 'active' && p.stock <= 0,
+                ).length,
             },
         ],
         [payables, activePurchases, activeSales, products],
     );
 
     const charts = useMemo(() => {
-        const salesSeries = salesInPeriod
-            .slice(-12)
-            .map((sale) => ({ date: sale.date, value: toNumber(sale.total) }));
-        const profitSeries = salesInPeriod.slice(-12).map((sale) => ({
-            date: sale.date,
-            value: calculateSalesProfit([sale]),
-        }));
+        const datedSales = salesInPeriod
+            .map((sale) => ({ sale, date: saleDateOf(sale) }))
+            .filter(
+                (
+                    entry,
+                ): entry is {
+                    sale: (typeof salesInPeriod)[number];
+                    date: string;
+                } => entry.date !== null,
+            );
+        const sortedDates = datedSales.map((entry) => entry.date).sort();
+        const chartRange =
+            salesRange ??
+            (sortedDates.length > 0
+                ? {
+                      from: sortedDates[0],
+                      to: sortedDates[sortedDates.length - 1],
+                  }
+                : null);
+        const buckets = chartRange ? buildSeriesBuckets(chartRange) : [];
+        const salesByBucket = new Map<string, number>();
+        const profitByBucket = new Map<string, number>();
+
+        for (const { sale, date } of datedSales) {
+            const key = bucketKeyFor(date, buckets);
+            salesByBucket.set(
+                key,
+                (salesByBucket.get(key) ?? 0) + toNumber(sale.total),
+            );
+            profitByBucket.set(
+                key,
+                (profitByBucket.get(key) ?? 0) + calculateSalesProfit([sale]),
+            );
+        }
+
+        const toSeries = (values: Map<string, number>) =>
+            buckets.map((bucket) => ({
+                key: bucket.key,
+                label: bucket.label,
+                value: values.get(bucket.key) ?? 0,
+            }));
 
         return [
             {
                 id: 'vendas' as const,
                 title: 'Vendas no período',
                 summary: formatCurrencyBR(
-                    salesSeries.reduce((sum, point) => sum + point.value, 0),
+                    datedSales.reduce(
+                        (sum, { sale }) => sum + toNumber(sale.total),
+                        0,
+                    ),
                 ),
-                description: 'Volume de vendas conforme o filtro aplicado.',
                 color: '#f97316',
-                series: salesSeries.map((point) => ({
-                    date: point.date,
-                    label: dateToLabel(point.date),
-                    value: point.value,
-                })),
+                series: toSeries(salesByBucket),
             },
             {
                 id: 'lucro' as const,
                 title: 'Lucro no período',
-                summary: formatCurrencyBR(
-                    profitSeries.reduce((sum, point) => sum + point.value, 0),
-                ),
-                description:
-                    'Lucro real calculado a partir do custo dos itens vendidos.',
+                summary: formatCurrencyBR(totalProfit),
                 color: '#22c55e',
-                series: profitSeries.map((point) => ({
-                    date: point.date,
-                    label: dateToLabel(point.date),
-                    value: point.value,
-                })),
+                series: toSeries(profitByBucket),
             },
         ];
-    }, [salesInPeriod]);
+    }, [salesInPeriod, salesRange, totalProfit]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Visão Geral', href: '/dashboard' }]}>
@@ -426,14 +655,24 @@ export default function DashboardPage() {
                     title={`Bem-vindo, ${userName}`}
                     description={`${getDashboardGreetingForToday()}`}
                 >
-                    <div className="flex flex-col gap-3 pt-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <ViewSwitcher view={view} onViewChange={setView} />
-                        <div className="md:ml-auto">
+                        {isRefreshing ? (
+                            <span
+                                role="status"
+                                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                            >
+                                <Spinner className="size-3.5" />
+                                Atualizando
+                            </span>
+                        ) : null}
+                        <div className="min-w-0 sm:ml-auto">
                             <PeriodFilter
                                 period={period}
                                 customRange={customRange}
                                 periodOptions={[
                                     'current-month',
+                                    'previous-month',
                                     '7d',
                                     '30d',
                                     '90d',
@@ -461,7 +700,7 @@ export default function DashboardPage() {
 
                 {view === 'kpi' ? (
                     <div className="grid gap-6">
-                        <MetricsGrid metrics={metrics} />
+                        <MetricsGrid metrics={metrics} isLoading={isLoading} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
                                 <RecentActivity
@@ -469,41 +708,20 @@ export default function DashboardPage() {
                                     isPending={isActivitiesPending}
                                 />
                             </div>
-                            <div className="rounded-xl border bg-card p-4">
-                                <h3 className="mb-4 font-semibold">
-                                    Alertas e lembretes
-                                </h3>
-                                <div className="space-y-4">
-                                    {alerts.map((alert) => (
-                                        <button
-                                            type="button"
-                                            key={alert.id}
-                                            onClick={() =>
-                                                navigateByAlert(alert.id)
-                                            }
-                                            className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
-                                        >
-                                            <span className="text-sm font-medium text-foreground">
-                                                {alert.label}
-                                            </span>
-                                            <span
-                                                className={`inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
-                                                    alert.value > 0
-                                                        ? 'bg-orange-500 text-white'
-                                                        : 'bg-muted text-foreground'
-                                                }`}
-                                            >
-                                                {alert.value}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            <AlertsPanel
+                                alerts={alerts}
+                                onSelect={navigateByAlert}
+                                isLoading={isLoading}
+                            />
                         </div>
                     </div>
                 ) : (
                     <div className="grid gap-6">
-                        <ChartsPanel charts={charts} />
+                        <ChartsPanel
+                            charts={charts}
+                            periodLabel={periodLabel}
+                            isLoading={isLoading}
+                        />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
                                 <RecentActivity
@@ -511,36 +729,11 @@ export default function DashboardPage() {
                                     isPending={isActivitiesPending}
                                 />
                             </div>
-                            <div className="rounded-xl border bg-card p-4">
-                                <h3 className="mb-4 font-semibold">
-                                    Alertas e lembretes
-                                </h3>
-                                <div className="space-y-4">
-                                    {alerts.map((alert) => (
-                                        <button
-                                            type="button"
-                                            key={alert.id}
-                                            onClick={() =>
-                                                navigateByAlert(alert.id)
-                                            }
-                                            className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-background/40 px-4 py-3 text-left transition-colors hover:bg-muted/40"
-                                        >
-                                            <span className="text-sm font-medium text-foreground">
-                                                {alert.label}
-                                            </span>
-                                            <span
-                                                className={`inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1 text-sm font-semibold ${
-                                                    alert.value > 0
-                                                        ? 'bg-orange-500 text-white'
-                                                        : 'bg-muted text-foreground'
-                                                }`}
-                                            >
-                                                {alert.value}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            <AlertsPanel
+                                alerts={alerts}
+                                onSelect={navigateByAlert}
+                                isLoading={isLoading}
+                            />
                         </div>
                     </div>
                 )}

@@ -38,7 +38,7 @@ test('landing page structured data describes Operis, DG Computer and the visible
 test('landing page receives the same FAQ used in the structured data', function () {
     $this->get(route('home'))
         ->assertInertia(fn (Assert $page) => $page
-            ->component('home')
+            ->component('home/index')
             ->where('seoTitle', config('landing.seo.title'))
             ->has('faq', count(config('landing.faq'))));
 });

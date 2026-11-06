@@ -4,15 +4,16 @@ namespace App\Services\Categories;
 
 use App\Models\Category;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CategoryService
 {
     public function __construct(private readonly CategoryRepositoryInterface $categories) {}
 
-    public function list(int $companyId): LengthAwarePaginator
+    public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
     {
-        return $this->categories->paginateByCompany($companyId);
+        return $this->categories->paginateByCompany($companyId, $tableQuery);
     }
 
     public function create(int $companyId, array $data): Category

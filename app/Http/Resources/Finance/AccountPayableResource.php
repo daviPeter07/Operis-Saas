@@ -39,6 +39,7 @@ class AccountPayableResource extends ApiResource
         return [
             'id' => $this->id,
             'supplier_id' => $this->supplier_id,
+            'supplier_name' => $this->whenLoaded('supplier', fn () => $this->supplier?->name),
             'purchase_id' => $this->purchase_id,
             'installment_number' => $this->installment_number,
             'total_installments' => $this->total_installments,

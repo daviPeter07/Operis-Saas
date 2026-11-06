@@ -1,4 +1,4 @@
-@php($isLightOnlyPage = ($page['component'] ?? null) === 'home')
+@php($isLightOnlyPage = ($page['component'] ?? null) === 'home/index')
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ! $isLightOnlyPage && ($appearance ?? 'system') == 'dark']) @if ($isLightOnlyPage) data-theme-lock="light" @endif>
     <head>

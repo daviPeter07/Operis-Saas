@@ -19,6 +19,8 @@ class CategoryResource extends ApiResource
             'name' => $this->name,
             'parent_id' => $this->parent_id,
             'status' => $this->status,
+            'products_count' => $this->whenCounted('products'),
+            'createdAt' => $this->created_at?->clone()->setTimezone(config('app.business_timezone'))->format('Y-m-d H:i:s'),
         ];
     }
 }

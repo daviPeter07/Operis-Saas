@@ -22,7 +22,7 @@ class StoreAccountPayableRequest extends FormRequest
         return [
             'supplier_id' => ['required', 'integer', Rule::exists('suppliers', 'id')->where('company_id', $companyId)],
             'item' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'entry_date' => ['required', 'date'],
             'due_date' => ['required', 'date', 'after_or_equal:entry_date'],

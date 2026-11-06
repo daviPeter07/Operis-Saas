@@ -1,6 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { accountPayableService } from '@/services/account-payables';
 import { productsQueryKey } from './use-products';
 import { purchasesQueryKey } from './use-purchases';
@@ -82,9 +81,13 @@ export function useSettleAccountPayable() {
                 payment_notes: payload.payment_notes,
             }),
         onMutate: async (payload: SettlePayload) => {
-            await queryClient.cancelQueries({ queryKey: accountPayablesQueryKey });
+            await queryClient.cancelQueries({
+                queryKey: accountPayablesQueryKey,
+            });
 
-            const previous = queryClient.getQueryData<any>(accountPayablesQueryKey);
+            const previous = queryClient.getQueryData<any>(
+                accountPayablesQueryKey,
+            );
 
             if (previous?.data) {
                 queryClient.setQueryData(accountPayablesQueryKey, {
@@ -109,7 +112,10 @@ export function useSettleAccountPayable() {
         },
         onError: (_error, _payload, context) => {
             if (context?.previous) {
-                queryClient.setQueryData(accountPayablesQueryKey, context.previous);
+                queryClient.setQueryData(
+                    accountPayablesQueryKey,
+                    context.previous,
+                );
             }
         },
     });
@@ -121,9 +127,13 @@ export function useUnsettleAccountPayable() {
     return useMutation({
         mutationFn: async (id: number) => accountPayableService.unsettle(id),
         onMutate: async (id: number) => {
-            await queryClient.cancelQueries({ queryKey: accountPayablesQueryKey });
+            await queryClient.cancelQueries({
+                queryKey: accountPayablesQueryKey,
+            });
 
-            const previous = queryClient.getQueryData<any>(accountPayablesQueryKey);
+            const previous = queryClient.getQueryData<any>(
+                accountPayablesQueryKey,
+            );
 
             if (previous?.data) {
                 queryClient.setQueryData(accountPayablesQueryKey, {
@@ -148,7 +158,10 @@ export function useUnsettleAccountPayable() {
         },
         onError: (_error, _id, context) => {
             if (context?.previous) {
-                queryClient.setQueryData(accountPayablesQueryKey, context.previous);
+                queryClient.setQueryData(
+                    accountPayablesQueryKey,
+                    context.previous,
+                );
             }
         },
     });
@@ -176,7 +189,7 @@ export function useCreateManualAccountPayable() {
 
     return useMutation({
         mutationFn: async (payload: CreateManualPayload) =>
-            accountPayableService.create(payload),
+            accountPayableService.createManual(payload),
         onSuccess: () => {
             void invalidateRelatedQueries(queryClient);
         },
@@ -204,9 +217,6 @@ export function useDeleteAccountPayable() {
         mutationFn: async (id: number) => accountPayableService.delete(id),
         onSuccess: () => {
             void invalidateRelatedQueries(queryClient);
-        },
-        onError: () => {
-            toast.error('Erro ao excluir conta a pagar.');
         },
     });
 }

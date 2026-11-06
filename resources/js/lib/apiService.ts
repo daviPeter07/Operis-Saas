@@ -10,6 +10,9 @@ export interface ListParams {
     [key: string]: unknown;
 }
 
+// TableIndexRequest::MAX_PER_PAGE.
+const FETCH_ALL_PER_PAGE = 100;
+
 export interface BaseServiceOptions {
     basePath: string;
 }
@@ -31,43 +34,34 @@ export abstract class ApiService<T extends { id: number }> {
         this.basePath = options.basePath;
     }
 
+    // Without `page` it loads every page (fetch_all: false keeps only the first one).
+    // The API's largest page size keeps the number of requests low, and the pages
+    // after the first are requested together.
     async list(params?: ListParams): Promise<PaginatedData<T>> {
-        const response = await apiClient.get<unknown>(this.basePath, params);
-        const payload =
-            response &&
-            typeof response === 'object' &&
-            'meta' in response &&
-            'data' in response
-                ? (response as unknown)
-                : (response.data as unknown);
-        const firstPage = this.normalizeListPayload(payload);
-        const shouldFetchAll = params?.fetch_all !== false;
+        const { fetch_all: fetchAllParam, ...query } = params ?? {};
+        const shouldFetchAll = fetchAllParam !== false && !query.page;
+        const firstPage = await this.fetchPage(
+            shouldFetchAll
+                ? { ...query, per_page: query.per_page ?? FETCH_ALL_PER_PAGE }
+                : query,
+        );
 
-        if (!shouldFetchAll || params?.page || firstPage.meta.last_page <= 1) {
+        if (!shouldFetchAll || firstPage.meta.last_page <= 1) {
             return firstPage;
         }
 
-        let allRows = [...firstPage.data];
-
-        for (let page = 2; page <= firstPage.meta.last_page; page++) {
-            const nextResponse = await apiClient.get<unknown>(this.basePath, {
-                ...params,
-                page,
-                per_page: params?.per_page ?? firstPage.meta.per_page,
-                fetch_all: undefined,
-            });
-
-            const nextPayload =
-                nextResponse &&
-                typeof nextResponse === 'object' &&
-                'meta' in nextResponse &&
-                'data' in nextResponse
-                    ? (nextResponse as unknown)
-                    : (nextResponse.data as unknown);
-
-            const nextPage = this.normalizeListPayload(nextPayload);
-            allRows = allRows.concat(nextPage.data);
-        }
+        const otherPages = await Promise.all(
+            Array.from({ length: firstPage.meta.last_page - 1 }, (_, index) =>
+                this.fetchPage({
+                    ...query,
+                    page: index + 2,
+                    per_page: firstPage.meta.per_page,
+                }),
+            ),
+        );
+        const allRows = firstPage.data.concat(
+            ...otherPages.map((page) => page.data),
+        );
 
         return {
             data: allRows,
@@ -78,6 +72,21 @@ export abstract class ApiService<T extends { id: number }> {
                 total: firstPage.meta.total,
             },
         };
+    }
+
+    private async fetchPage(
+        query: Omit<ListParams, 'fetch_all'>,
+    ): Promise<PaginatedData<T>> {
+        const response = await apiClient.get<unknown>(this.basePath, query);
+        const payload =
+            response &&
+            typeof response === 'object' &&
+            'meta' in response &&
+            'data' in response
+                ? (response as unknown)
+                : (response.data as unknown);
+
+        return this.normalizeListPayload(payload);
     }
 
     private normalizeListPayload(payload: unknown): PaginatedData<T> {
@@ -118,7 +127,9 @@ export abstract class ApiService<T extends { id: number }> {
                     maybePaginated.per_page ??
                     maybePaginated.data.length;
                 const lastPage =
-                    maybePaginated.meta?.last_page ?? maybePaginated.last_page ?? 1;
+                    maybePaginated.meta?.last_page ??
+                    maybePaginated.last_page ??
+                    1;
                 const currentPage =
                     maybePaginated.meta?.current_page ??
                     maybePaginated.current_page ??
