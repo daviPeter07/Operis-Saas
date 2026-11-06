@@ -54,18 +54,17 @@ export function PrintPreviewDialog({
                 }
             }}
         >
-            <DialogContent className="max-w-[min(1200px,calc(100vw-1rem))] p-0 sm:max-w-[min(1200px,calc(100vw-1rem))]">
-                <div className="grid gap-0 lg:grid-cols-[260px_1fr]">
-                    <aside className="border-r bg-muted/20 p-5">
-                        <DialogHeader className="mb-5 text-left">
-                            <DialogTitle>Preview do comprovante</DialogTitle>
-                            <DialogDescription>
-                                Revise o documento antes de exportar ou
-                                imprimir.
+            <DialogContent className="flex h-[calc(100dvh-1rem)] max-w-[min(1200px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(1200px,calc(100vw-1rem))] lg:h-[min(92dvh,960px)]">
+                <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] lg:grid-cols-[260px_minmax(0,1fr)] lg:grid-rows-1">
+                    <aside className="border-b bg-muted/20 p-4 pr-12 lg:border-r lg:border-b-0 lg:p-5">
+                        <DialogHeader className="mb-4 text-left lg:mb-5">
+                            <DialogTitle>Comprovante da venda</DialogTitle>
+                            <DialogDescription className="hidden sm:block">
+                                Revise o documento antes de baixar ou imprimir.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="space-y-5">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:gap-5">
                             <div className="space-y-2">
                                 <p className="text-sm font-medium">
                                     Visualização
@@ -138,21 +137,22 @@ export function PrintPreviewDialog({
                         </div>
                     </aside>
 
-                    <section className="flex min-h-[80dvh] flex-col">
-                        <div className="flex-1 bg-muted/10 p-4">
+                    <section className="flex min-h-0 flex-col">
+                        <div className="min-h-0 flex-1 bg-muted/10 p-2 sm:p-4">
                             {sale ? (
                                 <iframe
                                     title="Preview do documento da venda"
                                     srcDoc={previewDocument}
-                                    className="h-[72dvh] w-full rounded-md border bg-white"
+                                    className="h-full w-full rounded-md border bg-white"
                                 />
                             ) : null}
                         </div>
 
-                        <DialogFooter className="border-t px-4 py-3">
+                        <DialogFooter className="flex-row gap-2 border-t px-4 py-3 sm:justify-end">
                             <Button
                                 type="button"
                                 variant="outline"
+                                className="flex-1 sm:flex-none"
                                 onClick={() => onOpenChange(false)}
                             >
                                 Fechar
@@ -160,6 +160,7 @@ export function PrintPreviewDialog({
                             {mode === 'digital' ? (
                                 <Button
                                     type="button"
+                                    className="flex-1 sm:flex-none"
                                     onClick={() => {
                                         if (sale) {
                                             downloadSaleInvoicePdf(sale);
@@ -172,6 +173,7 @@ export function PrintPreviewDialog({
                             ) : (
                                 <Button
                                     type="button"
+                                    className="flex-1 sm:flex-none"
                                     onClick={async () => {
                                         if (sale) {
                                             try {
