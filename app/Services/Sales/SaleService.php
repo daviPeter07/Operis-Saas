@@ -333,7 +333,8 @@ class SaleService
         }
 
         if ($paymentMethod === 'crediario') {
-            return $this->receivableService->resolveCrediarioDueDate(
+            // The date the cashier chose for the first installment; otherwise 30 days after the sale.
+            return $data['first_installment_date'] ?? $this->receivableService->resolveCrediarioDueDate(
                 $data['date'],
                 30,
             );
