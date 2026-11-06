@@ -54,13 +54,15 @@ import {
     STATUS_COLUMN,
     STATUS_EXPORT_COLUMN,
     TOTAL_COLUMN,
+    UNKNOWN_HISTORY_EVENT,
 } from './constants';
-import { makeCrediarioEntrySchema } from './schemas';
+import { makeCrediarioEntrySchema, notesSchema } from './schemas';
 import type {
     ApiParams,
     ApiPaymentMethod,
     AppliedDiscount,
     CardType,
+    HistoryEventConfig,
     NewClientData,
     SaleDiscountType,
     SaleDraft,
@@ -316,16 +318,23 @@ export function getOwnOpenBalance(receivables: AccountReceivable[]): number {
         .reduce((sum, receivable) => sum + toNumber(receivable.amount), 0);
 }
 
+function getHistoryEvent(type: string): HistoryEventConfig {
+    return (
+        (HISTORY_EVENTS as Partial<Record<string, HistoryEventConfig>>)[type] ??
+        UNKNOWN_HISTORY_EVENT
+    );
+}
+
 export function toHistoryItems(sale: Sale): HistoryTimelineItem[] {
     return (sale.history ?? []).map((entry, index) => {
-        const event = HISTORY_EVENTS[entry.type] ?? HISTORY_EVENTS.updated;
+        const event = getHistoryEvent(entry.type);
 
         return {
             id: `${entry.type}-${index}`,
             title: event.title,
             icon: event.icon,
             tone: event.tone,
-            description: entry.description,
+            description: entry.description || null,
             date: entry.occurred_at,
             amount: entry.amount,
         };
@@ -418,6 +427,8 @@ export function toSaleFormInitial(sale?: Sale | null): SaleFormInitial {
             installments: '1',
             crediarioEntry: '',
             discount: NO_DISCOUNT,
+            notes: '',
+            delivered: false,
         };
     }
 
@@ -442,6 +453,8 @@ export function toSaleFormInitial(sale?: Sale | null): SaleFormInitial {
         crediarioEntry: toMoneyInput(toNumber(sale.crediario_entry)),
         discount:
             discount > 0 ? { type: 'amount', value: discount } : NO_DISCOUNT,
+        notes: sale.notes ?? '',
+        delivered: Boolean(sale.delivered_at),
     };
 }
 
@@ -523,7 +536,7 @@ export function useSaleForm(
         initial.date,
     );
     const [saleDate, setSaleDate] = useState(initial.date);
-    const [notes, setNotes] = useState('');
+    const [notes, setNotes] = useState(initial.notes);
     const [discount, setDiscount] = useState(initial.discount);
 
     const selectedClient = clients.find((client) => client.id === clientId);
@@ -560,6 +573,10 @@ export function useSaleForm(
             ? null
             : (entryCheck.error.issues[0]?.message ?? null),
     };
+    const notesCheck = notesSchema.safeParse(notes);
+    const notesError = notesCheck.success
+        ? null
+        : (notesCheck.error.issues[0]?.message ?? null);
     const isCrediarioValid =
         paymentMethod !== 'crediario' ||
         (creditEnabled && !crediario.exceeded && !crediario.entryError);
@@ -644,6 +661,7 @@ export function useSaleForm(
         setSaleDate,
         notes,
         setNotes,
+        notesError,
         discount,
         setDiscount,
         subtotal,
@@ -651,7 +669,10 @@ export function useSaleForm(
         total,
         crediario,
         canSubmit:
-            Boolean(selectedClient) && lineItems.length > 0 && isCrediarioValid,
+            Boolean(selectedClient) &&
+            lineItems.length > 0 &&
+            isCrediarioValid &&
+            !notesError,
     };
 }
 
@@ -661,6 +682,7 @@ export function buildSaleDraft(
         saleId?: number;
         saleStatus?: SaleStatus;
         paidInstallments: number[];
+        delivered: boolean;
     },
 ): SaleDraft {
     const isCrediario = form.paymentMethod === 'crediario';
@@ -692,6 +714,8 @@ export function buildSaleDraft(
               )
             : [],
         status: options.saleStatus === 'completed' ? 'completed' : 'pending',
+        notes: form.notes,
+        delivered: options.delivered,
     };
 }
 
@@ -711,6 +735,8 @@ export function toSaleMutationInput(draft: SaleDraft): SaleMutationInput {
         status: isAllPaid ? 'completed' : draft.status,
         payment_method: paymentMethod,
         discount: draft.discount,
+        notes: draft.notes.trim() || null,
+        delivered: draft.delivered,
         installments: usesInstallments ? draft.installments : undefined,
         first_installment_date: usesInstallments
             ? draft.firstInstallmentDate

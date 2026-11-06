@@ -90,6 +90,7 @@ export function SaleForm({
                                 saleId,
                                 saleStatus,
                                 paidInstallments,
+                                delivered: initial.delivered,
                             }),
                         );
                         setDraftKey((key) => key + 1);

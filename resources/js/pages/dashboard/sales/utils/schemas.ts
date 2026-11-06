@@ -1,7 +1,12 @@
 import { z } from 'zod';
 import { VALIDATION_MESSAGES as MESSAGES } from '@/constants/validation-messages';
 import { formatCurrencyBR } from '@/lib/format';
-import { SALE_MESSAGES } from './constants';
+import { maxLengthMessage } from '@/utils/validation';
+import { SALE_LIMITS, SALE_MESSAGES } from './constants';
+
+export const notesSchema = z
+    .string()
+    .max(SALE_LIMITS.notesLength, maxLengthMessage(SALE_LIMITS.notesLength));
 
 export function makeDiscountSchema(subtotal: number) {
     return z

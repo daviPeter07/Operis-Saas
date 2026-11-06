@@ -13,6 +13,8 @@ export type SaleMutationInput = {
     status?: 'pending' | 'completed';
     payment_method: 'cash' | 'pix' | 'card_debit' | 'card_credit' | 'crediario';
     discount?: number;
+    notes?: string | null;
+    delivered?: boolean;
     installments?: number;
     first_installment_date?: string;
     installment_value?: number;

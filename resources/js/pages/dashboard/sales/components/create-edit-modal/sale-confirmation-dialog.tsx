@@ -31,7 +31,7 @@ export function SaleConfirmationDialog({
         draft.paidInstallments,
     );
     const [showProfit, setShowProfit] = useState(false);
-    const [delivered, setDelivered] = useState(false);
+    const [delivered, setDelivered] = useState(draft.delivered);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const installmentValue =
@@ -41,7 +41,7 @@ export function SaleConfirmationDialog({
         { length: draft.installments },
         (_, index) => index + 1,
     );
-    const confirmed = { ...draft, status, paidInstallments };
+    const confirmed = { ...draft, status, paidInstallments, delivered };
 
     const toggleInstallment = (number: number) =>
         setPaidInstallments((current) =>

@@ -1,5 +1,9 @@
 import { DetailsField, DetailsSection } from '@/components/details-page';
-import { formatCurrencyBR, formatDateBR } from '@/lib/format';
+import {
+    formatCurrencyBR,
+    formatDateBR,
+    formatDateTimeManaus,
+} from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { PAYMENT_METHOD_LABELS } from '../../utils/constants';
 import { formatOptionalDateTime, getSaleProfit } from '../../utils/functions';
@@ -45,6 +49,11 @@ export function SaleDetails({ sale }: SaleDetailsProps) {
                         ? `${installments}x de ${formatCurrencyBR(sale.installment_value)}`
                         : `${installments}x`}
                 </DetailsField>
+                <DetailsField label="Entregue em">
+                    {sale.delivered_at
+                        ? formatDateTimeManaus(sale.delivered_at)
+                        : 'Não entregue'}
+                </DetailsField>
                 {entry > 0 ? (
                     <DetailsField label="Entrada">
                         {formatCurrencyBR(entry)}
@@ -64,6 +73,20 @@ export function SaleDetails({ sale }: SaleDetailsProps) {
                 </DetailsField>
                 <DetailsField label="Lucro">
                     {formatCurrencyBR(getSaleProfit(sale))}
+                </DetailsField>
+            </DetailsSection>
+
+            <DetailsSection title="Observações">
+                <DetailsField label="Anotações da venda" wide>
+                    {sale.notes?.trim() ? (
+                        <span className="whitespace-pre-line">
+                            {sale.notes}
+                        </span>
+                    ) : (
+                        <span className="font-normal text-muted-foreground">
+                            Nenhuma observação nesta venda.
+                        </span>
+                    )}
                 </DetailsField>
             </DetailsSection>
         </div>

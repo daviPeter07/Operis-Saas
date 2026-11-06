@@ -15,7 +15,8 @@ export type SaleHistoryType =
     | 'updated'
     | 'payment_received'
     | 'completed'
-    | 'cancelled';
+    | 'cancelled'
+    | 'delivered';
 
 export interface SaleHistoryEntry {
     type: SaleHistoryType;
@@ -42,6 +43,8 @@ export interface Sale {
     crediario_entry?: number | null;
     completed_at?: string | null;
     cancelled_at?: string | null;
+    delivered_at?: string | null;
+    notes?: string | null;
     items?: SaleItem[];
     history?: SaleHistoryEntry[];
 }

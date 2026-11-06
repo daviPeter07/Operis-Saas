@@ -2,8 +2,10 @@ import {
     Ban,
     CircleCheck,
     Coins,
+    History,
     DollarSign,
     HandCoins,
+    PackageCheck,
     Pencil,
     Percent,
     ShoppingCart,
@@ -18,6 +20,7 @@ import { NamesCell } from '../components/names-cell';
 import { SaleStatusChip } from '../components/sale-status-chip';
 import type {
     AppliedDiscount,
+    HistoryEventConfig,
     HistoryEventMap,
     SaleDialogMode,
     SaleDialogText,
@@ -224,7 +227,24 @@ export const HISTORY_EVENTS: HistoryEventMap = {
     },
     completed: { title: 'Venda concluída', icon: CircleCheck, tone: 'success' },
     cancelled: { title: 'Venda cancelada', icon: Ban, tone: 'danger' },
+    delivered: {
+        title: 'Venda marcada como entregue',
+        icon: PackageCheck,
+        tone: 'success',
+    },
 };
+
+// Event types the screen does not know yet still show, with the API description.
+export const UNKNOWN_HISTORY_EVENT: HistoryEventConfig = {
+    title: 'Registro na venda',
+    icon: History,
+    tone: 'default',
+};
+
+// Mirrors the notes column validation on StoreSaleRequest.
+export const SALE_LIMITS = {
+    notesLength: 1000,
+} as const;
 
 export const SALE_DIALOG_TEXT: Record<SaleDialogMode, SaleDialogText> = {
     create: {

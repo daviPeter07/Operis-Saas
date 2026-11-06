@@ -58,15 +58,24 @@ export function CheckoutPanel({
                         onOpenDiscount={onOpenDiscount}
                     />
 
-                    <Textarea
-                        value={form.notes}
-                        onChange={(event) =>
-                            form.setNotes(event.currentTarget.value)
-                        }
-                        placeholder="Observações (opcional)"
-                        rows={3}
-                        className="h-24 resize-none"
-                    />
+                    <div className="space-y-1.5">
+                        <Textarea
+                            value={form.notes}
+                            onChange={(event) =>
+                                form.setNotes(event.currentTarget.value)
+                            }
+                            placeholder="Observações (opcional)"
+                            aria-label="Observações"
+                            aria-invalid={form.notesError !== null}
+                            rows={3}
+                            className="h-24 resize-none"
+                        />
+                        {form.notesError ? (
+                            <p className="text-xs text-destructive">
+                                {form.notesError}
+                            </p>
+                        ) : null}
+                    </div>
 
                     <SaleDateField form={form} />
 

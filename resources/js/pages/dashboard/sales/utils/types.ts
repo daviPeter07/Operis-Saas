@@ -99,6 +99,8 @@ export type SaleFormInitial = {
     installments: string;
     crediarioEntry: string;
     discount: AppliedDiscount;
+    notes: string;
+    delivered: boolean;
 };
 
 export type CrediarioSummary = {
@@ -140,6 +142,7 @@ export type SaleFormState = {
     setSaleDate: (value: string) => void;
     notes: string;
     setNotes: (value: string) => void;
+    notesError: string | null;
     discount: AppliedDiscount;
     setDiscount: (value: AppliedDiscount) => void;
     subtotal: number;
@@ -166,6 +169,8 @@ export type SaleDraft = {
     crediarioEntry?: number;
     paidInstallments: number[];
     status: 'pending' | 'completed';
+    notes: string;
+    delivered: boolean;
 };
 
 export type StockWarning = {
