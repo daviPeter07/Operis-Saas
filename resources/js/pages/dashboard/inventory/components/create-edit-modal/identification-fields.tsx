@@ -2,6 +2,7 @@ import { Barcode, Plus, Sparkles } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { toast } from 'sonner';
 import { InputSearchComplete } from '@/components/input-search-complete';
+import { RequiredMark } from '@/components/required-mark';
 import { Button } from '@/components/ui/button';
 import {
     FormControl,
@@ -24,7 +25,6 @@ import type {
     QuickCreateButtonProps,
     QuickCreateType,
 } from '../../utils/types';
-import { RequiredMark } from './required-mark';
 
 function QuickCreateButton({ label, onClick }: QuickCreateButtonProps) {
     return (

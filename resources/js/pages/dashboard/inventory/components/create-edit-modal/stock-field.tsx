@@ -1,4 +1,5 @@
 import { useFormContext } from 'react-hook-form';
+import { RequiredMark } from '@/components/required-mark';
 import { Button } from '@/components/ui/button';
 import {
     FormControl,
@@ -12,7 +13,6 @@ import { cn } from '@/lib/utils';
 import { STOCK_STEPS } from '../../utils/constants';
 import { toNonNegativeQuantity } from '../../utils/functions';
 import type { ProductDialogForm, StockFieldProps } from '../../utils/types';
-import { RequiredMark } from './required-mark';
 
 export function StockField({ name, label }: StockFieldProps) {
     const form = useFormContext<ProductDialogForm>();

@@ -1,4 +1,5 @@
 import { useFormContext } from 'react-hook-form';
+import { RequiredMark } from '@/components/required-mark';
 import {
     FormControl,
     FormField,
@@ -10,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { applyFieldMask } from '@/utils/form-fields';
 import { COST_TOOLTIP, SALE_PRICE_TOOLTIP } from '../../utils/constants';
 import type { ProductDialogForm } from '../../utils/types';
-import { RequiredMark } from './required-mark';
 
 export function PriceFields() {
     const form = useFormContext<ProductDialogForm>();

@@ -137,8 +137,3 @@ export type QuickCreateState = {
     type: QuickCreateType | null;
     name: string;
 };
-
-export type ServerValidationError = {
-    message?: string;
-    errors?: Record<string, string[]>;
-};

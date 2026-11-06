@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Suppliers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Suppliers\IndexSupplierRequest;
 use App\Http\Requests\Suppliers\StoreSupplierRequest;
 use App\Http\Requests\Suppliers\UpdateSupplierRequest;
 use App\Http\Resources\Suppliers\SupplierResource;
@@ -18,10 +19,10 @@ class SupplierController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexSupplierRequest $request): AnonymousResourceCollection
     {
         return SupplierResource::collection(
-            $this->supplierService->list(auth()->user()->current_company_id)
+            $this->supplierService->list(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 

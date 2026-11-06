@@ -20,11 +20,17 @@ Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::middleware(['auth'])->group(function (): void {
     Route::inertia('dashboard', 'dashboard/index')->name('dashboard');
-    Route::inertia('dashboard/clients', 'dashboard/clients')->name('dashboard.clients');
+    Route::inertia('dashboard/clients', 'dashboard/clients/index')->name('dashboard.clients');
+    Route::get('dashboard/clients/{customer}', fn (int $customer) => Inertia::render('dashboard/clients/show', ['customerId' => $customer]))
+        ->whereNumber('customer')
+        ->name('dashboard.clients.show');
     Route::inertia('dashboard/sales', 'dashboard/sales')->name('dashboard.sales');
-    Route::inertia('dashboard/suppliers', 'dashboard/suppliers')->name('dashboard.suppliers');
-    Route::inertia('dashboard/categories', 'dashboard/categories')->name('dashboard.categories');
-    Route::inertia('dashboard/brands', 'dashboard/brands')->name('dashboard.brands');
+    Route::inertia('dashboard/suppliers', 'dashboard/suppliers/index')->name('dashboard.suppliers');
+    Route::get('dashboard/suppliers/{supplier}', fn (int $supplier) => Inertia::render('dashboard/suppliers/show', ['supplierId' => $supplier]))
+        ->whereNumber('supplier')
+        ->name('dashboard.suppliers.show');
+    Route::inertia('dashboard/categories', 'dashboard/categories/index')->name('dashboard.categories');
+    Route::inertia('dashboard/brands', 'dashboard/brands/index')->name('dashboard.brands');
     Route::inertia('dashboard/inventory', 'dashboard/inventory/index')->name('dashboard.inventory');
     Route::get('dashboard/inventory/{product}', fn (int $product) => Inertia::render('dashboard/inventory/show', ['productId' => $product]))
         ->whereNumber('product')

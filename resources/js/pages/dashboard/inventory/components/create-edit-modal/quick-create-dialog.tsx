@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { RequiredMark } from '@/components/required-mark';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -19,14 +20,13 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { showServerErrors } from '@/utils/form-errors';
 import { QUICK_CREATE_TEXT } from '../../utils/constants';
-import { showServerErrors } from '../../utils/functions';
 import { quickCreateSchema } from '../../utils/schemas';
 import type {
     QuickCreateDialogProps,
     QuickCreateForm,
 } from '../../utils/types';
-import { RequiredMark } from './required-mark';
 
 export function QuickCreateDialog({
     type,

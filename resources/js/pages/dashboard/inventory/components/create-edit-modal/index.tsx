@@ -16,6 +16,7 @@ import { Form } from '@/components/ui/form';
 import { useBrands, useCreateBrand } from '@/hooks/use-brands';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useCreateProduct, useUpdateProduct } from '@/hooks/use-products';
+import { showServerErrors } from '@/utils/form-errors';
 import { toFieldOptions } from '@/utils/form-fields';
 import {
     CLOSED_QUICK_CREATE,
@@ -25,7 +26,6 @@ import {
 } from '../../utils/constants';
 import {
     normalizeInitialData,
-    showServerErrors,
     toProductFormValues,
     toProductSubmitData,
 } from '../../utils/functions';
