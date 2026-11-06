@@ -89,6 +89,12 @@ return [
     */
     'updates' => [
         [
+            'date' => '2026-11-05',
+            'type' => 'melhoria',
+            'title' => 'Estoque com filtros por coluna e página do produto',
+            'description' => 'Filtre e ordene o estoque direto em cada coluna e veja todos os dados de um produto, com lucro e margem, na página dele.',
+        ],
+        [
             'date' => '2026-07-01',
             'type' => 'melhoria',
             'title' => 'Valor original das contas sempre visível',
