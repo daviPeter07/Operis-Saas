@@ -10,12 +10,18 @@ import type { CheckoutSectionProps } from '../../utils/types';
 
 export function SaleDateField({ form }: CheckoutSectionProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const calendarRef = useRef<HTMLDivElement | null>(null);
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
         if (!isOpen) {
             return;
         }
+
+        calendarRef.current?.scrollIntoView({
+            block: 'nearest',
+            behavior: 'smooth',
+        });
 
         const handleOutsideClick = (event: MouseEvent) => {
             if (!containerRef.current?.contains(event.target as Node)) {
@@ -31,7 +37,7 @@ export function SaleDateField({ form }: CheckoutSectionProps) {
 
     return (
         <div ref={containerRef} className="relative space-y-2">
-            <Label>Data</Label>
+            <Label>Data da venda</Label>
             <Button
                 type="button"
                 variant="outline"
@@ -46,7 +52,10 @@ export function SaleDateField({ form }: CheckoutSectionProps) {
                     : 'Selecionar data'}
             </Button>
             {isOpen ? (
-                <div className="absolute bottom-[calc(100%+0.25rem)] left-0 z-90 rounded-md border bg-background p-2 shadow-xl">
+                <div
+                    ref={calendarRef}
+                    className="absolute top-[calc(100%+0.25rem)] left-0 z-90 rounded-md border bg-background p-2 shadow-xl"
+                >
                     <Calendar
                         mode="single"
                         selected={

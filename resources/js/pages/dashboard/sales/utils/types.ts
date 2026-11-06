@@ -204,6 +204,26 @@ export type SaleFormProps = {
     onSubmit: (draft: SaleDraft) => void;
 };
 
+export type CheckoutPaymentOption = {
+    value: UiPaymentMethod;
+    label: string;
+    hint: string;
+    icon: LucideIcon;
+};
+
+export type StepCardProps = {
+    children: ReactNode;
+};
+
+export type StepSectionProps = {
+    icon: LucideIcon;
+    title: string;
+    description?: string;
+    action?: ReactNode;
+    className?: string;
+    children: ReactNode;
+};
+
 export type CheckoutSectionProps = {
     form: SaleFormState;
 };

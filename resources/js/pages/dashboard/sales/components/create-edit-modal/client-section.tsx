@@ -1,13 +1,8 @@
-import { UserPlus } from 'lucide-react';
+import { UserPlus, UserRound } from 'lucide-react';
 import { InputSearchComplete } from '@/components/input-search-complete';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import type { ClientSectionProps } from '../../utils/types';
+import { StepSection } from './step-section';
 
 export function ClientSection({
     form,
@@ -15,39 +10,34 @@ export function ClientSection({
     onCreateClient,
 }: ClientSectionProps) {
     return (
-        <Card>
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">Cliente</CardTitle>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                aria-label="Criar cliente"
-                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                onClick={() => onCreateClient('')}
-                            >
-                                <UserPlus className="h-4 w-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Criar cliente</TooltipContent>
-                    </Tooltip>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <InputSearchComplete
-                    value={form.clientId}
-                    onChange={form.setClientId}
-                    options={clientOptions}
-                    ariaLabel="Cliente da venda"
-                    placeholder="Buscar cliente"
-                    emptyMessage="Nenhum cliente encontrado."
-                    onCreateOption={onCreateClient}
-                    createOptionLabel={(query) => `Cadastrar "${query}"`}
-                />
-            </CardContent>
-        </Card>
+        <StepSection
+            icon={UserRound}
+            title="Cliente"
+            description="Quem está comprando"
+            action={
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => onCreateClient('')}
+                >
+                    <UserPlus className="size-4" />
+                    <span className="hidden sm:inline">Novo cliente</span>
+                    <span className="sr-only sm:hidden">Novo cliente</span>
+                </Button>
+            }
+        >
+            <InputSearchComplete
+                value={form.clientId}
+                onChange={form.setClientId}
+                options={clientOptions}
+                ariaLabel="Cliente da venda"
+                placeholder="Buscar cliente pelo nome"
+                emptyMessage="Nenhum cliente encontrado."
+                onCreateOption={onCreateClient}
+                createOptionLabel={(query) => `Cadastrar "${query}"`}
+            />
+        </StepSection>
     );
 }
