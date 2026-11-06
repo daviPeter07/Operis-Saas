@@ -1,16 +1,12 @@
 import { DetailsField, DetailsSection } from '@/components/details-page';
 import { PERSON_TYPE_LABELS } from '@/constants/person-type';
 import { formatCurrencyBR, formatDateTimeManaus } from '@/lib/format';
-import { inferPersonType } from '@/utils/clients';
-import {
-    formatClientDocument,
-    formatClientPhone,
-    getClientCredit,
-} from '../../utils/functions';
+import { formatDocumentDisplay, formatPhoneDisplay } from '@/utils/form-fields';
+import { getClientCredit } from '../../utils/functions';
 import type { ClientDetailsProps } from '../../utils/types';
 
 export function ClientDetails({ customer }: ClientDetailsProps) {
-    const personType = inferPersonType(customer.document);
+    const personType = customer.person_type;
     const credit = getClientCredit(customer);
 
     return (
@@ -20,7 +16,7 @@ export function ClientDetails({ customer }: ClientDetailsProps) {
                     {PERSON_TYPE_LABELS[personType]}
                 </DetailsField>
                 <DetailsField label={personType === 'pj' ? 'CNPJ' : 'CPF'}>
-                    {formatClientDocument(customer.document)}
+                    {formatDocumentDisplay(customer.document)}
                 </DetailsField>
                 <DetailsField label="Cadastrado em">
                     {customer.createdAt
@@ -34,7 +30,7 @@ export function ClientDetails({ customer }: ClientDetailsProps) {
                     {customer.email || '-'}
                 </DetailsField>
                 <DetailsField label="Telefone">
-                    {formatClientPhone(customer.phone)}
+                    {formatPhoneDisplay(customer.phone)}
                 </DetailsField>
             </DetailsSection>
 

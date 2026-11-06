@@ -1,3 +1,5 @@
+import { createElement } from 'react';
+import { PersonTypeBadge } from '@/components/common/person-type-badge';
 import type { ServerColumn } from '@/components/table/server-table';
 import {
     PERSON_TYPE_LABELS,
@@ -57,11 +59,11 @@ export const NAME_COLUMN: ServerColumn<ClientRow> = {
     filter: { type: 'text', key: 'name' },
 };
 
-// The API infers the person type from the document size, like this column.
 export const PERSON_TYPE_COLUMN: ServerColumn<ClientRow> = {
     key: 'personType',
     header: 'Tipo',
-    render: (row) => PERSON_TYPE_LABELS[row.personType],
+    render: (row) =>
+        createElement(PersonTypeBadge, { personType: row.personType }),
     filter: {
         type: 'select',
         key: 'person_type',
@@ -73,6 +75,7 @@ export const PERSON_TYPE_COLUMN: ServerColumn<ClientRow> = {
 export const DOCUMENT_COLUMN: ServerColumn<ClientRow> = {
     key: 'document',
     header: 'Documento',
+    className: 'whitespace-nowrap',
     filter: { type: 'text', key: 'document' },
 };
 
@@ -144,8 +147,19 @@ export const TABLE_COLUMNS: ServerColumn<ClientRow>[] = [
     AVAILABLE_CREDIT_COLUMN,
 ];
 
+// Plain text in the spreadsheet instead of the badge.
 export const EXPORT_COLUMNS: ServerColumn<ClientRow>[] = [
-    ...TABLE_COLUMNS,
+    NAME_COLUMN,
+    {
+        ...PERSON_TYPE_COLUMN,
+        render: (row) => PERSON_TYPE_LABELS[row.personType],
+    },
+    DOCUMENT_COLUMN,
+    EMAIL_COLUMN,
+    PHONE_COLUMN,
+    CREDIT_ENABLED_COLUMN,
+    CREDIT_LIMIT_COLUMN,
+    AVAILABLE_CREDIT_COLUMN,
     CREDIT_TERM_COLUMN,
     STATUS_COLUMN,
     CREATED_AT_COLUMN,

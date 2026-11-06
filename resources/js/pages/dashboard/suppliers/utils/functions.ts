@@ -5,6 +5,7 @@ import { suppliersQueryKey } from '@/hooks/use-suppliers';
 import type { Supplier } from '@/schemas/supplier';
 import { supplierService } from '@/services/suppliers';
 import type { BreadcrumbItem } from '@/types';
+import { formatDocumentDisplay, formatPhoneDisplay } from '@/utils/form-fields';
 import { SUPPLIERS_BREADCRUMB, SUPPLIERS_LIST_URL } from './constants';
 import type {
     ApiParams,
@@ -73,10 +74,10 @@ export function toSupplierRow(supplier: Supplier): SupplierRow {
         id: String(supplier.id),
         supplier,
         name: supplier.name,
-        document: supplier.document ?? '',
+        document: formatDocumentDisplay(supplier.document),
         person_type: supplier.person_type,
-        email: supplier.email ?? '',
-        phone: supplier.phone ?? '',
+        email: supplier.email || '-',
+        phone: formatPhoneDisplay(supplier.phone),
         status: supplier.status,
         createdAt: supplier.createdAt ?? '',
     };

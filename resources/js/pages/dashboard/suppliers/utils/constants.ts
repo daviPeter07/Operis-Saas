@@ -34,8 +34,8 @@ export const DELETE_SUPPLIER_ERROR = 'Não foi possível excluir o fornecedor.';
 
 export const SUPPLIERS_FILTER_KEYS = [
     'name',
-    'document',
     'person_type',
+    'document',
     'email',
     'phone',
     'status',
@@ -52,8 +52,8 @@ export const NAME_COLUMN: ServerColumn<SupplierRow> = {
 export const DOCUMENT_COLUMN: ServerColumn<SupplierRow> = {
     key: 'document',
     header: 'Documento',
-    render: (row) => row.document || '-',
-    filter: { type: 'text', key: 'document', placeholder: 'CPF ou CNPJ' },
+    className: 'whitespace-nowrap',
+    filter: { type: 'text', key: 'document' },
 };
 
 export const PERSON_TYPE_COLUMN: ServerColumn<SupplierRow> = {
@@ -72,14 +72,12 @@ export const PERSON_TYPE_COLUMN: ServerColumn<SupplierRow> = {
 export const EMAIL_COLUMN: ServerColumn<SupplierRow> = {
     key: 'email',
     header: 'E-mail',
-    render: (row) => row.email || '-',
     filter: { type: 'text', key: 'email' },
 };
 
 export const PHONE_COLUMN: ServerColumn<SupplierRow> = {
     key: 'phone',
     header: 'Telefone',
-    render: (row) => row.phone || '-',
     filter: { type: 'text', key: 'phone' },
 };
 
@@ -105,8 +103,8 @@ export const CREATED_AT_COLUMN: ServerColumn<SupplierRow> = {
 
 export const TABLE_COLUMNS: ServerColumn<SupplierRow>[] = [
     NAME_COLUMN,
-    DOCUMENT_COLUMN,
     PERSON_TYPE_COLUMN,
+    DOCUMENT_COLUMN,
     EMAIL_COLUMN,
     PHONE_COLUMN,
     STATUS_COLUMN,
@@ -116,11 +114,11 @@ export const TABLE_COLUMNS: ServerColumn<SupplierRow>[] = [
 // Plain text in the spreadsheet instead of the badges.
 export const EXPORT_COLUMNS: ServerColumn<SupplierRow>[] = [
     NAME_COLUMN,
-    DOCUMENT_COLUMN,
     {
         ...PERSON_TYPE_COLUMN,
         render: (row) => PERSON_TYPE_LABELS[row.person_type],
     },
+    DOCUMENT_COLUMN,
     EMAIL_COLUMN,
     PHONE_COLUMN,
     { ...STATUS_COLUMN, render: (row) => translateStatus(row.status) },

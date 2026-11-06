@@ -1,6 +1,7 @@
 import { DetailsField, DetailsSection } from '@/components/details-page';
 import { PERSON_TYPE_LABELS } from '@/constants/person-type';
 import { formatDateTimeManaus } from '@/lib/format';
+import { formatDocumentDisplay, formatPhoneDisplay } from '@/utils/form-fields';
 import { DOCUMENT_FIELD, NOT_INFORMED } from '../../utils/constants';
 import type { SupplierDetailsProps } from '../../utils/types';
 
@@ -23,7 +24,7 @@ export function SupplierDetails({ supplier }: SupplierDetailsProps) {
                 <DetailsField
                     label={DOCUMENT_FIELD[supplier.person_type].label}
                 >
-                    {supplier.document || <NotInformed />}
+                    {formatDocumentDisplay(supplier.document)}
                 </DetailsField>
                 <DetailsField label="Cadastrado em">
                     {supplier.createdAt
@@ -46,7 +47,7 @@ export function SupplierDetails({ supplier }: SupplierDetailsProps) {
                     )}
                 </DetailsField>
                 <DetailsField label="Telefone">
-                    {supplier.phone || <NotInformed />}
+                    {formatPhoneDisplay(supplier.phone)}
                 </DetailsField>
             </DetailsSection>
         </div>

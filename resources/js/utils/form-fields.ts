@@ -225,3 +225,11 @@ export function toFieldOptions(
 ): FieldOption[] {
     return items.map((item) => ({ value: String(item.id), label: item.name }));
 }
+
+export function formatDocumentDisplay(document: string | null): string {
+    return document?.trim() ? formatDocumentInput(document) : '-';
+}
+
+export function formatPhoneDisplay(phone: string | null): string {
+    return phone?.trim() ? formatPhoneInput(phone) : '-';
+}

@@ -6,11 +6,10 @@ import type { Customer } from '@/schemas/customer';
 import { customerService } from '@/services/customers';
 import { toNumber } from '@/services/normalizers';
 import type { BreadcrumbItem } from '@/types';
-import { inferPersonType } from '@/utils/clients';
 import {
     formatCurrencyInput,
-    formatDocumentInput,
-    formatPhoneInput,
+    formatDocumentDisplay,
+    formatPhoneDisplay,
     parseCurrencyInput,
 } from '@/utils/form-fields';
 import {
@@ -93,14 +92,6 @@ export function getClientCredit(customer: Customer): ClientCredit {
     };
 }
 
-export function formatClientDocument(document: string | null): string {
-    return document?.trim() ? formatDocumentInput(document) : '-';
-}
-
-export function formatClientPhone(phone: string | null): string {
-    return phone?.trim() ? formatPhoneInput(phone) : '-';
-}
-
 export function toClientRow(customer: Customer): ClientRow {
     const credit = getClientCredit(customer);
 
@@ -108,10 +99,10 @@ export function toClientRow(customer: Customer): ClientRow {
         id: String(customer.id),
         customer,
         name: customer.name,
-        personType: inferPersonType(customer.document),
-        document: formatClientDocument(customer.document),
+        personType: customer.person_type,
+        document: formatDocumentDisplay(customer.document),
         email: customer.email || '-',
-        phone: formatClientPhone(customer.phone),
+        phone: formatPhoneDisplay(customer.phone),
         creditEnabled: Boolean(customer.credit_enabled),
         creditLimit: credit.limit,
         availableCredit: credit.available,
@@ -128,7 +119,7 @@ export function toInitialData(customer: Customer): ClientInitialData {
         email: customer.email ?? '',
         phone: customer.phone ?? '',
         document: customer.document ?? '',
-        personType: inferPersonType(customer.document),
+        personType: customer.person_type,
         creditEnabled: Boolean(customer.credit_enabled),
         creditLimit: toNumber(customer.credit_limit),
         creditTermDays: toNumber(customer.credit_term_days) || 30,
