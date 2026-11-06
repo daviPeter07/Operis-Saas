@@ -11,12 +11,8 @@ export type SaleMutationInput = {
     customer_id: number | null;
     date: string;
     status?: 'pending' | 'completed';
-    payment_method:
-        | 'cash'
-        | 'pix'
-        | 'card_debit'
-        | 'card_credit'
-        | 'crediario';
+    payment_method: 'cash' | 'pix' | 'card_debit' | 'card_credit' | 'crediario';
+    discount?: number;
     installments?: number;
     first_installment_date?: string;
     installment_value?: number;
@@ -49,9 +45,13 @@ export function useCreateSale() {
             saleService.create(data as unknown as Partial<Sale>),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
-            await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: receivablesQueryKey,
+            });
             await queryClient.invalidateQueries({ queryKey: productsQueryKey });
-            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: customersQueryKey,
+            });
         },
     });
 }
@@ -60,13 +60,22 @@ export function useUpdateSale() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, data }: { id: number; data: SaleMutationInput }) =>
-            saleService.update(id, data as Partial<Sale>),
+        mutationFn: async ({
+            id,
+            data,
+        }: {
+            id: number;
+            data: SaleMutationInput;
+        }) => saleService.update(id, data as Partial<Sale>),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
-            await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: receivablesQueryKey,
+            });
             await queryClient.invalidateQueries({ queryKey: productsQueryKey });
-            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: customersQueryKey,
+            });
         },
     });
 }
@@ -78,9 +87,13 @@ export function useDeleteSale() {
         mutationFn: async (id: number) => saleService.delete(id),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: salesQueryKey });
-            await queryClient.invalidateQueries({ queryKey: receivablesQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: receivablesQueryKey,
+            });
             await queryClient.invalidateQueries({ queryKey: productsQueryKey });
-            await queryClient.invalidateQueries({ queryKey: customersQueryKey });
+            await queryClient.invalidateQueries({
+                queryKey: customersQueryKey,
+            });
         },
     });
 }
