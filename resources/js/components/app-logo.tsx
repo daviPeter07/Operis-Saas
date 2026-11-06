@@ -1,6 +1,6 @@
 import { Building2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useWorkspace } from '@/features/dashboard/workspace-context';
+import { useWorkspace } from '@/components/workspace-context';
 
 export default function AppLogo() {
     const { currentCompany, isLoading } = useWorkspace();

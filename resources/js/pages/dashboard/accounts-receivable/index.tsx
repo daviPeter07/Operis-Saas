@@ -6,7 +6,6 @@ import { useDeleteAccountReceivable } from '@/hooks/use-account-receivables';
 import { useServerTableState } from '@/hooks/use-server-table-state';
 import AppLayout from '@/layouts/app-layout';
 import { CreateEditModal } from './components/create-edit-modal';
-import { OriginFilterNotice } from './components/origin-filter-notice';
 import { PartialSettleDialog } from './components/partial-settle-dialog';
 import { SelectionBar } from './components/selection-bar';
 import { SummaryCards } from './components/summary-cards';
@@ -71,13 +70,6 @@ export default function AccountsReceivablePage() {
             <PageContent>
                 <SummaryCards apiParams={tableState.apiParams} />
 
-                {tableState.filters.sale ? (
-                    <OriginFilterNotice
-                        originId={tableState.filters.sale}
-                        onClear={() => tableState.setFilter('sale', '')}
-                    />
-                ) : null}
-
                 <ServerTable
                     title="Contas a Receber"
                     columns={getTableColumns()}
@@ -88,6 +80,9 @@ export default function AccountsReceivablePage() {
                     isLoading={receivablesPage.isPending}
                     isFetching={receivablesPage.isFetching}
                     state={tableState}
+                    filterLabels={{
+                        sale: (id) => `contas da Venda #${id}`,
+                    }}
                     selection={{
                         selectedIds: new Set(selected.keys()),
                         onChange: (row, checked) => toggle([row], checked),

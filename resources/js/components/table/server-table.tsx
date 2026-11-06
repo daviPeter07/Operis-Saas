@@ -7,11 +7,13 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
+import { PeriodFilter } from '@/components/filters/period-filter';
 import { ColumnFilter } from '@/components/table/column-filter';
 import type { ColumnFilterConfig } from '@/components/table/column-filter';
 import { DataTableCell } from '@/components/table/data-table';
 import { DataTableRowZebra } from '@/components/table/data-table-row';
 import { DeleteConfirmDialog } from '@/components/table/delete-confirm-dialog';
+import { FilterNotice } from '@/components/table/filter-notice';
 import { HighlightText } from '@/components/table/highlight-text';
 import { Pagination, PaginationInfo } from '@/components/table/pagination';
 import { TableActions } from '@/components/table/table-actions';
@@ -35,7 +37,6 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PeriodFilter } from '@/features/dashboard/overview/period-filter';
 import type { ServerTableState } from '@/hooks/use-server-table-state';
 import { exportToExcel } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
@@ -69,6 +70,8 @@ export interface ServerTableProps<T extends { id: string }> {
     showPeriodFilter?: boolean;
     onCreate?: () => void;
     onView?: (row: T) => void;
+    // Off hides the view action (the eye), which otherwise opens a generic dialog.
+    showView?: boolean;
     onPrint?: (row: T) => void;
     onEdit?: (row: T) => void;
     onDelete?: (row: T) => Promise<void> | void;
@@ -77,6 +80,8 @@ export interface ServerTableProps<T extends { id: string }> {
     itemName?: (row: T) => string;
     rowClassName?: (row: T) => string | undefined;
     selection?: ServerTableSelection<T>;
+    // Text for filters without a column, used by the filter notice (e.g. sale: "contas da Venda #12").
+    filterLabels?: Record<string, (value: string) => string>;
 }
 
 export function ServerTable<T extends { id: string }>({
@@ -91,6 +96,7 @@ export function ServerTable<T extends { id: string }>({
     showPeriodFilter = true,
     onCreate,
     onView,
+    showView = true,
     onPrint,
     onEdit,
     onDelete,
@@ -99,6 +105,7 @@ export function ServerTable<T extends { id: string }>({
     itemName,
     rowClassName,
     selection,
+    filterLabels,
 }: ServerTableProps<T>) {
     const [viewRow, setViewRow] = React.useState<T | null>(null);
     const [deleteRow, setDeleteRow] = React.useState<T | null>(null);
@@ -110,6 +117,35 @@ export function ServerTable<T extends { id: string }>({
         : 0;
     const extraColumns = (showActions ? 1 : 0) + (selection ? 1 : 0);
     const openView = (row: T) => (onView ? onView(row) : setViewRow(row));
+
+    // Filters that came in the URL, i.e. a link from another screen. The notice
+    // stays while they are unchanged and goes away once the user edits them.
+    const [arrivalFilters] = React.useState(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        return Object.entries(state.filters).filter(([key]) => params.has(key));
+    });
+    const showFilterNotice =
+        arrivalFilters.length > 0 &&
+        arrivalFilters.every(([key, value]) => state.filters[key] === value);
+    const describeFilter = (key: string, value: string): string => {
+        const label = filterLabels?.[key];
+
+        if (label) {
+            return label(value);
+        }
+
+        const column = columns.find((item) => item.filter?.key === key);
+        const filter = column?.filter;
+        const option =
+            filter && filter.type !== 'text'
+                ? filter.options.find((item) => item.value === value)
+                : undefined;
+
+        return column ? `${column.header}: ${option?.label ?? value}` : value;
+    };
+    const clearArrivalFilters = () =>
+        arrivalFilters.forEach(([key]) => state.setFilter(key, ''));
 
     const renderCell = (column: ServerColumn<T>, row: T) =>
         column.render ? column.render(row) : String(row[column.key] ?? '');
@@ -166,6 +202,14 @@ export function ServerTable<T extends { id: string }>({
 
     return (
         <div className="space-y-4">
+            {showFilterNotice ? (
+                <FilterNotice
+                    items={arrivalFilters.map(([key, value]) =>
+                        describeFilter(key, value),
+                    )}
+                    onClear={clearArrivalFilters}
+                />
+            ) : null}
             <TableToolbar
                 showSearch={false}
                 createPosition="start"
@@ -242,8 +286,8 @@ export function ServerTable<T extends { id: string }>({
                                     scope="col"
                                     aria-sort={ariaSort(state, column.sortKey)}
                                     className={cn(
-                                        'px-4 pt-3 pb-2 text-left align-top font-bold whitespace-nowrap text-foreground',
-                                        column.filter && 'min-w-40',
+                                        'px-3 pt-3 pb-2 text-left align-top font-bold whitespace-nowrap text-foreground',
+                                        column.filter && 'min-w-24',
                                         column.className,
                                     )}
                                 >
@@ -275,7 +319,7 @@ export function ServerTable<T extends { id: string }>({
                             {showActions ? (
                                 <th
                                     scope="col"
-                                    className="w-32 px-4 pt-3 pb-2 text-right align-top font-medium text-muted-foreground"
+                                    className="w-24 px-3 pt-3 pb-2 text-right align-top font-medium text-muted-foreground"
                                 >
                                     Ações
                                 </th>
@@ -345,15 +389,19 @@ export function ServerTable<T extends { id: string }>({
                                     {columns.map((column) => (
                                         <DataTableCell
                                             key={column.key}
-                                            className={column.className}
+                                            className={cn(
+                                                'px-3',
+                                                column.className,
+                                            )}
                                         >
                                             {renderDisplayCell(column, row)}
                                         </DataTableCell>
                                     ))}
                                     {showActions ? (
-                                        <DataTableCell className="w-32">
+                                        <DataTableCell className="w-24 px-3">
                                             <TableActions
                                                 onView={() => openView(row)}
+                                                showView={showView}
                                                 onPrint={
                                                     onPrint
                                                         ? () => onPrint(row)
@@ -436,6 +484,7 @@ export function ServerTable<T extends { id: string }>({
                                 <TableActions
                                     className="mt-2 justify-end border-t pt-2"
                                     onView={() => openView(row)}
+                                    showView={showView}
                                     onPrint={
                                         onPrint ? () => onPrint(row) : undefined
                                     }

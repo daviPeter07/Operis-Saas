@@ -56,7 +56,10 @@ export default function SalesPage() {
 
                 <ServerTable
                     title="Vendas"
-                    columns={getTableColumns(filterOptions)}
+                    columns={getTableColumns(
+                        filterOptions,
+                        tableState.filters.product,
+                    )}
                     exportColumns={getExportColumns()}
                     rows={(salesPage.data?.data ?? []).map(toSaleRow)}
                     total={salesPage.data?.meta.total ?? 0}
@@ -64,6 +67,9 @@ export default function SalesPage() {
                     isLoading={salesPage.isPending}
                     isFetching={salesPage.isFetching}
                     state={tableState}
+                    filterLabels={{
+                        id: (id) => `Venda #${id}`,
+                    }}
                     onCreate={() => setIsCreateOpen(true)}
                     onView={(row) => openSaleDetails(row.sale.id)}
                     onPrint={(row) => void openPrint(row.sale.id)}

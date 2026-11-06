@@ -20,7 +20,6 @@ import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { FieldOption } from '@/utils/form-fields';
-import { NamesCell } from '../components/names-cell';
 import { SaleStatusChip } from '../components/sale-status-chip';
 import type {
     AppliedDiscount,
@@ -62,6 +61,8 @@ export const CANCEL_SALE_DIALOG = {
 };
 
 export const SALES_FILTER_KEYS = [
+    // A single record, opened from "Últimas atividades" on Visão Geral.
+    'id',
     'customer',
     'product',
     'category_id',
@@ -136,13 +137,6 @@ export const CUSTOMER_COLUMN: ServerColumn<SaleRow> = {
     filter: { type: 'text', key: 'customer' },
 };
 
-export const PRODUCT_COLUMN: ServerColumn<SaleRow> = {
-    key: 'productNames',
-    header: 'Produto',
-    render: (row) => createElement(NamesCell, { names: row.productNames }),
-    filter: { type: 'text', key: 'product' },
-};
-
 export const PRODUCT_EXPORT_COLUMN: ServerColumn<SaleRow> = {
     key: 'productList',
     header: 'Produto',
@@ -209,6 +203,19 @@ export const INSTALLMENTS_COLUMN: ServerColumn<SaleRow> = {
     key: 'installments',
     header: 'Parcela',
     render: (row) => `${row.installments}x`,
+};
+
+// Table only: the method with its installments ("Crediário 3x"), so the table fits
+// without scrolling. The export keeps both columns.
+export const PAYMENT_COLUMN: ServerColumn<SaleRow> = {
+    ...PAYMENT_METHOD_COLUMN,
+    header: 'Pagamento',
+    className: undefined,
+    render: (row) => {
+        const label = PAYMENT_METHOD_LABELS[row.paymentMethod] ?? '-';
+
+        return row.installments > 1 ? `${label} ${row.installments}x` : label;
+    },
 };
 
 export const SUMMARY_CARDS: SummaryCard[] = [

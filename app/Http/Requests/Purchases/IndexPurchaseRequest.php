@@ -22,6 +22,7 @@ class IndexPurchaseRequest extends TableIndexRequest
     protected function filterRules(): array
     {
         return [
+            'id' => ['integer', 'min:1'],
             'supplier' => ['string', 'max:255'],
             'product' => ['string', 'max:255'],
             'category_id' => ['integer'],

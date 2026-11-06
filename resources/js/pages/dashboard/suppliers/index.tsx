@@ -43,6 +43,10 @@ export default function SuppliersPage() {
                     isLoading={suppliersPage.isPending}
                     isFetching={suppliersPage.isFetching}
                     state={tableState}
+                    filterLabels={{
+                        id: (id) =>
+                            `Fornecedor: ${suppliersPage.data?.data.find((supplier) => String(supplier.id) === id)?.name ?? `#${id}`}`,
+                    }}
                     onCreate={() => setIsCreateOpen(true)}
                     onView={(row) => openSupplierDetails(row.supplier.id)}
                     onEdit={(row) => setEditingSupplier(row.supplier)}

@@ -229,10 +229,6 @@ export type HistoryEventConfig = {
 
 export type HistoryEventMap = Record<PurchaseHistoryType, HistoryEventConfig>;
 
-export type NamesCellProps = {
-    names: string[];
-};
-
 export type PurchaseStepKey = 'products' | 'cart' | 'payment' | 'summary';
 
 export type PurchaseStep = {

@@ -45,7 +45,10 @@ export default function PurchasesPage() {
 
                 <ServerTable
                     title="Compras"
-                    columns={getTableColumns(filterOptions)}
+                    columns={getTableColumns(
+                        filterOptions,
+                        tableState.filters.product,
+                    )}
                     exportColumns={getExportColumns()}
                     rows={(purchasesPage.data?.data ?? []).map(toPurchaseRow)}
                     total={purchasesPage.data?.meta.total ?? 0}
@@ -53,6 +56,9 @@ export default function PurchasesPage() {
                     isLoading={purchasesPage.isPending}
                     isFetching={purchasesPage.isFetching}
                     state={tableState}
+                    filterLabels={{
+                        id: (id) => `Compra #${id}`,
+                    }}
                     onCreate={() => setIsCreateOpen(true)}
                     onView={(row) => openPurchaseDetails(row.purchase.id)}
                     loadAllForExport={async () =>

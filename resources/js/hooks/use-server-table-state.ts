@@ -5,12 +5,9 @@ import {
     useQueryStates,
 } from 'nuqs';
 import { useCallback, useMemo } from 'react';
-import type {
-    CustomRange,
-    Period,
-} from '@/features/dashboard/overview/period-filter';
-import { resolveDateRange } from '@/features/dashboard/overview/period-range';
+import type { CustomRange, Period } from '@/components/filters/period-filter';
 import { nowInAppTimeZone } from '@/lib/app-timezone';
+import { resolveDateRange } from '@/utils/period-range';
 
 const periods = [
     'current-month',

@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import { PersonTypeBadge } from '@/components/common/person-type-badge';
+import { StatusBadge } from '@/components/common/status-badge';
 import type { ServerColumn } from '@/components/table/server-table';
 import {
     PERSON_TYPE_LABELS,
@@ -32,6 +33,8 @@ export const DELETE_CLIENT_DIALOG = {
 };
 
 export const CLIENTS_FILTER_KEYS = [
+    // A single record, opened from "Últimas atividades" on Visão Geral.
+    'id',
     'name',
     'person_type',
     'document',
@@ -91,10 +94,19 @@ export const PHONE_COLUMN: ServerColumn<ClientRow> = {
     filter: { type: 'text', key: 'phone' },
 };
 
+function creditEnabledLabel(enabled: boolean): string {
+    return enabled ? 'Habilitado' : 'Desabilitado';
+}
+
 export const CREDIT_ENABLED_COLUMN: ServerColumn<ClientRow> = {
     key: 'creditEnabled',
     header: 'Crediário',
-    render: (row) => (row.creditEnabled ? 'Habilitado' : 'Desabilitado'),
+    // Same chip as Ativo/Inativo.
+    render: (row) =>
+        createElement(StatusBadge, {
+            status: row.creditEnabled ? 'active' : 'inactive',
+            label: creditEnabledLabel(row.creditEnabled),
+        }),
     filter: {
         type: 'select',
         key: 'credit_enabled',
@@ -157,7 +169,10 @@ export const EXPORT_COLUMNS: ServerColumn<ClientRow>[] = [
     DOCUMENT_COLUMN,
     EMAIL_COLUMN,
     PHONE_COLUMN,
-    CREDIT_ENABLED_COLUMN,
+    {
+        ...CREDIT_ENABLED_COLUMN,
+        render: (row) => creditEnabledLabel(row.creditEnabled),
+    },
     CREDIT_LIMIT_COLUMN,
     AVAILABLE_CREDIT_COLUMN,
     CREDIT_TERM_COLUMN,

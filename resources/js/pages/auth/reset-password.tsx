@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import ResetPasswordPageContent from '@/features/auth/reset-password-page-content';
+import { ResetPasswordPageContent } from './components/reset-password-page-content';
 
 type Props = {
     token: string;

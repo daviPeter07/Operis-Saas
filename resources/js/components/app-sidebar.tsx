@@ -42,8 +42,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useWorkspace } from '@/components/workspace-context';
 import { WORKSPACE_GROUP_LABELS, withAppBasePath } from '@/constants/workspace';
-import { useWorkspace } from '@/features/dashboard/workspace-context';
 import {
     getAltShortcutLabel,
     isEditableElement,

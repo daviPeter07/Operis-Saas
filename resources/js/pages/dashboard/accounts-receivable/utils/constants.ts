@@ -1,4 +1,3 @@
-import { Link } from '@inertiajs/react';
 import {
     Banknote,
     CalendarClock,
@@ -9,6 +8,7 @@ import {
     QrCode,
 } from 'lucide-react';
 import { createElement } from 'react';
+import { RecordLink } from '@/components/table/record-link';
 import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
@@ -52,6 +52,8 @@ export const RECEIVABLE_STATUS_OPTIONS: FieldOption[] = [
     { value: 'partial', label: RECEIVABLE_STATUS_LABELS.partial },
     { value: 'received', label: RECEIVABLE_STATUS_LABELS.received },
     { value: 'cancelled', label: RECEIVABLE_STATUS_LABELS.cancelled },
+    // Filter only: open and past due (the Visão Geral alert opens it).
+    { value: 'overdue', label: 'Vencida' },
 ];
 
 export const RECEIVABLE_STATUS_CHIP_CLASS: Record<ReceivableStatus, string> = {
@@ -78,6 +80,8 @@ export const CUSTOMER_COLUMN: ServerColumn<ReceivableRow> = {
 export const DESCRIPTION_COLUMN: ServerColumn<ReceivableRow> = {
     key: 'description',
     header: 'Descrição',
+    // Long codes without spaces ("COOLER/KITFAN/FONTE/SSD") wrap instead of widening the table.
+    className: 'wrap-anywhere',
     filter: { type: 'text', key: 'description' },
 };
 
@@ -94,17 +98,12 @@ export const ORIGIN_COLUMN: ServerColumn<ReceivableRow> = {
     // Opens the venda straight from the table.
     render: (row) =>
         row.receivable.sale_id
-            ? createElement(
-                  Link,
-                  {
-                      href: withAppBasePath(
-                          `/dashboard/sales/${row.receivable.sale_id}`,
-                      ),
-                      className:
-                          'font-medium text-accent underline-offset-4 hover:underline',
-                  },
-                  row.origin,
-              )
+            ? createElement(RecordLink, {
+                  href: withAppBasePath(
+                      `/dashboard/sales/${row.receivable.sale_id}`,
+                  ),
+                  children: row.origin,
+              })
             : row.origin,
     filter: {
         type: 'select',

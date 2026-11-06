@@ -6,7 +6,6 @@ import { useDeleteAccountPayable } from '@/hooks/use-account-payables';
 import { useServerTableState } from '@/hooks/use-server-table-state';
 import AppLayout from '@/layouts/app-layout';
 import { CreateEditModal } from './components/create-edit-modal';
-import { OriginFilterNotice } from './components/origin-filter-notice';
 import { PartialSettleDialog } from './components/partial-settle-dialog';
 import { SelectionBar } from './components/selection-bar';
 import { SummaryCards } from './components/summary-cards';
@@ -71,13 +70,6 @@ export default function AccountsPayablePage() {
             <PageContent>
                 <SummaryCards apiParams={tableState.apiParams} />
 
-                {tableState.filters.purchase ? (
-                    <OriginFilterNotice
-                        originId={tableState.filters.purchase}
-                        onClear={() => tableState.setFilter('purchase', '')}
-                    />
-                ) : null}
-
                 <ServerTable
                     title="Contas a Pagar"
                     columns={getTableColumns()}
@@ -88,6 +80,9 @@ export default function AccountsPayablePage() {
                     isLoading={payablesPage.isPending}
                     isFetching={payablesPage.isFetching}
                     state={tableState}
+                    filterLabels={{
+                        purchase: (id) => `contas da Compra #${id}`,
+                    }}
                     selection={{
                         selectedIds: new Set(selected.keys()),
                         onChange: (row, checked) => toggle([row], checked),

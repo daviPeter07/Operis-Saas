@@ -1,5 +1,4 @@
-import { Link } from '@inertiajs/react';
-import { ArrowUpRight } from 'lucide-react';
+import { RecordLink } from '@/components/table/record-link';
 
 type LinkedCountProps = {
     count: number;
@@ -21,13 +20,8 @@ export function LinkedCount({
     }
 
     return (
-        <Link
-            href={href}
-            title={`Ver ${plural} no estoque`}
-            className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:text-accent hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
+        <RecordLink href={href} title={`Ver ${plural} no estoque`}>
             {label}
-            <ArrowUpRight aria-hidden className="size-3.5 opacity-60" />
-        </Link>
+        </RecordLink>
     );
 }

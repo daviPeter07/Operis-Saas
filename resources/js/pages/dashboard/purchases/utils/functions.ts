@@ -8,6 +8,7 @@ import {
 import { addDays, format } from 'date-fns';
 import { createElement, useState } from 'react';
 import type { HistoryTimelineItem } from '@/components/history-timeline';
+import { NamesCell } from '@/components/table/names-cell';
 import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
 import { productsQueryKey } from '@/hooks/use-products';
@@ -23,7 +24,6 @@ import type { BreadcrumbItem, ServerValidationError } from '@/types';
 import type { UiProduct } from '@/types/dashboard-entities';
 import { formatCurrencyInput } from '@/utils/form-fields';
 import { todayString } from '@/utils/sales-dialog';
-import { NamesCell } from '../components/names-cell';
 import {
     BOLETO_DAYS_PER_INSTALLMENT,
     BOLETO_TERMS,
@@ -33,9 +33,9 @@ import {
     DATE_COLUMN,
     DUE_DATE_COLUMN,
     HISTORY_EVENTS,
+    PAYMENT_COLUMN,
     PAYMENT_METHOD_COLUMN,
     PAYMENT_METHOD_LABELS,
-    PRODUCT_COLUMN,
     PRODUCT_EXPORT_COLUMN,
     PURCHASES_BREADCRUMB,
     PURCHASES_LIST_URL,
@@ -198,6 +198,22 @@ export function toPurchaseRow(purchase: Purchase): PurchaseRow {
     };
 }
 
+// While the column is searched, the matching product is the one shown.
+function productColumn(query: string): ServerColumn<PurchaseRow> {
+    return {
+        key: 'productNames',
+        header: 'Produto',
+        render: (row) =>
+            createElement(NamesCell, {
+                names: row.productNames,
+                query,
+                // Product names are long: a wider column wraps them less.
+                className: 'min-w-28',
+            }),
+        filter: { type: 'text', key: 'product' },
+    };
+}
+
 function categoryColumn(
     options: PurchasesFilterOptions,
 ): ServerColumn<PurchaseRow> {
@@ -231,18 +247,18 @@ function brandColumn(
 // Dates side by side at the start, then who and what, then values.
 export function getTableColumns(
     options: PurchasesFilterOptions,
+    productQuery = '',
 ): ServerColumn<PurchaseRow>[] {
     return [
         DATE_COLUMN,
         DUE_DATE_COLUMN,
         SUPPLIER_COLUMN,
-        PRODUCT_COLUMN,
+        productColumn(productQuery),
         categoryColumn(options),
         brandColumn(options),
         TOTAL_COLUMN,
         STATUS_COLUMN,
-        PAYMENT_METHOD_COLUMN,
-        BOLETOS_COLUMN,
+        PAYMENT_COLUMN,
     ];
 }
 

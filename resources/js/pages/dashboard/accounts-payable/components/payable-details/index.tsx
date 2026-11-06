@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
 import { DetailsField, DetailsSection } from '@/components/details-page';
+import { RecordLink } from '@/components/table/record-link';
 import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
@@ -20,14 +20,13 @@ export function PayableDetails({ payable }: PayableDetailsProps) {
                 </DetailsField>
                 <DetailsField label="Origem">
                     {payable.purchase_id ? (
-                        <Link
+                        <RecordLink
                             href={withAppBasePath(
                                 `/dashboard/purchases/${payable.purchase_id}`,
                             )}
-                            className="text-accent underline-offset-4 hover:underline"
                         >
                             Compra #{payable.purchase_id}
-                        </Link>
+                        </RecordLink>
                     ) : (
                         'Manual'
                     )}

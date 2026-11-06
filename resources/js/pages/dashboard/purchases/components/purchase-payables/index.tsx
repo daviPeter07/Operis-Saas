@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ArrowUpRight } from 'lucide-react';
 import { StatusBadge } from '@/components/common/status-badge';
 import { DetailsCard } from '@/components/details-page';
+import { RecordLink } from '@/components/table/record-link';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -52,16 +53,15 @@ export function PurchasePayables({
                         {payables.map((payable) => (
                             <TableRow key={payable.id}>
                                 <TableCell className="font-medium">
-                                    <Link
+                                    <RecordLink
                                         href={withAppBasePath(
                                             `/dashboard/accounts-payable/${payable.id}`,
                                         )}
-                                        className="text-accent underline-offset-4 hover:underline"
                                     >
                                         {payable.total_installments
                                             ? `${payable.installment_number}/${payable.total_installments}`
                                             : 'Única'}
-                                    </Link>
+                                    </RecordLink>
                                 </TableCell>
                                 <TableCell>
                                     {payable.due_date

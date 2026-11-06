@@ -131,8 +131,3 @@ export type ReceivableDetailsProps = {
 };
 
 export type NewClientData = NonNullable<ClientCreateDialogProps['initialData']>;
-
-export type OriginFilterNoticeProps = {
-    originId: string;
-    onClear: () => void;
-};

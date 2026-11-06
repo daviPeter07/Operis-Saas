@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ArrowUpRight } from 'lucide-react';
 import { StatusBadge } from '@/components/common/status-badge';
 import { DetailsCard } from '@/components/details-page';
+import { RecordLink } from '@/components/table/record-link';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -59,17 +60,16 @@ export function SaleInstallments({
                         {receivables.map((receivable) => (
                             <TableRow key={receivable.id}>
                                 <TableCell className="font-medium">
-                                    <Link
+                                    <RecordLink
                                         href={withAppBasePath(
                                             `/dashboard/accounts-receivable/${receivable.id}`,
                                         )}
-                                        className="text-accent underline-offset-4 hover:underline"
                                     >
                                         {getInstallmentLabel(
                                             receivable,
                                             installmentsCount,
                                         )}
-                                    </Link>
+                                    </RecordLink>
                                 </TableCell>
                                 <TableCell>
                                     {receivable.due_date

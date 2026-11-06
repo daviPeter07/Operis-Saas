@@ -25,7 +25,8 @@ class IndexAccountReceivableRequest extends TableIndexRequest
             'description' => ['string', 'max:255'],
             'sale' => ['integer'],
             'origin' => [Rule::in(['sale', 'manual'])],
-            'status' => [Rule::in(['pending', 'partial', 'received', 'cancelled'])],
+            // overdue: open (pending/partial) and past due, the "vencidas" of Visão Geral.
+            'status' => [Rule::in(['pending', 'partial', 'received', 'cancelled', 'overdue'])],
         ];
     }
 }

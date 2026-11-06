@@ -33,6 +33,8 @@ export const DELETE_SUPPLIER_SUCCESS = 'Fornecedor excluído com sucesso.';
 export const DELETE_SUPPLIER_ERROR = 'Não foi possível excluir o fornecedor.';
 
 export const SUPPLIERS_FILTER_KEYS = [
+    // A single record, opened from "Últimas atividades" on Visão Geral.
+    'id',
     'name',
     'person_type',
     'document',

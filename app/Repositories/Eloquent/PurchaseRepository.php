@@ -41,6 +41,13 @@ class PurchaseRepository implements PurchaseRepositoryInterface
                 'created_at' => 'created_at',
             ]);
 
+        // A single record, opened from "Últimas atividades" on Visão Geral.
+        $id = $tableQuery->filter('id');
+
+        if ($id !== null) {
+            $query->whereKey((int) $id);
+        }
+
         return $tableQuery->paginate($query);
     }
 

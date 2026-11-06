@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { accountReceivableService } from '@/services/account-receivables';
+import { customersQueryKey } from './use-customers';
 import { productsQueryKey } from './use-products';
 import { purchasesQueryKey } from './use-purchases';
 import { salesQueryKey } from './use-sales';
@@ -40,6 +41,8 @@ async function invalidateRelatedQueries(
         queryClient.invalidateQueries({ queryKey: productsQueryKey }),
         queryClient.invalidateQueries({ queryKey: purchasesQueryKey }),
         queryClient.invalidateQueries({ queryKey: accountPayablesQueryKey }),
+        // Open balance (crediário limit) changes with each settlement.
+        queryClient.invalidateQueries({ queryKey: customersQueryKey }),
     ]);
 }
 

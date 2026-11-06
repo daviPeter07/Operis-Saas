@@ -105,8 +105,3 @@ export type PartialSettleDialogProps = {
 export type PayableDetailsProps = {
     payable: AccountPayable;
 };
-
-export type OriginFilterNoticeProps = {
-    originId: string;
-    onClear: () => void;
-};
