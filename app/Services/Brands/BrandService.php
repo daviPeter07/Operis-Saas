@@ -4,15 +4,16 @@ namespace App\Services\Brands;
 
 use App\Models\Brand;
 use App\Repositories\Contracts\BrandRepositoryInterface;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BrandService
 {
     public function __construct(private readonly BrandRepositoryInterface $brands) {}
 
-    public function list(int $companyId): LengthAwarePaginator
+    public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
     {
-        return $this->brands->paginateByCompany($companyId);
+        return $this->brands->paginateByCompany($companyId, $tableQuery);
     }
 
     public function create(int $companyId, array $data): Brand
