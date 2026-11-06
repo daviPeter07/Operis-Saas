@@ -34,21 +34,22 @@ export function CreateEditModal({
     onOpenChange,
     onSuccess,
     supplier,
+    initialName,
 }: CreateEditModalProps) {
     const createSupplier = useCreateSupplier();
     const updateSupplier = useUpdateSupplier();
     const form = useForm<SupplierFormValues>({
         resolver: zodResolver(supplierFormSchema),
         mode: 'onTouched',
-        defaultValues: toSupplierFormValues(supplier),
+        defaultValues: toSupplierFormValues(supplier, initialName),
     });
     const text = SUPPLIER_DIALOG_TEXT[supplier ? 'edit' : 'create'];
 
     useEffect(() => {
         if (open) {
-            form.reset(toSupplierFormValues(supplier));
+            form.reset(toSupplierFormValues(supplier, initialName));
         }
-    }, [form, open, supplier]);
+    }, [form, initialName, open, supplier]);
 
     const submit = form.handleSubmit(async (values) => {
         const data = toSupplierSubmitData(values);

@@ -41,6 +41,8 @@ export type CreateEditModalProps = {
     onOpenChange: (open: boolean) => void;
     onSuccess?: (supplier: Supplier) => void;
     supplier?: Supplier | null;
+    // Name typed in a search box, used to start a new supplier.
+    initialName?: string;
 };
 
 export type SupplierDetailsProps = {
