@@ -135,18 +135,3 @@ export type SupplierForm = {
     number: string;
     zipCode: string;
 };
-
-export type SupplierCreateDialogProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    mode?: 'create' | 'edit';
-    initialData?: {
-        id?: number;
-        name: string;
-        email: string;
-        phone: string;
-        document: string;
-        personType: 'pf' | 'pj';
-        status?: 'active' | 'inactive';
-    };
-};
