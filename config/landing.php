@@ -89,6 +89,18 @@ return [
     */
     'updates' => [
         [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Clientes, fornecedores, categorias e marcas com filtros por coluna',
+            'description' => 'Filtre e ordene essas listas direto em cada coluna, veja os detalhes de clientes e fornecedores numa página própria e abra os produtos de uma categoria ou marca com um clique.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Tipo do cliente e crédito disponível corretos',
+            'description' => 'O tipo de pessoa (física ou jurídica) escolhido no cadastro do cliente agora é salvo, e o crédito disponível do crediário considera todas as contas em aberto.',
+        ],
+        [
             'date' => '2026-11-05',
             'type' => 'melhoria',
             'title' => 'Estoque com filtros por coluna e página do produto',
