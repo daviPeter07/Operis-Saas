@@ -33,16 +33,19 @@ class ReceivableService
             ? max(0, min((float) ($sale->crediario_entry ?? 0), (float) $sale->total))
             : 0.0;
         $financedTotal = max(0, (float) $sale->total - $crediarioEntry);
-        $installments = $sale->installments ?? 1;
-        $installmentAmount = $installments > 0
-            ? $financedTotal / $installments
-            : $financedTotal;
+        $installments = max(1, (int) ($sale->installments ?? 1));
+        // Split in cents so the installments always add up to the financed total:
+        // the cents left over go to the last one (220 / 3 = 73.33 + 73.33 + 73.34).
+        $financedCents = (int) round($financedTotal * 100);
+        $baseCents = intdiv($financedCents, $installments);
         $firstInstallmentDate = Carbon::parse($sale->first_installment_date ?? $sale->date)
             ->startOfDay();
         $isCompletedSale = $sale->status === SaleStatus::Completed->value;
 
         for ($i = 0; $i < $installments; $i++) {
             $dueDate = $firstInstallmentDate->copy()->addMonthsNoOverflow($i);
+            $isLast = $i === $installments - 1;
+            $installmentAmount = ($isLast ? $financedCents - $baseCents * ($installments - 1) : $baseCents) / 100;
 
             $this->receivables->create([
                 'company_id' => $sale->company_id,
