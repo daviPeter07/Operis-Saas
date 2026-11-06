@@ -91,7 +91,7 @@ export function RecentActivity({ activities, isPending }: RecentActivityProps) {
                         description="Crie uma venda, compra, cliente ou produto para começar a alimentar essa área."
                         action={{
                             label: 'Ir para Vendas',
-                            href: '/dashboard/sales',
+                            href:  withAppBasePath('/dashboard/sales'),
                         }}
                         className="py-6"
                     />
