@@ -45,6 +45,149 @@ A aplicação é **multiempresa**: cada usuário trabalha dentro de uma empresa 
 | 📊 **Relatórios** | Vendas, produtos mais vendidos, vendas por categoria e marca, estoque atual, inadimplência, pagamentos por método e maiores compradores |
 | 📥 **Importação / exportação** | Importação de cadastros por planilha; exportação de tabelas para Excel e PDF |
 
+## 🛠️ Correções em vendas (novembro de 2026)
+
+Revisão completa do módulo de vendas. Para cada um dos 21 problemas está registrado como era antes, por que acontecia, o que foi feito e como funciona hoje. Também entraram as correções de clientes que afetavam o crediário.
+
+### Desconto
+
+**1. O desconto não era salvo na venda**
+- **Antes:** o caixa mostrava o desconto, mas a venda era gravada pelo valor cheio. As parcelas, a entrada do crediário e as contas a receber também saíam sem desconto.
+- **Por quê:** o banco não tinha onde guardar o desconto (não existia a coluna) e a API não recebia esse campo. O desconto existia só na tela e era descartado ao salvar.
+- **Correção:** coluna `discount` na venda. A API passou a aceitar o desconto e a calcular `total = subtotal − desconto` num único lugar, na criação e na edição.
+- **Hoje:** o desconto fica salvo e entra no total, nas parcelas, na entrada do crediário, no limite de crédito e no comprovante. Um desconto maior que o subtotal é recusado com uma mensagem.
+
+**2. O desconto sumia ou ficava errado no cadastro**
+- **Antes:** ao editar uma venda, o desconto voltava zerado. Um desconto em % não acompanhava as mudanças do carrinho, e um valor acima do subtotal era cortado sem aviso.
+- **Por quê:** o desconto não era carregado da venda salva e era calculado uma vez só, no momento em que era aplicado.
+- **Correção:** o desconto é carregado ao editar, recalculado sempre que o carrinho muda e validado na própria janela de desconto.
+- **Hoje:** o desconto aparece ao editar e acompanha o carrinho. Um valor inválido mostra o erro com a prévia do total e o botão "Remover desconto". A linha do desconto fica destacada em laranja no carrinho, no pagamento e no resumo.
+
+**3. O lucro do resumo ignorava o desconto**
+- **Antes:** o lucro mostrado antes de confirmar a venda era maior do que o real quando havia desconto.
+- **Por quê:** a conta usava só preço de venda menos custo dos itens.
+- **Correção e hoje:** o lucro do resumo desconta o desconto da venda.
+
+### Crediário e parcelas
+
+**4. O crediário ignorava a data da 1ª parcela**
+- **Antes:** o caixa pedia a data da primeira parcela, mas as parcelas venciam sempre 30 dias depois da venda.
+- **Por quê:** a data escolhida não era enviada, e o servidor sempre usava "data da venda + 30 dias".
+- **Correção:** a data é enviada e usada pelo servidor. Sem data, continua valendo o padrão de 30 dias.
+- **Hoje:** a 1ª parcela vence na data escolhida e as seguintes mês a mês, respeitando o fim do mês (31/01 → 28/02).
+
+**5. As parcelas perdiam centavos**
+- **Antes:** R$ 220,00 em 3 parcelas virava 3 × R$ 73,33 = R$ 219,99. Faltava um centavo para fechar o total.
+- **Por quê:** cada parcela era arredondada sozinha e ninguém cuidava da sobra.
+- **Correção:** a divisão é feita em centavos e a sobra vai para a última parcela. O cadastro, o resumo, os detalhes e o comprovante usam essa mesma regra.
+- **Hoje:** 73,33 + 73,33 + 73,34 = 220,00. A soma das parcelas sempre fecha com o valor financiado.
+
+**6. O resumo do crediário calculava errado**
+- **Antes:** as parcelas eram calculadas sobre o total da venda, e não sobre o que sobra depois da entrada. O limite de crédito do cliente contava parcelas canceladas e, ao editar, as parcelas da própria venda.
+- **Por quê:** a tela usava o total cheio e somava todas as contas do cliente, sem filtrar o status nem a venda que estava sendo editada.
+- **Correção e hoje:** as parcelas dividem só o saldo financiado (total − entrada). O limite considera apenas as contas em aberto e desconta as parcelas da própria venda quando ela está sendo editada.
+
+**7. Uma entrada inválida travava o cadastro sem explicação**
+- **Antes:** com uma entrada zerada ou maior que o total, o botão de avançar ficava desabilitado sem nenhuma mensagem.
+- **Por quê:** a regra existia, mas só desabilitava o botão.
+- **Correção e hoje:** a tela explica que a entrada precisa ser maior que zero e menor que o total da venda.
+
+**8. Ao editar, as parcelas já pagas voltavam a ficar em aberto**
+- **Antes:** depois de editar uma venda no crediário, parcelas que o cliente já tinha pago apareciam de novo como pendentes.
+- **Por quê:** a edição não enviava quais parcelas já estavam pagas, e o servidor recriava todas como em aberto.
+- **Correção e hoje:** as parcelas pagas vêm marcadas ao editar e são enviadas junto. Um crediário de 1 parcela também pode ser marcado como pago.
+
+### Cancelar, excluir, editar e estoque
+
+**9. Cancelar uma venda pendente não desfazia nada**
+- **Antes:** as contas a receber continuavam em aberto (e contando no limite do cliente) e o estoque não voltava. Receber ou desfazer uma parcela depois tirava a venda do status "cancelada".
+- **Por quê:** o cancelamento só trocava o status da venda. As baixas de contas a receber recalculavam o status sem saber que a venda tinha sido cancelada.
+- **Correção:** o cancelamento devolve ao estoque exatamente o que a venda tirou, cancela as contas em aberto e mantém as já recebidas. Contas de vendas canceladas não podem mais receber baixa nem estorno (a API responde com erro).
+- **Hoje:** cancelar devolve o estoque uma única vez, libera o limite do cliente e não altera o dinheiro já recebido. Uma migration cancelou as contas que ficaram em aberto de vendas canceladas antes da correção.
+
+**10. Excluir uma venda cancelada devolvia o estoque de novo**
+- **Antes:** uma venda concluída, depois cancelada e depois excluída devolvia os produtos ao estoque duas vezes.
+- **Por quê:** o cancelamento e a exclusão devolviam o estoque cada um por conta própria, sem verificar o que já tinha voltado.
+- **Correção e hoje:** os dois calculam o saldo pelas movimentações de estoque da própria venda. O estoque volta uma vez só, não importa a ordem das ações.
+
+**11. Editar a venda mexia errado no estoque**
+- **Antes:** passar uma venda de concluída para pendente devolvia o estoque, e alterar os itens de uma venda pendente não ajustava nada.
+- **Por quê:** o ajuste de estoque dependia do status da venda, mas o estoque já sai no momento da criação, qualquer que seja o status.
+- **Correção e hoje:** a edição ajusta o estoque só pela diferença entre os itens antigos e os novos, em qualquer status. Produto repetido em duas linhas também é somado certo.
+
+### Cadastro da venda (janela de venda)
+
+**12. A janela fechava antes de a venda ser salva**
+- **Antes:** se a API recusasse a venda (por exemplo, estoque insuficiente), a janela já tinha fechado e o carrinho se perdia.
+- **Por quê:** a janela era fechada assim que o botão era clicado, sem esperar a resposta do servidor.
+- **Correção e hoje:** a janela só fecha depois que a venda é salva. Em caso de erro, o carrinho continua lá e a mensagem aparece.
+
+**13. A janela reabria com a venda anterior**
+- **Antes:** ao clicar em "Criar" de novo, voltavam o cliente, o carrinho e a etapa da venda anterior.
+- **Por quê:** o formulário continuava montado depois de fechar e guardava o estado da última venda.
+- **Correção e hoje:** o formulário é recriado sempre que a janela abre, então cada venda começa vazia (ou com os dados da venda que está sendo editada).
+
+**14. Preço errado ao adicionar produto pelo catálogo**
+- **Antes:** alguns preços viravam um valor enorme ao adicionar o produto (por exemplo, um produto de R$ 19,99).
+- **Por quê:** o preço era multiplicado por 100 para a máscara de moeda, e no JavaScript `19,99 × 100` dá `1998,9999999…`. A máscara juntava todos esses dígitos num número só.
+- **Correção e hoje:** o preço é convertido em centavos inteiros antes da máscara e aparece sempre certo.
+
+**15. Observações e "Marcar como entregue" não eram salvos**
+- **Antes:** os dois campos apareciam no caixa, mas nunca chegavam ao servidor.
+- **Por quê:** não existiam colunas para eles e a tela não os enviava.
+- **Correção e hoje:** as observações ficam salvas e aparecem nos detalhes da venda. A marcação de entrega saiu do cadastro por não estar em uso, mas o servidor continua aceitando o campo e uma entrega já registrada não é apagada ao editar.
+
+### Listagem e detalhes da venda
+
+**16. "Visualizar" abria a impressão**
+- **Antes:** o botão do olho na tabela abria o comprovante em vez dos detalhes.
+- **Por quê:** no componente de ações da tabela, os botões de ver e de imprimir chamavam a mesma função.
+- **Correção e hoje:** cada botão tem a sua ação. "Ver detalhes" abre a página da venda e "Imprimir" abre o comprovante.
+
+**17. Parcelas com R$ 0,00 nos detalhes**
+- **Antes:** o card Parcelas mostrava R$ 0,00 nas parcelas recebidas ou canceladas, e uma venda cancelada aparecia como "1x".
+- **Por quê:** a tela lia o valor **em aberto** da parcela (que é zero depois de receber ou cancelar) e contava só as parcelas que restavam.
+- **Correção e hoje:** mostra o valor original de cada parcela e, na venda cancelada, a divisão original.
+
+**18. "Recebido em" mostrava um dia antes**
+- **Antes:** um recebimento feito em 06/11 aparecia como 05/11.
+- **Por quê:** recebimentos gravados só com a data viravam meia-noite no horário universal, que em Manaus é 20h do dia anterior.
+- **Correção e hoje:** datas sem horário são exibidas como estão, sem conversão de fuso.
+
+**19. Formas de pagamento antigas sem nome**
+- **Antes:** vendas antigas feitas no "cartão" ou "parcelado" (opções que não existem mais) mostravam "-" na tabela, o código interno nos detalhes, e não podiam ser filtradas.
+- **Por quê:** esses valores não estavam na lista de nomes nem no filtro.
+- **Correção e hoje:** aparecem como "Cartão" e "Parcelado" e entram no filtro de forma de pagamento.
+
+**20. O comprovante em PDF mostrava valores de pagamento errados**
+- **Antes:** numa venda pendente no crediário, o PDF dizia "Valor pago R$ 0,00" mesmo com a entrada paga, e qualquer venda paga aparecia como "Liquidado". O PDF não mostrava as parcelas com vencimento nem as observações, e uma venda ainda não salva saía como "Venda #0".
+- **Por quê:** o PDF só olhava o status da venda (paga = tudo pago, pendente = nada pago) e não usava a entrada nem as parcelas.
+- **Correção e hoje:** o comprovante (PDF e prévia) foi refeito. Ele mostra a situação com cor (Paga, Pendente ou Cancelada), o desconto em destaque, a entrada paga e o que falta no crediário, a tabela de parcelas com o vencimento de cada uma, as observações e o número das páginas. Venda ainda não salva aparece como "Nova venda".
+
+### Clientes (afetava o crediário)
+
+**21. Todo cliente era salvo como pessoa física**
+- **Antes:** escolher "Pessoa jurídica" no cadastro não tinha efeito. O cliente voltava como PF.
+- **Por quê:** a tela não enviava o tipo de pessoa ao salvar, e a API não o devolvia.
+- **Correção e hoje:** o tipo é salvo e devolvido. Uma migration corrigiu os clientes já cadastrados: quem tem documento com 14 dígitos (CNPJ) passou a ser PJ.
+
+### Melhorias que vieram junto
+
+- **Cadastro da venda em 4 etapas** (Produtos → Cliente e carrinho → Pagamento → Resumo), com bolinhas no topo mostrando o progresso. O "Próximo" só libera com a etapa completa e diz o que falta.
+- **Cards centralizados, um embaixo do outro**, em todas as etapas, no computador e no celular.
+- **Etapas "Cliente e carrinho" e "Pagamento" redesenhadas:** cada etapa virou um card só, dividido em seções com ícone. O carrinho mostra quantidade e subtotal de cada item com botões de + e −, as formas de pagamento têm ícone e uma explicação curta, o crediário mostra o saldo financiado e o limite lado a lado, e o total fica em destaque no fim.
+- **Confirmação ao adicionar produto:** aparece a mensagem "2 × Produto adicionado ao carrinho", com a quantidade de itens e o total do carrinho.
+- **Resumo da venda num card só:** cliente e total em destaque, itens, valores e a pergunta "O cliente já pagou?" (Pendente ou Paga). No crediário, a pergunta é quais parcelas já foram pagas. O botão passou a se chamar "Imprimir Nota".
+- **Cadastro de produto no celular:** a janela agora cabe na tela. O título e os botões Cancelar/Criar ficam sempre visíveis e só o formulário rola. Antes ela ficava mais alta que a tela, cortando o título e os botões. No celular, os botões "Gerar" e "Ler" mostram só o ícone.
+- **Janela do comprovante ajustada para o celular:** as opções ficam em cima, o documento ocupa o resto da tela e os botões ficam lado a lado.
+- **Página de detalhes da venda** com resumo, valores, itens, parcelas e o **histórico** de tudo o que aconteceu (registro, edição, recebimentos, conclusão, cancelamento).
+- **Filtros por coluna** na tabela de vendas (cliente, produto, categoria, marca, status, forma de pagamento) e ordenação por data, total e lucro.
+
+### O que não teve como corrigir
+
+- Os descontos de vendas gravadas antes da correção se perderam, porque nunca foram salvos.
+- Vendas pendentes canceladas antes da correção continuam sem o estoque devolvido. O estoque já se movimentou desde então, e ajustar para trás poderia gerar números errados.
+
 ## 🧱 Stack
 
 - **Backend:** Laravel 13 (PHP 8.5), Fortify (autenticação), Sanctum (API com sessão por cookie)
@@ -105,8 +248,8 @@ Acesse **http://localhost:8000**.
 ## 🧪 Qualidade
 
 ```bash
-php artisan test --compact                       # suíte completa
-php artisan test --compact --filter="nome"       # um teste específico
+DB_DATABASE=operis_test_main php artisan test --compact                  # suíte completa
+DB_DATABASE=operis_test_main php artisan test --compact --filter="nome"  # um teste específico
 
 vendor/bin/pint        # formatação PHP
 pnpm lint              # ESLint
@@ -115,7 +258,7 @@ pnpm types:check       # TypeScript
 composer run ci:check  # tudo acima de uma vez
 ```
 
-> ⚠️ Os testes usam `RefreshDatabase` e **zeram o banco configurado no `.env`**. Nunca aponte o `.env` local para o banco de produção.
+> ⚠️ Os testes usam `RefreshDatabase` e **zeram o banco que estiver configurado**. Rode sempre com `DB_DATABASE=operis_test_main` (um banco só de testes no MySQL do Docker) para não apagar os dados de desenvolvimento, e nunca aponte o `.env` local para o banco de produção.
 
 ## 📦 Deploy
 
@@ -123,7 +266,7 @@ O deploy é **automático a cada push na `main`** via GitHub Actions (`.github/w
 
 1. O CI instala as dependências, gera o build do frontend e empacota tudo em um único `release.zip`.
 2. O pacote é enviado por FTPS para a hospedagem (cPanel).
-3. Um receptor protegido por token (`.github/deploy/receiver.php`) troca os arquivos, preserva `.env` e `storage/` e roda `migrate`, `optimize` e `queue:restart`.
+3. Um receptor protegido por token (`.github/deploy/receiver.php`) troca os arquivos, preserva `.env` e `storage/` e roda `migrate --force`, `config:cache`, `event:cache`, `view:cache` e `queue:restart`. As rotas não são cacheadas, porque o app roda na subpasta `/operis`.
 4. Um healthcheck confirma que a aplicação está no ar.
 
 Também é possível disparar manualmente: `gh workflow run deploy-production-ftp.yml`.
