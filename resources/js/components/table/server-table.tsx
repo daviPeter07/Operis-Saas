@@ -19,6 +19,7 @@ import { TableToolbar } from '@/components/table/table-toolbar';
 import { ViewDialog } from '@/components/table/view-dialog';
 import type { ViewField } from '@/components/table/view-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -49,6 +50,13 @@ export interface ServerColumn<T> {
     className?: string;
 }
 
+// Checkbox column for batch actions; selected rows can span pages.
+export interface ServerTableSelection<T> {
+    selectedIds: ReadonlySet<string>;
+    onChange: (row: T, checked: boolean) => void;
+    onChangePage: (rows: T[], checked: boolean) => void;
+}
+
 export interface ServerTableProps<T extends { id: string }> {
     title: string;
     columns: ServerColumn<T>[];
@@ -68,6 +76,7 @@ export interface ServerTableProps<T extends { id: string }> {
     exportColumns?: ServerColumn<T>[];
     itemName?: (row: T) => string;
     rowClassName?: (row: T) => string | undefined;
+    selection?: ServerTableSelection<T>;
 }
 
 export function ServerTable<T extends { id: string }>({
@@ -89,12 +98,17 @@ export function ServerTable<T extends { id: string }>({
     exportColumns = columns,
     itemName,
     rowClassName,
+    selection,
 }: ServerTableProps<T>) {
     const [viewRow, setViewRow] = React.useState<T | null>(null);
     const [deleteRow, setDeleteRow] = React.useState<T | null>(null);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = React.useState(false);
     const hasFilters = columns.some((column) => column.filter);
     const showActions = Boolean(onView || onPrint || onEdit || onDelete);
+    const pageSelected = selection
+        ? rows.filter((row) => selection.selectedIds.has(row.id)).length
+        : 0;
+    const extraColumns = (showActions ? 1 : 0) + (selection ? 1 : 0);
     const openView = (row: T) => (onView ? onView(row) : setViewRow(row));
 
     const renderCell = (column: ServerColumn<T>, row: T) =>
@@ -204,6 +218,24 @@ export function ServerTable<T extends { id: string }>({
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b">
+                            {selection ? (
+                                <th scope="col" className="w-10 pt-3 pb-2 pl-4">
+                                    <Checkbox
+                                        aria-label="Selecionar todos desta página"
+                                        disabled={rows.length === 0}
+                                        checked={
+                                            pageSelected > 0 &&
+                                            pageSelected === rows.length
+                                        }
+                                        onCheckedChange={(checked) =>
+                                            selection.onChangePage(
+                                                rows,
+                                                checked === true,
+                                            )
+                                        }
+                                    />
+                                </th>
+                            ) : null}
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
@@ -260,6 +292,11 @@ export function ServerTable<T extends { id: string }>({
                         {isLoading ? (
                             Array.from({ length: 6 }).map((_, index) => (
                                 <tr key={index} className="border-b">
+                                    {selection ? (
+                                        <DataTableCell className="w-10">
+                                            <Skeleton className="size-4" />
+                                        </DataTableCell>
+                                    ) : null}
                                     {columns.map((column) => (
                                         <DataTableCell key={column.key}>
                                             <Skeleton className="h-5 w-full max-w-40" />
@@ -274,11 +311,7 @@ export function ServerTable<T extends { id: string }>({
                             ))
                         ) : rows.length === 0 ? (
                             <tr>
-                                <td
-                                    colSpan={
-                                        columns.length + (showActions ? 1 : 0)
-                                    }
-                                >
+                                <td colSpan={columns.length + extraColumns}>
                                     <EmptyResults state={state} />
                                 </td>
                             </tr>
@@ -287,8 +320,28 @@ export function ServerTable<T extends { id: string }>({
                                 <DataTableRowZebra
                                     key={row.id}
                                     index={index}
-                                    className={rowClassName?.(row)}
+                                    className={cn(
+                                        rowClassName?.(row),
+                                        selection?.selectedIds.has(row.id) &&
+                                            'bg-accent/5',
+                                    )}
                                 >
+                                    {selection ? (
+                                        <DataTableCell className="w-10">
+                                            <Checkbox
+                                                aria-label="Selecionar linha"
+                                                checked={selection.selectedIds.has(
+                                                    row.id,
+                                                )}
+                                                onCheckedChange={(checked) =>
+                                                    selection.onChange(
+                                                        row,
+                                                        checked === true,
+                                                    )
+                                                }
+                                            />
+                                        </DataTableCell>
+                                    ) : null}
                                     {columns.map((column) => (
                                         <DataTableCell
                                             key={column.key}
@@ -346,8 +399,26 @@ export function ServerTable<T extends { id: string }>({
                             className={cn(
                                 'rounded-lg border bg-card p-3',
                                 rowClassName?.(row),
+                                selection?.selectedIds.has(row.id) &&
+                                    'border-accent/50 bg-accent/5',
                             )}
                         >
+                            {selection ? (
+                                <label className="mb-1 flex items-center gap-2 border-b pb-2 text-xs text-muted-foreground">
+                                    <Checkbox
+                                        checked={selection.selectedIds.has(
+                                            row.id,
+                                        )}
+                                        onCheckedChange={(checked) =>
+                                            selection.onChange(
+                                                row,
+                                                checked === true,
+                                            )
+                                        }
+                                    />
+                                    Selecionar
+                                </label>
+                            ) : null}
                             {columns.map((column) => (
                                 <div
                                     key={column.key}
