@@ -211,3 +211,66 @@ test('changing the value of a pending purchase with a paid boleto is refused', f
     expect($first->fresh()->status)->toBe('paid')
         ->and($this->product->fresh()->stock)->toBe('15.00');
 });
+
+test('boletos marked as paid on the summary are settled and the purchase stays pending', function () {
+    $id = $this->actingAs($this->user)->postJson('/api/purchases', ($this->payload)([
+        'payment_method' => 'boleto',
+        'boleto_term_days' => 90,
+        'paid_installments' => [1],
+    ]))->assertCreated()->assertJsonPath('data.status', 'pending')->json('data.id');
+
+    $payables = AccountPayable::query()->where('purchase_id', $id)->orderBy('installment_number')->get();
+    expect($payables->pluck('status')->all())->toBe(['paid', 'pending', 'pending'])
+        ->and($payables[0]->amount_paid)->toBe($payables[0]->amount)
+        ->and($payables[0]->paid_method)->toBe('boleto');
+});
+
+test('marking every boleto as paid completes the purchase', function () {
+    $this->actingAs($this->user)->postJson('/api/purchases', ($this->payload)([
+        'payment_method' => 'boleto',
+        'boleto_term_days' => 60,
+        'paid_installments' => [1, 2],
+    ]))->assertCreated()->assertJsonPath('data.status', 'completed');
+});
+
+test('the edit can mark and unmark paid boletos', function () {
+    $id = $this->actingAs($this->user)->postJson('/api/purchases', ($this->payload)([
+        'payment_method' => 'boleto',
+        'boleto_term_days' => 60,
+        'paid_installments' => [1],
+    ]))->json('data.id');
+
+    $this->actingAs($this->user)->putJson("/api/purchases/{$id}", ($this->payload)([
+        'payment_method' => 'boleto',
+        'boleto_term_days' => 60,
+        'paid_installments' => [2],
+    ]))->assertOk()->assertJsonPath('data.status', 'pending');
+
+    expect(AccountPayable::query()->where('purchase_id', $id)->orderBy('installment_number')->pluck('status')->all())
+        ->toBe(['pending', 'paid']);
+
+    $this->actingAs($this->user)->putJson("/api/purchases/{$id}", ($this->payload)([
+        'payment_method' => 'boleto',
+        'boleto_term_days' => 60,
+        'status' => 'completed',
+        'paid_installments' => [1, 2],
+    ]))->assertOk()->assertJsonPath('data.status', 'completed');
+
+    $this->actingAs($this->user)->putJson("/api/purchases/{$id}", ($this->payload)([
+        'payment_method' => 'boleto',
+        'boleto_term_days' => 60,
+        'status' => 'pending',
+        'paid_installments' => [1],
+    ]))->assertOk()->assertJsonPath('data.status', 'pending');
+
+    expect(AccountPayable::query()->where('purchase_id', $id)->orderBy('installment_number')->pluck('status')->all())
+        ->toBe(['paid', 'pending']);
+});
+
+test('a boleto number above 5 is rejected', function () {
+    $this->actingAs($this->user)->postJson('/api/purchases', ($this->payload)([
+        'payment_method' => 'boleto',
+        'boleto_term_days' => 60,
+        'paid_installments' => [6],
+    ]))->assertUnprocessable()->assertJsonValidationErrors('paid_installments.0');
+});

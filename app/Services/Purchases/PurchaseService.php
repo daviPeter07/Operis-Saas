@@ -41,6 +41,7 @@ class PurchaseService
             $this->syncItems($purchase, $data['items']);
 
             $this->payableService->regenerateFromPurchase($purchase);
+            $this->syncPaidBoletos($purchase, $data);
 
             $this->stockMovementService->reconcile($companyId, $purchase->id, $this->stockTarget($data['items']), StockMovementType::Purchase, $userId, 'purchase');
 
@@ -72,6 +73,7 @@ class PurchaseService
             $this->syncItems($purchase, $data['items']);
 
             $this->syncPayables($purchase, $before);
+            $this->syncPaidBoletos($purchase, $data);
 
             // Stock follows the items only (lines of the same product added up).
             $this->stockMovementService->reconcile($purchase->company_id, $purchase->id, $this->stockTarget($data['items']), StockMovementType::PurchaseEdit, $userId, 'purchase');
@@ -175,6 +177,52 @@ class PurchaseService
         }
 
         $this->payableService->regenerateFromPurchase($purchase);
+    }
+
+    /**
+     * Boletos the buyer marked as already paid on the summary step. Marked ones are settled,
+     * unmarked ones that were paid go back to pending (partial payments are left alone), and
+     * the purchase is completed only when no boleto is left open.
+     */
+    private function syncPaidBoletos(Purchase $purchase, array $data): void
+    {
+        if ($purchase->payment_method !== 'boleto' || ! array_key_exists('paid_installments', $data)) {
+            return;
+        }
+
+        $paid = collect($data['paid_installments'] ?? [])
+            ->map(fn (mixed $number): int => (int) $number)
+            ->filter(fn (int $number): bool => $number > 0)
+            ->unique()
+            ->all();
+        $today = now(config('app.business_timezone'))->toDateString();
+
+        foreach ($purchase->payables()->where('status', '!=', 'cancelled')->get() as $payable) {
+            $shouldBePaid = in_array((int) $payable->installment_number, $paid, true);
+
+            if ($shouldBePaid && $payable->status !== 'paid') {
+                $payable->update([
+                    'status' => 'paid',
+                    'amount_paid' => $payable->amount,
+                    'paid_at' => $today,
+                    'paid_method' => 'boleto',
+                ]);
+            } elseif (! $shouldBePaid && $payable->status === 'paid') {
+                $payable->update([
+                    'status' => 'pending',
+                    'amount_paid' => 0,
+                    'paid_at' => null,
+                    'paid_method' => null,
+                    'payment_notes' => null,
+                ]);
+            }
+        }
+
+        $hasOpenBoletos = $purchase->payables()->whereIn('status', ['pending', 'partial'])->exists();
+
+        $purchase->update([
+            'status' => $hasOpenBoletos ? PurchaseStatus::Pending->value : PurchaseStatus::Completed->value,
+        ]);
     }
 
     private function calculateTotal(array $items): float

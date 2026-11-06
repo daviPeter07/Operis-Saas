@@ -7,6 +7,7 @@ import { useSuppliers } from '@/hooks/use-suppliers';
 import { PURCHASE_DIALOG_TEXT } from '../../utils/constants';
 import {
     getErrorMessage,
+    getPaidBoletos,
     toPurchaseFormInitial,
     toPurchaseMutationInput,
     toUiProduct,
@@ -63,6 +64,7 @@ export function CreateEditModal({
                     initial={toPurchaseFormInitial(purchase)}
                     purchaseId={purchase?.id}
                     purchaseStatus={purchase?.status}
+                    paidBoletos={getPaidBoletos(purchase)}
                     suppliers={suppliers}
                     products={products.map(toUiProduct)}
                     isSubmitting={isSubmitting}

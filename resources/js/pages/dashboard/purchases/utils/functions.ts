@@ -536,10 +536,51 @@ export function usePurchaseForm(
     };
 }
 
+// Boletos already paid in contas a pagar, so the edit starts with them marked.
+export function getPaidBoletos(purchase?: Purchase | null): number[] {
+    return (purchase?.payables ?? [])
+        .filter(
+            (payable) =>
+                payable.status === 'paid' &&
+                payable.installment_number !== null,
+        )
+        .map((payable) => payable.installment_number as number);
+}
+
+function resolveDraftStatus(
+    form: PurchaseFormState,
+    status: PurchaseDraft['status'],
+    paidBoletos: number[],
+): PurchaseDraft['status'] {
+    // Cash is paid on the spot: its payable is created as paid.
+    if (form.paymentMethod === 'money') {
+        return 'completed';
+    }
+
+    if (form.paymentMethod === 'boleto') {
+        return paidBoletos.length === form.boletos.length
+            ? 'completed'
+            : 'pending';
+    }
+
+    return status;
+}
+
 export function buildPurchaseDraft(
     form: PurchaseFormState,
-    options: { purchaseId?: number; status: PurchaseDraft['status'] },
+    options: {
+        purchaseId?: number;
+        status: PurchaseDraft['status'];
+        paidBoletos: number[];
+    },
 ): PurchaseDraft {
+    const paidBoletos =
+        form.paymentMethod === 'boleto'
+            ? options.paidBoletos
+                  .filter((number) => number <= form.boletos.length)
+                  .sort((a, b) => a - b)
+            : [];
+
     return {
         purchaseId: options.purchaseId,
         supplierId: form.supplierId,
@@ -550,8 +591,8 @@ export function buildPurchaseDraft(
         boletoTerm: form.boletoTerm,
         boletos: form.boletos,
         total: form.total,
-        // Cash is paid on the spot: its payable is created as paid.
-        status: form.paymentMethod === 'money' ? 'completed' : options.status,
+        status: resolveDraftStatus(form, options.status, paidBoletos),
+        paidBoletos,
         notes: form.notes,
     };
 }
@@ -569,6 +610,8 @@ export function toPurchaseMutationInput(
         boleto_term_days:
             paymentMethod === 'boleto' ? draft.boletoTerm : undefined,
         notes: draft.notes.trim() || null,
+        paid_installments:
+            paymentMethod === 'boleto' ? draft.paidBoletos : undefined,
         items: draft.lineItems.map((item) => ({
             product_id: Number(item.productId),
             quantity: Number(item.quantity),

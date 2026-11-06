@@ -35,6 +35,7 @@ export function PurchaseForm({
     initial,
     purchaseId,
     purchaseStatus,
+    paidBoletos: initialPaidBoletos,
     suppliers,
     products,
     isSubmitting,
@@ -56,8 +57,14 @@ export function PurchaseForm({
         purchaseStatus === 'completed' ? 'completed' : 'pending',
     );
 
+    const [paidBoletos, setPaidBoletos] = useState(initialPaidBoletos);
+
     const reachable = getReachableStep(form);
-    const draft = buildPurchaseDraft(form, { purchaseId, status });
+    const draft = buildPurchaseDraft(form, {
+        purchaseId,
+        status,
+        paidBoletos,
+    });
     const goTo = (index: number) =>
         setStep(Math.max(0, Math.min(index, reachable)));
 
@@ -115,6 +122,7 @@ export function PurchaseForm({
                             draft={draft}
                             status={draft.status}
                             onStatusChange={setStatus}
+                            onPaidBoletosChange={setPaidBoletos}
                         />
                     ) : null}
                 </div>

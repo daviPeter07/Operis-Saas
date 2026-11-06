@@ -28,6 +28,8 @@ class UpdatePurchaseRequest extends FormRequest
             'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120,150'],
             'update_product_cost' => ['sometimes', 'boolean'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'paid_installments' => ['nullable', 'array'],
+            'paid_installments.*' => ['integer', 'min:1', 'max:5'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('company_id', $companyId)],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],

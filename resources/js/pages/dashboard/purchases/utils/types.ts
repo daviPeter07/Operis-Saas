@@ -138,6 +138,7 @@ export type PurchaseDraft = {
     boletos: BoletoInstallment[];
     total: number;
     status: 'pending' | 'completed';
+    paidBoletos: number[];
     notes: string;
 };
 
@@ -153,6 +154,7 @@ export type PurchaseFormProps = {
     initial: PurchaseFormInitial;
     purchaseId?: number;
     purchaseStatus?: PurchaseStatus;
+    paidBoletos: number[];
     suppliers: Supplier[];
     products: UiProduct[];
     isSubmitting: boolean;
@@ -271,10 +273,17 @@ export type PurchasePaymentAnswer = {
     description: string;
 };
 
+export type PaidBoletosProps = {
+    boletos: BoletoInstallment[];
+    paid: number[];
+    onChange: (paid: number[]) => void;
+};
+
 export type SummaryStepProps = {
     draft: PurchaseDraft;
     status: PurchaseDraft['status'];
     onStatusChange: (status: PurchaseDraft['status']) => void;
+    onPaidBoletosChange: (paid: number[]) => void;
 };
 
 export type StepFooterProps = {

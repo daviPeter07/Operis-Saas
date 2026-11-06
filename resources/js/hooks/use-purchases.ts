@@ -17,6 +17,8 @@ export type PurchaseMutationInput = {
     boleto_term_days?: 30 | 60 | 90 | 120 | 150;
     update_product_cost?: boolean;
     notes?: string | null;
+    // Boleto numbers already paid (1 to 5); the purchase completes when all are paid.
+    paid_installments?: number[];
     items: Array<{
         product_id: number;
         quantity: number;

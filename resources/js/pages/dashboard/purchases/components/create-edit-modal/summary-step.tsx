@@ -4,11 +4,13 @@ import { cn } from '@/lib/utils';
 import { PURCHASE_PAYMENT_ANSWERS } from '../../utils/constants';
 import { getDraftPaymentLabel } from '../../utils/functions';
 import type { SummaryStepProps } from '../../utils/types';
+import { PaidBoletos } from './paid-boletos';
 
 export function SummaryStep({
     draft,
     status,
     onStatusChange,
+    onPaidBoletosChange,
 }: SummaryStepProps) {
     const isCash = draft.paymentMethod === 'money';
     const isBoleto = draft.paymentMethod === 'boleto';
@@ -79,30 +81,6 @@ export function SummaryStep({
                     </ul>
                 </div>
 
-                {isBoleto ? (
-                    <div className="border-t bg-muted/30 px-5 py-4">
-                        <p className="mb-2 text-sm font-semibold">
-                            Boletos em contas a pagar
-                        </p>
-                        <ul className="space-y-1.5 text-sm">
-                            {draft.boletos.map((boleto) => (
-                                <li
-                                    key={boleto.number}
-                                    className="flex items-center justify-between gap-4"
-                                >
-                                    <span className="text-muted-foreground">
-                                        {boleto.number}º boleto · vence{' '}
-                                        {formatDateBR(boleto.dueDate)}
-                                    </span>
-                                    <span className="tabular-nums">
-                                        {formatCurrencyBR(boleto.amount)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ) : null}
-
                 {draft.notes.trim() ? (
                     <div className="border-t px-5 py-4">
                         <p className="text-xs text-muted-foreground">
@@ -115,73 +93,88 @@ export function SummaryStep({
                 ) : null}
 
                 <div className="border-t px-5 py-4">
-                    <p className="font-semibold">A compra já foi paga?</p>
+                    <p className="font-semibold">
+                        {isBoleto
+                            ? 'Algum boleto já foi pago?'
+                            : 'A compra já foi paga?'}
+                    </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                         {isCash
                             ? 'Compra em dinheiro é paga na hora.'
                             : isBoleto
-                              ? 'Escolha "Paga" só se todos os boletos já foram pagos.'
+                              ? 'Marque os boletos que você já pagou. A compra fica concluída quando todos estiverem pagos.'
                               : 'Escolha "Paga" se você já pagou o fornecedor.'}
                     </p>
 
-                    <div
-                        role="radiogroup"
-                        aria-label="Situação da compra"
-                        className="mt-3 grid gap-2 sm:grid-cols-2"
-                    >
-                        {PURCHASE_PAYMENT_ANSWERS.map((answer) => {
-                            const isSelected = status === answer.value;
-                            const isPaidAnswer = answer.value === 'completed';
+                    {isBoleto ? (
+                        <PaidBoletos
+                            boletos={draft.boletos}
+                            paid={draft.paidBoletos}
+                            onChange={onPaidBoletosChange}
+                        />
+                    ) : (
+                        <div
+                            role="radiogroup"
+                            aria-label="Situação da compra"
+                            className="mt-3 grid gap-2 sm:grid-cols-2"
+                        >
+                            {PURCHASE_PAYMENT_ANSWERS.map((answer) => {
+                                const isSelected = status === answer.value;
+                                const isPaidAnswer =
+                                    answer.value === 'completed';
 
-                            return (
-                                <button
-                                    key={answer.value}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={isSelected}
-                                    disabled={isCash && !isPaidAnswer}
-                                    onClick={() => onStatusChange(answer.value)}
-                                    className={cn(
-                                        'flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                                        !isSelected && 'hover:bg-muted',
-                                        isSelected &&
-                                            isPaidAnswer &&
-                                            'border-emerald-500/60 bg-emerald-500/10',
-                                        isSelected &&
-                                            !isPaidAnswer &&
-                                            'border-amber-500/60 bg-amber-500/10',
-                                    )}
-                                >
-                                    <span
+                                return (
+                                    <button
+                                        key={answer.value}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={isSelected}
+                                        disabled={isCash && !isPaidAnswer}
+                                        onClick={() =>
+                                            onStatusChange(answer.value)
+                                        }
                                         className={cn(
-                                            'flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-muted-foreground/40',
+                                            'flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                                            !isSelected && 'hover:bg-muted',
                                             isSelected &&
                                                 isPaidAnswer &&
-                                                'border-emerald-500 bg-emerald-500 text-white',
+                                                'border-emerald-500/60 bg-emerald-500/10',
                                             isSelected &&
                                                 !isPaidAnswer &&
-                                                'border-amber-500 bg-amber-500 text-white',
+                                                'border-amber-500/60 bg-amber-500/10',
                                         )}
                                     >
-                                        {isSelected ? (
-                                            <Check
-                                                aria-hidden
-                                                className="size-3"
-                                            />
-                                        ) : null}
-                                    </span>
-                                    <span>
-                                        <span className="block text-sm font-semibold">
-                                            {answer.label}
+                                        <span
+                                            className={cn(
+                                                'flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-muted-foreground/40',
+                                                isSelected &&
+                                                    isPaidAnswer &&
+                                                    'border-emerald-500 bg-emerald-500 text-white',
+                                                isSelected &&
+                                                    !isPaidAnswer &&
+                                                    'border-amber-500 bg-amber-500 text-white',
+                                            )}
+                                        >
+                                            {isSelected ? (
+                                                <Check
+                                                    aria-hidden
+                                                    className="size-3"
+                                                />
+                                            ) : null}
                                         </span>
-                                        <span className="block text-xs text-muted-foreground">
-                                            {answer.description}
+                                        <span>
+                                            <span className="block text-sm font-semibold">
+                                                {answer.label}
+                                            </span>
+                                            <span className="block text-xs text-muted-foreground">
+                                                {answer.description}
+                                            </span>
                                         </span>
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
