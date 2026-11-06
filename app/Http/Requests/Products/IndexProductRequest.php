@@ -20,6 +20,7 @@ class IndexProductRequest extends TableIndexRequest
     protected function filterRules(): array
     {
         return [
+            'id' => ['integer', 'min:1'],
             'name' => ['string', 'max:255'],
             'sku' => ['string', 'max:255'],
             'barcode' => ['string', 'max:255'],

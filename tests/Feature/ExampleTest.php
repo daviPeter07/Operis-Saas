@@ -6,7 +6,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 test('home shows the landing page to guests', function () {
     $this->get(route('home'))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('home'));
+        ->assertInertia(fn (Assert $page) => $page->component('home/index'));
 });
 
 test('home keeps the landing page light even when the user prefers dark', function () {

@@ -2,32 +2,16 @@ import { router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/dashboard-header';
+import type { CustomRange, Period } from '@/components/filters/period-filter';
+import { PeriodFilter, periodLabels } from '@/components/filters/period-filter';
+import { AlertsPanel } from '@/components/overview/alerts-panel';
+import { ChartsPanel } from '@/components/overview/charts-panel';
+import type { Metric } from '@/components/overview/metrics-grid';
+import { MetricsGrid } from '@/components/overview/metrics-grid';
+import { RecentActivity } from '@/components/overview/recent-activity';
+import { ViewSwitcher } from '@/components/overview/view-switcher';
 import { PageContent } from '@/components/page-content';
-import { AlertsPanel } from '@/features/dashboard/overview/alerts-panel';
-import { ChartsPanel } from '@/features/dashboard/overview/charts-panel';
-import { MetricsGrid } from '@/features/dashboard/overview/metrics-grid';
-import type { Metric } from '@/features/dashboard/overview/metrics-grid';
-import type {
-    CustomRange,
-    Period,
-} from '@/features/dashboard/overview/period-filter';
-import {
-    PeriodFilter,
-    periodLabels,
-} from '@/features/dashboard/overview/period-filter';
-import {
-    bucketKeyFor,
-    buildSeriesBuckets,
-    comparePeriods,
-    formatRangeLabel,
-    getCurrentMonthRange,
-    normalizeDateString,
-    resolveDateRange,
-    resolvePreviousRange,
-} from '@/features/dashboard/overview/period-range';
-import type { DateRange } from '@/features/dashboard/overview/period-range';
-import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
-import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
+import { Spinner } from '@/components/ui/spinner';
 import { useAccountPayables } from '@/hooks/use-account-payables';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
@@ -41,6 +25,18 @@ import { nowInAppTimeZone, todayInAppTimeZone } from '@/lib/app-timezone';
 import { formatCurrencyBR, formatDateTimeManaus } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { getDashboardGreetingForToday } from '@/utils/dashboard-greeting';
+import {
+    bucketKeyFor,
+    buildSeriesBuckets,
+    comparePeriods,
+    formatComparisonRange,
+    formatRangeLabel,
+    getCurrentMonthRange,
+    normalizeDateString,
+    resolveDateRange,
+    resolvePreviousRange,
+} from '@/utils/period-range';
+import type { DateRange } from '@/utils/period-range';
 import { calculateSalesProfit } from '@/utils/sale-profit';
 
 type DatedSale = { date?: string | null; createdAt?: string | null };
@@ -194,23 +190,36 @@ export default function DashboardPage() {
         };
     };
 
-    const { data: sales = [], isPending: isSalesPending } = useSales();
-    const { data: purchases = [], isPending: isPurchasesPending } =
-        usePurchases();
-    const { data: receivables = [] } = useAccountReceivables();
-    const { data: payables = [] } = useAccountPayables();
-    const { data: customers = [], isPending: isCustomersPending } =
-        useCustomers();
-    const { data: products = [], isPending: isProductsPending } = useProducts();
-    const { data: suppliers = [], isPending: isSuppliersPending } =
-        useSuppliers();
+    const salesQuery = useSales();
+    const purchasesQuery = usePurchases();
+    const receivablesQuery = useAccountReceivables();
+    const payablesQuery = useAccountPayables();
+    const customersQuery = useCustomers();
+    const productsQuery = useProducts();
+    const suppliersQuery = useSuppliers();
+    const { data: sales = [] } = salesQuery;
+    const { data: purchases = [] } = purchasesQuery;
+    const { data: receivables = [] } = receivablesQuery;
+    const { data: payables = [] } = payablesQuery;
+    const { data: customers = [] } = customersQuery;
+    const { data: products = [] } = productsQuery;
+    const { data: suppliers = [] } = suppliersQuery;
+    const overviewQueries = [
+        salesQuery,
+        purchasesQuery,
+        receivablesQuery,
+        payablesQuery,
+        customersQuery,
+        productsQuery,
+        suppliersQuery,
+    ];
 
-    const isActivitiesPending =
-        isSalesPending ||
-        isPurchasesPending ||
-        isCustomersPending ||
-        isProductsPending ||
-        isSuppliersPending;
+    // First load: skeletons. Later refreshes (after a change elsewhere or when the
+    // cache gets old) keep the numbers on screen with an "Atualizando" hint.
+    const isLoading = overviewQueries.some((query) => query.isPending);
+    const isRefreshing =
+        !isLoading && overviewQueries.some((query) => query.isFetching);
+    const isActivitiesPending = isLoading;
 
     const [view, setView] = useState<'kpi' | 'chart'>('kpi');
     const [period, setPeriod] = useState<Period>('current-month');
@@ -315,19 +324,14 @@ export default function DashboardPage() {
                 0,
             ),
             previousProfit: calculateSalesProfit(salesInPreviousPeriod),
+            // The exact window compared, so "Mês atual" reads "vs. 01/10 a 06/10"
+            // (the same days of last month) instead of looking like the whole month.
             previousPeriodName: previousRange
-                ? period === 'current-month'
-                    ? 'no mês passado'
-                    : period === 'previous-month'
-                      ? 'no mês retrasado'
-                      : 'no período anterior'
+                ? `de ${formatComparisonRange(previousRange)}`
                 : null,
-            comparisonLabel:
-                period === 'current-month'
-                    ? 'vs. mês passado'
-                    : period === 'previous-month'
-                      ? 'vs. mês retrasado'
-                      : 'vs. período anterior',
+            comparisonLabel: previousRange
+                ? `vs. ${formatComparisonRange(previousRange)}`
+                : '',
         };
         const overdueDetail = (count: number) =>
             count > 0
@@ -367,6 +371,11 @@ export default function DashboardPage() {
                 iconBackground: 'bg-blue-500/12',
                 iconRing: 'ring-blue-500/20',
                 detail: overdueDetail(overdueReceivables),
+                scopeNote: {
+                    label: 'Todo o período',
+                    description:
+                        'Não muda com o filtro de período: soma todas as contas a receber em aberto, de qualquer data.',
+                },
             },
             {
                 id: 'contas_a_pagar',
@@ -377,11 +386,15 @@ export default function DashboardPage() {
                 iconBackground: 'bg-red-600/12',
                 iconRing: 'ring-red-600/20',
                 detail: overdueDetail(overduePayables),
+                scopeNote: {
+                    label: 'Todo o período',
+                    description:
+                        'Não muda com o filtro de período: soma todas as contas a pagar em aberto, de qualquer data.',
+                },
             },
         ];
     }, [
         payables,
-        period,
         previousRange,
         receivables,
         salesInPeriod,
@@ -401,6 +414,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((sale) => ({
                 id: `sale-${sale.id}`,
+                recordId: sale.id,
                 type: 'sale' as const,
                 responsible: userName,
                 description: `Venda #${sale.id} - ${sale.customer_name ?? 'Sem cliente'}`,
@@ -418,6 +432,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((purchase) => ({
                 id: `purchase-${purchase.id}`,
+                recordId: purchase.id,
                 type: 'purchase' as const,
                 responsible: userName,
                 description: `Compra #${purchase.id}`,
@@ -441,6 +456,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((customer) => ({
                 id: `client-${customer.id}`,
+                recordId: customer.id,
                 type: 'client' as const,
                 responsible: userName,
                 description: `Novo cliente: ${customer.name}`,
@@ -465,6 +481,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((supplier) => ({
                 id: `supplier-${supplier.id}`,
+                recordId: supplier.id,
                 type: 'supplier' as const,
                 responsible: userName,
                 description: `Novo fornecedor: ${supplier.name}`,
@@ -489,6 +506,7 @@ export default function DashboardPage() {
             .slice(0, 5)
             .map((product) => ({
                 id: `product-${product.id}`,
+                recordId: product.id,
                 type: 'product' as const,
                 responsible: userName,
                 description: `Novo produto: ${product.name}`,
@@ -511,6 +529,7 @@ export default function DashboardPage() {
             .sort((a, b) => b.sortAt - a.sortAt)
             .map((item) => ({
                 id: item.id,
+                recordId: item.recordId,
                 type: item.type,
                 responsible: item.responsible,
                 description: item.description,
@@ -530,9 +549,15 @@ export default function DashboardPage() {
     const alerts = useMemo(
         () => [
             {
+                // Open accounts payable past their due date (no "overdue" status exists).
                 id: 'late-payments',
                 label: 'Pagamentos atrasados',
-                value: payables.filter((p) => p.status === 'overdue').length,
+                value: payables.filter(
+                    (p) =>
+                        (p.status === 'pending' || p.status === 'partial') &&
+                        p.due_date !== null &&
+                        p.due_date.slice(0, 10) < todayInAppTimeZone(),
+                ).length,
             },
             {
                 id: 'orders-to-pay',
@@ -548,7 +573,10 @@ export default function DashboardPage() {
             {
                 id: 'out-of-stock-products',
                 label: 'Produtos sem estoque',
-                value: products.filter((p) => p.stock <= 0).length,
+                // The inventory lists active products only.
+                value: products.filter(
+                    (p) => p.status === 'active' && p.stock <= 0,
+                ).length,
             },
         ],
         [payables, activePurchases, activeSales, products],
@@ -629,6 +657,15 @@ export default function DashboardPage() {
                 >
                     <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <ViewSwitcher view={view} onViewChange={setView} />
+                        {isRefreshing ? (
+                            <span
+                                role="status"
+                                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                            >
+                                <Spinner className="size-3.5" />
+                                Atualizando
+                            </span>
+                        ) : null}
                         <div className="min-w-0 sm:ml-auto">
                             <PeriodFilter
                                 period={period}
@@ -663,7 +700,7 @@ export default function DashboardPage() {
 
                 {view === 'kpi' ? (
                     <div className="grid gap-6">
-                        <MetricsGrid metrics={metrics} />
+                        <MetricsGrid metrics={metrics} isLoading={isLoading} />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
                                 <RecentActivity
@@ -674,6 +711,7 @@ export default function DashboardPage() {
                             <AlertsPanel
                                 alerts={alerts}
                                 onSelect={navigateByAlert}
+                                isLoading={isLoading}
                             />
                         </div>
                     </div>
@@ -682,6 +720,7 @@ export default function DashboardPage() {
                         <ChartsPanel
                             charts={charts}
                             periodLabel={periodLabel}
+                            isLoading={isLoading}
                         />
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <div className="lg:col-span-2">
@@ -693,6 +732,7 @@ export default function DashboardPage() {
                             <AlertsPanel
                                 alerts={alerts}
                                 onSelect={navigateByAlert}
+                                isLoading={isLoading}
                             />
                         </div>
                     </div>

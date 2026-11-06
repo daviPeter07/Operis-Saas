@@ -90,6 +90,24 @@ return [
     'updates' => [
         [
             'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Alertas e atividades da Visão Geral',
+            'description' => 'Pagamentos atrasados agora conta as contas vencidas, cada alerta ou atividade abre a lista já filtrada no que foi clicado, e a tabela avisa o filtro com um botão para ver tudo.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Tabelas sem rolagem lateral e Visão Geral mais rápida',
+            'description' => 'As tabelas cabem na tela com o nome inteiro dos produtos e a pesquisa marcada, e a Visão Geral abre mais rápido e mostra quando está atualizando.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Vendas pagas e total recebido',
+            'description' => 'Vendas com todas as parcelas recebidas agora aparecem como concluídas, e o total recebido passa a contar as contas recebidas antes de 15 de maio.',
+        ],
+        [
+            'date' => '2026-11-06',
             'type' => 'novidade',
             'title' => 'Histórico da compra e contas ligadas',
             'description' => 'Veja nos detalhes da compra cada boleto pago, edição e cancelamento, abra a venda ou a compra direto pela conta e filtre o período pelo mês anterior.',

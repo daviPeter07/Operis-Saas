@@ -1,6 +1,6 @@
-import { Link } from '@inertiajs/react';
 import { CircleCheck, Coins, ListChecks } from 'lucide-react';
 import { createElement } from 'react';
+import { RecordLink } from '@/components/table/record-link';
 import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
@@ -41,6 +41,8 @@ export const PAYABLE_STATUS_OPTIONS: FieldOption[] = [
     { value: 'partial', label: PAYABLE_STATUS_LABELS.partial },
     { value: 'paid', label: PAYABLE_STATUS_LABELS.paid },
     { value: 'cancelled', label: PAYABLE_STATUS_LABELS.cancelled },
+    // Filter only: open and past due (the Visão Geral alert opens it).
+    { value: 'overdue', label: 'Vencida' },
 ];
 
 export const PAYABLE_STATUS_CHIP_CLASS: Record<PayableStatus, string> = {
@@ -66,6 +68,8 @@ export const SUPPLIER_COLUMN: ServerColumn<PayableRow> = {
 export const DESCRIPTION_COLUMN: ServerColumn<PayableRow> = {
     key: 'description',
     header: 'Descrição',
+    // Long codes without spaces ("COOLER/KITFAN/FONTE/SSD") wrap instead of widening the table.
+    className: 'wrap-anywhere',
     filter: { type: 'text', key: 'description' },
 };
 
@@ -82,17 +86,12 @@ export const ORIGIN_COLUMN: ServerColumn<PayableRow> = {
     // Opens the compra straight from the table.
     render: (row) =>
         row.payable.purchase_id
-            ? createElement(
-                  Link,
-                  {
-                      href: withAppBasePath(
-                          `/dashboard/purchases/${row.payable.purchase_id}`,
-                      ),
-                      className:
-                          'font-medium text-accent underline-offset-4 hover:underline',
-                  },
-                  row.origin,
-              )
+            ? createElement(RecordLink, {
+                  href: withAppBasePath(
+                      `/dashboard/purchases/${row.payable.purchase_id}`,
+                  ),
+                  children: row.origin,
+              })
             : row.origin,
     filter: {
         type: 'select',

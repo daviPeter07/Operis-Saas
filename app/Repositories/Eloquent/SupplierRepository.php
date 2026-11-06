@@ -27,6 +27,13 @@ class SupplierRepository implements SupplierRepositoryInterface
         $this->applyDigitsFilter($query, 'document', $tableQuery->filter('document'), ['.', '-', '/', ' ']);
         $this->applyDigitsFilter($query, 'phone', $tableQuery->filter('phone'), ['(', ')', '-', ' ']);
 
+        // A single record, opened from "Últimas atividades" on Visão Geral.
+        $id = $tableQuery->filter('id');
+
+        if ($id !== null) {
+            $query->whereKey((int) $id);
+        }
+
         return $tableQuery->paginate($query);
     }
 

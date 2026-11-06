@@ -12,7 +12,7 @@ test('landing page receives the three most recent updates, newest first', functi
 
     $this->get(route('home'))
         ->assertInertia(fn (Assert $page) => $page
-            ->component('home')
+            ->component('home/index')
             ->has('updates', 3)
             ->where('updates.0.title', 'Mais nova')
             ->where('updates.1.title', 'Do meio')

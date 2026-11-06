@@ -9,7 +9,7 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return Inertia::render('home', [
+    return Inertia::render('home/index', [
         'seoTitle' => config('landing.seo.title'),
         'faq' => config('landing.faq'),
         'updates' => collect(config('landing.updates'))->sortByDesc('date')->take(3)->values(),

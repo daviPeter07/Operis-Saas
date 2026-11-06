@@ -74,6 +74,10 @@ export default function InventoryPage() {
                     }
                     isFetching={productsPage.isFetching}
                     state={tableState}
+                    filterLabels={{
+                        id: (id) =>
+                            `Produto: ${productsPage.data?.data.find((product) => String(product.id) === id)?.name ?? `#${id}`}`,
+                    }}
                     onCreate={() => setIsCreateOpen(true)}
                     onView={(row) => openProductDetails(row.product.id)}
                     onEdit={(row) => setEditingProduct(row.product)}

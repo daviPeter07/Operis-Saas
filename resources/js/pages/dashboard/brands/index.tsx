@@ -39,6 +39,7 @@ export default function BrandsPage() {
                     isLoading={brandsPage.isPending}
                     isFetching={brandsPage.isFetching}
                     state={tableState}
+                    showView={false}
                     onCreate={() => setIsCreateOpen(true)}
                     onEdit={(row) => setEditingBrand(row.brand)}
                     onDelete={async (row) => {

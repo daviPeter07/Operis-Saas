@@ -20,6 +20,7 @@ class IndexSupplierRequest extends TableIndexRequest
     protected function filterRules(): array
     {
         return [
+            'id' => ['integer', 'min:1'],
             'name' => ['string', 'max:255'],
             'document' => ['string', 'max:255'],
             'email' => ['string', 'max:255'],

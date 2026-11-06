@@ -160,6 +160,24 @@ test('the listing can show only the accounts of one purchase', function () {
         ->assertJsonCount(0, 'data');
 });
 
+test('the overdue status lists open accounts past their due date', function () {
+    $this->travelTo('2026-11-15 12:00:00');
+
+    // Receivables: "Conserto" is due 20/11, "Antiga" is cancelled, "Venda de cabo" is received.
+    AccountReceivable::query()->where('item', 'Conserto de notebook')->update(['due_date' => '2026-11-10']);
+
+    $this->actingAs($this->user)->getJson('/api/account-receivables?filter[status]=overdue')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.item', 'Conserto de notebook');
+
+    // Payables: "Aluguel" (pending, due 10/11) is overdue; "Energia" is paid.
+    $this->actingAs($this->user)->getJson('/api/account-payables?filter[status]=overdue')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.item', 'Aluguel');
+});
+
 test('invalid filters are rejected', function () {
     $this->actingAs($this->user)->getJson('/api/account-receivables?filter[status]=paid')
         ->assertUnprocessable();

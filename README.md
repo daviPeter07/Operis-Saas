@@ -321,6 +321,75 @@ As duas telas ganharam o mesmo padrão das outras: filtros em cada coluna, pági
 - **Por quê:** a API não tinha filtros nem devolvia o nome do cliente/fornecedor.
 - **Correção e hoje:** filtros, ordenação e paginação rodam no servidor, que já devolve o nome.
 
+## 📋 Tabelas, Visão Geral e dados antigos (novembro de 2026)
+
+Ajustes feitos depois de conferir o sistema com os dados reais da DG Computer.
+
+### Tabelas
+
+**1. Era preciso rolar para o lado para ver as ações**
+- **Antes:** em telas de notebook e monitores comuns (até uns 1500 px de largura), vendas, compras, contas a pagar e clientes ficavam mais largas que a tela, e o olho e a impressora só apareciam rolando para o lado.
+- **Por quê:** cada coluna com filtro tinha uma largura mínima grande, o espaçamento entre colunas era largo e as colunas "M. Pagamento" e "Parcela" ficavam separadas.
+- **Correção e hoje:** colunas mais compactas, o conteúdo da página alinhado com o topo, e a forma de pagamento junto com as parcelas numa coluna só ("Crediário 3x", "Boleto 2x"). Com a barra lateral aberta, todas as tabelas cabem a partir de 1440 px. Na exportação para Excel e PDF as colunas continuam separadas.
+
+**2. Nome do produto cortado**
+- **Antes:** nomes longos eram cortados com "…".
+- **Correção e hoje:** o nome aparece inteiro, quebrando em mais de uma linha quando precisa.
+
+**3. "+1" pouco visível**
+- **Antes:** quando a venda ou a compra tinha mais de um produto, o "+1" era cinza claro e pequeno.
+- **Correção e hoje:** o número fica em negrito com fundo mais forte, e ao passar o mouse aparecem os outros produtos separados por vírgula. Vale também para categoria e marca.
+
+**4. A pesquisa por produto mostrava outro produto na coluna**
+- **Antes:** ao pesquisar um produto, a venda aparecia na lista mas a coluna mostrava o primeiro produto dela, que podia ser outro.
+- **Correção e hoje:** a coluna mostra o produto pesquisado, com o trecho buscado marcado.
+
+**5. Links com aparência diferente em cada tela**
+- **Antes:** em categorias e marcas o link era preto com uma setinha, e em contas a pagar e a receber era laranja sem setinha.
+- **Correção e hoje:** todos os links para outro registro são laranja com a setinha: origem das contas, quantidade de produtos em categorias e marcas, e as parcelas nos detalhes da venda e da compra.
+
+**Melhorias que vieram junto**
+- Em clientes, a coluna Crediário usa o mesmo selo de Ativo/Inativo (verde "Habilitado", cinza "Desabilitado").
+- Em categorias e marcas, o botão "Visualizar" foi tirado por enquanto.
+
+### Visão Geral
+
+**6. A página demorava e recarregava toda vez**
+- **Antes:** a Visão Geral buscava vendas, contas, produtos e clientes de 15 em 15, um pedido depois do outro (77 pedidos com os dados atuais), e voltar para ela depois de um minuto buscava tudo de novo.
+- **Correção e hoje:** os dados vêm de 100 em 100 e ao mesmo tempo (16 pedidos), ficam guardados por alguns minutos e só são buscados de novo quando algo muda (uma venda, uma compra, uma baixa) ou quando ficam velhos.
+
+**7. Números zerados enquanto carregava**
+- **Antes:** os indicadores, os gráficos e os alertas mostravam R$ 0,00 até os dados chegarem.
+- **Correção e hoje:** esses pontos mostram um carregamento no lugar do número, e um aviso "Atualizando" aparece enquanto a página renova dados que já estavam na tela.
+
+**8. Alertas da Visão Geral com número errado ou levando para a lista errada**
+- **Antes:** "Pagamentos atrasados" mostrava sempre 0, mesmo com contas vencidas, e "Compras a pagar" abria contas a pagar em vez das compras. Ao chegar na lista, nada dizia que ela estava filtrada.
+- **Por quê:** o alerta procurava um status "atrasado" que nenhuma conta tem (uma conta vencida continua "pendente", só que com vencimento no passado).
+- **Correção e hoje:** "Pagamentos atrasados" conta as contas a pagar em aberto com vencimento passado e abre contas a pagar filtradas por "Vencida", um novo valor do filtro de Status (também em contas a receber). "Compras a pagar" abre as compras pendentes, e "Produtos sem estoque" conta só produtos ativos, como o estoque.
+
+**9. Aviso de lista filtrada em todo atalho**
+- **Antes:** só contas a receber e a pagar avisavam quando a lista vinha filtrada de uma venda ou compra.
+- **Correção e hoje:** toda tabela aberta já filtrada por outra tela (alertas, produtos de uma categoria ou marca, contas de uma venda ou compra) mostra no topo "Mostrando só …" com o filtro e o botão "Ver tudo". O aviso se ajusta ao celular.
+
+**10. "Últimas atividades" abria só a lista**
+- **Antes:** clicar numa atividade (uma venda, uma compra, um cliente novo) abria a tabela inteira, e era preciso procurar o registro.
+- **Correção e hoje:** a tabela abre já filtrada naquele registro, com o aviso "Mostrando só Venda #230" (ou o nome do cliente, fornecedor ou produto) e o botão "Ver tudo".
+
+**11. Porcentagem dos indicadores confusa**
+- **Antes:** a variação vinha como "+13.916%", com ponto separando o milhar, e parecia 13 com três casas decimais. Os cards de contas a receber e a pagar não diziam que ignoram o filtro de período.
+- **Correção e hoje:** a variação usa vírgula e no máximo duas casas ("+13915,83%"), sem ponto de milhar, e diz exatamente com que dias compara: em "Mês atual", os mesmos dias do mês passado ("vs. 01/10 a 06/10"), e não o mês passado inteiro. Os cards de contas mostram "Todo o período" e, ao passar o mouse, explicam que somam todas as contas em aberto, de qualquer data.
+
+### Dados antigos corrigidos
+
+**12. Contas recebidas antes de 15/05 sem valor pago**
+- **Antes:** 12 contas a receber marcadas como recebidas tinham "valor pago" zerado (R$ 12.911,04 no total), então o "Total recebido" ficava menor e o histórico dessas vendas não mostrava o pagamento.
+- **Por quê:** em 15/05 o sistema passou a guardar quanto foi pago em cada conta, e as contas que já estavam recebidas ficaram com zero.
+- **Correção e hoje:** as contas recebidas (e as pagas, em contas a pagar) passam a ter o valor pago igual ao valor da conta.
+
+**13. Vendas pagas que continuavam pendentes**
+- **Antes:** 3 vendas no crediário tinham todas as parcelas recebidas mas continuavam como pendentes.
+- **Correção e hoje:** viram concluídas, com a conclusão no histórico.
+
 ## 🧱 Stack
 
 - **Backend:** Laravel 13 (PHP 8.5), Fortify (autenticação), Sanctum (API com sessão por cookie)

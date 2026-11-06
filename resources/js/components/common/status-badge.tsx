@@ -3,6 +3,7 @@ import { translateStatus } from '@/lib/format';
 
 type StatusBadgeProps = {
     status: string;
+    label?: string;
 };
 
 const statusClassMap: Record<string, string> = {
@@ -16,12 +17,12 @@ const statusClassMap: Record<string, string> = {
     inactive: 'bg-gray-100 text-gray-800',
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status, label }: StatusBadgeProps) {
     return (
         <Badge
             className={statusClassMap[status] ?? 'bg-gray-100 text-gray-800'}
         >
-            {translateStatus(status)}
+            {label ?? translateStatus(status)}
         </Badge>
     );
 }

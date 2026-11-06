@@ -16,7 +16,6 @@ import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import type { FieldOption } from '@/utils/form-fields';
-import { NamesCell } from '../components/names-cell';
 import { PurchaseStatusChip } from '../components/purchase-status-chip';
 import type {
     BoletoTerm,
@@ -58,6 +57,8 @@ export const CANCEL_PURCHASE_DIALOG = {
 };
 
 export const PURCHASES_FILTER_KEYS = [
+    // A single record, opened from "Últimas atividades" on Visão Geral.
+    'id',
     'supplier',
     'product',
     'category_id',
@@ -143,13 +144,6 @@ export const SUPPLIER_COLUMN: ServerColumn<PurchaseRow> = {
     filter: { type: 'text', key: 'supplier' },
 };
 
-export const PRODUCT_COLUMN: ServerColumn<PurchaseRow> = {
-    key: 'productNames',
-    header: 'Produto',
-    render: (row) => createElement(NamesCell, { names: row.productNames }),
-    filter: { type: 'text', key: 'product' },
-};
-
 export const PRODUCT_EXPORT_COLUMN: ServerColumn<PurchaseRow> = {
     key: 'productList',
     header: 'Produto',
@@ -209,6 +203,19 @@ export const BOLETOS_COLUMN: ServerColumn<PurchaseRow> = {
     header: 'Boletos',
     className: 'whitespace-nowrap',
     render: (row) => (row.boletos > 0 ? `${row.boletos}x` : '-'),
+};
+
+// Table only: the method with its boletos ("Boleto 3x"), so the table fits without
+// scrolling. The export keeps both columns.
+export const PAYMENT_COLUMN: ServerColumn<PurchaseRow> = {
+    ...PAYMENT_METHOD_COLUMN,
+    header: 'Pagamento',
+    className: undefined,
+    render: (row) => {
+        const label = PAYMENT_METHOD_LABELS[row.paymentMethod] ?? '-';
+
+        return row.boletos > 0 ? `${label} ${row.boletos}x` : label;
+    },
 };
 
 export const SUMMARY_CARDS: SummaryCard[] = [

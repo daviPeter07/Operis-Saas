@@ -299,10 +299,6 @@ export type SaleInstallmentsProps = {
 
 export type NewClientData = NonNullable<ClientCreateDialogProps['initialData']>;
 
-export type NamesCellProps = {
-    names: string[];
-};
-
 export type SaleStepKey = 'products' | 'cart' | 'payment' | 'summary';
 
 export type SaleStep = {

@@ -43,6 +43,10 @@ export default function ClientsPage() {
                     isLoading={customersPage.isPending}
                     isFetching={customersPage.isFetching}
                     state={tableState}
+                    filterLabels={{
+                        id: (id) =>
+                            `Cliente: ${customersPage.data?.data.find((customer) => String(customer.id) === id)?.name ?? `#${id}`}`,
+                    }}
                     onCreate={() => setIsCreateOpen(true)}
                     onView={(row) => openClientDetails(row.customer.id)}
                     onEdit={(row) => setEditingCustomer(row.customer)}

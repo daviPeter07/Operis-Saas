@@ -1,9 +1,6 @@
 import { router } from '@inertiajs/react';
 import * as React from 'react';
-import type {
-    CustomRange,
-    Period,
-} from '@/features/dashboard/overview/period-filter';
+import type { CustomRange, Period } from '@/components/filters/period-filter';
 
 export type TableQueryState = {
     search: string;

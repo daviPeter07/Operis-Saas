@@ -27,6 +27,8 @@ export const DELETE_PRODUCT_DIALOG = {
 };
 
 export const INVENTORY_FILTER_KEYS = [
+    // A single record, opened from "Últimas atividades" on Visão Geral.
+    'id',
     'name',
     'sku',
     'brand_id',

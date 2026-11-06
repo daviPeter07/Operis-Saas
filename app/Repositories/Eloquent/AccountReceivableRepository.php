@@ -27,6 +27,9 @@ class AccountReceivableRepository implements AccountReceivableRepositoryInterfac
         // Cancelled records only show up when asked for.
         if ($status === null) {
             $query->where('status', '!=', 'cancelled');
+        } elseif ($status === 'overdue') {
+            $query->whereIn('status', ['pending', 'partial'])
+                ->whereDate('due_date', '<', now(config('app.business_timezone'))->toDateString());
         } else {
             $query->where('status', $status);
         }

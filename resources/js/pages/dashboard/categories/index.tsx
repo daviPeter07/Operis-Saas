@@ -47,6 +47,7 @@ export default function CategoriesPage() {
                     isLoading={categoriesPage.isPending}
                     isFetching={categoriesPage.isFetching}
                     state={tableState}
+                    showView={false}
                     onCreate={() => setIsCreateOpen(true)}
                     onEdit={(row) => setEditingCategory(row.category)}
                     onDelete={async (row) => {
