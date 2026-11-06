@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'customer_id',
     'sale_id',
     'installment_number',
+    'total_installments',
     'entry_date',
     'due_date',
     'item',
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'amount_paid',
     'status',
     'received_at',
+    'payment_method',
 ])]
 class AccountReceivable extends Model
 {

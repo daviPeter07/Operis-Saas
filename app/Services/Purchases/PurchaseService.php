@@ -21,6 +21,7 @@ class PurchaseService
         private readonly PurchaseRepositoryInterface $purchases,
         private readonly StockMovementService $stockMovementService,
         private readonly PayableService $payableService,
+        private readonly PurchaseHistoryService $history,
     ) {}
 
     public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
@@ -43,6 +44,10 @@ class PurchaseService
             $this->payableService->regenerateFromPurchase($purchase);
             $this->syncPaidBoletos($purchase, $data);
 
+            $this->history->recordCreated($purchase);
+            $this->history->recordPaymentChanges($purchase, []);
+            $this->history->syncStatus($purchase);
+
             $this->stockMovementService->reconcile($companyId, $purchase->id, $this->stockTarget($data['items']), StockMovementType::Purchase, $userId, 'purchase');
 
             $this->maybeUpdateProductCost($purchase, (bool) ($data['update_product_cost'] ?? false));
@@ -61,6 +66,7 @@ class PurchaseService
             }
 
             $before = $this->financialSnapshot($purchase);
+            $paidBefore = $this->history->paidSnapshot($purchase);
             $nextStatus = $data['status'] ?? $purchase->status ?? PurchaseStatus::Pending->value;
 
             // Notes are only changed when the request sends them.
@@ -74,6 +80,10 @@ class PurchaseService
 
             $this->syncPayables($purchase, $before);
             $this->syncPaidBoletos($purchase, $data);
+
+            $this->history->recordUpdated($purchase);
+            $this->history->recordPaymentChanges($purchase, $paidBefore);
+            $this->history->syncStatus($purchase);
 
             // Stock follows the items only (lines of the same product added up).
             $this->stockMovementService->reconcile($purchase->company_id, $purchase->id, $this->stockTarget($data['items']), StockMovementType::PurchaseEdit, $userId, 'purchase');
@@ -96,7 +106,10 @@ class PurchaseService
             $this->stockMovementService->reconcile($purchase->company_id, $purchase->id, [], StockMovementType::PurchaseCancel, $userId, 'purchase');
             $this->payableService->cancelFromPurchase($purchase);
 
-            return $this->purchases->update($purchase, ['status' => PurchaseStatus::Cancelled->value]);
+            $purchase = $this->purchases->update($purchase, ['status' => PurchaseStatus::Cancelled->value]);
+            $this->history->syncStatus($purchase);
+
+            return $purchase;
         });
     }
 

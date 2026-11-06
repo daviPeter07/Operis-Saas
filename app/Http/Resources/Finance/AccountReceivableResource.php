@@ -53,9 +53,10 @@ class AccountReceivableResource extends ApiResource
         return [
             'id' => $this->id,
             'customer_id' => $this->customer_id,
+            'customer_name' => $this->whenLoaded('customer', fn () => $this->customer?->name),
             'sale_id' => $this->sale_id,
             'installment_number' => $this->installment_number,
-            'total_installments' => $this->sale ? $this->sale->installments : null,
+            'total_installments' => $this->sale ? $this->sale->installments : $this->total_installments,
             'entry_date' => $this->entry_date?->toDateString(),
             'due_date' => $this->due_date?->toDateString(),
             'item' => $this->item ?? $this->resolveSaleItemSummary(),
@@ -67,6 +68,7 @@ class AccountReceivableResource extends ApiResource
             'remaining_balance' => max(0, (float) $this->amount - (float) ($this->amount_paid ?? 0)),
             'status' => $this->status,
             'received_at' => $this->received_at,
+            'payment_method' => $this->payment_method,
         ];
     }
 }

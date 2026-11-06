@@ -43,7 +43,9 @@ export function DetailsHeader({
             </div>
 
             {actions ? (
-                <div className="flex shrink-0 gap-2">{actions}</div>
+                <div className="flex flex-wrap gap-2 sm:max-w-[60%] sm:justify-end">
+                    {actions}
+                </div>
             ) : null}
         </header>
     );
@@ -115,15 +117,19 @@ export function DetailsField({
 // Same frame as DetailsSection, for content that is not a field grid (tables, timelines).
 export function DetailsCard({
     title,
+    action,
     children,
 }: {
     title: string;
+    // Shown at the right of the title, e.g. a link to the related list.
+    action?: ReactNode;
     children: ReactNode;
 }) {
     return (
         <Card className="gap-4 border-border bg-card py-5 shadow-sm">
-            <CardHeader className="border-b px-5 pb-4">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 border-b px-5 pb-4">
                 <CardTitle className="text-base">{title}</CardTitle>
+                {action}
             </CardHeader>
             <CardContent className="px-5">{children}</CardContent>
         </Card>

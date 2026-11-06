@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { addDays, format } from 'date-fns';
 import { createElement, useState } from 'react';
+import type { HistoryTimelineItem } from '@/components/history-timeline';
 import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
 import { productsQueryKey } from '@/hooks/use-products';
@@ -31,6 +32,7 @@ import {
     CATEGORY_EXPORT_COLUMN,
     DATE_COLUMN,
     DUE_DATE_COLUMN,
+    HISTORY_EVENTS,
     PAYMENT_METHOD_COLUMN,
     PAYMENT_METHOD_LABELS,
     PRODUCT_COLUMN,
@@ -41,6 +43,7 @@ import {
     STATUS_EXPORT_COLUMN,
     SUPPLIER_COLUMN,
     TOTAL_COLUMN,
+    UNKNOWN_HISTORY_EVENT,
 } from './constants';
 import { notesSchema } from './schemas';
 import type {
@@ -49,6 +52,7 @@ import type {
     BoletoInstallment,
     BoletoOption,
     BoletoTerm,
+    HistoryEventConfig,
     PurchaseCartItem,
     PurchaseDraft,
     PurchaseFormInitial,
@@ -674,4 +678,31 @@ export function formatPaidAt(value?: string | null): string {
     return /T00:00:00(\.0+)?(Z|\+00:00)$/.test(value)
         ? formatDateBR(value.slice(0, 10))
         : formatDateTimeManaus(value);
+}
+
+function getHistoryEvent(type: string): HistoryEventConfig {
+    return (
+        (HISTORY_EVENTS as Partial<Record<string, HistoryEventConfig>>)[type] ??
+        UNKNOWN_HISTORY_EVENT
+    );
+}
+
+export function toHistoryItems(purchase: Purchase): HistoryTimelineItem[] {
+    return (purchase.history ?? []).map((entry, index) => {
+        const event = getHistoryEvent(entry.type);
+
+        return {
+            id: `${entry.type}-${index}`,
+            title: entry.description || event.title,
+            icon: event.icon,
+            tone: event.tone,
+            description: null,
+            date: entry.occurred_at,
+            amount: entry.amount,
+        };
+    });
+}
+
+export function formatOptionalDateTime(value?: string | null): string {
+    return value ? formatDateTimeManaus(value) : '-';
 }

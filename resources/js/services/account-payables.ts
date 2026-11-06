@@ -94,7 +94,9 @@ class AccountPayableService extends ApiService<AccountPayable> {
         return normalizeAccountPayable(response.data);
     }
 
-    async create(payload: CreateManualAccountPayablePayload): Promise<void> {
+    async createManual(
+        payload: CreateManualAccountPayablePayload,
+    ): Promise<void> {
         await apiClient.post('/account-payables', payload);
     }
 
@@ -110,8 +112,10 @@ class AccountPayableService extends ApiService<AccountPayable> {
         return normalizeAccountPayable(response.data);
     }
 
-    async delete(id: number): Promise<void> {
+    async delete(id: number): Promise<{ success: boolean }> {
         await apiClient.delete(`/account-payables/${id}`);
+
+        return { success: true };
     }
 }
 

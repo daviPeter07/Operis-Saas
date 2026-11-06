@@ -1,5 +1,8 @@
+import { Link } from '@inertiajs/react';
+import { ArrowUpRight } from 'lucide-react';
 import { StatusBadge } from '@/components/common/status-badge';
 import { DetailsCard } from '@/components/details-page';
+import { Button } from '@/components/ui/button';
 import {
     Table,
     TableBody,
@@ -8,6 +11,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import {
     formatReceivedAt,
@@ -16,13 +20,30 @@ import {
 } from '../../utils/functions';
 import type { SaleInstallmentsProps } from '../../utils/types';
 
-export function SaleInstallments({ receivables }: SaleInstallmentsProps) {
+export function SaleInstallments({
+    saleId,
+    receivables,
+}: SaleInstallmentsProps) {
     const installmentsCount = receivables.filter(
         (receivable) => receivable.installment_number !== null,
     ).length;
 
     return (
-        <DetailsCard title="Parcelas">
+        <DetailsCard
+            title="Contas a receber"
+            action={
+                <Button asChild variant="outline" size="sm" className="gap-1.5">
+                    <Link
+                        href={withAppBasePath(
+                            `/dashboard/accounts-receivable?sale=${saleId}`,
+                        )}
+                    >
+                        Ver em contas a receber
+                        <ArrowUpRight className="size-4" />
+                    </Link>
+                </Button>
+            }
+        >
             <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
@@ -38,10 +59,17 @@ export function SaleInstallments({ receivables }: SaleInstallmentsProps) {
                         {receivables.map((receivable) => (
                             <TableRow key={receivable.id}>
                                 <TableCell className="font-medium">
-                                    {getInstallmentLabel(
-                                        receivable,
-                                        installmentsCount,
-                                    )}
+                                    <Link
+                                        href={withAppBasePath(
+                                            `/dashboard/accounts-receivable/${receivable.id}`,
+                                        )}
+                                        className="text-accent underline-offset-4 hover:underline"
+                                    >
+                                        {getInstallmentLabel(
+                                            receivable,
+                                            installmentsCount,
+                                        )}
+                                    </Link>
                                 </TableCell>
                                 <TableCell>
                                     {receivable.due_date

@@ -1,7 +1,12 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { HistoryTimelineTone } from '@/components/history-timeline';
 import type { PurchaseMutationInput } from '@/hooks/use-purchases';
-import type { Purchase, PurchasePayable } from '@/schemas/purchase';
+import type {
+    Purchase,
+    PurchaseHistoryType,
+    PurchasePayable,
+} from '@/schemas/purchase';
 import type { Supplier } from '@/schemas/supplier';
 import type { UiProduct } from '@/types/dashboard-entities';
 import type { FieldOption } from '@/utils/form-fields';
@@ -212,8 +217,17 @@ export type PurchaseItemsProps = {
 };
 
 export type PurchasePayablesProps = {
+    purchaseId: number;
     payables: PurchasePayable[];
 };
+
+export type HistoryEventConfig = {
+    title: string;
+    icon: LucideIcon;
+    tone: HistoryTimelineTone;
+};
+
+export type HistoryEventMap = Record<PurchaseHistoryType, HistoryEventConfig>;
 
 export type NamesCellProps = {
     names: string[];

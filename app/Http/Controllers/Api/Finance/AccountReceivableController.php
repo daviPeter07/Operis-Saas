@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Finance\IndexAccountReceivableRequest;
 use App\Http\Requests\Finance\StoreAccountReceivableRequest;
 use App\Http\Requests\Finance\UpdateAccountReceivableRequest;
 use App\Http\Resources\Finance\AccountReceivableResource;
@@ -44,12 +45,12 @@ class AccountReceivableController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexAccountReceivableRequest $request): AnonymousResourceCollection
     {
         $this->receivableService->syncMissingForCompany(auth()->user()->current_company_id);
 
         return AccountReceivableResource::collection(
-            $this->receivables->paginateByCompany(auth()->user()->current_company_id)
+            $this->receivables->paginateByCompany(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 
@@ -60,7 +61,7 @@ class AccountReceivableController extends Controller
     {
         $this->authorize('view', $accountReceivable);
 
-        return response()->json(['data' => AccountReceivableResource::make($accountReceivable)]);
+        return response()->json(['data' => AccountReceivableResource::make($accountReceivable->load('customer'))]);
     }
 
     /**

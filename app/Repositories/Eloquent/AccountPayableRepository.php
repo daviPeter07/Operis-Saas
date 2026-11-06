@@ -5,19 +5,73 @@ namespace App\Repositories\Eloquent;
 use App\Models\AccountPayable;
 use App\Models\Purchase;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
+use App\Support\Tables\TableQuery;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class AccountPayableRepository implements AccountPayableRepositoryInterface
 {
-    public function paginateByCompany(int $companyId): LengthAwarePaginator
+    public function paginateByCompany(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
     {
-        return AccountPayable::query()
+        $query = AccountPayable::query()
             ->forCompany($companyId)
-            ->with(['supplier', 'purchase.items'])
-            ->where('status', '!=', 'cancelled')
-            ->latest()
-            ->paginate();
+            ->with(['supplier', 'purchase.items']);
+
+        if ($tableQuery === null) {
+            return $query->where('status', '!=', 'cancelled')->latest()->paginate();
+        }
+
+        $status = $tableQuery->filter('status');
+
+        // Cancelled records only show up when asked for.
+        if ($status === null) {
+            $query->where('status', '!=', 'cancelled');
+        } else {
+            $query->where('status', $status);
+        }
+
+        $supplier = $tableQuery->filter('supplier');
+
+        if ($supplier !== null) {
+            $query->whereHas('supplier', fn (Builder $related) => $related->where('name', 'like', $this->containsPattern($supplier)));
+        }
+
+        $description = $tableQuery->filter('description');
+
+        if ($description !== null) {
+            $pattern = $this->containsPattern($description);
+            $query->where(fn (Builder $where) => $where->where('item', 'like', $pattern)->orWhere('description', 'like', $pattern));
+        }
+
+        // The accounts of one purchase (links from its details page).
+        $purchaseId = $tableQuery->filter('purchase');
+
+        if ($purchaseId !== null) {
+            $query->where('purchase_id', $purchaseId);
+        }
+
+        match ($tableQuery->filter('origin')) {
+            'purchase' => $query->whereNotNull('purchase_id'),
+            'manual' => $query->whereNull('purchase_id'),
+            default => null,
+        };
+
+        $tableQuery
+            ->applyDateRange($query, 'due_date')
+            ->applySort($query, [
+                'amount' => 'amount',
+                'due_date' => 'due_date',
+                'entry_date' => 'entry_date',
+                'created_at' => 'created_at',
+            ]);
+
+        return $tableQuery->paginate($query);
+    }
+
+    private function containsPattern(string $value): string
+    {
+        return '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value).'%';
     }
 
     public function forPurchase(Purchase $purchase): Collection

@@ -14,6 +14,7 @@ import { nowInAppTimeZone } from '@/lib/app-timezone';
 
 const periods = [
     'current-month',
+    'previous-month',
     '7d',
     '30d',
     '90d',

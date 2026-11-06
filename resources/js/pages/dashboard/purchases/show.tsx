@@ -3,6 +3,7 @@ import { Ban, Pencil, ShoppingBag, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { DetailsBackButton, DetailsHeader } from '@/components/details-page';
+import { HistoryTimeline } from '@/components/history-timeline';
 import { PageContent } from '@/components/page-content';
 import { DeleteConfirmDialog } from '@/components/table/delete-confirm-dialog';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import {
     getErrorMessage,
     getShowBreadcrumbs,
     goBackToPurchases,
+    toHistoryItems,
     useCancelPurchase,
     usePurchase,
 } from './utils/functions';
@@ -139,8 +141,13 @@ function ShowContent({ purchaseId }: PurchasesShowPageProps) {
             <PurchaseItems purchase={purchase} />
 
             {payables.length > 0 ? (
-                <PurchasePayables payables={payables} />
+                <PurchasePayables
+                    purchaseId={purchase.id}
+                    payables={payables}
+                />
             ) : null}
+
+            <HistoryTimeline items={toHistoryItems(purchase)} />
 
             {isCancelled ? null : (
                 <CreateEditModal

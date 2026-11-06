@@ -90,6 +90,18 @@ return [
     'updates' => [
         [
             'date' => '2026-11-06',
+            'type' => 'novidade',
+            'title' => 'Histórico da compra e contas ligadas',
+            'description' => 'Veja nos detalhes da compra cada boleto pago, edição e cancelamento, abra a venda ou a compra direto pela conta e filtre o período pelo mês anterior.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Contas a receber e a pagar com filtros e detalhes',
+            'description' => 'Filtre as contas por cliente, fornecedor, descrição, origem e status, abra os detalhes de cada uma e dê baixa em várias de uma vez pela barra de seleção.',
+        ],
+        [
+            'date' => '2026-11-06',
             'type' => 'melhoria',
             'title' => 'Crediário sem entrada',
             'description' => 'A entrada do crediário agora é opcional: sem ela, o valor total da venda é dividido nas parcelas.',

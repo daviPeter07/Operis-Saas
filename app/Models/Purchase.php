@@ -21,6 +21,8 @@ class Purchase extends Model
             'due_date' => 'date',
             'total' => 'decimal:2',
             'boleto_term_days' => 'integer',
+            'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -42,5 +44,10 @@ class Purchase extends Model
     public function payables(): HasMany
     {
         return $this->hasMany(AccountPayable::class);
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(PurchaseEvent::class)->orderBy('occurred_at')->orderBy('id');
     }
 }

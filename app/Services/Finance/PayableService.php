@@ -6,6 +6,7 @@ use App\Enums\PurchaseStatus;
 use App\Models\AccountPayable;
 use App\Models\Purchase;
 use App\Repositories\Contracts\AccountPayableRepositoryInterface;
+use App\Services\Purchases\PurchaseHistoryService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,6 +15,7 @@ class PayableService
 {
     public function __construct(
         private readonly AccountPayableRepositoryInterface $payables,
+        private readonly PurchaseHistoryService $purchaseHistory,
     ) {}
 
     public function regenerateFromPurchase(Purchase $purchase): void
@@ -191,6 +193,8 @@ class PayableService
                 ]);
             }
 
+            $previouslyPaid = (float) ($payable->amount_paid ?? 0);
+
             $payable->update([
                 'status' => 'paid',
                 'amount_paid' => $payable->amount,
@@ -199,21 +203,21 @@ class PayableService
                 'payment_notes' => $data['payment_notes'] ?? null,
             ]);
 
-            $purchase = Purchase::query()
-                ->with(['payables:id,purchase_id,status'])
-                ->find($payable->purchase_id);
+            $purchase = Purchase::query()->find($payable->purchase_id);
 
-            if (! $purchase || $purchase->status !== PurchaseStatus::Pending->value) {
+            if (! $purchase) {
                 return $payable->refresh();
             }
+
+            $this->purchaseHistory->recordPayment($purchase, $payable, (float) $payable->amount - $previouslyPaid);
 
             $hasOpenPayables = $purchase->payables()->whereIn('status', ['pending', 'partial'])->exists();
 
-            if ($hasOpenPayables) {
-                return $payable->refresh();
+            if ($purchase->status === PurchaseStatus::Pending->value && ! $hasOpenPayables) {
+                $purchase->update(['status' => PurchaseStatus::Completed->value]);
             }
 
-            $purchase->update(['status' => PurchaseStatus::Completed->value]);
+            $this->purchaseHistory->syncStatus($purchase);
 
             return $payable->refresh();
         });
@@ -228,6 +232,8 @@ class PayableService
                 ]);
             }
 
+            $reversedAmount = (float) ($payable->amount_paid ?? 0);
+
             $payable->update([
                 'status' => 'pending',
                 'amount_paid' => 0,
@@ -236,19 +242,21 @@ class PayableService
                 'payment_notes' => null,
             ]);
 
-            $purchase = Purchase::query()
-                ->with(['payables:id,purchase_id,status'])
-                ->find($payable->purchase_id);
+            $purchase = Purchase::query()->find($payable->purchase_id);
 
             if (! $purchase) {
                 return $payable->refresh();
             }
+
+            $this->purchaseHistory->recordPaymentReversed($purchase, $payable, $reversedAmount);
 
             $hasOpenPayables = $purchase->payables()->whereIn('status', ['pending', 'partial'])->exists();
 
             if ($purchase->status === PurchaseStatus::Completed->value && $hasOpenPayables) {
                 $purchase->update(['status' => PurchaseStatus::Pending->value]);
             }
+
+            $this->purchaseHistory->syncStatus($purchase);
 
             return $payable->refresh();
         });
@@ -354,7 +362,8 @@ class PayableService
                 ]);
             }
 
-            $newAmountPaid = min((float) $payable->amount, (float) ($payable->amount_paid ?? 0) + $amount);
+            $previouslyPaid = (float) ($payable->amount_paid ?? 0);
+            $newAmountPaid = min((float) $payable->amount, $previouslyPaid + $amount);
             $isFullySettled = round($newAmountPaid, 2) >= round((float) $payable->amount, 2);
 
             $payable->update([
@@ -369,13 +378,13 @@ class PayableService
                 return $payable->refresh();
             }
 
-            $purchase = Purchase::query()
-                ->with(['payables:id,purchase_id,status'])
-                ->find($payable->purchase_id);
+            $purchase = Purchase::query()->find($payable->purchase_id);
 
             if (! $purchase) {
                 return $payable->refresh();
             }
+
+            $this->purchaseHistory->recordPayment($purchase, $payable, $newAmountPaid - $previouslyPaid, partial: ! $isFullySettled);
 
             $hasOpenPayables = $purchase->payables()
                 ->whereIn('status', ['pending', 'partial'])
@@ -386,6 +395,8 @@ class PayableService
                     ? PurchaseStatus::Pending->value
                     : PurchaseStatus::Completed->value,
             ]);
+
+            $this->purchaseHistory->syncStatus($purchase);
 
             return $payable->refresh();
         });

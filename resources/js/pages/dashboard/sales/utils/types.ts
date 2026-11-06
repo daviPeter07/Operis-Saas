@@ -293,6 +293,7 @@ export type SaleItemsProps = {
 };
 
 export type SaleInstallmentsProps = {
+    saleId: number;
     receivables: AccountReceivable[];
 };
 
