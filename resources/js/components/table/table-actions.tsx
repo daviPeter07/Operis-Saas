@@ -13,26 +13,26 @@ import { cn } from '@/lib/utils';
 
 export interface TableActionsProps {
     onView?: () => void;
+    onPrint?: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
     showView?: boolean;
     showEdit?: boolean;
     showDelete?: boolean;
-    showPrint?: boolean;
     className?: string;
 }
 
 export function TableActions({
     onView,
+    onPrint,
     onEdit,
     onDelete,
     showView = true,
     showEdit = true,
     showDelete = true,
-    showPrint = false,
     className,
 }: TableActionsProps) {
-    const hasActions = showView || showEdit || showDelete;
+    const hasActions = showView || showEdit || showDelete || Boolean(onPrint);
 
     if (!hasActions) {
         return null;
@@ -40,32 +40,30 @@ export function TableActions({
 
     return (
         <div className={cn('flex items-center justify-end gap-1', className)}>
-{showView && onView && (
-                    <>
-                        {/* Imprime somente se showPrint está habilitado */}
-                        {showPrint && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white"
-                                onClick={onView}
-                                title="Imprimir comprovante"
-                            >
-                                <Printer className="h-4 w-4" />
-                            </Button>
-                        )}
-                        {/* Ícone de olho para visualizar detalhes */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
-                            onClick={onView}
-                            title="Ver detalhes"
-                        >
-                            <Eye className="h-4 w-4" />
-                        </Button>
-                    </>
-                )}
+            {showView && onView && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                    onClick={onView}
+                    title="Ver detalhes"
+                    aria-label="Ver detalhes"
+                >
+                    <Eye className="h-4 w-4" />
+                </Button>
+            )}
+            {onPrint && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-foreground hover:bg-muted"
+                    onClick={onPrint}
+                    title="Imprimir comprovante"
+                    aria-label="Imprimir comprovante"
+                >
+                    <Printer className="h-4 w-4" />
+                </Button>
+            )}
             {showEdit && onEdit && (
                 <Button
                     variant="ghost"
