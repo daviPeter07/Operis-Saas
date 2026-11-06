@@ -1,7 +1,5 @@
 import { router } from '@inertiajs/react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { parseAsString, useQueryState } from 'nuqs';
-import { useEffect, useState } from 'react';
 import { withAppBasePath } from '@/constants/workspace';
 import { customersQueryKey } from '@/hooks/use-customers';
 import type { Customer } from '@/schemas/customer';
@@ -18,7 +16,6 @@ import {
 import {
     CLIENTS_BREADCRUMB,
     CLIENTS_LIST_URL,
-    CREATE_CLIENT_ACTION,
     EMPTY_CLIENT_FORM,
 } from './constants';
 import type {
@@ -70,23 +67,6 @@ export function useCustomer(id: number) {
         queryFn: () => customerService.get(id),
         retry: false,
     });
-}
-
-// "?action=create-client" opens the create modal once and leaves the URL clean.
-export function useCreateFromQuickAction() {
-    const [action, setAction] = useQueryState(
-        'action',
-        parseAsString.withOptions({ history: 'replace' }),
-    );
-    const createState = useState(action === CREATE_CLIENT_ACTION);
-
-    useEffect(() => {
-        if (action === CREATE_CLIENT_ACTION) {
-            void setAction(null);
-        }
-    }, [action, setAction]);
-
-    return createState;
 }
 
 export async function fetchAllCustomers(
