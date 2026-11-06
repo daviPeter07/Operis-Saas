@@ -52,6 +52,7 @@ import {
     INSTALLMENTS_COLUMN,
     NO_DISCOUNT,
     PAYMENT_METHOD_COLUMN,
+    PAYMENT_METHOD_LABELS,
     PRODUCT_COLUMN,
     PRODUCT_EXPORT_COLUMN,
     PROFIT_COLUMN,
@@ -934,4 +935,27 @@ export function getSaleInstallmentAmounts(
     }
 
     return splitSaleInstallments(sale);
+}
+
+// Highest step the cashier can open: each step needs the previous ones complete.
+export function getReachableStep(form: SaleFormState): number {
+    if (form.lineItems.length === 0) {
+        return 0;
+    }
+
+    if (!form.selectedClient) {
+        return 1;
+    }
+
+    return form.canSubmit ? 3 : 2;
+}
+
+export function getDraftPaymentLabel(draft: SaleDraft): string {
+    const label =
+        PAYMENT_METHOD_LABELS[
+            toApiPaymentMethod(draft.paymentMethod, draft.cardType)
+        ];
+    const hasInstallments = draft.installments > 1;
+
+    return hasInstallments ? `${label} em ${draft.installments}x` : label;
 }

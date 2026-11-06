@@ -103,10 +103,12 @@ export function CreateEditModal({
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent
-                    className="max-w-[min(1700px,calc(100vw-1rem))] overflow-y-auto p-0 sm:max-w-[min(1700px,calc(100vw-1rem))]"
+                    className="max-w-[min(1400px,calc(100vw-1rem))] gap-0 overflow-hidden p-0 sm:max-w-[min(1400px,calc(100vw-1rem))]"
                     onEscapeKeyDown={keepDialogOpenWhileSearchListOpen}
                 >
+                    {/* A fresh form each time the dialog opens. */}
                     <SaleForm
+                        key={open ? `open-${sale?.id ?? 'new'}` : 'closed'}
                         title={sale ? `${text.title} #${sale.id}` : text.title}
                         description={text.description}
                         initial={toSaleFormInitial(sale)}
@@ -120,6 +122,7 @@ export function CreateEditModal({
                             saleReceivables,
                         )}
                         isSubmitting={isSubmitting}
+                        onCancel={() => onOpenChange(false)}
                         onSubmit={(draft) => void submit(draft)}
                     />
                 </DialogContent>

@@ -26,6 +26,8 @@ import type {
     SaleDialogText,
     SaleRow,
     SaleStatus,
+    SaleStep,
+    SaleStepKey,
     SummaryCard,
 } from './types';
 
@@ -290,4 +292,22 @@ export const SALE_MESSAGES = {
     cancelError: 'Não foi possível cancelar a venda.',
     deleteSuccess: 'Venda excluída com sucesso.',
     deleteError: 'Não foi possível excluir a venda.',
+};
+
+export const SALE_STEPS: SaleStep[] = [
+    { key: 'products', label: 'Produtos', description: 'Escolha os itens' },
+    {
+        key: 'cart',
+        label: 'Cliente e carrinho',
+        description: 'Revise o pedido',
+    },
+    { key: 'payment', label: 'Pagamento', description: 'Forma e data' },
+    { key: 'summary', label: 'Resumo', description: 'Confira e registre' },
+];
+
+export const SALE_STEP_HINTS: Record<SaleStepKey, string> = {
+    products: 'Adicione ao menos um produto para continuar.',
+    cart: 'Escolha o cliente para continuar.',
+    payment: 'Confira a forma de pagamento para continuar.',
+    summary: '',
 };

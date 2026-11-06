@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { HistoryTimelineTone } from '@/components/history-timeline';
 import type { SaleMutationInput } from '@/hooks/use-sales';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
@@ -199,18 +200,8 @@ export type SaleFormProps = {
     products: UiProduct[];
     paidInstallments: number[];
     isSubmitting: boolean;
+    onCancel: () => void;
     onSubmit: (draft: SaleDraft) => void;
-};
-
-export type CheckoutPanelProps = {
-    form: SaleFormState;
-    title: string;
-    description: string;
-    clientOptions: FieldOption[];
-    onCreateClient: (name: string) => void;
-    onEditClient: () => void;
-    onOpenDiscount: () => void;
-    onSubmit: () => void;
 };
 
 export type CheckoutSectionProps = {
@@ -230,7 +221,8 @@ export type CrediarioSectionProps = {
 
 export type TotalsSectionProps = {
     form: SaleFormState;
-    onOpenDiscount: () => void;
+    // Without it the totals are read-only (no Aplicar/Alterar button).
+    onOpenDiscount?: () => void;
 };
 
 export type DiscountDialogProps = {
@@ -246,14 +238,6 @@ export type AddProductDialogProps = {
     onOpenChange: (open: boolean) => void;
     product: UiProduct | null;
     onConfirm: (product: UiProduct, quantity: number, price: number) => void;
-};
-
-export type SaleConfirmationDialogProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    draft: SaleDraft;
-    isSubmitting: boolean;
-    onConfirm: (draft: SaleDraft) => void;
 };
 
 export type StockWarningDialogProps = {
@@ -293,4 +277,58 @@ export type NewClientData = NonNullable<ClientCreateDialogProps['initialData']>;
 
 export type NamesCellProps = {
     names: string[];
+};
+
+export type SaleStepKey = 'products' | 'cart' | 'payment' | 'summary';
+
+export type SaleStep = {
+    key: SaleStepKey;
+    label: string;
+    description: string;
+};
+
+export type SaleStepsProps = {
+    current: number;
+    reachable: number;
+    onSelect: (index: number) => void;
+};
+
+export type ProductsStepProps = {
+    form: SaleFormState;
+    products: UiProduct[];
+    onAddFromCatalog: (product: UiProduct) => void;
+    onOpenCreateProduct: () => void;
+};
+
+export type CartStepProps = {
+    form: SaleFormState;
+    clientOptions: FieldOption[];
+    onCreateClient: (name: string) => void;
+    onOpenDiscount: () => void;
+};
+
+export type PaymentStepProps = {
+    form: SaleFormState;
+    onEditClient: () => void;
+};
+
+export type SummaryStepProps = {
+    draft: SaleDraft;
+    status: SaleDraft['status'];
+    onStatusChange: (status: SaleDraft['status']) => void;
+    paidInstallments: number[];
+    onPaidInstallmentsChange: (paid: number[]) => void;
+    onPrint: () => void;
+};
+
+export type StepFooterProps = {
+    step: number;
+    canAdvance: boolean;
+    isSubmitting: boolean;
+    // Shown on the left when the step is complete (e.g. items and total).
+    summary: ReactNode;
+    onBack: () => void;
+    onCancel: () => void;
+    onNext: () => void;
+    onConfirm: () => void;
 };
