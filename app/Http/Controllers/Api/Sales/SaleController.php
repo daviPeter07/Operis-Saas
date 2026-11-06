@@ -47,7 +47,7 @@ class SaleController extends Controller
     {
         $this->authorize('view', $sale);
 
-        return response()->json(['data' => SaleResource::make($sale->load(['items.product.category', 'items.product.brand', 'customer']))]);
+        return response()->json(['data' => SaleResource::make($sale->load(['items.product.category', 'items.product.brand', 'customer', 'events']))]);
     }
 
     /**

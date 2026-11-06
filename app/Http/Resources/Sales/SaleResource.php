@@ -3,6 +3,8 @@
 namespace App\Http\Resources\Sales;
 
 use App\Http\Resources\ApiResource;
+use App\Models\SaleEvent;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 
 class SaleResource extends ApiResource
@@ -25,6 +27,8 @@ class SaleResource extends ApiResource
             'total' => $this->total,
             'profit' => $this->profitAmount(),
             'status' => $this->status,
+            'completed_at' => $this->businessTime($this->completed_at),
+            'cancelled_at' => $this->businessTime($this->cancelled_at),
             'payment_method' => $this->payment_method,
             'installments' => $this->installments,
             'first_installment_date' => $this->first_installment_date?->toDateString(),
@@ -41,6 +45,17 @@ class SaleResource extends ApiResource
                 'unit_cost' => $item->unit_cost,
                 'subtotal' => $item->subtotal,
             ])->all()),
+            'history' => $this->whenLoaded('events', fn () => $this->events->map(fn (SaleEvent $event): array => [
+                'type' => $event->type,
+                'occurred_at' => $this->businessTime($event->occurred_at),
+                'description' => $event->description,
+                'amount' => $event->amount === null ? null : (float) $event->amount,
+            ])->all()),
         ];
+    }
+
+    private function businessTime(?CarbonInterface $moment): ?string
+    {
+        return $moment?->clone()->setTimezone(config('app.business_timezone'))->format('Y-m-d H:i:s');
     }
 }

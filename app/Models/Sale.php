@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'discount',
     'total',
     'status',
+    'completed_at',
+    'cancelled_at',
     'payment_method',
     'installments',
     'first_installment_date',
@@ -35,6 +37,8 @@ class Sale extends Model
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
             'total' => 'decimal:2',
+            'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'installments' => 'integer',
             'first_installment_date' => 'date',
             'installment_value' => 'decimal:2',
@@ -91,5 +95,13 @@ class Sale extends Model
     public function receivables(): HasMany
     {
         return $this->hasMany(AccountReceivable::class);
+    }
+
+    /**
+     * History, oldest first.
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(SaleEvent::class)->orderBy('occurred_at')->orderBy('id');
     }
 }

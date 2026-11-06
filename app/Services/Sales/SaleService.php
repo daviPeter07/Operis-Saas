@@ -22,6 +22,7 @@ class SaleService
         private readonly SaleRepositoryInterface $sales,
         private readonly StockMovementService $stockMovementService,
         private readonly ReceivableService $receivableService,
+        private readonly SaleHistoryService $history,
     ) {}
 
     public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
@@ -50,26 +51,11 @@ class SaleService
             $this->ensureCrediarioIsAllowed($sale);
 
             $this->receivableService->regenerateFromSale($sale);
+            $this->history->recordCreated($sale);
+            $this->history->recordCheckoutPayments($sale);
 
             if ($paymentMethod === 'crediario') {
-                $paidInstallments = collect($data['paid_installments'] ?? [])
-                    ->map(fn ($value) => (int) $value)
-                    ->filter(fn (int $value) => $value > 0)
-                    ->unique()
-                    ->values()
-                    ->all();
-
-                if (! empty($paidInstallments)) {
-                    $receivablesToSettle = $sale->receivables()
-                        ->whereIn('installment_number', $paidInstallments)
-                        ->get();
-
-                    foreach ($receivablesToSettle as $receivable) {
-                        $this->receivableService->settle($receivable, $userId, [
-                            'received_at' => now(config('app.business_timezone'))->toDateString(),
-                        ]);
-                    }
-                }
+                $this->settlePaidInstallments($sale, $userId, $data);
             }
 
             // Always deduct stock on creation, regardless of status (including crediário)
@@ -81,6 +67,8 @@ class SaleService
                     $sale->update(['status' => SaleStatus::Completed->value]);
                 }
             }
+
+            $this->history->syncStatus($sale);
 
             return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
         });
@@ -96,6 +84,10 @@ class SaleService
             }
 
             $previousStatus = $sale->status;
+            // Crediário entry/installments already paid before this edit (they are in the history).
+            $previouslyReceived = $sale->payment_method === 'crediario'
+                ? $sale->receivables()->where('status', FinancialStatus::Received->value)->pluck('installment_number')
+                : collect();
             $previousItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
             $this->assertStockAvailability(
                 $data['items'],
@@ -115,26 +107,21 @@ class SaleService
             $this->ensureCrediarioIsAllowed($sale);
 
             $this->receivableService->regenerateFromSale($sale);
+            $this->history->recordUpdated($sale);
+            // Receivables are rebuilt on every edit: only payments this edit adds go to the history.
+            $this->history->recordCheckoutPayments(
+                $sale,
+                includeEntry: ! $previouslyReceived->contains(fn (mixed $number): bool => $number === null),
+                includeFullPayment: $previousStatus !== SaleStatus::Completed->value,
+            );
 
             if ($paymentMethod === 'crediario') {
-                $paidInstallments = collect($data['paid_installments'] ?? [])
-                    ->map(fn ($value) => (int) $value)
-                    ->filter(fn (int $value) => $value > 0)
-                    ->unique()
-                    ->values()
-                    ->all();
-
-                if (! empty($paidInstallments)) {
-                    $receivablesToSettle = $sale->receivables()
-                        ->whereIn('installment_number', $paidInstallments)
-                        ->get();
-
-                    foreach ($receivablesToSettle as $receivable) {
-                        $this->receivableService->settle($receivable, $userId, [
-                            'received_at' => now(config('app.business_timezone'))->toDateString(),
-                        ]);
-                    }
-                }
+                $this->settlePaidInstallments(
+                    $sale,
+                    $userId,
+                    $data,
+                    alreadyReceived: $previouslyReceived->filter()->map(fn (mixed $number): int => (int) $number)->values()->all(),
+                );
             }
 
             // If all crediário receivables are settled, update status (stock already deducted on creation)
@@ -154,6 +141,8 @@ class SaleService
                 $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
             }
 
+            $this->history->syncStatus($sale);
+
             return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
         });
     }
@@ -170,7 +159,10 @@ class SaleService
                 $this->receivableService->cancelFromSale($sale);
             }
 
-            return $this->sales->update($sale, ['status' => SaleStatus::Cancelled->value]);
+            $sale = $this->sales->update($sale, ['status' => SaleStatus::Cancelled->value]);
+            $this->history->syncStatus($sale);
+
+            return $sale;
         });
     }
 
@@ -186,6 +178,38 @@ class SaleService
 
             $this->sales->delete($sale);
         });
+    }
+
+    /**
+     * Crediário installments the cashier marked as already paid when saving the sale.
+     *
+     * @param  list<int>  $alreadyReceived  Installments that were paid before this edit (not new payments).
+     */
+    private function settlePaidInstallments(Sale $sale, int $userId, array $data, array $alreadyReceived = []): void
+    {
+        $paidInstallments = collect($data['paid_installments'] ?? [])
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn (int $value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($paidInstallments === []) {
+            return;
+        }
+
+        $receivablesToSettle = $sale->receivables()
+            ->whereIn('installment_number', $paidInstallments)
+            ->get();
+
+        foreach ($receivablesToSettle as $receivable) {
+            $this->receivableService->settle(
+                $receivable,
+                $userId,
+                ['received_at' => now(config('app.business_timezone'))->toDateString()],
+                recordHistory: ! in_array((int) $receivable->installment_number, $alreadyReceived, true),
+            );
+        }
     }
 
     /**

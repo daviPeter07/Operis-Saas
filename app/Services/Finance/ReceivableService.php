@@ -8,6 +8,7 @@ use App\Models\AccountReceivable;
 use App\Models\Sale;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
 use App\Services\Products\StockMovementService;
+use App\Services\Sales\SaleHistoryService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ class ReceivableService
     public function __construct(
         private readonly AccountReceivableRepositoryInterface $receivables,
         private readonly StockMovementService $stockMovementService,
+        private readonly SaleHistoryService $saleHistory,
     ) {}
 
     public function regenerateFromSale(Sale $sale): void
@@ -133,14 +135,19 @@ class ReceivableService
         return $this->receivables->openBalanceForCustomer($companyId, $customerId);
     }
 
-    public function settle(AccountReceivable $receivable, int $userId, array $data): AccountReceivable
+    /**
+     * @param  bool  $recordHistory  False when re-applying a payment the sale history already has.
+     */
+    public function settle(AccountReceivable $receivable, int $userId, array $data, bool $recordHistory = true): AccountReceivable
     {
-        return DB::transaction(function () use ($receivable, $data): AccountReceivable {
+        return DB::transaction(function () use ($receivable, $data, $recordHistory): AccountReceivable {
             if (in_array($receivable->status, [FinancialStatus::Received->value, FinancialStatus::Cancelled->value], true)) {
                 throw ValidationException::withMessages([
                     'receivable' => 'Conta a receber ja foi baixada ou cancelada.',
                 ]);
             }
+
+            $previouslyPaid = (float) ($receivable->amount_paid ?? 0);
 
             $receivable->update([
                 'status' => FinancialStatus::Received->value,
@@ -151,6 +158,10 @@ class ReceivableService
             $sale = Sale::query()
                 ->with(['items:id,sale_id,product_id,quantity', 'receivables:id,sale_id,status'])
                 ->find($receivable->sale_id);
+
+            if ($sale && $recordHistory) {
+                $this->saleHistory->recordPayment($sale, $receivable, (float) $receivable->amount - $previouslyPaid);
+            }
 
             if (! $sale || $sale->status !== SaleStatus::Pending->value) {
                 return $receivable->refresh();
@@ -165,6 +176,7 @@ class ReceivableService
             }
 
             $sale->update(['status' => SaleStatus::Completed->value]);
+            $this->saleHistory->syncStatus($sale);
 
             // Stock was already deducted on sale creation; no additional movement needed.
 
@@ -181,6 +193,8 @@ class ReceivableService
                 ]);
             }
 
+            $reversedAmount = (float) ($receivable->amount_paid ?? 0);
+
             $receivable->update([
                 'status' => FinancialStatus::Pending->value,
                 'amount_paid' => 0,
@@ -195,6 +209,8 @@ class ReceivableService
                 return $receivable->refresh();
             }
 
+            $this->saleHistory->recordPaymentReversed($sale, $receivable, $reversedAmount);
+
             $hasOpenReceivables = $sale->receivables()
                 ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
                 ->exists();
@@ -204,6 +220,7 @@ class ReceivableService
                     ? SaleStatus::Pending->value
                     : SaleStatus::Completed->value,
             ]);
+            $this->saleHistory->syncStatus($sale);
 
             return $receivable->refresh();
         });
@@ -286,7 +303,8 @@ class ReceivableService
                 ]);
             }
 
-            $newAmountPaid = min((float) $receivable->amount, (float) ($receivable->amount_paid ?? 0) + $amount);
+            $previouslyPaid = (float) ($receivable->amount_paid ?? 0);
+            $newAmountPaid = min((float) $receivable->amount, $previouslyPaid + $amount);
             $isFullySettled = round($newAmountPaid, 2) >= round((float) $receivable->amount, 2);
 
             $receivable->update([
@@ -307,6 +325,8 @@ class ReceivableService
                 return $receivable->refresh();
             }
 
+            $this->saleHistory->recordPayment($sale, $receivable, $newAmountPaid - $previouslyPaid, partial: ! $isFullySettled);
+
             $hasOpenReceivables = $sale->receivables()
                 ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
                 ->exists();
@@ -316,6 +336,7 @@ class ReceivableService
                     ? SaleStatus::Pending->value
                     : SaleStatus::Completed->value,
             ]);
+            $this->saleHistory->syncStatus($sale);
 
             return $receivable->refresh();
         });
