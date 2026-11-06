@@ -48,6 +48,7 @@ import {
     parseCurrencyInput,
     toFieldOptions,
 } from '@/utils/form-fields';
+import { splitManualBoletos } from '@/utils/manual-boletos';
 import {
     BOLETO_TERMS,
     MANUAL_PAYMENT_OPTIONS,
@@ -56,7 +57,6 @@ import {
     PAYABLE_MESSAGES,
 } from '../../utils/constants';
 import {
-    splitManualBoletos,
     toPayableFormValues,
     toPayableSubmitData,
 } from '../../utils/functions';

@@ -9,6 +9,20 @@ export interface PurchaseItem {
     subtotal: number;
 }
 
+export type PurchaseHistoryType =
+    | 'created'
+    | 'updated'
+    | 'payment_made'
+    | 'completed'
+    | 'cancelled';
+
+export interface PurchaseHistoryEntry {
+    type: PurchaseHistoryType;
+    occurred_at: string;
+    description: string;
+    amount: number | null;
+}
+
 export interface PurchasePayable {
     id: number;
     installment_number: number | null;
@@ -29,9 +43,12 @@ export interface Purchase {
     due_date: string | null;
     total: number;
     status: 'pending' | 'completed' | 'cancelled';
+    completed_at?: string | null;
+    cancelled_at?: string | null;
     payment_method: string;
     boleto_term_days?: number | null;
     notes?: string | null;
     items?: PurchaseItem[];
     payables?: PurchasePayable[];
+    history?: PurchaseHistoryEntry[];
 }

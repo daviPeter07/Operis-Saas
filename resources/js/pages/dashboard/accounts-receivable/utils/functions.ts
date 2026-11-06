@@ -17,6 +17,7 @@ import { accountReceivableService } from '@/services/account-receivables';
 import { toNumber } from '@/services/normalizers';
 import type { BreadcrumbItem, ServerValidationError } from '@/types';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
+import { addMonthsKeepingDay } from '@/utils/manual-boletos';
 import {
     AMOUNT_COLUMN,
     CUSTOMER_COLUMN,
@@ -25,6 +26,7 @@ import {
     ENTRY_DATE_COLUMN,
     INSTALLMENT_COLUMN,
     ORIGIN_COLUMN,
+    ORIGIN_EXPORT_COLUMN,
     RECEIVABLE_MESSAGES,
     RECEIVABLES_BREADCRUMB,
     RECEIVABLES_LIST_URL,
@@ -33,6 +35,7 @@ import {
 } from './constants';
 import type {
     ApiParams,
+    BoletoTerm,
     NewClientData,
     ReceivableFormValues,
     ReceivableRow,
@@ -153,27 +156,27 @@ export function toReceivableRow(receivable: AccountReceivable): ReceivableRow {
 
 export function getTableColumns(): ServerColumn<ReceivableRow>[] {
     return [
+        ENTRY_DATE_COLUMN,
+        DUE_DATE_COLUMN,
         CUSTOMER_COLUMN,
         DESCRIPTION_COLUMN,
         INSTALLMENT_COLUMN,
         ORIGIN_COLUMN,
         AMOUNT_COLUMN,
         STATUS_COLUMN,
-        DUE_DATE_COLUMN,
-        ENTRY_DATE_COLUMN,
     ];
 }
 
 export function getExportColumns(): ServerColumn<ReceivableRow>[] {
     return [
+        ENTRY_DATE_COLUMN,
+        DUE_DATE_COLUMN,
         CUSTOMER_COLUMN,
         DESCRIPTION_COLUMN,
         INSTALLMENT_COLUMN,
-        ORIGIN_COLUMN,
+        ORIGIN_EXPORT_COLUMN,
         AMOUNT_COLUMN,
         STATUS_EXPORT_COLUMN,
-        DUE_DATE_COLUMN,
-        ENTRY_DATE_COLUMN,
     ];
 }
 
@@ -223,12 +226,18 @@ export function getErrorMessage(error: unknown, fallback: string): string {
 export function toReceivableFormValues(
     receivable?: AccountReceivable | null,
 ): ReceivableFormValues {
+    const today = todayInAppTimeZone();
+
     if (!receivable) {
         return {
             customer_id: '',
             item: '',
             amount: '',
-            entry_date: todayInAppTimeZone(),
+            entry_date: today,
+            due_date: today,
+            payment_method: 'pix',
+            boleto_term_days: '30',
+            status: 'pending',
             description: '',
         };
     }
@@ -244,7 +253,11 @@ export function toReceivableFormValues(
             amount > 0
                 ? formatCurrencyInput(String(Math.round(amount * 100)))
                 : '',
-        entry_date: receivable.entry_date ?? todayInAppTimeZone(),
+        entry_date: receivable.entry_date ?? today,
+        due_date: receivable.due_date ?? receivable.entry_date ?? today,
+        payment_method: 'pix',
+        boleto_term_days: '30',
+        status: receivable.status === 'received' ? 'received' : 'pending',
         description: receivable.description ?? '',
     };
 }
@@ -252,12 +265,22 @@ export function toReceivableFormValues(
 export function toReceivableSubmitData(
     values: ReceivableFormValues,
 ): ReceivableSubmitData {
+    const isBoleto = values.payment_method === 'boleto';
+    const term = Number(values.boleto_term_days) as BoletoTerm;
+
     return {
         customer_id: Number(values.customer_id),
         item: values.item.trim(),
         description: values.description.trim() || undefined,
         amount: parseCurrencyInput(values.amount),
         entry_date: values.entry_date,
+        // A boleto account is due on its last boleto (the API splits it month by month).
+        due_date: isBoleto
+            ? addMonthsKeepingDay(values.entry_date, Math.ceil(term / 30))
+            : values.due_date,
+        payment_method: values.payment_method,
+        status: values.status,
+        boleto_term_days: isBoleto ? term : undefined,
     };
 }
 

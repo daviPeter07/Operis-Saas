@@ -152,7 +152,10 @@ function ShowContent({ saleId }: SalesShowPageProps) {
             <SaleItems sale={sale} />
 
             {saleReceivables.length > 0 ? (
-                <SaleInstallments receivables={saleReceivables} />
+                <SaleInstallments
+                    saleId={sale.id}
+                    receivables={saleReceivables}
+                />
             ) : null}
 
             <HistoryTimeline items={toHistoryItems(sale)} />

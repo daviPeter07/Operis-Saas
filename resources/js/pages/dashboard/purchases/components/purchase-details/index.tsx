@@ -1,7 +1,11 @@
 import { DetailsField, DetailsSection } from '@/components/details-page';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
-import { getPaymentLabel, isOpenPayableStatus } from '../../utils/functions';
+import {
+    formatOptionalDateTime,
+    getPaymentLabel,
+    isOpenPayableStatus,
+} from '../../utils/functions';
 import type { PurchaseDetailsProps } from '../../utils/types';
 import { PurchaseStatusChip } from '../purchase-status-chip';
 
@@ -32,6 +36,19 @@ export function PurchaseDetails({ purchase }: PurchaseDetailsProps) {
                 </DetailsField>
                 <DetailsField label="Status">
                     <PurchaseStatusChip status={purchase.status} />
+                </DetailsField>
+                <DetailsField
+                    label={
+                        purchase.status === 'cancelled'
+                            ? 'Data do cancelamento'
+                            : 'Data de conclusão'
+                    }
+                >
+                    {formatOptionalDateTime(
+                        purchase.status === 'cancelled'
+                            ? purchase.cancelled_at
+                            : purchase.completed_at,
+                    )}
                 </DetailsField>
                 <DetailsField label="M. pagamento">
                     {getPaymentLabel(

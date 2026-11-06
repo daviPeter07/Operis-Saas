@@ -6,6 +6,7 @@ import { useDeleteAccountPayable } from '@/hooks/use-account-payables';
 import { useServerTableState } from '@/hooks/use-server-table-state';
 import AppLayout from '@/layouts/app-layout';
 import { CreateEditModal } from './components/create-edit-modal';
+import { OriginFilterNotice } from './components/origin-filter-notice';
 import { PartialSettleDialog } from './components/partial-settle-dialog';
 import { SelectionBar } from './components/selection-bar';
 import { SummaryCards } from './components/summary-cards';
@@ -69,6 +70,13 @@ export default function AccountsPayablePage() {
         <AppLayout breadcrumbs={[PAYABLES_BREADCRUMB]}>
             <PageContent>
                 <SummaryCards apiParams={tableState.apiParams} />
+
+                {tableState.filters.purchase ? (
+                    <OriginFilterNotice
+                        originId={tableState.filters.purchase}
+                        onClear={() => tableState.setFilter('purchase', '')}
+                    />
+                ) : null}
 
                 <ServerTable
                     title="Contas a Pagar"

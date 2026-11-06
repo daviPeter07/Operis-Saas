@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { CircleCheck, Coins, ListChecks } from 'lucide-react';
 import { createElement } from 'react';
 import type { ServerColumn } from '@/components/table/server-table';
@@ -24,6 +25,7 @@ export const PAYABLES_FILTER_KEYS = [
     'description',
     'origin',
     'status',
+    'purchase',
 ] as const;
 
 export const PAYABLE_STATUS_LABELS: Record<PayableStatus, string> = {
@@ -77,12 +79,32 @@ export const ORIGIN_COLUMN: ServerColumn<PayableRow> = {
     key: 'origin',
     header: 'Origem',
     className: 'whitespace-nowrap',
+    // Opens the compra straight from the table.
+    render: (row) =>
+        row.payable.purchase_id
+            ? createElement(
+                  Link,
+                  {
+                      href: withAppBasePath(
+                          `/dashboard/purchases/${row.payable.purchase_id}`,
+                      ),
+                      className:
+                          'font-medium text-accent underline-offset-4 hover:underline',
+                  },
+                  row.origin,
+              )
+            : row.origin,
     filter: {
         type: 'select',
         key: 'origin',
         allLabel: 'Todas',
         options: ORIGIN_OPTIONS,
     },
+};
+
+export const ORIGIN_EXPORT_COLUMN: ServerColumn<PayableRow> = {
+    key: 'origin',
+    header: 'Origem',
 };
 
 export const AMOUNT_COLUMN: ServerColumn<PayableRow> = {

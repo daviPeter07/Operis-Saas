@@ -110,22 +110,58 @@ class ReceivableService
             ->each(fn (Sale $sale) => $this->regenerateFromSale($sale));
     }
 
+    /**
+     * A receivable typed on the contas a receber screen. Same rules as a manual payable: a
+     * boleto is split into one per 30 days of term, due month by month after the entry date,
+     * with the leftover cents on the first ones; "received" creates it already settled.
+     */
     public function createManual(int $companyId, array $data): void
     {
-        $this->receivables->create([
+        $isReceived = ($data['status'] ?? 'pending') === FinancialStatus::Received->value;
+        $paymentMethod = $data['payment_method'] ?? null;
+        $base = [
             'company_id' => $companyId,
             'customer_id' => $data['customer_id'],
             'sale_id' => null,
-            'installment_number' => null,
             'entry_date' => $data['entry_date'],
-            'due_date' => null,
             'item' => $data['item'],
             'description' => $data['description'] ?? null,
-            'amount' => $data['amount'],
-            'amount_paid' => 0,
-            'status' => FinancialStatus::Pending->value,
-            'received_at' => null,
-        ]);
+            'status' => $isReceived ? FinancialStatus::Received->value : FinancialStatus::Pending->value,
+            'received_at' => $isReceived ? $data['entry_date'] : null,
+            'payment_method' => $paymentMethod,
+        ];
+
+        if ($paymentMethod !== 'boleto') {
+            $this->receivables->create([
+                ...$base,
+                'installment_number' => null,
+                'total_installments' => null,
+                'due_date' => $data['due_date'] ?? null,
+                'amount' => $data['amount'],
+                'amount_paid' => $isReceived ? $data['amount'] : 0,
+            ]);
+
+            return;
+        }
+
+        $installments = max(1, (int) ceil(max(30, (int) ($data['boleto_term_days'] ?? 30)) / 30));
+        $totalCents = (int) round((float) $data['amount'] * 100);
+        $baseCents = intdiv($totalCents, $installments);
+        $remainderCents = $totalCents % $installments;
+        $entryDate = Carbon::parse($data['entry_date'], config('app.business_timezone'))->startOfDay();
+
+        for ($index = 1; $index <= $installments; $index++) {
+            $amount = ($baseCents + ($index <= $remainderCents ? 1 : 0)) / 100;
+
+            $this->receivables->create([
+                ...$base,
+                'installment_number' => $index,
+                'total_installments' => $installments,
+                'due_date' => $entryDate->copy()->addMonthsNoOverflow($index)->toDateString(),
+                'amount' => $amount,
+                'amount_paid' => $isReceived ? $amount : 0,
+            ]);
+        }
     }
 
     public function update(AccountReceivable $receivable, array $data): AccountReceivable
@@ -136,6 +172,7 @@ class ReceivableService
             'item' => $data['item'],
             'description' => $data['description'] ?? null,
             'amount' => $data['amount'],
+            ...(array_key_exists('due_date', $data) ? ['due_date' => $data['due_date']] : []),
         ]);
 
         return $receivable->refresh();

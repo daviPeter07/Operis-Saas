@@ -318,12 +318,16 @@ export default function DashboardPage() {
             previousPeriodName: previousRange
                 ? period === 'current-month'
                     ? 'no mês passado'
-                    : 'no período anterior'
+                    : period === 'previous-month'
+                      ? 'no mês retrasado'
+                      : 'no período anterior'
                 : null,
             comparisonLabel:
                 period === 'current-month'
                     ? 'vs. mês passado'
-                    : 'vs. período anterior',
+                    : period === 'previous-month'
+                      ? 'vs. mês retrasado'
+                      : 'vs. período anterior',
         };
         const overdueDetail = (count: number) =>
             count > 0
@@ -631,6 +635,7 @@ export default function DashboardPage() {
                                 customRange={customRange}
                                 periodOptions={[
                                     'current-month',
+                                    'previous-month',
                                     '7d',
                                     '30d',
                                     '90d',

@@ -25,6 +25,7 @@ class UpdateAccountReceivableRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:1000'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'entry_date' => ['required', 'date'],
+            'due_date' => ['sometimes', 'nullable', 'date', 'after_or_equal:entry_date'],
         ];
     }
 }

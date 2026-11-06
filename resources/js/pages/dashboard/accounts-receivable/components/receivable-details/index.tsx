@@ -3,7 +3,7 @@ import { DetailsField, DetailsSection } from '@/components/details-page';
 import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
-import { SETTLE_LABELS } from '../../utils/constants';
+import { PAYMENT_METHOD_LABELS, SETTLE_LABELS } from '../../utils/constants';
 import { formatSettledAt, getInstallmentLabel } from '../../utils/functions';
 import type { ReceivableDetailsProps } from '../../utils/types';
 import { ReceivableStatusChip } from '../receivable-status-chip';
@@ -50,6 +50,12 @@ export function ReceivableDetails({ receivable }: ReceivableDetailsProps) {
                 </DetailsField>
                 <DetailsField label={SETTLE_LABELS.settledOn}>
                     {formatSettledAt(receivable.received_at)}
+                </DetailsField>
+                <DetailsField label="Forma de pagamento">
+                    {receivable.payment_method
+                        ? (PAYMENT_METHOD_LABELS[receivable.payment_method] ??
+                          receivable.payment_method)
+                        : '-'}
                 </DetailsField>
             </DetailsSection>
 

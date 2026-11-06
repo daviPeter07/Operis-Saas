@@ -41,11 +41,19 @@ export type ReceivablesShowPageProps = {
     receivableId: number;
 };
 
+export type ManualPaymentMethod = 'cash' | 'pix' | 'card' | 'boleto';
+
+export type BoletoTerm = 30 | 60 | 90 | 120 | 150;
+
 export type ReceivableFormValues = {
     customer_id: string;
     item: string;
     amount: string;
     entry_date: string;
+    due_date: string;
+    payment_method: ManualPaymentMethod;
+    boleto_term_days: '30' | '60' | '90' | '120' | '150';
+    status: 'pending' | 'received';
     description: string;
 };
 
@@ -55,6 +63,10 @@ export type ReceivableSubmitData = {
     description?: string;
     amount: number;
     entry_date: string;
+    due_date: string;
+    payment_method: ManualPaymentMethod;
+    status: 'pending' | 'received';
+    boleto_term_days?: BoletoTerm;
 };
 
 export type ReceivableDialogText = {
@@ -96,3 +108,8 @@ export type ReceivableDetailsProps = {
 };
 
 export type NewClientData = NonNullable<ClientCreateDialogProps['initialData']>;
+
+export type OriginFilterNoticeProps = {
+    originId: string;
+    onClear: () => void;
+};

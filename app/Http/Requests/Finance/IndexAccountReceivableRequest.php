@@ -23,6 +23,7 @@ class IndexAccountReceivableRequest extends TableIndexRequest
         return [
             'customer' => ['string', 'max:255'],
             'description' => ['string', 'max:255'],
+            'sale' => ['integer'],
             'origin' => [Rule::in(['sale', 'manual'])],
             'status' => [Rule::in(['pending', 'partial', 'received', 'cancelled'])],
         ];

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { DatePickerInput } from '@/components/date/date-picker-input';
 import {
@@ -27,16 +27,32 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
     useCreateManualAccountReceivable,
     useUpdateAccountReceivable,
 } from '@/hooks/use-account-receivables';
 import { useCustomers } from '@/hooks/use-customers';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { CreateEditModal as ClientCreateEditModal } from '@/pages/dashboard/clients/components/create-edit-modal';
 import { showServerErrors } from '@/utils/form-errors';
-import { applyFieldMask, toFieldOptions } from '@/utils/form-fields';
 import {
+    applyFieldMask,
+    parseCurrencyInput,
+    toFieldOptions,
+} from '@/utils/form-fields';
+import { splitManualBoletos } from '@/utils/manual-boletos';
+import {
+    BOLETO_TERMS,
+    MANUAL_PAYMENT_OPTIONS,
+    MANUAL_STATUS_OPTIONS,
     RECEIVABLE_DIALOG_TEXT,
     RECEIVABLE_MESSAGES,
 } from '../../utils/constants';
@@ -65,7 +81,21 @@ export function CreateEditModal({
         mode: 'onTouched',
         defaultValues: toReceivableFormValues(receivable),
     });
-    const text = RECEIVABLE_DIALOG_TEXT[receivable ? 'edit' : 'create'];
+    const isEdit = Boolean(receivable);
+    const text = RECEIVABLE_DIALOG_TEXT[isEdit ? 'edit' : 'create'];
+    const [paymentMethod, boletoTerm, amount, entryDate] = useWatch({
+        control: form.control,
+        name: ['payment_method', 'boleto_term_days', 'amount', 'entry_date'],
+    });
+    // Payment method, boletos and status only apply when the account is created.
+    const isBoleto = !isEdit && paymentMethod === 'boleto';
+    const boletos = isBoleto
+        ? splitManualBoletos(
+              parseCurrencyInput(amount),
+              Number(boletoTerm),
+              entryDate,
+          )
+        : [];
 
     useEffect(() => {
         if (open) {
@@ -94,7 +124,7 @@ export function CreateEditModal({
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent
-                    className="flex max-h-[calc(100dvh-1rem)] !w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[calc(100dvh-4rem)] sm:!max-w-[720px]"
+                    className="flex max-h-[calc(100dvh-1rem)] !w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[calc(100dvh-4rem)] sm:!max-w-[760px]"
                     onEscapeKeyDown={keepDialogOpenWhileSearchListOpen}
                 >
                     <DialogHeader className="border-b px-4 py-4 pr-12 text-left sm:px-6">
@@ -226,6 +256,203 @@ export function CreateEditModal({
                                         </FormItem>
                                     )}
                                 />
+
+                                {isEdit ? null : (
+                                    <>
+                                        <FormField
+                                            control={form.control}
+                                            name="payment_method"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Forma de pagamento
+                                                    </FormLabel>
+                                                    <Select
+                                                        value={field.value}
+                                                        onValueChange={
+                                                            field.onChange
+                                                        }
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {MANUAL_PAYMENT_OPTIONS.map(
+                                                                (option) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            option.value
+                                                                        }
+                                                                        value={
+                                                                            option.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Situação
+                                                    </FormLabel>
+                                                    <Select
+                                                        value={field.value}
+                                                        onValueChange={
+                                                            field.onChange
+                                                        }
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {MANUAL_STATUS_OPTIONS.map(
+                                                                (option) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            option.value
+                                                                        }
+                                                                        value={
+                                                                            option.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </SelectItem>
+                                                                ),
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </>
+                                )}
+
+                                {isBoleto ? (
+                                    <FormField
+                                        control={form.control}
+                                        name="boleto_term_days"
+                                        render={({ field }) => (
+                                            <FormItem className="sm:col-span-2">
+                                                <FormLabel>Boletos</FormLabel>
+                                                <div
+                                                    role="radiogroup"
+                                                    aria-label="Quantidade de boletos"
+                                                    className="grid grid-cols-5 gap-2"
+                                                >
+                                                    {BOLETO_TERMS.map(
+                                                        (term) => {
+                                                            const count =
+                                                                term / 30;
+                                                            const isSelected =
+                                                                field.value ===
+                                                                String(term);
+
+                                                            return (
+                                                                <button
+                                                                    key={term}
+                                                                    type="button"
+                                                                    role="radio"
+                                                                    aria-checked={
+                                                                        isSelected
+                                                                    }
+                                                                    onClick={() =>
+                                                                        field.onChange(
+                                                                            String(
+                                                                                term,
+                                                                            ),
+                                                                        )
+                                                                    }
+                                                                    className={
+                                                                        isSelected
+                                                                            ? 'cursor-pointer rounded-lg border border-accent bg-accent/10 py-2 text-center'
+                                                                            : 'cursor-pointer rounded-lg border py-2 text-center hover:bg-muted'
+                                                                    }
+                                                                >
+                                                                    <span className="block text-lg leading-none font-black">
+                                                                        {count}
+                                                                    </span>
+                                                                    <span className="text-[11px] text-muted-foreground">
+                                                                        {count ===
+                                                                        1
+                                                                            ? 'boleto'
+                                                                            : 'boletos'}
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                                <ul className="divide-y rounded-lg border text-sm">
+                                                    {boletos.map((boleto) => (
+                                                        <li
+                                                            key={boleto.number}
+                                                            className="flex items-center justify-between gap-3 px-3 py-2"
+                                                        >
+                                                            <span className="text-muted-foreground">
+                                                                {boleto.number}º
+                                                                boleto · vence{' '}
+                                                                {formatDateBR(
+                                                                    boleto.dueDate,
+                                                                )}
+                                                            </span>
+                                                            <span className="font-medium tabular-nums">
+                                                                {formatCurrencyBR(
+                                                                    boleto.amount,
+                                                                )}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Um boleto por mês, a partir
+                                                    da data de lançamento.
+                                                </p>
+                                            </FormItem>
+                                        )}
+                                    />
+                                ) : (
+                                    <FormField
+                                        control={form.control}
+                                        name="due_date"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Vencimento <RequiredMark />
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <DatePickerInput
+                                                        value={field.value}
+                                                        onChange={
+                                                            field.onChange
+                                                        }
+                                                        placeholder="Selecionar data"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
                                 <FormField
                                     control={form.control}

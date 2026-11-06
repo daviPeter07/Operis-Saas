@@ -23,9 +23,17 @@ class PurchaseResource extends ApiResource
             'due_date' => $this->due_date?->toDateString(),
             'total' => $this->total,
             'status' => $this->status,
+            'completed_at' => $this->businessTime($this->completed_at),
+            'cancelled_at' => $this->businessTime($this->cancelled_at),
             'payment_method' => $this->payment_method,
             'boleto_term_days' => $this->boleto_term_days,
             'notes' => $this->notes,
+            'history' => $this->whenLoaded('events', fn () => $this->events->map(fn ($event): array => [
+                'type' => $event->type,
+                'occurred_at' => $this->businessTime($event->occurred_at),
+                'description' => $event->description,
+                'amount' => $event->amount === null ? null : (float) $event->amount,
+            ])->all()),
             'payables' => $this->whenLoaded('payables', fn () => $this->payables
                 ->sortBy('installment_number')
                 ->values()

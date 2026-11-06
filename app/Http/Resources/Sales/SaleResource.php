@@ -4,7 +4,6 @@ namespace App\Http\Resources\Sales;
 
 use App\Http\Resources\ApiResource;
 use App\Models\SaleEvent;
-use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 
 class SaleResource extends ApiResource
@@ -54,10 +53,5 @@ class SaleResource extends ApiResource
                 'amount' => $event->amount === null ? null : (float) $event->amount,
             ])->all()),
         ];
-    }
-
-    private function businessTime(?CarbonInterface $moment): ?string
-    {
-        return $moment?->clone()->setTimezone(config('app.business_timezone'))->format('Y-m-d H:i:s');
     }
 }

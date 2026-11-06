@@ -1,9 +1,13 @@
 import {
+    Ban,
     Banknote,
+    CircleCheck,
     CreditCard,
     DollarSign,
     FileText,
     HandCoins,
+    History,
+    Pencil,
     QrCode,
     ShoppingBag,
 } from 'lucide-react';
@@ -17,6 +21,8 @@ import { PurchaseStatusChip } from '../components/purchase-status-chip';
 import type {
     BoletoTerm,
     CheckoutPaymentOption,
+    HistoryEventConfig,
+    HistoryEventMap,
     PurchaseDialogMode,
     PurchaseDialogText,
     PurchasePaymentAnswer,
@@ -225,6 +231,29 @@ export const SUMMARY_CARDS: SummaryCard[] = [
         format: formatCurrencyBR,
     },
 ];
+
+export const HISTORY_EVENTS: HistoryEventMap = {
+    created: { title: 'Compra registrada', icon: ShoppingBag, tone: 'default' },
+    updated: { title: 'Compra editada', icon: Pencil, tone: 'default' },
+    payment_made: {
+        title: 'Pagamento feito',
+        icon: HandCoins,
+        tone: 'success',
+    },
+    completed: {
+        title: 'Compra concluída',
+        icon: CircleCheck,
+        tone: 'success',
+    },
+    cancelled: { title: 'Compra cancelada', icon: Ban, tone: 'danger' },
+};
+
+// Event types the screen does not know yet still show, with the API description.
+export const UNKNOWN_HISTORY_EVENT: HistoryEventConfig = {
+    title: 'Registro na compra',
+    icon: History,
+    tone: 'default',
+};
 
 // Mirrors the notes column validation on StorePurchaseRequest.
 export const PURCHASE_LIMITS = {

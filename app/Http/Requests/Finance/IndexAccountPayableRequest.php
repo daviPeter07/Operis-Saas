@@ -23,6 +23,7 @@ class IndexAccountPayableRequest extends TableIndexRequest
         return [
             'supplier' => ['string', 'max:255'],
             'description' => ['string', 'max:255'],
+            'purchase' => ['integer'],
             'origin' => [Rule::in(['purchase', 'manual'])],
             'status' => [Rule::in(['pending', 'partial', 'paid', 'cancelled'])],
         ];

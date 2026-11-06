@@ -44,6 +44,13 @@ class AccountReceivableRepository implements AccountReceivableRepositoryInterfac
             $query->where(fn (Builder $where) => $where->where('item', 'like', $pattern)->orWhere('description', 'like', $pattern));
         }
 
+        // The accounts of one sale (links from its details page).
+        $saleId = $tableQuery->filter('sale');
+
+        if ($saleId !== null) {
+            $query->where('sale_id', $saleId);
+        }
+
         match ($tableQuery->filter('origin')) {
             'sale' => $query->whereNotNull('sale_id'),
             'manual' => $query->whereNull('sale_id'),

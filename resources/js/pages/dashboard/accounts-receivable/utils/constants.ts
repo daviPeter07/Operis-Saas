@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { CircleCheck, Coins, ListChecks } from 'lucide-react';
 import { createElement } from 'react';
 import type { ServerColumn } from '@/components/table/server-table';
@@ -26,6 +27,7 @@ export const RECEIVABLES_FILTER_KEYS = [
     'description',
     'origin',
     'status',
+    'sale',
 ] as const;
 
 export const RECEIVABLE_STATUS_LABELS: Record<ReceivableStatus, string> = {
@@ -80,12 +82,32 @@ export const ORIGIN_COLUMN: ServerColumn<ReceivableRow> = {
     key: 'origin',
     header: 'Origem',
     className: 'whitespace-nowrap',
+    // Opens the venda straight from the table.
+    render: (row) =>
+        row.receivable.sale_id
+            ? createElement(
+                  Link,
+                  {
+                      href: withAppBasePath(
+                          `/dashboard/sales/${row.receivable.sale_id}`,
+                      ),
+                      className:
+                          'font-medium text-accent underline-offset-4 hover:underline',
+                  },
+                  row.origin,
+              )
+            : row.origin,
     filter: {
         type: 'select',
         key: 'origin',
         allLabel: 'Todas',
         options: ORIGIN_OPTIONS,
     },
+};
+
+export const ORIGIN_EXPORT_COLUMN: ServerColumn<ReceivableRow> = {
+    key: 'origin',
+    header: 'Origem',
 };
 
 export const AMOUNT_COLUMN: ServerColumn<ReceivableRow> = {
@@ -157,6 +179,28 @@ export const RECEIVABLE_LIMITS = {
     itemLength: 255,
     descriptionLength: 1000,
 } as const;
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+    cash: 'Dinheiro',
+    pix: 'PIX',
+    card: 'Cartão',
+    boleto: 'Boleto',
+};
+
+export const MANUAL_PAYMENT_OPTIONS: FieldOption[] = [
+    { value: 'pix', label: 'PIX' },
+    { value: 'cash', label: 'Dinheiro' },
+    { value: 'card', label: 'Cartão' },
+    { value: 'boleto', label: 'Boleto' },
+];
+
+export const MANUAL_STATUS_OPTIONS: FieldOption[] = [
+    { value: 'pending', label: 'Pendente' },
+    { value: 'received', label: 'Recebida' },
+];
+
+// Mirrors StoreAccountReceivableRequest: one boleto per 30 days, due month by month.
+export const BOLETO_TERMS = [30, 60, 90, 120, 150] as const;
 
 export const RECEIVABLE_DIALOG_TEXT: Record<
     'create' | 'edit',

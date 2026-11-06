@@ -25,6 +25,10 @@ class StoreAccountReceivableRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:1000'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'entry_date' => ['required', 'date'],
+            'due_date' => ['required', 'date', 'after_or_equal:entry_date'],
+            'payment_method' => ['required', 'in:cash,pix,card,boleto'],
+            'boleto_term_days' => ['nullable', 'integer', 'in:30,60,90,120,150'],
+            'status' => ['required', 'in:pending,received'],
         ];
     }
 }

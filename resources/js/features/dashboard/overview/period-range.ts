@@ -50,6 +50,18 @@ export function getCurrentMonthRange(
     };
 }
 
+// The whole calendar month `offset` months away (-1 = last month).
+function getMonthRange(offset: number, referenceDate: Date): DateRange {
+    const from = new Date(
+        referenceDate.getFullYear(),
+        referenceDate.getMonth() + offset,
+        1,
+    );
+    const to = new Date(from.getFullYear(), from.getMonth() + 1, 0);
+
+    return { from: formatDate(from), to: formatDate(to) };
+}
+
 export function resolveDateRange(
     period: Period,
     customRange: CustomRange,
@@ -59,6 +71,10 @@ export function resolveDateRange(
 
     if (period === 'current-month') {
         return getCurrentMonthRange(referenceDate);
+    }
+
+    if (period === 'previous-month') {
+        return getMonthRange(-1, referenceDate);
     }
 
     if (period === '7d') {
@@ -150,6 +166,11 @@ export function resolvePreviousRange(
         );
 
         return { from: formatDate(from), to: formatDate(to) };
+    }
+
+    // Last month compares with the whole month before it.
+    if (period === 'previous-month') {
+        return getMonthRange(-1, parseDate(range.from));
     }
 
     const length = daysBetween(range.from, range.to);

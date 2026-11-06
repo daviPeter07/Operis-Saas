@@ -16,4 +16,5 @@ export interface AccountReceivable {
     remaining_balance: number;
     status: 'pending' | 'partial' | 'received' | 'overdue' | 'cancelled';
     received_at: string | null;
+    payment_method?: string | null;
 }

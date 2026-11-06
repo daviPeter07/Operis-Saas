@@ -8,6 +8,7 @@ import { resolveDateRange } from './period-range';
 
 export type Period =
     | 'current-month'
+    | 'previous-month'
     | '7d'
     | '30d'
     | '90d'
@@ -30,6 +31,7 @@ interface PeriodFilterProps {
 
 export const periodLabels: Record<Period, string> = {
     'current-month': 'Mês atual',
+    'previous-month': 'Mês anterior',
     '7d': 'Últimos 7 dias',
     '30d': 'Últimos 30 dias',
     '90d': 'Últimos 90 dias',
@@ -43,6 +45,7 @@ export const periodLabels: Record<Period, string> = {
 export const allPeriodOptions: Period[] = [
     'all',
     'current-month',
+    'previous-month',
     '7d',
     '30d',
     '90d',

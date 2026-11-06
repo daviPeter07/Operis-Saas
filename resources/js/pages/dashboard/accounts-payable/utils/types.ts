@@ -68,12 +68,6 @@ export type PayableSubmitData = {
     boleto_term_days?: BoletoTerm;
 };
 
-export type ManualBoleto = {
-    number: number;
-    dueDate: string;
-    amount: number;
-};
-
 export type PayableDialogText = {
     title: string;
     description: string;
@@ -110,4 +104,9 @@ export type PartialSettleDialogProps = {
 
 export type PayableDetailsProps = {
     payable: AccountPayable;
+};
+
+export type OriginFilterNoticeProps = {
+    originId: string;
+    onClear: () => void;
 };

@@ -253,6 +253,13 @@ Compras ganhou o mesmo cadastro em etapas, a tabela com filtros por coluna e a p
 - **Tabela com filtros por coluna** (fornecedor, produto, categoria, marca, status e forma de pagamento) e ordenação por data, vencimento e total. Data e vencimento ficam lado a lado no começo.
 - **Página de detalhes da compra** com resumo, valores (total, pago e em aberto), observações, itens e as contas a pagar com a situação de cada boleto.
 
+### Histórico da compra
+
+- **Novo:** os detalhes da compra mostram o histórico, igual ao da venda: compra registrada, editada, cada boleto pago ("Boleto 2 pago", "Pagamento parcial do boleto 3"), pagamento desfeito, compra concluída e cancelada, com data, hora e valor. Vale para o que é feito no cadastro da compra e para as baixas em contas a pagar.
+- **Compras antigas:** o histórico delas foi montado a partir do que já estava salvo (cadastro, boletos pagos, conclusão e cancelamento).
+- **Datas:** o resumo mostra a data de conclusão (ou do cancelamento) da compra.
+- O histórico das vendas foi conferido e não tinha erro.
+
 ## 💰 Contas a receber e a pagar (novembro de 2026)
 
 As duas telas ganharam o mesmo padrão das outras: filtros em cada coluna, página de detalhes de cada conta e as ações de baixa num lugar só. A seleção pela caixinha à esquerda continua.
@@ -278,6 +285,14 @@ As duas telas ganharam o mesmo padrão das outras: filtros em cada coluna, pági
 - **Cadastro de conta:**
   - formulário novo, com busca de cliente/fornecedor e "Cadastrar" pelo nome digitado;
   - em contas a pagar no boleto, aparece a lista dos boletos com o vencimento e o valor de cada um, igual ao que vai ser criado.
+  - contas a receber ganhou os mesmos campos de contas a pagar: forma de pagamento (Dinheiro, PIX, Cartão ou Boleto), situação (Pendente ou Recebida), vencimento e boletos de 1 a 5, um por mês a partir do lançamento. Antes, a conta a receber manual era lançada sem vencimento nem forma de pagamento.
+- **Colunas:** Lançamento e Vencimento vêm primeiro, lado a lado.
+- **Origem clicável:** "Venda #26" ou "Compra #22" na coluna Origem abre a venda ou a compra direto, sem passar pelos detalhes da conta.
+- **De vendas e compras para as contas:** nos detalhes da venda, o card "Parcelas" virou "Contas a receber", igual ao card "Contas a pagar" da compra. Os dois têm o botão "Ver em contas a receber/pagar", que abre a tabela já filtrada só com as contas daquela venda ou compra (com um aviso e o botão "Ver todas"), e cada parcela abre os detalhes da conta.
+
+### Filtro de período
+
+- **Novo:** a opção "Mês anterior" (o mês passado inteiro) em todos os filtros de período, inclusive na Visão Geral, que compara com o mês antes dele.
 
 ### Problemas corrigidos
 

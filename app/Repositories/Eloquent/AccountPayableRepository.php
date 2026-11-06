@@ -44,6 +44,13 @@ class AccountPayableRepository implements AccountPayableRepositoryInterface
             $query->where(fn (Builder $where) => $where->where('item', 'like', $pattern)->orWhere('description', 'like', $pattern));
         }
 
+        // The accounts of one purchase (links from its details page).
+        $purchaseId = $tableQuery->filter('purchase');
+
+        if ($purchaseId !== null) {
+            $query->where('purchase_id', $purchaseId);
+        }
+
         match ($tableQuery->filter('origin')) {
             'purchase' => $query->whereNotNull('purchase_id'),
             'manual' => $query->whereNull('purchase_id'),

@@ -1,5 +1,8 @@
+import { Link } from '@inertiajs/react';
+import { ArrowUpRight } from 'lucide-react';
 import { StatusBadge } from '@/components/common/status-badge';
 import { DetailsCard } from '@/components/details-page';
+import { Button } from '@/components/ui/button';
 import {
     Table,
     TableBody,
@@ -8,13 +11,31 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { withAppBasePath } from '@/constants/workspace';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { formatPaidAt } from '../../utils/functions';
 import type { PurchasePayablesProps } from '../../utils/types';
 
-export function PurchasePayables({ payables }: PurchasePayablesProps) {
+export function PurchasePayables({
+    purchaseId,
+    payables,
+}: PurchasePayablesProps) {
     return (
-        <DetailsCard title="Contas a pagar">
+        <DetailsCard
+            title="Contas a pagar"
+            action={
+                <Button asChild variant="outline" size="sm" className="gap-1.5">
+                    <Link
+                        href={withAppBasePath(
+                            `/dashboard/accounts-payable?purchase=${purchaseId}`,
+                        )}
+                    >
+                        Ver em contas a pagar
+                        <ArrowUpRight className="size-4" />
+                    </Link>
+                </Button>
+            }
+        >
             <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
@@ -31,9 +52,16 @@ export function PurchasePayables({ payables }: PurchasePayablesProps) {
                         {payables.map((payable) => (
                             <TableRow key={payable.id}>
                                 <TableCell className="font-medium">
-                                    {payable.total_installments
-                                        ? `${payable.installment_number}/${payable.total_installments}`
-                                        : 'Única'}
+                                    <Link
+                                        href={withAppBasePath(
+                                            `/dashboard/accounts-payable/${payable.id}`,
+                                        )}
+                                        className="text-accent underline-offset-4 hover:underline"
+                                    >
+                                        {payable.total_installments
+                                            ? `${payable.installment_number}/${payable.total_installments}`
+                                            : 'Única'}
+                                    </Link>
                                 </TableCell>
                                 <TableCell>
                                     {payable.due_date

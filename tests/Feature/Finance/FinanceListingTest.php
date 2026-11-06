@@ -5,6 +5,7 @@ use App\Models\AccountReceivable;
 use App\Models\Company;
 use App\Models\CompanyUser;
 use App\Models\Customer;
+use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\User;
 
@@ -135,6 +136,28 @@ test('the details endpoints return the customer and supplier names', function ()
     $this->actingAs($this->user)->getJson("/api/account-payables/{$payable->id}")
         ->assertOk()
         ->assertJsonPath('data.supplier_name', 'Distribuidora Norte');
+});
+
+test('the listing can show only the accounts of one purchase', function () {
+    $payable = AccountPayable::query()->where('item', 'Aluguel')->firstOrFail();
+    $purchase = Purchase::query()->create([
+        'company_id' => $this->company->id,
+        'supplier_id' => $payable->supplier_id,
+        'date' => '2026-11-01',
+        'total' => 1200,
+        'status' => 'pending',
+        'payment_method' => 'pix',
+    ]);
+    $payable->update(['purchase_id' => $purchase->id]);
+
+    $this->actingAs($this->user)->getJson("/api/account-payables?filter[purchase]={$purchase->id}")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.item', 'Aluguel');
+
+    $this->actingAs($this->user)->getJson('/api/account-receivables?filter[sale]=999999')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
 });
 
 test('invalid filters are rejected', function () {
