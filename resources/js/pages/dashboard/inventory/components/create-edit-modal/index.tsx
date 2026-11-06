@@ -122,17 +122,20 @@ export function CreateEditModal({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="!w-[calc(100vw-2rem)] sm:!max-w-[980px]"
+                className="flex max-h-[calc(100dvh-1rem)] !w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[calc(100dvh-4rem)] sm:!max-w-[980px]"
                 onEscapeKeyDown={keepDialogOpenWhileSearchListOpen}
             >
-                <DialogHeader>
+                <DialogHeader className="border-b px-4 py-4 pr-12 text-left sm:px-6">
                     <DialogTitle>{text.title}</DialogTitle>
                     <DialogDescription>{text.description}</DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={submit} className="space-y-5">
-                        <div className="grid gap-4 sm:grid-cols-2">
+                    <form
+                        onSubmit={submit}
+                        className="flex min-h-0 flex-1 flex-col"
+                    >
+                        <div className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-4 py-4 sm:grid-cols-2 sm:px-6 sm:py-5">
                             <IdentificationFields
                                 brands={toFieldOptions(brands)}
                                 categories={toFieldOptions(categories)}
@@ -149,16 +152,18 @@ export function CreateEditModal({
                             <DescriptionField />
                         </div>
 
-                        <DialogFooter>
+                        <DialogFooter className="flex-row gap-2 border-t px-4 py-3 sm:px-6">
                             <Button
                                 type="button"
                                 variant="outline"
+                                className="flex-1 sm:flex-none"
                                 onClick={() => onOpenChange(false)}
                             >
                                 Cancelar
                             </Button>
                             <Button
                                 type="submit"
+                                className="flex-1 sm:flex-none"
                                 disabled={
                                     !form.formState.isValid ||
                                     form.formState.isSubmitting
