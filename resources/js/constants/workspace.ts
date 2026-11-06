@@ -1,5 +1,6 @@
 import type {
     WorkspaceModule,
+    WorkspaceModuleGroup,
     WorkspaceQuickAction,
     WorkspaceRole,
 } from '@/types/workspace';
@@ -46,46 +47,50 @@ export const defaultWorkspaceNavigation: WorkspaceModule[] = [
         shortcut: '4',
     },
     {
-        key: 'clients',
-        label: 'Clientes',
-        href: withAppBasePath('/dashboard/clients'),
-        status: 'available',
-        shortcut: '5',
-    },
-    {
-        key: 'suppliers',
-        label: 'Fornecedores',
-        href: withAppBasePath('/dashboard/suppliers'),
-        status: 'available',
-        shortcut: '6',
-    },
-    {
-        key: 'brands',
-        label: 'Marcas',
-        href: withAppBasePath('/dashboard/brands'),
-        status: 'available',
-        shortcut: '7',
-    },
-    {
-        key: 'categories',
-        label: 'Categorias',
-        href: withAppBasePath('/dashboard/categories'),
-        status: 'available',
-        shortcut: '8',
-    },
-    {
         key: 'accounts-receivable',
         label: 'Contas a Receber',
         href: withAppBasePath('/dashboard/accounts-receivable'),
         status: 'available',
-        shortcut: '9',
+        shortcut: '5',
     },
     {
         key: 'accounts-payable',
         label: 'Contas a Pagar',
         href: withAppBasePath('/dashboard/accounts-payable'),
         status: 'available',
+        shortcut: '6',
+    },
+    {
+        key: 'clients',
+        label: 'Clientes',
+        href: withAppBasePath('/dashboard/clients'),
+        status: 'available',
+        shortcut: '7',
+        group: 'basic-registrations',
+    },
+    {
+        key: 'suppliers',
+        label: 'Fornecedores',
+        href: withAppBasePath('/dashboard/suppliers'),
+        status: 'available',
+        shortcut: '8',
+        group: 'basic-registrations',
+    },
+    {
+        key: 'brands',
+        label: 'Marcas',
+        href: withAppBasePath('/dashboard/brands'),
+        status: 'available',
+        shortcut: '9',
+        group: 'basic-registrations',
+    },
+    {
+        key: 'categories',
+        label: 'Categorias',
+        href: withAppBasePath('/dashboard/categories'),
+        status: 'available',
         shortcut: '0',
+        group: 'basic-registrations',
     },
     {
         key: 'reports',
@@ -106,6 +111,10 @@ export const defaultWorkspaceNavigation: WorkspaceModule[] = [
         status: 'available',
     },
 ];
+
+export const WORKSPACE_GROUP_LABELS: Record<WorkspaceModuleGroup, string> = {
+    'basic-registrations': 'Cadastros básicos',
+};
 
 export const defaultWorkspaceQuickActions: WorkspaceQuickAction[] = [
     {

@@ -2,6 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import {
     Award,
     BarChart3,
+    ChevronDown,
     CreditCard,
     LayoutGrid,
     Receipt,
@@ -21,6 +22,11 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
 import { Badge } from '@/components/ui/badge';
 import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
@@ -36,13 +42,17 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { withAppBasePath } from '@/constants/workspace';
+import { WORKSPACE_GROUP_LABELS, withAppBasePath } from '@/constants/workspace';
 import { useWorkspace } from '@/features/dashboard/workspace-context';
 import {
     getAltShortcutLabel,
     isEditableElement,
 } from '@/lib/keyboard-shortcuts';
-import type { WorkspaceModuleKey } from '@/types/workspace';
+import type {
+    WorkspaceModule,
+    WorkspaceModuleGroup,
+    WorkspaceModuleKey,
+} from '@/types/workspace';
 
 const navMetaByModule: Record<
     WorkspaceModuleKey,
@@ -132,9 +142,62 @@ function usePendingNavigationPath(): string | null {
     return pendingPath;
 }
 
+const OPEN_GROUPS_STORAGE_KEY = 'operis:sidebar-groups';
+
+type OpenGroups = Partial<Record<WorkspaceModuleGroup, boolean>>;
+
+type NavigationSection = {
+    group?: WorkspaceModuleGroup;
+    items: WorkspaceModule[];
+};
+
+function readOpenGroups(): OpenGroups {
+    try {
+        return JSON.parse(
+            window.localStorage.getItem(OPEN_GROUPS_STORAGE_KEY) ?? '{}',
+        ) as OpenGroups;
+    } catch {
+        return {};
+    }
+}
+
+function saveOpenGroups(openGroups: OpenGroups): void {
+    try {
+        window.localStorage.setItem(
+            OPEN_GROUPS_STORAGE_KEY,
+            JSON.stringify(openGroups),
+        );
+    } catch {
+        // Private windows may block storage; the group just won't be remembered.
+    }
+}
+
+/** Consecutive items with the same group become one section. */
+function groupNavigation(navigation: WorkspaceModule[]): NavigationSection[] {
+    return navigation.reduce<NavigationSection[]>((sections, item) => {
+        const last = sections.at(-1);
+
+        if (last && last.group === item.group) {
+            last.items.push(item);
+        } else {
+            sections.push({ group: item.group, items: [item] });
+        }
+
+        return sections;
+    }, []);
+}
+
 export function AppSidebar() {
     const { navigation } = useWorkspace();
-    const { isMobile, setOpenMobile } = useSidebar();
+    const { isMobile, setOpenMobile, state } = useSidebar();
+    const [openGroups, setOpenGroups] = React.useState(readOpenGroups);
+
+    const toggleGroup = (group: WorkspaceModuleGroup, open: boolean) => {
+        const next = { ...openGroups, [group]: open };
+
+        setOpenGroups(next);
+        saveOpenGroups(next);
+    };
     const pendingPath = usePendingNavigationPath();
 
     const navigationShortcuts = React.useMemo(() => {
@@ -207,6 +270,82 @@ export function AppSidebar() {
         );
     };
 
+    const isActivePath = (href: string) =>
+        href === location.pathname ||
+        // Inner pages (e.g. a product's details) keep their module highlighted.
+        (href !== withAppBasePath('/dashboard') &&
+            location.pathname.startsWith(`${href}/`));
+
+    const navigationSections = groupNavigation(navigation);
+
+    const renderNavigationItem = (navigationItem: WorkspaceModule) => {
+        const meta = navMetaByModule[navigationItem.key];
+
+        if (!meta) {
+            return null;
+        }
+
+        const isPending =
+            pendingPath === navigationItem.href &&
+            pendingPath !== location.pathname;
+        const isActive = isActivePath(navigationItem.href) || isPending;
+        const Icon = meta.icon;
+
+        return (
+            <Tooltip key={navigationItem.key}>
+                <TooltipTrigger asChild>
+                    <SidebarMenuItem className="relative list-none marker:content-none">
+                        <Link
+                            href={navigationItem.href}
+                            prefetch
+                            aria-busy={isPending}
+                            onClick={() => {
+                                if (isMobile) {
+                                    setOpenMobile(false);
+                                }
+                            }}
+                            className={`relative flex items-center gap-3 rounded-xl px-3 py-2 pr-9 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:pr-0 ${
+                                isActive
+                                    ? 'bg-sidebar-accent text-accent shadow-[0_0_0_1px_hsl(var(--sidebar-border))]'
+                                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground hover:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)]'
+                            } `}
+                        >
+                            {isPending ? (
+                                <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                            ) : (
+                                <Icon className="h-4 w-4 shrink-0" />
+                            )}
+                            <span className="truncate group-data-[collapsible=icon]:hidden">
+                                {navigationItem.label}
+                            </span>
+                            {!isPending &&
+                                renderShortcutBadge(navigationItem.shortcut)}
+                        </Link>
+                    </SidebarMenuItem>
+                </TooltipTrigger>
+                <TooltipContent
+                    hidden={isMobile}
+                    side="right"
+                    align="center"
+                    className="max-w-64 rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 text-sidebar-foreground shadow-xl"
+                >
+                    <p className="text-sm font-semibold text-sidebar-foreground">
+                        {navigationItem.label}
+                    </p>
+                    {navigationItem.shortcut && (
+                        <p className="mt-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+                            Atalho{' '}
+                            {getAltShortcutLabel(navigationItem.shortcut)}
+                        </p>
+                    )}
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {meta.description}
+                    </p>
+                </TooltipContent>
+            </Tooltip>
+        );
+    };
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -226,85 +365,60 @@ export function AppSidebar() {
             <SidebarContent>
                 <TooltipProvider>
                     <nav className="flex flex-col gap-1 px-3 group-data-[collapsible=icon]:gap-0.5">
-                        {navigation.map((navigationItem) => {
-                            const meta = navMetaByModule[navigationItem.key];
-
-                            if (!meta) {
-                                return null;
+                        {navigationSections.map((section, index) => {
+                            if (!section.group) {
+                                return (
+                                    <React.Fragment key={`section-${index}`}>
+                                        {index > 0 ? (
+                                            <div className="mx-3 my-2 h-px bg-sidebar-border group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-6" />
+                                        ) : null}
+                                        {section.items.map(
+                                            renderNavigationItem,
+                                        )}
+                                    </React.Fragment>
+                                );
                             }
 
-                            const isPending =
-                                pendingPath === navigationItem.href &&
-                                pendingPath !== location.pathname;
-                            // Inner pages (e.g. a product's details) keep their module highlighted.
-                            const isInnerPage =
-                                navigationItem.href !==
-                                    withAppBasePath('/dashboard') &&
-                                location.pathname.startsWith(
-                                    `${navigationItem.href}/`,
-                                );
-                            const isActive =
-                                navigationItem.href === location.pathname ||
-                                isInnerPage ||
-                                isPending;
-                            const Icon = meta.icon;
+                            const group = section.group;
+                            const hasActiveItem = section.items.some((item) =>
+                                isActivePath(item.href),
+                            );
+                            // With the sidebar reduced to icons the group always shows its icons.
+                            const isOpen =
+                                state === 'collapsed' ||
+                                (openGroups[group] ?? true);
 
                             return (
-                                <Tooltip key={navigationItem.key}>
-                                    <TooltipTrigger asChild>
-                                        <SidebarMenuItem className="relative list-none marker:content-none">
-                                            <Link
-                                                href={navigationItem.href}
-                                                prefetch
-                                                aria-busy={isPending}
-                                                onClick={() => {
-                                                    if (isMobile) {
-                                                        setOpenMobile(false);
-                                                    }
-                                                }}
-                                                className={`relative flex items-center gap-3 rounded-xl px-3 py-2 pr-9 text-sm font-medium transition-all duration-200 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:pr-0 ${
-                                                    isActive
-                                                        ? 'bg-sidebar-accent text-accent shadow-[0_0_0_1px_hsl(var(--sidebar-border))]'
-                                                        : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground hover:shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)]'
-                                                } `}
-                                            >
-                                                {isPending ? (
-                                                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                                                ) : (
-                                                    <Icon className="h-4 w-4 shrink-0" />
-                                                )}
-                                                <span className="truncate group-data-[collapsible=icon]:hidden">
-                                                    {navigationItem.label}
-                                                </span>
-                                                {!isPending &&
-                                                    renderShortcutBadge(
-                                                        navigationItem.shortcut,
-                                                    )}
-                                            </Link>
-                                        </SidebarMenuItem>
-                                    </TooltipTrigger>
-                                    <TooltipContent
-                                        hidden={isMobile}
-                                        side="right"
-                                        align="center"
-                                        className="max-w-64 rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 text-sidebar-foreground shadow-xl"
+                                <Collapsible
+                                    key={group}
+                                    open={isOpen}
+                                    onOpenChange={(open) =>
+                                        toggleGroup(group, open)
+                                    }
+                                    className="flex flex-col gap-1 group-data-[collapsible=icon]:gap-0.5"
+                                >
+                                    <div className="mx-auto my-2 hidden h-px w-6 bg-sidebar-border group-data-[collapsible=icon]:block" />
+                                    <CollapsibleTrigger
+                                        className={`mt-2 flex cursor-pointer items-center justify-between rounded-lg px-3 py-1.5 text-xs font-medium outline-none group-data-[collapsible=icon]:hidden hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring ${
+                                            hasActiveItem && !isOpen
+                                                ? 'text-accent'
+                                                : 'text-muted-foreground'
+                                        }`}
                                     >
-                                        <p className="text-sm font-semibold text-sidebar-foreground">
-                                            {navigationItem.label}
-                                        </p>
-                                        {navigationItem.shortcut && (
-                                            <p className="mt-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
-                                                Atalho{' '}
-                                                {getAltShortcutLabel(
-                                                    navigationItem.shortcut,
-                                                )}
-                                            </p>
+                                        {WORKSPACE_GROUP_LABELS[group]}
+                                        <ChevronDown
+                                            aria-hidden
+                                            className={`size-3.5 transition-transform duration-200 ${
+                                                isOpen ? '' : '-rotate-90'
+                                            }`}
+                                        />
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="flex flex-col gap-1 overflow-hidden group-data-[collapsible=icon]:gap-0.5 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+                                        {section.items.map(
+                                            renderNavigationItem,
                                         )}
-                                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                            {meta.description}
-                                        </p>
-                                    </TooltipContent>
-                                </Tooltip>
+                                    </CollapsibleContent>
+                                </Collapsible>
                             );
                         })}
                     </nav>

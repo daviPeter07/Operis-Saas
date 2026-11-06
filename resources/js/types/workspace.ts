@@ -28,12 +28,15 @@ export type WorkspaceCompany = {
     secondaryColor: string;
 };
 
+export type WorkspaceModuleGroup = 'basic-registrations';
+
 export type WorkspaceModule = {
     key: WorkspaceModuleKey;
     label: string;
     href: string;
     status: WorkspaceModuleStatus;
     shortcut?: string;
+    group?: WorkspaceModuleGroup;
 };
 
 export type WorkspaceQuickActionKey =
