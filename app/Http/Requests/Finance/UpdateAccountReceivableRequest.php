@@ -7,24 +7,24 @@ use Illuminate\Validation\Rule;
 
 class UpdateAccountReceivableRequest extends FormRequest
 {
-  public function authorize(): bool
-  {
-    return auth()->check();
-  }
+    public function authorize(): bool
+    {
+        return auth()->check();
+    }
 
-  /**
-   * @return array<string, array<int, mixed>|string>
-   */
-  public function rules(): array
-  {
-    $companyId = $this->user()->current_company_id;
+    /**
+     * @return array<string, array<int, mixed>|string>
+     */
+    public function rules(): array
+    {
+        $companyId = $this->user()->current_company_id;
 
-    return [
-      'customer_id' => ['required', 'integer', Rule::exists('customers', 'id')->where('company_id', $companyId)],
-      'item' => ['required', 'string', 'max:255'],
-      'description' => ['nullable', 'string', 'max:1000'],
-      'amount' => ['required', 'numeric', 'min:0'],
-      'entry_date' => ['required', 'date'],
-    ];
-  }
+        return [
+            'customer_id' => ['required', 'integer', Rule::exists('customers', 'id')->where('company_id', $companyId)],
+            'item' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'entry_date' => ['required', 'date'],
+        ];
+    }
 }

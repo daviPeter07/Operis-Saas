@@ -53,6 +53,7 @@ class AccountReceivableResource extends ApiResource
         return [
             'id' => $this->id,
             'customer_id' => $this->customer_id,
+            'customer_name' => $this->whenLoaded('customer', fn () => $this->customer?->name),
             'sale_id' => $this->sale_id,
             'installment_number' => $this->installment_number,
             'total_installments' => $this->sale ? $this->sale->installments : null,

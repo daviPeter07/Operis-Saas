@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Finance\IndexAccountPayableRequest;
 use App\Http\Requests\Finance\StoreAccountPayableRequest;
 use App\Http\Requests\Finance\UpdateAccountPayableRequest;
 use App\Http\Resources\Finance\AccountPayableResource;
@@ -44,12 +45,12 @@ class AccountPayableController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexAccountPayableRequest $request): AnonymousResourceCollection
     {
         $this->payableService->syncMissingForCompany(auth()->user()->current_company_id);
 
         return AccountPayableResource::collection(
-            $this->payables->paginateByCompany(auth()->user()->current_company_id)
+            $this->payables->paginateByCompany(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 
@@ -60,7 +61,7 @@ class AccountPayableController extends Controller
     {
         $this->authorize('view', $accountPayable);
 
-        return response()->json(['data' => AccountPayableResource::make($accountPayable)]);
+        return response()->json(['data' => AccountPayableResource::make($accountPayable->load('supplier'))]);
     }
 
     /**

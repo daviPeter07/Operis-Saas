@@ -23,7 +23,7 @@ class StoreAccountReceivableRequest extends FormRequest
             'customer_id' => ['required', 'integer', Rule::exists('customers', 'id')->where('company_id', $companyId)],
             'item' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'amount' => ['required', 'numeric', 'min:0'],
+            'amount' => ['required', 'numeric', 'gt:0'],
             'entry_date' => ['required', 'date'],
         ];
     }
