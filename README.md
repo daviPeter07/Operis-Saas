@@ -379,14 +379,19 @@ Ajustes feitos depois de conferir o sistema com os dados reais da DG Computer.
 - **Antes:** a variação vinha como "+13.916%", com ponto separando o milhar, e parecia 13 com três casas decimais. Os cards de contas a receber e a pagar não diziam que ignoram o filtro de período.
 - **Correção e hoje:** a variação usa vírgula e no máximo duas casas ("+13915,83%"), sem ponto de milhar, e diz exatamente com que dias compara: em "Mês atual", os mesmos dias do mês passado ("vs. 01/10 a 06/10"), e não o mês passado inteiro. Os cards de contas mostram "Todo o período" e, ao passar o mouse, explicam que somam todas as contas em aberto, de qualquer data.
 
+**12. "Total a receber" de vendas maior que o que falta receber**
+- **Antes:** o card somava o valor inteiro das vendas pendentes (R$ 98.752,00 com os dados atuais), contando entradas e parcelas que o cliente já tinha pago.
+- **Por quê:** o card olhava só o status da venda; uma venda no crediário continua pendente até a última parcela, mesmo com várias já recebidas.
+- **Correção e hoje:** soma só o que falta receber das parcelas em aberto de cada venda (R$ 77.499,43), o mesmo valor que aparece em contas a receber.
+
 ### Dados antigos corrigidos
 
-**12. Contas recebidas antes de 15/05 sem valor pago**
+**13. Contas recebidas antes de 15/05 sem valor pago**
 - **Antes:** 12 contas a receber marcadas como recebidas tinham "valor pago" zerado (R$ 12.911,04 no total), então o "Total recebido" ficava menor e o histórico dessas vendas não mostrava o pagamento.
 - **Por quê:** em 15/05 o sistema passou a guardar quanto foi pago em cada conta, e as contas que já estavam recebidas ficaram com zero.
 - **Correção e hoje:** as contas recebidas (e as pagas, em contas a pagar) passam a ter o valor pago igual ao valor da conta.
 
-**13. Vendas pagas que continuavam pendentes**
+**14. Vendas pagas que continuavam pendentes**
 - **Antes:** 3 vendas no crediário tinham todas as parcelas recebidas mas continuavam como pendentes.
 - **Correção e hoje:** viram concluídas, com a conclusão no histórico.
 

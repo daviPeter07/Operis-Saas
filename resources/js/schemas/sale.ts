@@ -34,6 +34,8 @@ export interface Sale {
     discount?: number;
     total: number;
     profit?: number;
+    // Still to be received: open balance of the pending/partial receivables.
+    open_amount?: number;
     status: 'pending' | 'completed' | 'cancelled';
     payment_method: string;
     customer_name?: string | null;

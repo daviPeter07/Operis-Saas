@@ -19,6 +19,7 @@ class SaleRepository implements SaleRepositoryInterface
         $query = Sale::query()
             ->forCompany($companyId)
             ->withProfit()
+            ->withOpenAmount()
             ->with(['customer', 'items.product.category', 'items.product.brand']);
 
         if ($tableQuery === null) {

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable([
     'company_id',
@@ -77,6 +78,36 @@ class Sale extends Model
         $margin = $items->sum(fn (SaleItem $item): float => (float) $item->quantity * ((float) $item->unit_price - (float) $item->unit_cost));
 
         return round($margin - (float) $this->discount, 2);
+    }
+
+    /**
+     * What is still to be received: the open balance (amount - amount_paid) of the sale's
+     * pending and partial receivables. Entries and installments already paid are out.
+     */
+    public function scopeWithOpenAmount(Builder $query): void
+    {
+        if ($query->getQuery()->columns === null) {
+            $query->select('sales.*');
+        }
+
+        $query->selectRaw(
+            '(select coalesce(sum(account_receivables.amount - account_receivables.amount_paid), 0)'
+            ." from account_receivables where account_receivables.sale_id = sales.id and account_receivables.status in ('pending', 'partial')) as open_amount"
+        );
+    }
+
+    /**
+     * Same value as scopeWithOpenAmount, reusing the SQL value when the query selected it.
+     */
+    public function openAmount(): float
+    {
+        if (array_key_exists('open_amount', $this->getAttributes())) {
+            return round((float) $this->getAttributes()['open_amount'], 2);
+        }
+
+        return round((float) $this->receivables()
+            ->whereIn('status', ['pending', 'partial'])
+            ->sum(DB::raw('amount - amount_paid')), 2);
     }
 
     public function customer(): BelongsTo

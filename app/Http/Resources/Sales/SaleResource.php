@@ -25,6 +25,7 @@ class SaleResource extends ApiResource
             'discount' => (float) $this->discount,
             'total' => $this->total,
             'profit' => $this->profitAmount(),
+            'open_amount' => $this->openAmount(),
             'status' => $this->status,
             'completed_at' => $this->businessTime($this->completed_at),
             'cancelled_at' => $this->businessTime($this->cancelled_at),

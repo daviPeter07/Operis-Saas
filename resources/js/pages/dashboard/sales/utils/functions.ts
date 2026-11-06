@@ -295,13 +295,12 @@ export function getSalesTotals(sales: Sale[]): SalesTotals {
         count: active.length,
         total: active.reduce((sum, sale) => sum + sale.total, 0),
         profit: active.reduce((sum, sale) => sum + getSaleProfit(sale), 0),
-        receivable: active
-            .filter((sale) => sale.status === 'pending')
-            .reduce(
-                (sum, sale) =>
-                    sum + sale.total - toNumber(sale.crediario_entry),
-                0,
-            ),
+        // Open installments only, like contas a receber: paid entries and
+        // installments of pending sales are already in.
+        receivable: active.reduce(
+            (sum, sale) => sum + toNumber(sale.open_amount),
+            0,
+        ),
     };
 }
 

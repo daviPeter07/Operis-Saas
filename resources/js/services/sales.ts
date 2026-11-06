@@ -19,6 +19,10 @@ function normalizeSale(sale: Sale): Sale {
             sale.installment_value === null
                 ? sale.installment_value
                 : toNumber(sale.installment_value),
+        open_amount:
+            sale.open_amount === undefined || sale.open_amount === null
+                ? undefined
+                : toNumber(sale.open_amount),
         crediario_entry:
             sale.crediario_entry === undefined || sale.crediario_entry === null
                 ? sale.crediario_entry

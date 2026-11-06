@@ -91,6 +91,12 @@ return [
         [
             'date' => '2026-11-06',
             'type' => 'correcao',
+            'title' => 'Total a receber das vendas',
+            'description' => 'O card de vendas agora soma só o que falta receber das parcelas em aberto, sem contar entradas e parcelas que o cliente já pagou.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
             'title' => 'Alertas e atividades da Visão Geral',
             'description' => 'Pagamentos atrasados agora conta as contas vencidas, cada alerta ou atividade abre a lista já filtrada no que foi clicado, e a tabela avisa o filtro com um botão para ver tudo.',
         ],
