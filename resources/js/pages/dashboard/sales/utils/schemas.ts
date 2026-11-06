@@ -31,11 +31,11 @@ export function makeDiscountSchema(subtotal: number) {
         );
 }
 
-// The crediário entry is paid now; the rest is split into installments.
+// The crediário entry is optional and paid now; the rest is split into installments.
 export function makeCrediarioEntrySchema(total: number) {
     return z
         .number()
-        .gt(0, SALE_MESSAGES.entryRequired)
+        .min(0, MESSAGES.notNegative)
         .lt(
             total,
             `${SALE_MESSAGES.entryTooHigh} (${formatCurrencyBR(total)})`,

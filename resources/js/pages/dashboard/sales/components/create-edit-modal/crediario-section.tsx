@@ -32,7 +32,12 @@ export function CrediarioSection({
         >
             <div className="space-y-4 text-sm">
                 <div className="grid gap-2">
-                    <Label htmlFor="crediario-entry">Entrada</Label>
+                    <Label htmlFor="crediario-entry">
+                        Entrada{' '}
+                        <span className="font-normal text-muted-foreground">
+                            (opcional)
+                        </span>
+                    </Label>
                     <Input
                         id="crediario-entry"
                         type="text"
@@ -60,7 +65,7 @@ export function CrediarioSection({
                         )}
                     >
                         {crediario.entryError ??
-                            'Valor pago agora. O restante vira parcelas.'}
+                            'Valor pago agora. Deixe em branco para parcelar o total.'}
                     </p>
                 </div>
 
@@ -123,8 +128,10 @@ export function CrediarioSection({
                     </div>
                 ) : crediario.entryError ? null : (
                     <p className="rounded-xl bg-accent/10 px-3 py-2.5 text-foreground">
-                        A venda fica pendente até a quitação. A entrada é
-                        recebida agora e o saldo é dividido em{' '}
+                        A venda fica pendente até a quitação.{' '}
+                        {crediario.entry > 0
+                            ? 'A entrada é recebida agora e o saldo é dividido em'
+                            : 'Sem entrada, o total é dividido em'}{' '}
                         <strong>
                             {describeInstallments(crediario.installmentAmounts)}
                         </strong>

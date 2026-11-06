@@ -217,7 +217,10 @@ function buildReceiptData(sale: Sale): ReceiptData {
     if (sale.status === 'completed') {
         balanceRows.push(['Pago', total]);
     } else if (sale.status === 'pending' && isCrediario) {
-        balanceRows.push(['Entrada paga', entry]);
+        if (entry > 0) {
+            balanceRows.push(['Entrada paga', entry]);
+        }
+
         balanceRows.push(['A pagar no crediário', Math.max(0, total - entry)]);
     } else if (sale.status === 'pending') {
         balanceRows.push(['A pagar', total]);
