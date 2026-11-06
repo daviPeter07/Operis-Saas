@@ -15,30 +15,24 @@ import {
     isWebSerialSupported,
     printSaleThermalReceiptWithWebSerial,
 } from '@/lib/web-serial-printer';
-import type { Sale } from '@/schemas/sale';
 import type { ThermalPaperWidth } from '@/utils/sale-documents';
 import {
     buildSaleDocumentPreviewHtml,
     downloadSaleInvoicePdf,
     printSaleThermalReceipt,
 } from '@/utils/sale-documents';
+import type {
+    PrintPreviewDialogProps,
+    PrintPreviewMode,
+} from '../../utils/types';
 
-type PreviewMode = 'digital' | 'thermal';
-
-type SaleDocumentPreviewDialogProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    sale: Sale | null;
-    initialMode?: PreviewMode;
-};
-
-export function SaleDocumentPreviewDialog({
+export function PrintPreviewDialog({
     open,
     onOpenChange,
     sale,
     initialMode = 'digital',
-}: SaleDocumentPreviewDialogProps) {
-    const [mode, setMode] = useState<PreviewMode>(initialMode);
+}: PrintPreviewDialogProps) {
+    const [mode, setMode] = useState<PrintPreviewMode>(initialMode);
     const [paperWidth, setPaperWidth] = useState<ThermalPaperWidth>('58mm');
 
     const previewDocument = useMemo(() => {
@@ -74,7 +68,7 @@ export function SaleDocumentPreviewDialog({
                         <div className="space-y-5">
                             <div className="space-y-2">
                                 <p className="text-sm font-medium">
-                                    Visualizacao
+                                    Visualização
                                 </p>
                                 <ToggleGroup
                                     type="single"
@@ -101,7 +95,7 @@ export function SaleDocumentPreviewDialog({
                                         variant="outline"
                                         className="rounded-md border"
                                     >
-                                        Termica
+                                        Térmica
                                     </ToggleGroupItem>
                                 </ToggleGroup>
                             </div>
@@ -187,7 +181,7 @@ export function SaleDocumentPreviewDialog({
                                                         paperWidth,
                                                     );
                                                     toast.success(
-                                                        'Abrindo impressao do Windows com layout termico.',
+                                                        'Abrindo a impressão do Windows com layout térmico.',
                                                     );
 
                                                     return;
@@ -210,10 +204,10 @@ export function SaleDocumentPreviewDialog({
                                                 const message =
                                                     error instanceof Error
                                                         ? error.message
-                                                        : 'Falha ao imprimir diretamente na termica.';
+                                                        : 'Falha ao imprimir diretamente na térmica.';
 
                                                 toast.warning(
-                                                    `${message} Abrindo impressao do Windows com layout termico.`,
+                                                    `${message} Abrindo a impressão do Windows com layout térmico.`,
                                                 );
                                             }
                                         }

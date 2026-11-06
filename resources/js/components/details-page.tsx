@@ -111,3 +111,21 @@ export function DetailsField({
         </div>
     );
 }
+
+// Same frame as DetailsSection, for content that is not a field grid (tables, timelines).
+export function DetailsCard({
+    title,
+    children,
+}: {
+    title: string;
+    children: ReactNode;
+}) {
+    return (
+        <Card className="gap-4 border-border bg-card py-5 shadow-sm">
+            <CardHeader className="border-b px-5 pb-4">
+                <CardTitle className="text-base">{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="px-5">{children}</CardContent>
+        </Card>
+    );
+}

@@ -16,6 +16,13 @@ export default defineConfig(({ mode }) => {
     return {
         base: basePath,
 
+        // Session worktrees under .claude/ carry their own vendor and would exhaust the file watchers.
+        server: {
+            watch: {
+                ignored: ['**/.claude/**'],
+            },
+        },
+
         plugins: [
             laravel({
                 input: ['resources/css/app.css', 'resources/js/app.tsx'],

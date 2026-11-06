@@ -24,7 +24,10 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('dashboard/clients/{customer}', fn (int $customer) => Inertia::render('dashboard/clients/show', ['customerId' => $customer]))
         ->whereNumber('customer')
         ->name('dashboard.clients.show');
-    Route::inertia('dashboard/sales', 'dashboard/sales')->name('dashboard.sales');
+    Route::inertia('dashboard/sales', 'dashboard/sales/index')->name('dashboard.sales');
+    Route::get('dashboard/sales/{sale}', fn (int $sale) => Inertia::render('dashboard/sales/show', ['saleId' => $sale]))
+        ->whereNumber('sale')
+        ->name('dashboard.sales.show');
     Route::inertia('dashboard/suppliers', 'dashboard/suppliers/index')->name('dashboard.suppliers');
     Route::get('dashboard/suppliers/{supplier}', fn (int $supplier) => Inertia::render('dashboard/suppliers/show', ['supplierId' => $supplier]))
         ->whereNumber('supplier')
