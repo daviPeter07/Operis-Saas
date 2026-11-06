@@ -48,7 +48,6 @@ export interface Column<T> {
 }
 
 export interface GenericTableProps<T extends { id: string }> {
-    showPrint?: boolean;
     data: T[];
     columns: Column<T>[];
     title: string;
@@ -106,7 +105,6 @@ export function GenericTable<T extends { id: string }>({
     className,
     routeUrl,
     showActions = true,
-    showPrint = false,
     clickableRow = false,
     onRowClick,
     createFields,
@@ -644,7 +642,6 @@ export function GenericTable<T extends { id: string }>({
                                                                   )
                                                             : undefined
                                                     }
-                                                    showPrint={showPrint}
                                                 />
                                             </DataTableCell>
                                         )}

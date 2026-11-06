@@ -61,6 +61,7 @@ export interface ServerTableProps<T extends { id: string }> {
     showPeriodFilter?: boolean;
     onCreate?: () => void;
     onView?: (row: T) => void;
+    onPrint?: (row: T) => void;
     onEdit?: (row: T) => void;
     onDelete?: (row: T) => Promise<void> | void;
     loadAllForExport?: () => Promise<T[]>;
@@ -81,6 +82,7 @@ export function ServerTable<T extends { id: string }>({
     showPeriodFilter = true,
     onCreate,
     onView,
+    onPrint,
     onEdit,
     onDelete,
     loadAllForExport,
@@ -92,7 +94,7 @@ export function ServerTable<T extends { id: string }>({
     const [deleteRow, setDeleteRow] = React.useState<T | null>(null);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = React.useState(false);
     const hasFilters = columns.some((column) => column.filter);
-    const showActions = Boolean(onEdit || onDelete);
+    const showActions = Boolean(onView || onPrint || onEdit || onDelete);
     const openView = (row: T) => (onView ? onView(row) : setViewRow(row));
 
     const renderCell = (column: ServerColumn<T>, row: T) =>
@@ -299,6 +301,11 @@ export function ServerTable<T extends { id: string }>({
                                         <DataTableCell className="w-32">
                                             <TableActions
                                                 onView={() => openView(row)}
+                                                onPrint={
+                                                    onPrint
+                                                        ? () => onPrint(row)
+                                                        : undefined
+                                                }
                                                 onEdit={
                                                     onEdit
                                                         ? () => onEdit(row)
@@ -358,6 +365,9 @@ export function ServerTable<T extends { id: string }>({
                                 <TableActions
                                     className="mt-2 justify-end border-t pt-2"
                                     onView={() => openView(row)}
+                                    onPrint={
+                                        onPrint ? () => onPrint(row) : undefined
+                                    }
                                     onEdit={
                                         onEdit ? () => onEdit(row) : undefined
                                     }
