@@ -91,6 +91,12 @@ return [
         [
             'date' => '2026-11-07',
             'type' => 'novidade',
+            'title' => 'Loja virtual em breve',
+            'description' => 'Em breve você vai ter uma loja virtual com os produtos do seu estoque, com preço e disponibilidade sempre atualizados, e acompanhar os pedidos pelo Operis.',
+        ],
+        [
+            'date' => '2026-11-07',
+            'type' => 'novidade',
             'title' => 'Cadastro de serviços',
             'description' => 'Cadastre os serviços que a empresa oferece, com custo opcional para os terceirizados, adicione-os na venda junto com os produtos e veja quantas vezes cada um já foi feito.',
         ],
