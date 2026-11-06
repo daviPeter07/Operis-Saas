@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Categories;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Categories\IndexCategoryRequest;
 use App\Http\Requests\Categories\StoreCategoryRequest;
 use App\Http\Requests\Categories\UpdateCategoryRequest;
 use App\Http\Resources\Categories\CategoryResource;
@@ -18,10 +19,10 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexCategoryRequest $request): AnonymousResourceCollection
     {
         return CategoryResource::collection(
-            $this->categoryService->list(auth()->user()->current_company_id)
+            $this->categoryService->list(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 

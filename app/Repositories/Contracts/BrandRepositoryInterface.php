@@ -3,11 +3,12 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Brand;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface BrandRepositoryInterface
 {
-    public function paginateByCompany(int $companyId): LengthAwarePaginator;
+    public function paginateByCompany(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator;
 
     public function createForCompany(int $companyId, array $data): Brand;
 
