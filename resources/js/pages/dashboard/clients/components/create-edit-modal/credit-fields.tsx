@@ -14,37 +14,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatCurrencyInput } from '@/utils/form-fields';
 import {
-    CREDIT_DISABLED_TOOLTIP,
     CREDIT_ENABLED_OPTIONS,
     CREDIT_TERM_OPTIONS,
 } from '../../utils/constants';
-import type {
-    ClientFormValues,
-    CreditFieldTooltipProps,
-} from '../../utils/types';
-
-function CreditFieldTooltip({ disabled, children }: CreditFieldTooltipProps) {
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div>{children}</div>
-                </TooltipTrigger>
-                {disabled ? (
-                    <TooltipContent>{CREDIT_DISABLED_TOOLTIP}</TooltipContent>
-                ) : null}
-            </Tooltip>
-        </TooltipProvider>
-    );
-}
+import type { ClientFormValues } from '../../utils/types';
+import { CreditFieldTooltip } from './credit-field-tooltip';
 
 export function CreditFields() {
     const form = useFormContext<ClientFormValues>();

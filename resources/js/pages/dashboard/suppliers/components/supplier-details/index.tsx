@@ -2,16 +2,9 @@ import { DetailsField, DetailsSection } from '@/components/details-page';
 import { PERSON_TYPE_LABELS } from '@/constants/person-type';
 import { formatDateTimeManaus } from '@/lib/format';
 import { formatDocumentDisplay, formatPhoneDisplay } from '@/utils/form-fields';
-import { DOCUMENT_FIELD, NOT_INFORMED } from '../../utils/constants';
+import { DOCUMENT_FIELD } from '../../utils/constants';
 import type { SupplierDetailsProps } from '../../utils/types';
-
-function NotInformed() {
-    return (
-        <span className="font-normal text-muted-foreground">
-            {NOT_INFORMED}
-        </span>
-    );
-}
+import { NotInformed } from './not-informed';
 
 export function SupplierDetails({ supplier }: SupplierDetailsProps) {
     return (

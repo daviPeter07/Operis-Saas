@@ -9,11 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCreateBrand } from '@/hooks/use-brands';
-import { useCreateCategory } from '@/hooks/use-categories';
 import { todayInAppTimeZone } from '@/lib/app-timezone';
-import { ProductDialog } from '@/pages/dashboard/inventory/components/create-edit-modal';
-import { SupplierCreateDialog } from '@/pages/dashboard/suppliers/components/create-edit-modal';
+import { CreateEditModal as ProductCreateEditModal } from '@/pages/dashboard/inventory/components/create-edit-modal';
+import { CreateEditModal as SupplierCreateEditModal } from '@/pages/dashboard/suppliers/components/create-edit-modal';
 import type { UiPurchase } from '@/types/dashboard-entities';
 import type { UiProduct } from '@/types/dashboard-entities';
 import type {
@@ -174,8 +172,6 @@ export function PurchaseCreateDialog({
     onSubmit,
     products,
     suppliers,
-    categories,
-    brands,
     onCreateProduct,
     onApplyStock,
     mode = 'create',
@@ -211,8 +207,6 @@ export function PurchaseCreateDialog({
     const [purchaseDraft, setPurchaseDraft] = React.useState<UiPurchase | null>(
         null,
     );
-    const createBrand = useCreateBrand();
-    const createCategory = useCreateCategory();
     const purchaseItems = React.useMemo(
         () =>
             (initialItems ?? []).map((item) => ({
@@ -634,18 +628,9 @@ export function PurchaseCreateDialog({
                 }}
             />
 
-            <ProductDialog
+            <ProductCreateEditModal
                 open={productCreateOpen}
                 onOpenChange={setProductCreateOpen}
-                mode="create"
-                brands={brands.map((brand) => ({
-                    value: String(brand.id),
-                    label: brand.name,
-                }))}
-                categories={categories.map((category) => ({
-                    value: String(category.id),
-                    label: category.name,
-                }))}
                 onSubmit={async (data) => {
                     const created = await onCreateProduct({
                         name: data.name.trim(),
@@ -662,18 +647,9 @@ export function PurchaseCreateDialog({
 
                     handleAddFromCatalog(created.id);
                 }}
-                onCreateBrand={async (name) => {
-                    return createBrand.mutateAsync({ name, status: 'active' });
-                }}
-                onCreateCategory={async (name) => {
-                    return createCategory.mutateAsync({
-                        name,
-                        status: 'active',
-                    });
-                }}
             />
 
-            <SupplierCreateDialog
+            <SupplierCreateEditModal
                 open={supplierCreateOpen}
                 onOpenChange={setSupplierCreateOpen}
                 onSuccess={({ id, name }) => {

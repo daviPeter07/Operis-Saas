@@ -58,9 +58,7 @@ export type ClientDialogText = {
     submitting: string;
 };
 
-export type CreateEditModalProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
+export type CreateEditModalProps = ClientCreateDialogProps & {
     customer?: Customer | null;
 };
 
