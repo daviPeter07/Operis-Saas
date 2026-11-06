@@ -309,9 +309,10 @@ class SaleService
         $crediarioEntry = (float) ($sale->crediario_entry ?? 0);
         $financedTotal = (float) $sale->total - $crediarioEntry;
 
-        if ($crediarioEntry <= 0 || $financedTotal <= 0) {
+        // The entry is optional; when given it must leave something to finance.
+        if ($crediarioEntry < 0 || $financedTotal <= 0) {
             throw ValidationException::withMessages([
-                'crediario_entry' => 'Venda em crediario exige entrada maior que zero e menor que o total.',
+                'crediario_entry' => 'A entrada do crediario precisa ser menor que o total da venda.',
             ]);
         }
 

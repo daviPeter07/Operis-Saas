@@ -30,7 +30,7 @@ class UpdateSaleRequest extends FormRequest
             'installments' => ['nullable', 'integer', 'min:1', 'max:24'],
             'first_installment_date' => ['nullable', 'date'],
             'installment_value' => ['nullable', 'numeric', 'min:0'],
-            'crediario_entry' => ['nullable', 'numeric', 'min:0.01'],
+            'crediario_entry' => ['nullable', 'numeric', 'min:0'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'delivered' => ['sometimes', 'boolean'],

@@ -91,6 +91,30 @@ return [
         [
             'date' => '2026-11-06',
             'type' => 'melhoria',
+            'title' => 'Crediário sem entrada',
+            'description' => 'A entrada do crediário agora é opcional: sem ela, o valor total da venda é dividido nas parcelas.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'novidade',
+            'title' => 'Comprovante em PDF no tamanho do cupom',
+            'description' => 'Salve o comprovante da venda em PDF de 80 mm, igual ao cupom da impressora térmica, para enviar ao cliente, e marque no cadastro da compra quais boletos já foram pagos.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Compras em etapas e boletos mais claros',
+            'description' => 'Registre a compra em 4 passos, cadastre o fornecedor pela busca e veja, antes de salvar, quantos boletos serão gerados com a data e o valor de cada um.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Observações e pagamentos das compras preservados',
+            'description' => 'As observações da compra agora ficam salvas, e editar uma compra não desfaz mais os boletos que já foram pagos.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
             'title' => 'Comprovante da venda em PDF mais completo',
             'description' => 'O PDF do comprovante mostra se a venda está paga ou pendente, o desconto, quanto já foi pago e, no crediário, cada parcela com o vencimento.',
         ],

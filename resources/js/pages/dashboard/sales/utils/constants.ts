@@ -296,7 +296,6 @@ export const STOCK_WARNING_FALLBACK =
 export const SALE_MESSAGES = {
     chooseClient: 'Selecione um cliente válido para continuar.',
     addItem: 'Adicione ao menos um item válido na venda.',
-    entryRequired: 'Informe uma entrada maior que zero.',
     entryTooHigh: 'A entrada precisa ser menor que o total da venda.',
     discountPercent: 'O desconto não pode passar de 100%.',
     discountAmount: 'O desconto não pode ser maior que o subtotal.',

@@ -95,9 +95,10 @@ export function makeEmptySupplierForm(): SupplierFormValues {
 
 export function toSupplierFormValues(
     supplier?: Supplier | null,
+    initialName = '',
 ): SupplierFormValues {
     if (!supplier) {
-        return makeEmptySupplierForm();
+        return { ...makeEmptySupplierForm(), name: initialName };
     }
 
     return {

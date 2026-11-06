@@ -9,6 +9,7 @@ import type { ThermalPaperWidth } from '@/utils/sale-documents';
 import {
     formatDiscount,
     formatSaleNumber,
+    getSaleBalance,
     hasDiscount,
 } from '@/utils/sale-documents';
 import {
@@ -219,18 +220,14 @@ export function buildThermalEscPosLines(
     lines.push(
         ...fitRight(
             'Pago',
-            formatCurrencyBR(
-                sale.status === 'completed' ? Number(sale.total) : 0,
-            ),
+            formatCurrencyBR(getSaleBalance(sale).paid),
             width,
         ).map((line) => `${line}\n`),
     );
     lines.push(
         ...fitRight(
             'Restante',
-            formatCurrencyBR(
-                sale.status === 'completed' ? 0 : Number(sale.total),
-            ),
+            formatCurrencyBR(getSaleBalance(sale).remaining),
             width,
         ).map((line) => `${line}\n`),
     );

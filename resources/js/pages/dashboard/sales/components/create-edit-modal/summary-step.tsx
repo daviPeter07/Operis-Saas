@@ -137,7 +137,11 @@ export function SummaryStep({
                                 Entrada
                             </span>
                             <span className="tabular-nums">
-                                {formatCurrencyBR(draft.crediarioEntry ?? 0)}
+                                {(draft.crediarioEntry ?? 0) > 0
+                                    ? formatCurrencyBR(
+                                          draft.crediarioEntry ?? 0,
+                                      )
+                                    : 'Sem entrada'}
                             </span>
                         </div>
                     ) : null}
