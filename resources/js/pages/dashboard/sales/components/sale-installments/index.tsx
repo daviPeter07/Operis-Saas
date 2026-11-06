@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/table';
 import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import {
-    formatOptionalDateTime,
+    formatReceivedAt,
+    getReceivableValue,
     getInstallmentLabel,
 } from '../../utils/functions';
 import type { SaleInstallmentsProps } from '../../utils/types';
@@ -48,15 +49,15 @@ export function SaleInstallments({ receivables }: SaleInstallmentsProps) {
                                         : '-'}
                                 </TableCell>
                                 <TableCell className="text-right tabular-nums">
-                                    {formatCurrencyBR(receivable.amount)}
+                                    {formatCurrencyBR(
+                                        getReceivableValue(receivable),
+                                    )}
                                 </TableCell>
                                 <TableCell>
                                     <StatusBadge status={receivable.status} />
                                 </TableCell>
                                 <TableCell>
-                                    {formatOptionalDateTime(
-                                        receivable.received_at,
-                                    )}
+                                    {formatReceivedAt(receivable.received_at)}
                                 </TableCell>
                             </TableRow>
                         ))}

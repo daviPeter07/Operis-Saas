@@ -14,7 +14,7 @@ import { customersQueryKey } from '@/hooks/use-customers';
 import { productsQueryKey } from '@/hooks/use-products';
 import type { SaleMutationInput } from '@/hooks/use-sales';
 import { receivablesQueryKey, salesQueryKey } from '@/hooks/use-sales';
-import { formatDateTimeManaus } from '@/lib/format';
+import { formatDateBR, formatDateTimeManaus } from '@/lib/format';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
 import type { Customer } from '@/schemas/customer';
 import type { Product } from '@/schemas/product';
@@ -337,10 +337,10 @@ export function toHistoryItems(sale: Sale): HistoryTimelineItem[] {
 
         return {
             id: `${entry.type}-${index}`,
-            title: event.title,
+            title: entry.description || event.title,
             icon: event.icon,
             tone: event.tone,
-            description: entry.description || null,
+            description: null,
             date: entry.occurred_at,
             amount: entry.amount,
         };
@@ -825,6 +825,17 @@ export function formatOptionalDateTime(value?: string | null): string {
     return value ? formatDateTimeManaus(value) : '-';
 }
 
+// Receipts settled on the receivables screen keep only the date (midnight UTC).
+export function formatReceivedAt(value?: string | null): string {
+    if (!value) {
+        return '-';
+    }
+
+    return /T00:00:00(\.0+)?Z$/.test(value)
+        ? formatDateBR(value.slice(0, 10))
+        : formatDateTimeManaus(value);
+}
+
 export function getInstallmentLabel(
     receivable: AccountReceivable,
     installmentsCount: number,
@@ -903,7 +914,12 @@ export function getInstallmentAmounts(
         .sort(
             (a, b) => (a.installment_number ?? 0) - (b.installment_number ?? 0),
         )
-        .map((receivable) => toNumber(receivable.amount));
+        .map(getReceivableValue);
+}
+
+// `amount` is what is still open; the installment value is `total_amount`.
+export function getReceivableValue(receivable: AccountReceivable): number {
+    return toNumber(receivable.total_amount ?? receivable.amount);
 }
 
 export function getSaleInstallmentAmounts(
@@ -912,7 +928,8 @@ export function getSaleInstallmentAmounts(
 ): number[] {
     const saved = getInstallmentAmounts(receivables);
 
-    if (saved.length > 0) {
+    // Cancelled installments are not listed, so fall back to the sale's own split.
+    if (saved.length > 0 && saved.length === (sale.installments ?? 1)) {
         return saved;
     }
 
