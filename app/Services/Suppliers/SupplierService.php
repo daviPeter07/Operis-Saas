@@ -4,15 +4,16 @@ namespace App\Services\Suppliers;
 
 use App\Models\Supplier;
 use App\Repositories\Contracts\SupplierRepositoryInterface;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class SupplierService
 {
     public function __construct(private readonly SupplierRepositoryInterface $suppliers) {}
 
-    public function list(int $companyId): LengthAwarePaginator
+    public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
     {
-        return $this->suppliers->paginateByCompany($companyId);
+        return $this->suppliers->paginateByCompany($companyId, $tableQuery);
     }
 
     public function create(int $companyId, array $data): Supplier
