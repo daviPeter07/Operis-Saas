@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\Purchases\PurchaseCancelController;
 use App\Http\Controllers\Api\Purchases\PurchaseController;
 use App\Http\Controllers\Api\Sales\SaleCancelController;
 use App\Http\Controllers\Api\Sales\SaleController;
+use App\Http\Controllers\Api\Services\ServiceController;
 use App\Http\Controllers\Api\Suppliers\SupplierController;
 use App\Http\Controllers\Api\Suppliers\SupplierImportController;
 use Illuminate\Http\Request;
@@ -58,6 +59,7 @@ Route::middleware([
     Route::apiResource('suppliers', SupplierController::class);
     Route::post('suppliers/import', SupplierImportController::class)->name('api.suppliers.import');
     Route::apiResource('brands', BrandController::class);
+    Route::apiResource('services', ServiceController::class);
     Route::post('brands/import', BrandImportController::class)->name('api.brands.import');
     Route::apiResource('categories', CategoryController::class);
     Route::post('categories/import', CategoryImportController::class)->name('api.categories.import');

@@ -1,14 +1,26 @@
 import { CatalogPanel } from '@/components/sales-dialog/catalog-panel';
-import { filterProductsByQuery } from '../../utils/functions';
+import {
+    filterProductsByQuery,
+    filterServicesByQuery,
+} from '../../utils/functions';
 import type { ProductsStepProps } from '../../utils/types';
 import { CartAddedNotice } from './cart-added-notice';
+import { CatalogModeSwitch } from './catalog-mode-switch';
+import { ServiceCatalogPanel } from './service-catalog-panel';
 
 export function ProductsStep({
     form,
     products,
+    services,
+    mode,
+    onModeChange,
+    serviceSearch,
+    onServiceSearchChange,
     lastAdded,
     onAddFromCatalog,
+    onAddService,
     onOpenCreateProduct,
+    onOpenCreateService,
     onViewCart,
     onDismissAdded,
 }: ProductsStepProps) {
@@ -26,18 +38,31 @@ export function ProductsStep({
                     />
                 </div>
             ) : null}
-            <CatalogPanel
-                productSearch={form.productSearch}
-                setProductSearch={form.setProductSearch}
-                isScannerReady={form.isScannerReady}
-                onToggleScanner={form.toggleScanner}
-                onOpenCreateProduct={onOpenCreateProduct}
-                visibleProducts={filterProductsByQuery(
-                    products,
-                    form.productSearch,
-                )}
-                onAddFromCatalog={onAddFromCatalog}
-            />
+            <div className="px-4 pt-4">
+                <CatalogModeSwitch mode={mode} onChange={onModeChange} />
+            </div>
+            {mode === 'products' ? (
+                <CatalogPanel
+                    productSearch={form.productSearch}
+                    setProductSearch={form.setProductSearch}
+                    isScannerReady={form.isScannerReady}
+                    onToggleScanner={form.toggleScanner}
+                    onOpenCreateProduct={onOpenCreateProduct}
+                    visibleProducts={filterProductsByQuery(
+                        products,
+                        form.productSearch,
+                    )}
+                    onAddFromCatalog={onAddFromCatalog}
+                />
+            ) : (
+                <ServiceCatalogPanel
+                    search={serviceSearch}
+                    onSearchChange={onServiceSearchChange}
+                    services={filterServicesByQuery(services, serviceSearch)}
+                    onAdd={onAddService}
+                    onOpenCreate={onOpenCreateService}
+                />
+            )}
         </div>
     );
 }

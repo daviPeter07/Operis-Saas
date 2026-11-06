@@ -1,7 +1,12 @@
 export interface SaleItem {
     id: number;
-    product_id: number;
+    type?: 'product' | 'service';
+    /** Product or service name. */
+    name?: string | null;
+    product_id: number | null;
     product_name?: string | null;
+    service_id?: number | null;
+    service_name?: string | null;
     category_name?: string | null;
     brand_name?: string | null;
     quantity: number;

@@ -3,12 +3,13 @@
 namespace App\Http\Requests\Sales;
 
 use App\Http\Requests\Sales\Concerns\ValidatesSaleDiscount;
+use App\Http\Requests\Sales\Concerns\ValidatesSaleItems;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreSaleRequest extends FormRequest
 {
-    use ValidatesSaleDiscount;
+    use ValidatesSaleDiscount, ValidatesSaleItems;
 
     public function authorize(): bool
     {
@@ -37,10 +38,7 @@ class StoreSaleRequest extends FormRequest
             'paid_installments' => ['nullable', 'array'],
             'paid_installments.*' => ['integer', 'min:1', 'max:24'],
             'allow_negative_stock' => ['sometimes', 'boolean'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('company_id', $companyId)],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            ...$this->itemRules($companyId, null),
         ];
     }
 }

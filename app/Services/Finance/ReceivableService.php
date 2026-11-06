@@ -6,6 +6,7 @@ use App\Enums\FinancialStatus;
 use App\Enums\SaleStatus;
 use App\Models\AccountReceivable;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
 use App\Services\Products\StockMovementService;
 use App\Services\Sales\SaleHistoryService;
@@ -212,7 +213,7 @@ class ReceivableService
             ]);
 
             $sale = Sale::query()
-                ->with(['items:id,sale_id,product_id,quantity', 'receivables:id,sale_id,status'])
+                ->with(['items:id,sale_id,product_id,service_id,quantity', 'receivables:id,sale_id,status'])
                 ->find($receivable->sale_id);
 
             if ($sale && $recordHistory) {
@@ -428,9 +429,9 @@ class ReceivableService
     private function resolveSaleItemSummary(Sale $sale): ?string
     {
         $items = $sale->items()
-            ->with('product')
+            ->with(['product', 'service'])
             ->get()
-            ->pluck('product.name')
+            ->map(fn (SaleItem $item): ?string => $item->displayName())
             ->filter()
             ->unique()
             ->values();

@@ -11,6 +11,7 @@ import {
     describeInstallments,
     splitSaleInstallments,
 } from '@/utils/sale-installments';
+import { getSaleItemName } from '@/utils/sale-items';
 import { todayString } from '@/utils/sales-dialog';
 
 export type ThermalPaperWidth = '58mm' | '80mm';
@@ -44,7 +45,7 @@ function renderInstallmentSummary(sale: Sale): string | null {
 }
 
 function resolveProductLabel(item: NonNullable<Sale['items']>[number]): string {
-    return item.product_name?.trim() || `Produto #${item.product_id}`;
+    return getSaleItemName(item);
 }
 
 function resolveCategorySummary(sale: Sale): string {
@@ -331,7 +332,7 @@ function renderDigitalDocumentMarkup(sale: Sale): string {
                         ? `<table class="items">
                             <thead>
                                 <tr>
-                                    <th>Produto</th>
+                                    <th>Item</th>
                                     <th class="items__qty">Qtd</th>
                                     <th class="items__money items__unit">Valor unit.</th>
                                     <th class="items__money">Subtotal</th>
@@ -1043,7 +1044,7 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
 
     autoTable(doc, {
         startY: y,
-        head: [['Produto', 'Qtd', 'Valor unit.', 'Subtotal']],
+        head: [['Item', 'Qtd', 'Valor unit.', 'Subtotal']],
         body: data.items.length
             ? data.items.map((item) => [
                   item.name,
@@ -1297,7 +1298,7 @@ export function downloadSaleThermalPdf(sale: Sale): void {
     lines.push({ kind: 'text', text: 'Cliente' });
     lines.push({ kind: 'text', text: customerName, bold: true, size: 9.5 });
 
-    title('Produtos');
+    title('Itens');
     const items = sale.items ?? [];
 
     if (items.length === 0) {

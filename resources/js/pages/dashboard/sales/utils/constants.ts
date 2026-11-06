@@ -9,12 +9,15 @@ import {
     History,
     DollarSign,
     HandCoins,
+    Package,
     PackageCheck,
     Pencil,
     Percent,
     ShoppingCart,
     TrendingUp,
+    Wrench,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { createElement } from 'react';
 import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
@@ -23,6 +26,7 @@ import type { FieldOption } from '@/utils/form-fields';
 import { SaleStatusChip } from '../components/sale-status-chip';
 import type {
     AppliedDiscount,
+    CatalogMode,
     CheckoutPaymentOption,
     HistoryEventConfig,
     HistoryEventMap,
@@ -65,6 +69,8 @@ export const SALES_FILTER_KEYS = [
     'id',
     'customer',
     'product',
+    // The sales of one service, opened from "Realizados" on Serviços.
+    'service_id',
     'category_id',
     'brand_id',
     'status',
@@ -139,7 +145,7 @@ export const CUSTOMER_COLUMN: ServerColumn<SaleRow> = {
 
 export const PRODUCT_EXPORT_COLUMN: ServerColumn<SaleRow> = {
     key: 'productList',
-    header: 'Produto',
+    header: 'Itens',
 };
 
 export const CATEGORY_EXPORT_COLUMN: ServerColumn<SaleRow> = {
@@ -317,7 +323,7 @@ export const SALE_MESSAGES = {
 };
 
 export const SALE_STEPS: SaleStep[] = [
-    { key: 'products', label: 'Produtos', description: 'Escolha os itens' },
+    { key: 'products', label: 'Itens', description: 'Produtos e serviços' },
     {
         key: 'cart',
         label: 'Cliente e carrinho',
@@ -328,7 +334,7 @@ export const SALE_STEPS: SaleStep[] = [
 ];
 
 export const SALE_STEP_HINTS: Record<SaleStepKey, string> = {
-    products: 'Adicione ao menos um produto para continuar.',
+    products: 'Adicione ao menos um produto ou serviço para continuar.',
     cart: 'Escolha o cliente para continuar.',
     payment: 'Confira a forma de pagamento para continuar.',
     summary: '',
@@ -345,4 +351,13 @@ export const SALE_PAYMENT_ANSWERS: SalePaymentAnswer[] = [
         label: 'Paga',
         description: 'Já recebi o pagamento',
     },
+];
+
+export const CATALOG_MODES: Array<{
+    value: CatalogMode;
+    label: string;
+    icon: LucideIcon;
+}> = [
+    { value: 'products', label: 'Produtos', icon: Package },
+    { value: 'services', label: 'Serviços', icon: Wrench },
 ];

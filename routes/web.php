@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function (): void {
         ->name('dashboard.suppliers.show');
     Route::inertia('dashboard/categories', 'dashboard/categories/index')->name('dashboard.categories');
     Route::inertia('dashboard/brands', 'dashboard/brands/index')->name('dashboard.brands');
+    Route::inertia('dashboard/services', 'dashboard/services/index')->name('dashboard.services');
     Route::inertia('dashboard/inventory', 'dashboard/inventory/index')->name('dashboard.inventory');
     Route::get('dashboard/inventory/{product}', fn (int $product) => Inertia::render('dashboard/inventory/show', ['productId' => $product]))
         ->whereNumber('product')
@@ -50,6 +51,7 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('dashboard/accounts-payable/{payable}', fn (int $payable) => Inertia::render('dashboard/accounts-payable/show', ['payableId' => $payable]))
         ->whereNumber('payable')
         ->name('dashboard.accounts-payable.show');
+    Route::inertia('dashboard/store', 'dashboard/store/index')->name('dashboard.store');
     Route::inertia('dashboard/team', 'dashboard/team')->name('dashboard.team');
     Route::inertia('dashboard/reports', 'dashboard/reports')->name('dashboard.reports');
     Route::inertia('dashboard/reports/vendas', 'dashboard/reports/vendas')->name('dashboard.reports.vendas');

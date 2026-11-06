@@ -5,6 +5,7 @@ import type { SaleMutationInput } from '@/hooks/use-sales';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
 import type { Customer } from '@/schemas/customer';
 import type { Sale, SaleHistoryType } from '@/schemas/sale';
+import type { Service } from '@/schemas/service';
 import type {
     UiCustomer,
     UiPaymentMethod,
@@ -124,6 +125,7 @@ export type SaleFormState = {
     selectedClient: UiCustomer | undefined;
     lineItems: SalesLineItem[];
     addProduct: (product: UiProduct, quantity: number, price: number) => void;
+    addService: (service: Service, quantity: number, price: number) => void;
     increaseQuantity: (itemId: string) => void;
     decreaseQuantity: (itemId: string) => void;
     removeItem: (itemId: string) => void;
@@ -198,6 +200,7 @@ export type SaleFormProps = {
     customers: Customer[];
     clients: UiCustomer[];
     products: UiProduct[];
+    services: Service[];
     paidInstallments: number[];
     isSubmitting: boolean;
     onCancel: () => void;
@@ -258,6 +261,21 @@ export type AddProductDialogProps = {
     onOpenChange: (open: boolean) => void;
     product: UiProduct | null;
     onConfirm: (product: UiProduct, quantity: number, price: number) => void;
+};
+
+export type AddServiceDialogProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    service: Service | null;
+    onConfirm: (service: Service, quantity: number, price: number) => void;
+};
+
+export type ServiceCatalogPanelProps = {
+    search: string;
+    onSearchChange: (value: string) => void;
+    services: Service[];
+    onAdd: (service: Service) => void;
+    onOpenCreate: () => void;
 };
 
 export type StockWarningDialogProps = {
@@ -327,12 +345,21 @@ export type CartAddedNoticeProps = {
     onDismiss: () => void;
 };
 
+export type CatalogMode = 'products' | 'services';
+
 export type ProductsStepProps = {
     form: SaleFormState;
     products: UiProduct[];
+    services: Service[];
+    mode: CatalogMode;
+    onModeChange: (mode: CatalogMode) => void;
+    serviceSearch: string;
+    onServiceSearchChange: (value: string) => void;
     lastAdded: AddedToCart | null;
     onAddFromCatalog: (product: UiProduct) => void;
+    onAddService: (service: Service) => void;
     onOpenCreateProduct: () => void;
+    onOpenCreateService: () => void;
     onViewCart: () => void;
     onDismissAdded: () => void;
 };

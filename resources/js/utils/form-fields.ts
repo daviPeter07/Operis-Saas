@@ -24,6 +24,16 @@ export function formatCurrencyInput(value: string): string {
     }).format(amount);
 }
 
+/**
+ * Money value as the BRL input shows it. Rounded to cents first, because
+ * `19.99 * 100` is `1998.9999…` and the mask would read it as a huge price.
+ */
+export function toMoneyInput(value: number): string {
+    return value > 0
+        ? formatCurrencyInput(String(Math.round(value * 100)))
+        : '';
+}
+
 export function parseCurrencyInput(value: string): number {
     const digits = onlyDigits(value);
 

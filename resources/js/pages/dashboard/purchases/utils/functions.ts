@@ -22,7 +22,6 @@ import { toNumber } from '@/services/normalizers';
 import { purchaseService } from '@/services/purchases';
 import type { BreadcrumbItem, ServerValidationError } from '@/types';
 import type { UiProduct } from '@/types/dashboard-entities';
-import { formatCurrencyInput } from '@/utils/form-fields';
 import { todayString } from '@/utils/sales-dialog';
 import {
     BOLETO_DAYS_PER_INSTALLMENT,
@@ -333,12 +332,6 @@ export function isUiPaymentMethod(
 
 export function isBoletoTerm(value: number): value is BoletoTerm {
     return (BOLETO_TERMS as number[]).includes(value);
-}
-
-export function toMoneyInput(value: number): string {
-    return value > 0
-        ? formatCurrencyInput(String(Math.round(value * 100)))
-        : '';
 }
 
 export function toPurchaseFormInitial(

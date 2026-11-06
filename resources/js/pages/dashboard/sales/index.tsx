@@ -5,6 +5,7 @@ import { ServerTable } from '@/components/table/server-table';
 import { useBrands } from '@/hooks/use-brands';
 import { useCategories } from '@/hooks/use-categories';
 import { useServerTableState } from '@/hooks/use-server-table-state';
+import { useServices } from '@/hooks/use-services';
 import { useUrlAction } from '@/hooks/use-url-action';
 import AppLayout from '@/layouts/app-layout';
 import type { Sale } from '@/schemas/sale';
@@ -33,9 +34,13 @@ export default function SalesPage() {
     const salesPage = useSalesPage(tableState.apiParams);
     const { data: brands = [] } = useBrands();
     const { data: categories = [] } = useCategories();
+    const { data: services = [] } = useServices();
     const [isCreateOpen, setIsCreateOpen] = useUrlAction(CREATE_SALE_ACTION);
     const [printSale, setPrintSale] = useState<Sale | null>(null);
 
+    const filteredServiceName = services.find(
+        (service) => String(service.id) === tableState.filters.service_id,
+    )?.name;
     const filterOptions = {
         brands: toFieldOptions(brands),
         categories: toFieldOptions(categories),
@@ -58,7 +63,7 @@ export default function SalesPage() {
                     title="Vendas"
                     columns={getTableColumns(
                         filterOptions,
-                        tableState.filters.product,
+                        tableState.filters.product || filteredServiceName,
                     )}
                     exportColumns={getExportColumns()}
                     rows={(salesPage.data?.data ?? []).map(toSaleRow)}
@@ -69,6 +74,8 @@ export default function SalesPage() {
                     state={tableState}
                     filterLabels={{
                         id: (id) => `Venda #${id}`,
+                        service_id: (id) =>
+                            `Serviço: ${filteredServiceName ?? `#${id}`}`,
                     }}
                     onCreate={() => setIsCreateOpen(true)}
                     onView={(row) => openSaleDetails(row.sale.id)}

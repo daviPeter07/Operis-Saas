@@ -20,14 +20,21 @@ class SaleRepository implements SaleRepositoryInterface
             ->forCompany($companyId)
             ->withProfit()
             ->withOpenAmount()
-            ->with(['customer', 'items.product.category', 'items.product.brand']);
+            ->with(['customer', 'items.product.category', 'items.product.brand', 'items.service']);
 
         if ($tableQuery === null) {
             return $query->latest()->paginate();
         }
 
         $this->whereRelatedNameContains($query, 'customer', $tableQuery->filter('customer'));
-        $this->whereRelatedNameContains($query, 'items.product', $tableQuery->filter('product'));
+        $this->whereItemNameContains($query, $tableQuery->filter('product'));
+
+        // The sales of one service, opened from "Realizados" on the services table.
+        $serviceId = $tableQuery->filter('service_id');
+
+        if ($serviceId !== null) {
+            $query->whereHas('items', fn (Builder $item) => $item->where('service_id', (int) $serviceId));
+        }
 
         foreach (['category_id', 'brand_id'] as $productColumn) {
             $value = $tableQuery->filter($productColumn);
@@ -75,7 +82,28 @@ class SaleRepository implements SaleRepositoryInterface
     }
 
     /**
-     * "Contains" match on the name of a related record (the customer, or any item's product).
+     * "Contains" match on the name of any item: a product or a service.
+     */
+    private function whereItemNameContains(Builder $query, ?string $value): void
+    {
+        if ($value === null) {
+            return;
+        }
+
+        $pattern = $this->likePattern($value);
+
+        $query->whereHas('items', fn (Builder $item) => $item->where(fn (Builder $name) => $name
+            ->whereHas('product', fn (Builder $product) => $product->where('name', 'like', $pattern))
+            ->orWhereHas('service', fn (Builder $service) => $service->where('name', 'like', $pattern))));
+    }
+
+    private function likePattern(string $value): string
+    {
+        return '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value).'%';
+    }
+
+    /**
+     * "Contains" match on the name of a related record (the customer).
      */
     private function whereRelatedNameContains(Builder $query, string $relation, ?string $value): void
     {
@@ -83,7 +111,7 @@ class SaleRepository implements SaleRepositoryInterface
             return;
         }
 
-        $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value).'%';
+        $pattern = $this->likePattern($value);
 
         $query->whereHas($relation, fn (Builder $related) => $related->where('name', 'like', $pattern));
     }
