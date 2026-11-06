@@ -253,6 +253,59 @@ Compras ganhou o mesmo cadastro em etapas, a tabela com filtros por coluna e a p
 - **Tabela com filtros por coluna** (fornecedor, produto, categoria, marca, status e forma de pagamento) e ordenação por data, vencimento e total. Data e vencimento ficam lado a lado no começo.
 - **Página de detalhes da compra** com resumo, valores (total, pago e em aberto), observações, itens e as contas a pagar com a situação de cada boleto.
 
+## 💰 Contas a receber e a pagar (novembro de 2026)
+
+As duas telas ganharam o mesmo padrão das outras: filtros em cada coluna, página de detalhes de cada conta e as ações de baixa num lugar só. A seleção pela caixinha à esquerda continua.
+
+### O que mudou
+
+- **Filtros por coluna:**
+  - Cliente/Fornecedor e Descrição: texto;
+  - Origem: select com Venda/Compra ou Manual;
+  - Status: select com Pendente, Parcial, Recebida/Paga ou Cancelada.
+- **Ordenação:** por Valor, Vencimento e Lançamento. O filtro de período usa o vencimento.
+- **Parcela:** aparece como nas vendas: "1/3", "Entrada" (entrada do crediário) ou "Única".
+- **Seleção:** marcando contas (de qualquer página), aparece uma barra no rodapé com o total e as ações:
+  - "Marcar como recebida/paga";
+  - "Baixa parcial" (com uma conta só);
+  - "Desfazer baixa".
+- **Página de detalhes de cada conta:**
+  - resumo, com link para a venda ou a compra de origem;
+  - valores: valor, recebido/pago e em aberto;
+  - forma e observação do pagamento (em contas a pagar);
+  - observações;
+  - as mesmas ações, mais editar e excluir.
+- **Cadastro de conta:**
+  - formulário novo, com busca de cliente/fornecedor e "Cadastrar" pelo nome digitado;
+  - em contas a pagar no boleto, aparece a lista dos boletos com o vencimento e o valor de cada um, igual ao que vai ser criado.
+
+### Problemas corrigidos
+
+**1. Baixa parcial em contas a receber com a data do dia seguinte**
+- **Antes:** uma baixa parcial feita à noite ficava registrada com a data do dia seguinte.
+- **Por quê:** a data era tirada do relógio universal (UTC), que em Manaus já virou o dia às 20h.
+- **Correção e hoje:** a data usa o dia de Manaus, como a baixa completa já fazia.
+
+**2. "Total recebido/pago" ignorava pagamentos parciais**
+- **Antes:** o cartão de resumo só somava contas totalmente baixadas; o que entrou em baixas parciais não aparecia.
+- **Por quê:** a conta somava o valor das contas com status "Recebida/Paga".
+- **Correção e hoje:** o cartão soma o que foi efetivamente recebido ou pago, inclusive as parciais.
+
+**3. Contas canceladas não apareciam em lugar nenhum**
+- **Antes:** a lista escondia as contas canceladas, sem como consultar.
+- **Por quê:** a API removia as canceladas sempre.
+- **Correção e hoje:** elas continuam fora da lista normal, mas aparecem ao filtrar o Status por "Cancelada".
+
+**4. Conta a receber de R$ 0,00**
+- **Antes:** era possível lançar uma conta a receber com valor zero.
+- **Por quê:** a validação aceitava valor mínimo 0.
+- **Correção e hoje:** o valor precisa ser maior que zero, como em contas a pagar.
+
+**5. A lista carregava tudo e filtrava no navegador**
+- **Antes:** a tela baixava todas as contas e todos os clientes/fornecedores para filtrar e mostrar os nomes, o que fica lento com muitos registros.
+- **Por quê:** a API não tinha filtros nem devolvia o nome do cliente/fornecedor.
+- **Correção e hoje:** filtros, ordenação e paginação rodam no servidor, que já devolve o nome.
+
 ## 🧱 Stack
 
 - **Backend:** Laravel 13 (PHP 8.5), Fortify (autenticação), Sanctum (API com sessão por cookie)
