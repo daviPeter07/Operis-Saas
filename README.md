@@ -190,7 +190,7 @@ Revisão completa do módulo de vendas. Para cada um dos 21 problemas está regi
 
 ## 🛒 Compras no padrão de vendas (novembro de 2026)
 
-Compras ganhou o mesmo cadastro em etapas, a tabela com filtros por coluna e a página de detalhes de vendas. Na revisão apareceram os problemas abaixo, cada um com como era antes, por que acontecia, o que foi feito e como funciona hoje.
+Compras ganhou o mesmo cadastro em etapas, a tabela com filtros por coluna e a página de detalhes de vendas. Na revisão apareceram os 8 problemas abaixo, cada um com como era antes, por que acontecia, o que foi feito e como funciona hoje.
 
 ### Problemas corrigidos
 
@@ -224,10 +224,20 @@ Compras ganhou o mesmo cadastro em etapas, a tabela com filtros por coluna e a p
 - **Por quê:** o sistema sempre registra o pagamento em dinheiro como pago, e nada concluía a compra depois.
 - **Correção e hoje:** no cadastro, compra em dinheiro é sempre registrada como paga.
 
-**7. "60 dias" no boleto não deixava claro quantos boletos eram**
+**7. Não dava para dizer que só parte dos boletos estava paga**
+- **Antes:** no fim do cadastro, a única opção era marcar a compra inteira como "Paga" ou "Pendente". Quem já tinha pago só o 1º boleto precisava escolher entre marcar tudo como pago (errado) ou deixar tudo em aberto e dar baixa depois em contas a pagar.
+- **Por quê:** a compra só tinha uma situação geral, sem olhar os boletos um a um.
+- **Correção e hoje:** no boleto, o resumo mostra a lista dos boletos para marcar os que já foram pagos, com o total pago e o em aberto. Os marcados já entram como pagos em contas a pagar, e a compra fica concluída quando todos estão pagos. Ao editar, os boletos pagos vêm marcados, e desmarcar um volta ele para em aberto.
+
+**8. "60 dias" no boleto não deixava claro quantos boletos eram**
 - **Antes:** as opções eram "30 dias", "60 dias"... e não mostravam que 60 dias significa 2 boletos (um em 30 e outro em 60 dias), nem as datas e os valores.
 - **Por quê:** a tela mostrava só o prazo total.
 - **Correção e hoje:** cada opção mostra a quantidade de boletos ("2 boletos, a cada 30 dias, até 05/01/27"), e embaixo aparece a lista de vencimentos com a data e o valor de cada boleto, igual ao que vai para contas a pagar.
+
+### Comprovante da venda em PDF de 80 mm
+
+- **Novo:** em "Imprimir Nota" → **Digital**, dá para escolher o formato do PDF: **A4** (folha inteira, para imprimir) ou **80 mm** (no tamanho do cupom da impressora térmica, para enviar ao cliente por WhatsApp ou e-mail). O PDF de 80 mm tem o mesmo conteúdo do cupom térmico e a altura do próprio cupom.
+- **Correção junto:** o cupom térmico (na tela, no PDF de 80 mm e na impressão direta) mostrava "Pago R$ 0,00" num crediário pendente mesmo com a entrada paga, porque olhava só o status da venda. Agora mostra a entrada como paga e o restante certo.
 
 ### Melhorias que vieram junto
 
