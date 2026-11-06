@@ -43,7 +43,9 @@ export function DetailsHeader({
             </div>
 
             {actions ? (
-                <div className="flex shrink-0 gap-2">{actions}</div>
+                <div className="flex flex-wrap gap-2 sm:max-w-[60%] sm:justify-end">
+                    {actions}
+                </div>
             ) : null}
         </header>
     );

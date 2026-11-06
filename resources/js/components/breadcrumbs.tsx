@@ -16,8 +16,12 @@ export function Breadcrumbs({
 }: {
     breadcrumbs: BreadcrumbItemType[];
 }) {
-    const resolveHref = (href: string): string =>
-        href.startsWith('/operis') ? href : withAppBasePath(href);
+    // Accepts plain paths and Wayfinder route objects ({ url, method }).
+    const resolveHref = (href: BreadcrumbItemType['href']): string => {
+        const url = typeof href === 'string' ? href : href.url;
+
+        return url.startsWith('/operis') ? url : withAppBasePath(url);
+    };
 
     return (
         <>
@@ -36,7 +40,11 @@ export function Breadcrumbs({
                                             </BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
-                                                <Link href={resolveHref(item.href)}>
+                                                <Link
+                                                    href={resolveHref(
+                                                        item.href,
+                                                    )}
+                                                >
                                                     {item.title}
                                                 </Link>
                                             </BreadcrumbLink>
