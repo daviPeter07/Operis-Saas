@@ -25,7 +25,7 @@ class CustomerRepository implements CustomerRepositoryInterface
 
         $tableQuery
             ->applyTextFilters($query, ['name' => 'name', 'email' => 'email'])
-            ->applyExactFilters($query, ['status' => 'status', 'credit_enabled' => 'credit_enabled'])
+            ->applyExactFilters($query, ['status' => 'status', 'person_type' => 'person_type', 'credit_enabled' => 'credit_enabled'])
             ->applyDateRange($query, 'created_at', isTimestamp: true)
             ->applySort($query, [
                 'name' => 'name',
@@ -35,15 +35,6 @@ class CustomerRepository implements CustomerRepositoryInterface
 
         $this->applyMaskedFilter($query, $tableQuery, 'document');
         $this->applyMaskedFilter($query, $tableQuery, 'phone');
-
-        // The person type shown on screen comes from the document: more than 11 digits is a CNPJ.
-        match ($tableQuery->filter('person_type')) {
-            'pj' => $query->whereRaw('CHAR_LENGTH('.$this->digitsOf('document').') > 11'),
-            'pf' => $query->where(fn (Builder $where) => $where
-                ->whereNull('document')
-                ->orWhereRaw('CHAR_LENGTH('.$this->digitsOf('document').') <= 11')),
-            default => null,
-        };
 
         return $tableQuery->paginate($query);
     }

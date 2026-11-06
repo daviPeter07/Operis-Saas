@@ -4,6 +4,7 @@ export interface Customer {
     email: string;
     phone: string;
     document: string;
+    person_type: 'pf' | 'pj';
     status: 'active' | 'inactive';
     credit_enabled: boolean;
     credit_limit: number;
@@ -19,6 +20,7 @@ export interface CreateCustomerInput {
     email: string;
     phone?: string;
     document?: string;
+    person_type?: 'pf' | 'pj';
     credit_enabled?: boolean;
     credit_limit?: number;
     credit_term_days?: number;

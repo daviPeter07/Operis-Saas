@@ -20,6 +20,7 @@ class CustomerResource extends ApiResource
             'email' => $this->email,
             'phone' => $this->phone,
             'document' => $this->document,
+            'person_type' => $this->person_type,
             'status' => $this->status,
             'credit_enabled' => $this->credit_enabled,
             'credit_limit' => $this->credit_limit,

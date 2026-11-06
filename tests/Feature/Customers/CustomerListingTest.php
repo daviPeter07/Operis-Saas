@@ -56,6 +56,7 @@ beforeEach(function () {
         'name' => 'Comercial Norte Ltda',
         'email' => 'contato@norte.com',
         'document' => '12.345.678/0001-90',
+        'person_type' => 'pj',
         'credit_enabled' => true,
         'credit_limit' => 5000,
     ]);
@@ -105,7 +106,7 @@ test('document and phone filters match the digits with or without the mask', fun
         ->and(listCustomers(['filter' => ['phone' => '(92) 98888']])->json('data.*.name'))->toBe(['Bruno Lima']);
 });
 
-test('person type filter follows the document size', function () {
+test('person type filter uses the saved person type', function () {
     expect(listCustomers(['filter' => ['person_type' => 'pj']])->json('data.*.name'))
         ->toBe(['Comercial Norte Ltda'])
         ->and(listCustomers(['filter' => ['person_type' => 'pf']])->json('data.*.name'))
@@ -202,4 +203,40 @@ test('customers from other companies never appear', function () {
 
     expect(listCustomers(['filter' => ['document' => '123456789']])->json('data.*.name'))
         ->toBe(['Ana Souza']);
+});
+
+test('the person type sent by the form is saved and returned', function () {
+    $this->actingAs($this->user)
+        ->postJson('/api/customers', [
+            'name' => 'Loja Centro Ltda',
+            'email' => 'loja@centro.com',
+            'document' => '98.765.432/0001-10',
+            'person_type' => 'pj',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.person_type', 'pj');
+
+    $customer = Customer::query()->where('name', 'Loja Centro Ltda')->firstOrFail();
+
+    $this->actingAs($this->user)
+        ->putJson("/api/customers/{$customer->id}", [
+            'name' => 'Loja Centro Ltda',
+            'email' => 'loja@centro.com',
+            'document' => '123.456.789-00',
+            'person_type' => 'pf',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.person_type', 'pf');
+});
+
+test('the backfill marks only customers with a CNPJ as pj', function () {
+    $saved = ($this->makeCustomer)(['name' => 'Salvo como PF', 'document' => '11.222.333/0001-44', 'person_type' => 'pf']);
+    $person = ($this->makeCustomer)(['name' => 'Pessoa', 'document' => '111.222.333-44', 'person_type' => 'pf']);
+    $oddDocument = ($this->makeCustomer)(['name' => 'Documento de 12 dígitos', 'document' => '100000000005', 'person_type' => 'pf']);
+
+    (require database_path('migrations/2026_11_05_230000_backfill_customer_person_type.php'))->up();
+
+    expect($saved->fresh()->person_type)->toBe('pj')
+        ->and($person->fresh()->person_type)->toBe('pf')
+        ->and($oddDocument->fresh()->person_type)->toBe('pf');
 });
