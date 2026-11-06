@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Products;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Products\IndexProductRequest;
 use App\Http\Requests\Products\StoreProductRequest;
 use App\Http\Requests\Products\UpdateProductRequest;
 use App\Http\Resources\Products\ProductResource;
@@ -18,10 +19,10 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexProductRequest $request): AnonymousResourceCollection
     {
         return ProductResource::collection(
-            $this->productService->list(auth()->user()->current_company_id)
+            $this->productService->list(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 
