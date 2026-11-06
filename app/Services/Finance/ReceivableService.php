@@ -8,6 +8,7 @@ use App\Models\AccountReceivable;
 use App\Models\Sale;
 use App\Repositories\Contracts\AccountReceivableRepositoryInterface;
 use App\Services\Products\StockMovementService;
+use App\Services\Sales\SaleHistoryService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ class ReceivableService
     public function __construct(
         private readonly AccountReceivableRepositoryInterface $receivables,
         private readonly StockMovementService $stockMovementService,
+        private readonly SaleHistoryService $saleHistory,
     ) {}
 
     public function regenerateFromSale(Sale $sale): void
@@ -31,16 +33,19 @@ class ReceivableService
             ? max(0, min((float) ($sale->crediario_entry ?? 0), (float) $sale->total))
             : 0.0;
         $financedTotal = max(0, (float) $sale->total - $crediarioEntry);
-        $installments = $sale->installments ?? 1;
-        $installmentAmount = $installments > 0
-            ? $financedTotal / $installments
-            : $financedTotal;
+        $installments = max(1, (int) ($sale->installments ?? 1));
+        // Split in cents so the installments always add up to the financed total:
+        // the cents left over go to the last one (220 / 3 = 73.33 + 73.33 + 73.34).
+        $financedCents = (int) round($financedTotal * 100);
+        $baseCents = intdiv($financedCents, $installments);
         $firstInstallmentDate = Carbon::parse($sale->first_installment_date ?? $sale->date)
             ->startOfDay();
         $isCompletedSale = $sale->status === SaleStatus::Completed->value;
 
         for ($i = 0; $i < $installments; $i++) {
             $dueDate = $firstInstallmentDate->copy()->addMonthsNoOverflow($i);
+            $isLast = $i === $installments - 1;
+            $installmentAmount = ($isLast ? $financedCents - $baseCents * ($installments - 1) : $baseCents) / 100;
 
             $this->receivables->create([
                 'company_id' => $sale->company_id,
@@ -76,11 +81,19 @@ class ReceivableService
         }
     }
 
+    /**
+     * Cancels what the customer still owes on a cancelled sale. Money already received
+     * stays recorded as received.
+     */
     public function cancelFromSale(Sale $sale): void
     {
         $current = $this->receivables->forSale($sale);
 
         foreach ($current as $receivable) {
+            if ($receivable->status === FinancialStatus::Received->value) {
+                continue;
+            }
+
             $receivable->update([
                 'status' => FinancialStatus::Cancelled->value,
             ]);
@@ -133,14 +146,21 @@ class ReceivableService
         return $this->receivables->openBalanceForCustomer($companyId, $customerId);
     }
 
-    public function settle(AccountReceivable $receivable, int $userId, array $data): AccountReceivable
+    /**
+     * @param  bool  $recordHistory  False when re-applying a payment the sale history already has.
+     */
+    public function settle(AccountReceivable $receivable, int $userId, array $data, bool $recordHistory = true): AccountReceivable
     {
-        return DB::transaction(function () use ($receivable, $data): AccountReceivable {
+        return DB::transaction(function () use ($receivable, $data, $recordHistory): AccountReceivable {
             if (in_array($receivable->status, [FinancialStatus::Received->value, FinancialStatus::Cancelled->value], true)) {
                 throw ValidationException::withMessages([
                     'receivable' => 'Conta a receber ja foi baixada ou cancelada.',
                 ]);
             }
+
+            $this->ensureSaleIsNotCancelled($receivable);
+
+            $previouslyPaid = (float) ($receivable->amount_paid ?? 0);
 
             $receivable->update([
                 'status' => FinancialStatus::Received->value,
@@ -151,6 +171,10 @@ class ReceivableService
             $sale = Sale::query()
                 ->with(['items:id,sale_id,product_id,quantity', 'receivables:id,sale_id,status'])
                 ->find($receivable->sale_id);
+
+            if ($sale && $recordHistory) {
+                $this->saleHistory->recordPayment($sale, $receivable, (float) $receivable->amount - $previouslyPaid);
+            }
 
             if (! $sale || $sale->status !== SaleStatus::Pending->value) {
                 return $receivable->refresh();
@@ -165,6 +189,7 @@ class ReceivableService
             }
 
             $sale->update(['status' => SaleStatus::Completed->value]);
+            $this->saleHistory->syncStatus($sale);
 
             // Stock was already deducted on sale creation; no additional movement needed.
 
@@ -181,6 +206,10 @@ class ReceivableService
                 ]);
             }
 
+            $this->ensureSaleIsNotCancelled($receivable);
+
+            $reversedAmount = (float) ($receivable->amount_paid ?? 0);
+
             $receivable->update([
                 'status' => FinancialStatus::Pending->value,
                 'amount_paid' => 0,
@@ -195,6 +224,8 @@ class ReceivableService
                 return $receivable->refresh();
             }
 
+            $this->saleHistory->recordPaymentReversed($sale, $receivable, $reversedAmount);
+
             $hasOpenReceivables = $sale->receivables()
                 ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
                 ->exists();
@@ -204,6 +235,7 @@ class ReceivableService
                     ? SaleStatus::Pending->value
                     : SaleStatus::Completed->value,
             ]);
+            $this->saleHistory->syncStatus($sale);
 
             return $receivable->refresh();
         });
@@ -241,6 +273,11 @@ class ReceivableService
                 continue;
             }
 
+            // Money received before the sale was cancelled stays received.
+            if ($targetStatus === FinancialStatus::Cancelled->value && $receivable->status === FinancialStatus::Received->value) {
+                continue;
+            }
+
             $receivable->update([
                 'status' => $targetStatus,
                 'amount_paid' => $targetStatus === FinancialStatus::Received->value
@@ -271,6 +308,8 @@ class ReceivableService
                 ]);
             }
 
+            $this->ensureSaleIsNotCancelled($receivable);
+
             $remaining = max(0, (float) $receivable->amount - (float) ($receivable->amount_paid ?? 0));
             $amount = (float) $data['amount'];
 
@@ -286,7 +325,8 @@ class ReceivableService
                 ]);
             }
 
-            $newAmountPaid = min((float) $receivable->amount, (float) ($receivable->amount_paid ?? 0) + $amount);
+            $previouslyPaid = (float) ($receivable->amount_paid ?? 0);
+            $newAmountPaid = min((float) $receivable->amount, $previouslyPaid + $amount);
             $isFullySettled = round($newAmountPaid, 2) >= round((float) $receivable->amount, 2);
 
             $receivable->update([
@@ -307,6 +347,8 @@ class ReceivableService
                 return $receivable->refresh();
             }
 
+            $this->saleHistory->recordPayment($sale, $receivable, $newAmountPaid - $previouslyPaid, partial: ! $isFullySettled);
+
             $hasOpenReceivables = $sale->receivables()
                 ->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])
                 ->exists();
@@ -316,9 +358,28 @@ class ReceivableService
                     ? SaleStatus::Pending->value
                     : SaleStatus::Completed->value,
             ]);
+            $this->saleHistory->syncStatus($sale);
 
             return $receivable->refresh();
         });
+    }
+
+    /**
+     * Payments of a cancelled sale are frozen: changing them would reopen or complete the sale.
+     */
+    private function ensureSaleIsNotCancelled(AccountReceivable $receivable): void
+    {
+        if ($receivable->sale_id === null) {
+            return;
+        }
+
+        $saleStatus = Sale::query()->whereKey($receivable->sale_id)->value('status');
+
+        if ($saleStatus === SaleStatus::Cancelled->value) {
+            throw ValidationException::withMessages([
+                'receivable' => 'Esta conta pertence a uma venda cancelada e não pode ser alterada.',
+            ]);
+        }
     }
 
     private function resolveSaleItemSummary(Sale $sale): ?string

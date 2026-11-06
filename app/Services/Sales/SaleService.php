@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\Finance\ReceivableService;
 use App\Services\Products\StockMovementService;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,11 +22,12 @@ class SaleService
         private readonly SaleRepositoryInterface $sales,
         private readonly StockMovementService $stockMovementService,
         private readonly ReceivableService $receivableService,
+        private readonly SaleHistoryService $history,
     ) {}
 
-    public function list(int $companyId): LengthAwarePaginator
+    public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
     {
-        return $this->sales->paginateByCompany($companyId);
+        return $this->sales->paginateByCompany($companyId, $tableQuery);
     }
 
     public function create(int $companyId, int $userId, array $data): Sale
@@ -37,28 +39,14 @@ class SaleService
                 (bool) ($data['allow_negative_stock'] ?? false)
             );
 
-            $totals = $this->calculateTotals($data['items']);
             $paymentMethod = $data['payment_method'];
-            $customer = isset($data['customer_id'])
-                ? Customer::query()->find($data['customer_id'])
-                : null;
             $status = $paymentMethod === 'crediario'
                 ? SaleStatus::Pending->value
                 : ($data['status'] ?? SaleStatus::Pending->value);
 
             $sale = $this->sales->createForCompany($companyId, [
-                'customer_id' => $data['customer_id'] ?? null,
-                'date' => $data['date'],
-                'subtotal' => $totals,
-                'total' => $totals,
-                'status' => $status,
-                'payment_method' => $paymentMethod,
-                'installments' => $this->resolveInstallments($paymentMethod, $data),
-                'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
-                'installment_value' => $data['installment_value'] ?? null,
-                'crediario_entry' => $paymentMethod === 'crediario'
-                    ? (float) ($data['crediario_entry'] ?? 0)
-                    : 0,
+                ...$this->saleAttributes($data, $status),
+                'notes' => $data['notes'] ?? null,
             ]);
 
             $this->syncItems($sale, $data['items']);
@@ -66,30 +54,16 @@ class SaleService
             $this->ensureCrediarioIsAllowed($sale);
 
             $this->receivableService->regenerateFromSale($sale);
+            $this->history->recordCreated($sale);
+            $this->history->recordCheckoutPayments($sale);
+            $this->history->syncDelivery($sale, (bool) ($data['delivered'] ?? false));
 
             if ($paymentMethod === 'crediario') {
-                $paidInstallments = collect($data['paid_installments'] ?? [])
-                    ->map(fn ($value) => (int) $value)
-                    ->filter(fn (int $value) => $value > 0)
-                    ->unique()
-                    ->values()
-                    ->all();
-
-                if (! empty($paidInstallments)) {
-                    $receivablesToSettle = $sale->receivables()
-                        ->whereIn('installment_number', $paidInstallments)
-                        ->get();
-
-                    foreach ($receivablesToSettle as $receivable) {
-                        $this->receivableService->settle($receivable, $userId, [
-                            'received_at' => now(config('app.business_timezone'))->toDateString(),
-                        ]);
-                    }
-                }
+                $this->settlePaidInstallments($sale, $userId, $data);
             }
 
-            // Always deduct stock on creation, regardless of status (including crediário)
-            $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+            // Stock leaves on creation, whatever the status (including crediário).
+            $this->stockMovementService->reconcile($companyId, $sale->id, $this->quantitiesByProduct($data['items']), StockMovementType::Sale, $userId);
             // If all crediário installments are already settled, mark the sale as completed (stock already deducted)
             if ($paymentMethod === 'crediario') {
                 $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
@@ -98,7 +72,9 @@ class SaleService
                 }
             }
 
-            return $sale->refresh()->load(['items.product.category', 'customer']);
+            $this->history->syncStatus($sale);
+
+            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
         });
     }
 
@@ -112,34 +88,26 @@ class SaleService
             }
 
             $previousStatus = $sale->status;
-            $previousItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
+            // Crediário entry/installments already paid before this edit (they are in the history).
+            $previouslyReceived = $sale->payment_method === 'crediario'
+                ? $sale->receivables()->where('status', FinancialStatus::Received->value)->pluck('installment_number')
+                : collect();
+            // What this sale holds out of stock now; it is available again for the edited items.
+            $previousItems = $this->stockMovementService->outstandingByProduct($sale->id);
             $this->assertStockAvailability(
                 $data['items'],
                 $previousItems,
                 (bool) ($data['allow_negative_stock'] ?? false)
             );
-            $totals = $this->calculateTotals($data['items']);
             $paymentMethod = $data['payment_method'];
-            $customer = isset($data['customer_id'])
-                ? Customer::query()->find($data['customer_id'])
-                : null;
             $nextStatus = $paymentMethod === 'crediario'
                 ? SaleStatus::Pending->value
                 : ($data['status'] ?? $sale->status ?? SaleStatus::Pending->value);
 
+            // Notes and delivery are only changed when the request sends them.
             $sale = $this->sales->update($sale, [
-                'customer_id' => $data['customer_id'] ?? null,
-                'date' => $data['date'],
-                'subtotal' => $totals,
-                'total' => $totals,
-                'status' => $nextStatus,
-                'payment_method' => $paymentMethod,
-                'installments' => $this->resolveInstallments($paymentMethod, $data),
-                'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
-                'installment_value' => $data['installment_value'] ?? null,
-                'crediario_entry' => $paymentMethod === 'crediario'
-                    ? (float) ($data['crediario_entry'] ?? 0)
-                    : 0,
+                ...$this->saleAttributes($data, $nextStatus),
+                ...(array_key_exists('notes', $data) ? ['notes' => $data['notes']] : []),
             ]);
 
             $sale->items()->delete();
@@ -148,26 +116,25 @@ class SaleService
             $this->ensureCrediarioIsAllowed($sale);
 
             $this->receivableService->regenerateFromSale($sale);
+            $this->history->recordUpdated($sale);
+
+            if (array_key_exists('delivered', $data)) {
+                $this->history->syncDelivery($sale, (bool) $data['delivered']);
+            }
+            // Receivables are rebuilt on every edit: only payments this edit adds go to the history.
+            $this->history->recordCheckoutPayments(
+                $sale,
+                includeEntry: ! $previouslyReceived->contains(fn (mixed $number): bool => $number === null),
+                includeFullPayment: $previousStatus !== SaleStatus::Completed->value,
+            );
 
             if ($paymentMethod === 'crediario') {
-                $paidInstallments = collect($data['paid_installments'] ?? [])
-                    ->map(fn ($value) => (int) $value)
-                    ->filter(fn (int $value) => $value > 0)
-                    ->unique()
-                    ->values()
-                    ->all();
-
-                if (! empty($paidInstallments)) {
-                    $receivablesToSettle = $sale->receivables()
-                        ->whereIn('installment_number', $paidInstallments)
-                        ->get();
-
-                    foreach ($receivablesToSettle as $receivable) {
-                        $this->receivableService->settle($receivable, $userId, [
-                            'received_at' => now(config('app.business_timezone'))->toDateString(),
-                        ]);
-                    }
-                }
+                $this->settlePaidInstallments(
+                    $sale,
+                    $userId,
+                    $data,
+                    alreadyReceived: $previouslyReceived->filter()->map(fn (mixed $number): int => (int) $number)->values()->all(),
+                );
             }
 
             // If all crediário receivables are settled, update status (stock already deducted on creation)
@@ -178,40 +145,41 @@ class SaleService
                 }
             }
 
-            // If a completed sale is set back to pending, revert stock
-            if ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
-                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
-            } elseif ($sale->status === SaleStatus::Completed->value) {
-                // Adjust stock diff when items change on a completed sale
-                $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
-                $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
-            }
+            // Stock follows the items only: a status change (completed <-> pending) moves nothing.
+            $this->stockMovementService->reconcile($sale->company_id, $sale->id, $this->quantitiesByProduct($data['items']), StockMovementType::SaleEdit, $userId);
 
-            return $sale->refresh()->load(['items.product.category', 'customer']);
+            $this->history->syncStatus($sale);
+
+            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
         });
     }
 
     public function cancel(Sale $sale, int $userId): Sale
     {
         return DB::transaction(function () use ($sale, $userId): Sale {
+            // Locked so two cancel requests cannot both give the stock back.
+            $sale = Sale::query()->lockForUpdate()->findOrFail($sale->id);
+
             if ($sale->status === SaleStatus::Cancelled->value) {
                 return $sale;
             }
 
-            if ($sale->status === SaleStatus::Completed->value) {
-                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleCancel, $userId, true);
-                $this->receivableService->cancelFromSale($sale);
-            }
+            // Stock left on every sale's creation, whatever its status, so it always comes back.
+            $this->stockMovementService->reconcile($sale->company_id, $sale->id, [], StockMovementType::SaleCancel, $userId);
+            $this->receivableService->cancelFromSale($sale);
 
-            return $this->sales->update($sale, ['status' => SaleStatus::Cancelled->value]);
+            $sale = $this->sales->update($sale, ['status' => SaleStatus::Cancelled->value]);
+            $this->history->syncStatus($sale);
+
+            return $sale;
         });
     }
 
     public function delete(Sale $sale, int $userId): void
     {
         DB::transaction(function () use ($sale, $userId): void {
-            // Sempre reverter o estoque ao excluir a venda, independente do status
-            $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleCancel, $userId, true);
+            // Gives back whatever the sale still holds out of stock (nothing when it was cancelled).
+            $this->stockMovementService->reconcile($sale->company_id, $sale->id, [], StockMovementType::SaleCancel, $userId);
 
             $sale->receivables()->delete();
             $sale->items()->delete();
@@ -221,9 +189,79 @@ class SaleService
         });
     }
 
-    private function calculateTotals(array $items): float
+    /**
+     * Crediário installments the cashier marked as already paid when saving the sale.
+     *
+     * @param  list<int>  $alreadyReceived  Installments that were paid before this edit (not new payments).
+     */
+    private function settlePaidInstallments(Sale $sale, int $userId, array $data, array $alreadyReceived = []): void
     {
-        return collect($items)->sum(fn (array $item): float => (float) $item['quantity'] * (float) $item['unit_price']);
+        $paidInstallments = collect($data['paid_installments'] ?? [])
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn (int $value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($paidInstallments === []) {
+            return;
+        }
+
+        $receivablesToSettle = $sale->receivables()
+            ->whereIn('installment_number', $paidInstallments)
+            ->get();
+
+        foreach ($receivablesToSettle as $receivable) {
+            $this->receivableService->settle(
+                $receivable,
+                $userId,
+                ['received_at' => now(config('app.business_timezone'))->toDateString()],
+                recordHistory: ! in_array((int) $receivable->installment_number, $alreadyReceived, true),
+            );
+        }
+    }
+
+    /**
+     * Columns shared by create and update. The discount (validated against the items
+     * subtotal by the request) lowers the total, and everything financial derives from
+     * that total: receivables, the crediário entry rule and the installment value.
+     *
+     * @return array<string, mixed>
+     */
+    private function saleAttributes(array $data, string $status): array
+    {
+        $paymentMethod = $data['payment_method'];
+        $customer = isset($data['customer_id'])
+            ? Customer::query()->find($data['customer_id'])
+            : null;
+        $subtotal = $this->calculateSubtotal($data['items']);
+        $discount = round((float) ($data['discount'] ?? 0), 2);
+        $total = round($subtotal - $discount, 2);
+        $installments = $this->resolveInstallments($paymentMethod, $data);
+        $crediarioEntry = $paymentMethod === 'crediario'
+            ? (float) ($data['crediario_entry'] ?? 0)
+            : 0;
+
+        return [
+            'customer_id' => $data['customer_id'] ?? null,
+            'date' => $data['date'],
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'total' => $total,
+            'status' => $status,
+            'payment_method' => $paymentMethod,
+            'installments' => $installments,
+            'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
+            'installment_value' => in_array($paymentMethod, ['card_credit', 'crediario'], true)
+                ? round(max(0, $total - $crediarioEntry) / $installments, 2)
+                : ($data['installment_value'] ?? null),
+            'crediario_entry' => $crediarioEntry,
+        ];
+    }
+
+    private function calculateSubtotal(array $items): float
+    {
+        return round(collect($items)->sum(fn (array $item): float => (float) $item['quantity'] * (float) $item['unit_price']), 2);
     }
 
     private function syncItems(Sale $sale, array $items): void
@@ -307,7 +345,8 @@ class SaleService
         }
 
         if ($paymentMethod === 'crediario') {
-            return $this->receivableService->resolveCrediarioDueDate(
+            // The date the cashier chose for the first installment; otherwise 30 days after the sale.
+            return $data['first_installment_date'] ?? $this->receivableService->resolveCrediarioDueDate(
                 $data['date'],
                 30,
             );
@@ -316,33 +355,16 @@ class SaleService
         return $data['date'];
     }
 
-    private function applyStock(Sale $sale, array $oldItems, array $newItems, StockMovementType $type, int $userId, bool $reverse = false): void
+    /**
+     * @param  array<int, array{product_id:int|string, quantity:float|int|string}>  $items
+     * @return array<int, float> product id => total quantity (lines of the same product added up)
+     */
+    private function quantitiesByProduct(array $items): array
     {
-        $items = $reverse ? $oldItems : $newItems;
-
-        foreach ($items as $item) {
-            $product = Product::query()->findOrFail($item['product_id']);
-            $delta = $reverse ? (float) $item['quantity'] : -(float) $item['quantity'];
-            $this->stockMovementService->register($product, $delta, $type, $sale->id, $userId);
-        }
-    }
-
-    private function applyStockDiff(Sale $sale, array $previousItems, array $newItems, int $userId): void
-    {
-        $productIds = collect(array_keys($previousItems))->merge(array_keys($newItems))->unique();
-
-        foreach ($productIds as $productId) {
-            $previous = $previousItems[$productId] ?? 0.0;
-            $current = $newItems[$productId] ?? 0.0;
-            $diff = $current - $previous;
-
-            if ($diff === 0.0) {
-                continue;
-            }
-
-            $product = Product::query()->findOrFail($productId);
-            $this->stockMovementService->register($product, -$diff, StockMovementType::SaleEdit, $sale->id, $userId);
-        }
+        return collect($items)
+            ->groupBy(fn (array $item): int => (int) $item['product_id'])
+            ->map(fn ($group): float => round((float) $group->sum(fn (array $item): float => (float) $item['quantity']), 2))
+            ->all();
     }
 
     /**
@@ -355,10 +377,7 @@ class SaleService
             return;
         }
 
-        $requestedByProduct = collect($items)
-            ->groupBy(fn (array $item): int => (int) $item['product_id'])
-            ->map(fn ($group): float => (float) $group->sum(fn (array $item): float => (float) $item['quantity']))
-            ->all();
+        $requestedByProduct = $this->quantitiesByProduct($items);
 
         $insufficientItems = [];
 
