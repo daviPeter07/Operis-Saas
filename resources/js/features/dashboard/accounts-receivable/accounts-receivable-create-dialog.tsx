@@ -18,7 +18,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { ClientCreateDialog } from '@/features/dashboard/clients/client-create-dialog';
+import { ClientCreateDialog } from '@/pages/dashboard/clients/components/create-edit-modal';
 import type { UiCustomer } from '@/types/dashboard-entities';
 import { formatCurrencyInput, parseCurrencyInput } from '@/utils/form-fields';
 import { todayString } from '@/utils/sales-dialog';

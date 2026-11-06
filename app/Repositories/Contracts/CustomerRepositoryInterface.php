@@ -3,11 +3,14 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Customer;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface CustomerRepositoryInterface
 {
-    public function paginateByCompany(int $companyId): LengthAwarePaginator;
+    public function paginateByCompany(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator;
+
+    public function loadOpenBalance(Customer $customer): Customer;
 
     public function createForCompany(int $companyId, array $data): Customer;
 

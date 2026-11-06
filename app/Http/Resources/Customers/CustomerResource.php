@@ -24,6 +24,7 @@ class CustomerResource extends ApiResource
             'credit_enabled' => $this->credit_enabled,
             'credit_limit' => $this->credit_limit,
             'credit_term_days' => $this->credit_term_days,
+            'open_balance' => $this->whenHas('open_balance', fn ($value): float => (float) $value),
             'createdAt' => $this->created_at?->clone()->setTimezone(config('app.business_timezone'))->format('Y-m-d H:i:s'),
         ];
     }

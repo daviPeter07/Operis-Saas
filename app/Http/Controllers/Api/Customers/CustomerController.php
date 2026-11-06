@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Customers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customers\IndexCustomerRequest;
 use App\Http\Requests\Customers\StoreCustomerRequest;
 use App\Http\Requests\Customers\UpdateCustomerRequest;
 use App\Http\Resources\Customers\CustomerResource;
@@ -18,11 +19,11 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexCustomerRequest $request): AnonymousResourceCollection
     {
-        $companyId = auth()->user()->current_company_id;
-
-        return CustomerResource::collection($this->customerService->list($companyId));
+        return CustomerResource::collection(
+            $this->customerService->list(auth()->user()->current_company_id, $request->tableQuery())
+        );
     }
 
     /**
@@ -42,7 +43,7 @@ class CustomerController extends Controller
     {
         $this->authorize('view', $customer);
 
-        return response()->json(['data' => CustomerResource::make($customer)]);
+        return response()->json(['data' => CustomerResource::make($this->customerService->withOpenBalance($customer))]);
     }
 
     /**
