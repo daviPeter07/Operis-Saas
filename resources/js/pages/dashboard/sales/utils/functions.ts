@@ -5,6 +5,7 @@ import {
     useQuery,
     useQueryClient,
 } from '@tanstack/react-query';
+import { addDays, format } from 'date-fns';
 import { createElement, useState } from 'react';
 import type { HistoryTimelineItem } from '@/components/history-timeline';
 import type { ServerColumn } from '@/components/table/server-table';
@@ -13,7 +14,7 @@ import { customersQueryKey } from '@/hooks/use-customers';
 import { productsQueryKey } from '@/hooks/use-products';
 import type { SaleMutationInput } from '@/hooks/use-sales';
 import { receivablesQueryKey, salesQueryKey } from '@/hooks/use-sales';
-import { formatDateTimeManaus } from '@/lib/format';
+import { formatCurrencyBR, formatDateTimeManaus } from '@/lib/format';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
 import type { Customer } from '@/schemas/customer';
 import type { Product } from '@/schemas/product';
@@ -40,6 +41,7 @@ import {
     BRAND_EXPORT_COLUMN,
     CATEGORY_EXPORT_COLUMN,
     CREDIARIO_DAYS_PER_INSTALLMENT,
+    CREDIARIO_FIRST_DUE_DAYS,
     CUSTOMER_COLUMN,
     DATE_COLUMN,
     HISTORY_EVENTS,
@@ -426,6 +428,7 @@ export function toSaleFormInitial(sale?: Sale | null): SaleFormInitial {
             cardType: 'debit',
             installments: '1',
             crediarioEntry: '',
+            firstInstallmentDate: null,
             discount: NO_DISCOUNT,
             notes: '',
             delivered: false,
@@ -451,6 +454,10 @@ export function toSaleFormInitial(sale?: Sale | null): SaleFormInitial {
         cardType: sale.payment_method === 'card_credit' ? 'credit' : 'debit',
         installments: String(sale.installments ?? 1),
         crediarioEntry: toMoneyInput(toNumber(sale.crediario_entry)),
+        firstInstallmentDate:
+            sale.payment_method === 'crediario'
+                ? (sale.first_installment_date ?? null)
+                : null,
         discount:
             discount > 0 ? { type: 'amount', value: discount } : NO_DISCOUNT,
         notes: sale.notes ?? '',
@@ -532,10 +539,13 @@ export function useSaleForm(
     const [crediarioEntry, setCrediarioEntry] = useState(
         initial.crediarioEntry,
     );
-    const [firstInstallmentDate, setFirstInstallmentDate] = useState(
-        initial.date,
+    const [chosenFirstInstallmentDate, setFirstInstallmentDate] = useState(
+        initial.firstInstallmentDate,
     );
     const [saleDate, setSaleDate] = useState(initial.date);
+    const firstInstallmentDate =
+        chosenFirstInstallmentDate ??
+        addDaysToDate(saleDate, CREDIARIO_FIRST_DUE_DAYS);
     const [notes, setNotes] = useState(initial.notes);
     const [discount, setDiscount] = useState(initial.discount);
 
@@ -565,6 +575,7 @@ export function useSaleForm(
         financed,
         installments: effectiveInstallments,
         installmentValue: roundMoney(financed / effectiveInstallments),
+        installmentAmounts: splitInstallments(financed, effectiveInstallments),
         maxInstallments,
         availableCredit,
         creditEnabled,
@@ -682,6 +693,7 @@ export function buildSaleDraft(
         saleId?: number;
         saleStatus?: SaleStatus;
         paidInstallments: number[];
+        savedInstallmentAmounts: number[];
         delivered: boolean;
     },
 ): SaleDraft {
@@ -702,11 +714,20 @@ export function buildSaleDraft(
         discount: form.discountAmount,
         total: form.total,
         installments,
-        firstInstallmentDate:
-            isCrediario || isCardCredit ? form.firstInstallmentDate : undefined,
+        firstInstallmentDate: isCrediario
+            ? form.firstInstallmentDate
+            : isCardCredit
+              ? form.saleDate
+              : undefined,
         installmentValue: isCrediario
             ? form.crediario.installmentValue
             : undefined,
+        installmentAmounts: isCrediario
+            ? pickInstallmentAmounts(
+                  options.savedInstallmentAmounts,
+                  form.crediario.installmentAmounts,
+              )
+            : [],
         crediarioEntry: isCrediario ? form.crediario.entry : undefined,
         paidInstallments: isCrediario
             ? options.paidInstallments.filter(
@@ -850,4 +871,75 @@ export function toNewClientData(name: string): NewClientData {
         creditTermDays: 30,
         status: 'active',
     };
+}
+
+export function addDaysToDate(date: string, days: number): string {
+    return format(addDays(parseLocalDate(date), days), 'yyyy-MM-dd');
+}
+
+// Same split as the API: equal installments, leftover cents on the last one.
+export function splitInstallments(financed: number, count: number): number[] {
+    const installments = Math.max(1, count);
+    const base = roundMoney(financed / installments);
+    const last = roundMoney(financed - base * (installments - 1));
+
+    return Array.from({ length: installments }, (_, index) =>
+        index === installments - 1 ? last : base,
+    );
+}
+
+// Keeps the saved receivables when the edit did not change the split.
+function pickInstallmentAmounts(saved: number[], computed: number[]): number[] {
+    const sum = (amounts: number[]) =>
+        roundMoney(amounts.reduce((total, amount) => total + amount, 0));
+
+    return saved.length === computed.length && sum(saved) === sum(computed)
+        ? saved
+        : computed;
+}
+
+export function getInstallmentAmounts(
+    receivables: AccountReceivable[],
+): number[] {
+    return receivables
+        .filter((receivable) => receivable.installment_number !== null)
+        .sort(
+            (a, b) => (a.installment_number ?? 0) - (b.installment_number ?? 0),
+        )
+        .map((receivable) => toNumber(receivable.amount));
+}
+
+export function getSaleInstallmentAmounts(
+    sale: Sale,
+    receivables: AccountReceivable[],
+): number[] {
+    const saved = getInstallmentAmounts(receivables);
+
+    if (saved.length > 0) {
+        return saved;
+    }
+
+    const financed = Math.max(0, sale.total - toNumber(sale.crediario_entry));
+
+    return splitInstallments(financed, sale.installments ?? 1);
+}
+
+export function describeInstallments(amounts: number[]): string {
+    if (amounts.length === 0) {
+        return '-';
+    }
+
+    const [first] = amounts;
+    const last = amounts[amounts.length - 1];
+    const head = amounts.slice(0, -1);
+
+    if (amounts.every((amount) => amount === first)) {
+        return `${amounts.length}x de ${formatCurrencyBR(first)}`;
+    }
+
+    if (head.every((amount) => amount === first)) {
+        return `${head.length}x de ${formatCurrencyBR(first)} + 1x de ${formatCurrencyBR(last)}`;
+    }
+
+    return amounts.map(formatCurrencyBR).join(' + ');
 }

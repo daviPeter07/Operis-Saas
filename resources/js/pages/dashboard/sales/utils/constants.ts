@@ -263,6 +263,9 @@ export const SALE_DIALOG_TEXT: Record<SaleDialogMode, SaleDialogText> = {
 
 export const NO_DISCOUNT: AppliedDiscount = { type: 'amount', value: 0 };
 
+// Default first crediário due date, counted from the sale date.
+export const CREDIARIO_FIRST_DUE_DAYS = 30;
+
 // Days of credit term per crediário installment.
 export const CREDIARIO_DAYS_PER_INSTALLMENT = 30;
 

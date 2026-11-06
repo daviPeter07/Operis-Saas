@@ -23,6 +23,7 @@ export function SaleForm({
     initial,
     saleId,
     saleStatus,
+    savedInstallmentAmounts,
     customers,
     clients,
     products,
@@ -90,6 +91,7 @@ export function SaleForm({
                                 saleId,
                                 saleStatus,
                                 paidInstallments,
+                                savedInstallmentAmounts,
                                 delivered: initial.delivered,
                             }),
                         );

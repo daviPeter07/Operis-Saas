@@ -6,11 +6,16 @@ import {
 } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { PAYMENT_METHOD_LABELS } from '../../utils/constants';
-import { formatOptionalDateTime, getSaleProfit } from '../../utils/functions';
+import {
+    describeInstallments,
+    formatOptionalDateTime,
+    getSaleInstallmentAmounts,
+    getSaleProfit,
+} from '../../utils/functions';
 import type { SaleDetailsProps } from '../../utils/types';
 import { SaleStatusChip } from '../sale-status-chip';
 
-export function SaleDetails({ sale }: SaleDetailsProps) {
+export function SaleDetails({ sale, receivables }: SaleDetailsProps) {
     const installments = sale.installments ?? 1;
     const entry = toNumber(sale.crediario_entry);
     const discount = toNumber(sale.discount);
@@ -45,8 +50,10 @@ export function SaleDetails({ sale }: SaleDetailsProps) {
                         sale.payment_method}
                 </DetailsField>
                 <DetailsField label="Parcelas">
-                    {installments > 1 && sale.installment_value
-                        ? `${installments}x de ${formatCurrencyBR(sale.installment_value)}`
+                    {installments > 1 || receivables.length > 0
+                        ? describeInstallments(
+                              getSaleInstallmentAmounts(sale, receivables),
+                          )
                         : `${installments}x`}
                 </DetailsField>
                 <DetailsField label="Entregue em">

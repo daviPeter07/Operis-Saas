@@ -34,8 +34,12 @@ export function SaleConfirmationDialog({
     const [delivered, setDelivered] = useState(draft.delivered);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    const installmentValue =
-        draft.installmentValue ?? draft.total / draft.installments;
+    const installmentAmount = (number: number) =>
+        draft.installmentAmounts[number - 1] ?? 0;
+    const paidAmount = paidInstallments.reduce(
+        (sum, number) => sum + installmentAmount(number),
+        0,
+    );
     const profit = calculateItemsProfit(draft.lineItems) - draft.discount;
     const installmentNumbers = Array.from(
         { length: draft.installments },
@@ -259,7 +263,9 @@ export function SaleConfirmationDialog({
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
                                                     {formatCurrencyBR(
-                                                        installmentValue,
+                                                        installmentAmount(
+                                                            number,
+                                                        ),
                                                     )}
                                                 </div>
                                             </div>
@@ -271,10 +277,7 @@ export function SaleConfirmationDialog({
                                 <div className="mt-3 text-sm font-medium text-green-600">
                                     {paidInstallments.length} parcela(s)
                                     confirmada(s):{' '}
-                                    {formatCurrencyBR(
-                                        paidInstallments.length *
-                                            installmentValue,
-                                    )}
+                                    {formatCurrencyBR(paidAmount)}
                                 </div>
                             ) : null}
                         </div>

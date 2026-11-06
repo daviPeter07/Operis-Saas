@@ -98,6 +98,7 @@ export type SaleFormInitial = {
     cardType: CardType;
     installments: string;
     crediarioEntry: string;
+    firstInstallmentDate: string | null;
     discount: AppliedDiscount;
     notes: string;
     delivered: boolean;
@@ -108,6 +109,7 @@ export type CrediarioSummary = {
     financed: number;
     installments: number;
     installmentValue: number;
+    installmentAmounts: number[];
     maxInstallments: number;
     availableCredit: number;
     creditEnabled: boolean;
@@ -166,6 +168,7 @@ export type SaleDraft = {
     installments: number;
     firstInstallmentDate?: string;
     installmentValue?: number;
+    installmentAmounts: number[];
     crediarioEntry?: number;
     paidInstallments: number[];
     status: 'pending' | 'completed';
@@ -190,6 +193,7 @@ export type SaleFormProps = {
     initial: SaleFormInitial;
     saleId?: number;
     saleStatus?: SaleStatus;
+    savedInstallmentAmounts: number[];
     customers: Customer[];
     clients: UiCustomer[];
     products: UiProduct[];
@@ -274,6 +278,7 @@ export type SaleStatusChipProps = {
 
 export type SaleDetailsProps = {
     sale: Sale;
+    receivables: AccountReceivable[];
 };
 
 export type SaleItemsProps = {

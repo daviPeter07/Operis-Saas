@@ -13,6 +13,7 @@ import {
 } from '../../utils/constants';
 import {
     getErrorMessage,
+    getInstallmentAmounts,
     getOwnOpenBalance,
     getPaidInstallments,
     getSaleReceivables,
@@ -115,6 +116,9 @@ export function CreateEditModal({
                         clients={clients}
                         products={products.map(toUiProduct)}
                         paidInstallments={getPaidInstallments(saleReceivables)}
+                        savedInstallmentAmounts={getInstallmentAmounts(
+                            saleReceivables,
+                        )}
                         isSubmitting={isSubmitting}
                         onSubmit={(draft) => void submit(draft)}
                     />

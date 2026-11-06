@@ -147,7 +147,7 @@ function ShowContent({ saleId }: SalesShowPageProps) {
                 }
             />
 
-            <SaleDetails sale={sale} />
+            <SaleDetails sale={sale} receivables={saleReceivables} />
 
             <SaleItems sale={sale} />
 

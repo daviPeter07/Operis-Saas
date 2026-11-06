@@ -7,6 +7,7 @@ import { formatCurrencyBR } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { formatCurrencyInput } from '@/utils/form-fields';
 import { SALE_MESSAGES } from '../../utils/constants';
+import { describeInstallments } from '../../utils/functions';
 import type { CrediarioSectionProps } from '../../utils/types';
 
 export function CrediarioSection({
@@ -112,8 +113,7 @@ export function CrediarioSection({
                     <p className="text-muted-foreground">
                         A venda fica pendente até a quitação: a entrada é
                         recebida agora e o saldo financiado é dividido em{' '}
-                        {crediario.installments}x de{' '}
-                        {formatCurrencyBR(crediario.installmentValue)}.
+                        {describeInstallments(crediario.installmentAmounts)}.
                     </p>
                 )}
             </CardContent>
