@@ -103,6 +103,7 @@ export function IdentificationFields({
                             <Button
                                 type="button"
                                 variant="outline"
+                                aria-label="Gerar código interno"
                                 onClick={() =>
                                     form.setValue(
                                         'sku',
@@ -117,8 +118,8 @@ export function IdentificationFields({
                                     )
                                 }
                             >
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Gerar
+                                <Sparkles className="size-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Gerar</span>
                             </Button>
                         </div>
                         <FormMessage />
@@ -177,6 +178,7 @@ export function IdentificationFields({
                             <Button
                                 type="button"
                                 variant="outline"
+                                aria-label="Gerar código de barras"
                                 onClick={() =>
                                     form.setValue(
                                         'barcode',
@@ -184,12 +186,13 @@ export function IdentificationFields({
                                     )
                                 }
                             >
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Gerar
+                                <Sparkles className="size-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Gerar</span>
                             </Button>
                             <Button
                                 type="button"
                                 variant="outline"
+                                aria-label="Ler código de barras com o scanner"
                                 onClick={() => {
                                     form.setFocus('barcode');
                                     toast.info(
@@ -197,8 +200,8 @@ export function IdentificationFields({
                                     );
                                 }}
                             >
-                                <Barcode className="mr-2 h-4 w-4" />
-                                Ler
+                                <Barcode className="size-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Ler</span>
                             </Button>
                         </div>
                     </FormItem>

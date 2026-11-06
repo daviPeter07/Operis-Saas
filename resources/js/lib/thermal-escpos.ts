@@ -6,7 +6,11 @@ import {
 } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
 import type { ThermalPaperWidth } from '@/utils/sale-documents';
-import { formatDiscount, hasDiscount } from '@/utils/sale-documents';
+import {
+    formatDiscount,
+    formatSaleNumber,
+    hasDiscount,
+} from '@/utils/sale-documents';
 import {
     describeInstallments,
     splitSaleInstallments,
@@ -114,7 +118,7 @@ export function buildThermalEscPosLines(
     lines.push(
         ...fitRight(
             `Data: ${formatDateBR(sale.date)}`,
-            `Venda: #${sale.id}`,
+            formatSaleNumber(sale, 'Venda: '),
             width,
         ).map((line) => `${line}\n`),
     );

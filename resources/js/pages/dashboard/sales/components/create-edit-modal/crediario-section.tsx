@@ -1,6 +1,6 @@
+import { CalendarClock, TriangleAlert } from 'lucide-react';
 import { CardPaymentFields } from '@/components/payment/card-payment-fields';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatCurrencyBR } from '@/lib/format';
@@ -9,6 +9,7 @@ import { formatCurrencyInput } from '@/utils/form-fields';
 import { describeInstallments } from '@/utils/sale-installments';
 import { SALE_MESSAGES } from '../../utils/constants';
 import type { CrediarioSectionProps } from '../../utils/types';
+import { StepSection } from './step-section';
 
 export function CrediarioSection({
     form,
@@ -24,15 +25,14 @@ export function CrediarioSection({
             : null;
 
     return (
-        <Card>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Crediário do cliente</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
+        <StepSection
+            icon={CalendarClock}
+            title="Crediário"
+            description="Entrada agora e o restante em parcelas"
+        >
+            <div className="space-y-4 text-sm">
                 <div className="grid gap-2">
-                    <Label htmlFor="crediario-entry">
-                        Entrada no crediário
-                    </Label>
+                    <Label htmlFor="crediario-entry">Entrada</Label>
                     <Input
                         id="crediario-entry"
                         type="text"
@@ -63,6 +63,7 @@ export function CrediarioSection({
                             'Valor pago agora. O restante vira parcelas.'}
                     </p>
                 </div>
+
                 <CardPaymentFields
                     cardType="credit"
                     onCardTypeChange={form.setCardType}
@@ -75,48 +76,62 @@ export function CrediarioSection({
                     enableInstallments
                     maxInstallments={crediario.maxInstallments}
                 />
-                <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">
-                        Saldo financiado
-                    </span>
-                    <span className="font-semibold">
-                        {formatCurrencyBR(crediario.financed)}
-                    </span>
+
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border bg-muted/20 px-3 py-2.5">
+                        <p className="text-xs text-muted-foreground">
+                            Saldo financiado
+                        </p>
+                        <p className="font-semibold tabular-nums">
+                            {formatCurrencyBR(crediario.financed)}
+                        </p>
+                    </div>
+                    <div className="rounded-xl border bg-muted/20 px-3 py-2.5">
+                        <p className="text-xs text-muted-foreground">
+                            Limite disponível
+                        </p>
+                        <p className="font-semibold tabular-nums">
+                            {selectedClient
+                                ? formatCurrencyBR(crediario.availableCredit)
+                                : '-'}
+                        </p>
+                    </div>
                 </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">
-                        Limite disponível
-                    </span>
-                    <span className="font-semibold">
-                        {selectedClient
-                            ? formatCurrencyBR(crediario.availableCredit)
-                            : '-'}
-                    </span>
-                </div>
+
                 {!selectedClient ? (
                     <p className="text-muted-foreground">
                         Escolha o cliente para ver o limite do crediário.
                     </p>
                 ) : creditProblem ? (
-                    <div className="space-y-2">
-                        <p className="text-destructive">{creditProblem}</p>
+                    <div className="flex flex-col gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="flex items-start gap-2 text-destructive">
+                            <TriangleAlert
+                                aria-hidden
+                                className="mt-0.5 size-4 shrink-0"
+                            />
+                            {creditProblem}
+                        </p>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="shrink-0"
                             onClick={onEditClient}
                         >
                             Ajustar crediário do cliente
                         </Button>
                     </div>
                 ) : crediario.entryError ? null : (
-                    <p className="text-muted-foreground">
-                        A venda fica pendente até a quitação: a entrada é
-                        recebida agora e o saldo financiado é dividido em{' '}
-                        {describeInstallments(crediario.installmentAmounts)}.
+                    <p className="rounded-xl bg-accent/10 px-3 py-2.5 text-foreground">
+                        A venda fica pendente até a quitação. A entrada é
+                        recebida agora e o saldo é dividido em{' '}
+                        <strong>
+                            {describeInstallments(crediario.installmentAmounts)}
+                        </strong>
+                        .
                     </p>
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </StepSection>
     );
 }

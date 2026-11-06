@@ -204,6 +204,26 @@ export type SaleFormProps = {
     onSubmit: (draft: SaleDraft) => void;
 };
 
+export type CheckoutPaymentOption = {
+    value: UiPaymentMethod;
+    label: string;
+    hint: string;
+    icon: LucideIcon;
+};
+
+export type StepCardProps = {
+    children: ReactNode;
+};
+
+export type StepSectionProps = {
+    icon: LucideIcon;
+    title: string;
+    description?: string;
+    action?: ReactNode;
+    className?: string;
+    children: ReactNode;
+};
+
 export type CheckoutSectionProps = {
     form: SaleFormState;
 };
@@ -293,11 +313,28 @@ export type SaleStepsProps = {
     onSelect: (index: number) => void;
 };
 
+export type AddedToCart = {
+    id: number;
+    productName: string;
+    quantity: number;
+};
+
+export type CartAddedNoticeProps = {
+    added: AddedToCart;
+    itemCount: number;
+    total: number;
+    onViewCart: () => void;
+    onDismiss: () => void;
+};
+
 export type ProductsStepProps = {
     form: SaleFormState;
     products: UiProduct[];
+    lastAdded: AddedToCart | null;
     onAddFromCatalog: (product: UiProduct) => void;
     onOpenCreateProduct: () => void;
+    onViewCart: () => void;
+    onDismissAdded: () => void;
 };
 
 export type CartStepProps = {
@@ -310,6 +347,12 @@ export type CartStepProps = {
 export type PaymentStepProps = {
     form: SaleFormState;
     onEditClient: () => void;
+};
+
+export type SalePaymentAnswer = {
+    value: SaleDraft['status'];
+    label: string;
+    description: string;
 };
 
 export type SummaryStepProps = {

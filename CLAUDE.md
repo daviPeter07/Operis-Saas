@@ -10,9 +10,9 @@ Operis is a multi-tenant business management SaaS (sales, purchases, inventory, 
 composer run dev                 # artisan serve + queue:listen + vite, all at once
 pnpm dev / pnpm build            # Vite only
 
-php artisan test --compact                                # all tests
-php artisan test --compact tests/Feature/Sales            # one directory/file
-php artisan test --compact --filter="creates a sale"      # one test
+DB_DATABASE=operis_test_main php artisan test --compact                            # all tests
+DB_DATABASE=operis_test_main php artisan test --compact tests/Feature/Sales        # one directory/file
+DB_DATABASE=operis_test_main php artisan test --compact --filter="creates a sale"  # one test
 
 vendor/bin/pint --dirty --format agent   # format changed PHP (required after PHP edits)
 pnpm lint            # eslint --fix
@@ -22,7 +22,9 @@ composer run ci:check  # eslint + prettier + tsc + pint --test + tests
 php artisan wayfinder:generate   # regenerate TS route/action helpers
 ```
 
-Tests run against **MySQL** (`phpunit.xml` sets `DB_CONNECTION=mysql`, not sqlite), so a MySQL database must be reachable. Feature tests use `RefreshDatabase` automatically (`tests/Pest.php`).
+Tests run against **MySQL** (`phpunit.xml` sets `DB_CONNECTION=mysql`, not sqlite), so a MySQL database must be reachable. Feature tests use `RefreshDatabase` automatically (`tests/Pest.php`), which wipes whatever database is configured: always pass `DB_DATABASE=operis_test_main` (a test-only database in the Docker MySQL) so the dev data survives. Page tests read the Vite manifest; if they fail with "Unable to locate file in Vite manifest" and the dev server is not running, run `npx vite build` first.
+
+`vite.config.ts` ignores `**/.claude/**`: agent worktrees live there with their own `vendor`/`node_modules` and used to exhaust the file watcher (`ENOSPC`), killing `composer run dev`.
 
 ## Architecture
 
@@ -42,11 +44,32 @@ Tenant = `Company`. The active tenant is `users.current_company_id` (resolved by
 - **Finance**: sales generate `AccountReceivable` installments via `ReceivableService` (payment method `crediario` = store credit installments, with `paid_installments` marking some as already received); purchases generate `AccountPayable` via `PayableService`. Canceling the sale/purchase must cancel its financial records, and a sale becomes `completed` once all receivables are `Received`/`Cancelled`.
 When changing any of these flows, check the stock and financial effects together.
 
+### Sales rules (do not regress)
+These rules come from the November 2026 sales review. The customer-facing write-up (before / why / fix / now for each bug) is in `README.md` under "Correções em vendas".
+- **Discount:** `sales.discount` is persisted; `total = subtotal − discount`, computed in one place in `SaleService` for create and update. A discount above the subtotal is a 422. Receivables, crediário entry, `installment_value`, the credit limit and the receipt all use the discounted total. Before the fix the column did not exist and the API dropped the field, so sales were saved at full price.
+- **Installments:** split in cents with floor; the remainder goes on the last one (`220/3 = 73.33 + 73.33 + 73.34`). The API and the front (`utils/sale-installments.ts` → `splitInstallments`) must use the same rule. Each installment used to be rounded alone and lost cents.
+- **Crediário:** the first due date comes from `first_installment_date` (default sale date + 30 days), then month by month clamped to month end. Installments split the financed balance (total − entry), not the total. The credit limit counts only open receivables and excludes the sale being edited. `paid_installments` is sent on update too, otherwise paid installments were recreated as open.
+- **Stock:** every create/update/cancel/delete derives the delta from the sale's own `StockMovement` balance, never from the status. Stock leaves on creation in any status. Edit applies only the item diff. Cancel and delete return only what the sale still holds, so the stock comes back once, whatever the order of actions. The old code branched on status, which returned stock on completed → pending and did not adjust pending sales.
+- **Cancel:** cancels open/partial receivables, keeps received ones, and returns stock in the same transaction with the sale locked. Settling or reversing a receivable of a cancelled sale is a 422. Before, cancel only flipped the status, and receivable settlements re-derived the sale status and "un-cancelled" it.
+- **History:** `sale_events` via `SaleHistoryService` (registered, edited, payment received/reversed, delivered, completed, cancelled). It keeps `completed_at`/`cancelled_at` in sync with the status.
+- **Front:** details read each installment's `total_amount` (`amount` is the open balance and is 0 once received/cancelled). Date-only timestamps (`T00:00:00Z`) are shown without timezone conversion (`formatReceivedAt`), otherwise Manaus shows the previous day. Legacy `payment_method` values `card`/`installment` keep labels and filter options. Money inputs are built with `Math.round(value * 100)` (`toMoneyInput`), because `19.99 * 100` is `1998.9999…` and the mask turned it into a huge price.
+- **Receipt** (`utils/sale-documents.ts`): the digital preview and the A4 PDF are built from the same `buildReceiptData(sale)`, so they always show the same thing. Status is colored (Paga/Pendente/Cancelada), and the balance comes from the entry and the installments (it used to be derived only from the status, which printed "Valor pago R$ 0,00" on crediário with an entry). Crediário installments are listed with their due dates, and the PDF uses `jspdf-autotable` so long sales break pages. Unsaved sales (`id = 0`) print "Nova venda" (`formatSaleNumber`, also used by ESC/POS). Every user text that goes into the `srcDoc` HTML passes through `escapeHtml`. To check the PDF without a browser, load the module with Vite's `ssrLoadModule` (with `jspdf` external) and rasterize with `pdftoppm`.
+- **Wizard** (`sales/components/create-edit-modal/`): 4 steps (products → client & cart → payment → summary). Steps 2 and 3 are one `StepCard` (centered, `max-w-3xl`, sections divided by borders), each part a `StepSection` (icon + title + description) ending in `TotalsSection`. Payment options come from `CHECKOUT_PAYMENT_OPTIONS` (label, hint, icon). Adding a product shows an inline confirmation (`CartAddedNotice`). The summary is a single card that asks "O cliente já pagou?" (`SALE_PAYMENT_ANSWERS`), or which installments were paid on crediário. The form is remounted on every open (`key` on `SaleForm`), otherwise it reopened with the previous sale. The modal closes only after the API saves, so a 422 keeps the cart.
+- **Not recoverable:** discounts of sales saved before the fix were never stored. Pending sales cancelled before the fix never had their stock returned, and stock has moved since, so they were left as is.
+
 ### Frontend
 - React 19 + TypeScript + Inertia v3, React Compiler enabled, Tailwind v4, shadcn-style components in `components/ui`.
 - Data flow: `lib/apiClient.ts` (fetch wrapper, `credentials: 'include'`) → `services/<entity>.ts` → TanStack Query hooks in `hooks/use-<entity>.ts` (export query keys; mutations invalidate related keys, e.g. sales invalidate products/customers/receivables) → feature components. API entity TypeScript interfaces live in `schemas/`.
 - Forms use `react-hook-form`; currency inputs use BRL masks; dates are formatted in the `America/Manaus` timezone.
 - `resources/js/actions`, `resources/js/routes`, `resources/js/wayfinder` are **generated by Wayfinder** — don't edit by hand.
+
+### Front-end module structure
+Migrated modules (inventory, clients, suppliers, categories, brands, sales) live entirely in `resources/js/pages/dashboard/<module>/`; `resources/js/features/` is legacy and shrinks as modules move:
+- `index.tsx` (list page, `ServerTable` + `useServerTableState`) and `show.tsx` (details page built with `components/details-page.tsx`).
+- `components/<name>/index.tsx`: one component per file, named after its folder; never two components in one index and no re-exports. Big dialogs are split into sibling files inside the folder (e.g. `sales/components/create-edit-modal/`). The create/edit modal is always `CreateEditModal`.
+- `utils/constants.ts` (every fixed object/label map), `utils/functions.ts` (functions and module-only hooks), `utils/schemas.ts` (Zod, mirroring the backend FormRequest rules, messages from `constants/validation-messages.ts`), `utils/types.ts` (all types, props included).
+- Code used by 2+ modules is global (`components/`, `utils/`, `hooks/`). Exception: cadastro modals (product, client, supplier, category, brand) stay in their module and other modules import them with an alias (`import { CreateEditModal as ClientCreateEditModal } ...`).
+- Forms: React Hook Form + shadcn `Form` + Zod. Keep comments minimal (no banners).
 
 ### Base path
 Production is served under a `/operis` path prefix on the host domain, so Laravel itself sees `/api/...` (`config/api.php`) while the browser calls `/operis/api` (`resources/js/config/api.ts`). Vite `base` comes from `VITE_APP_BASE_PATH` (default `/operis`). Keep URLs relative to these settings rather than hardcoding `/` or `/operis`: build them with `withAppBasePath()` (`resources/js/constants/workspace.ts`), as `config/api.ts` does.

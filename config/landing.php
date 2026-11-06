@@ -90,6 +90,18 @@ return [
     'updates' => [
         [
             'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Comprovante da venda em PDF mais completo',
+            'description' => 'O PDF do comprovante mostra se a venda está paga ou pendente, o desconto, quanto já foi pago e, no crediário, cada parcela com o vencimento.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Cadastro de venda em etapas',
+            'description' => 'Registre a venda em 4 passos (produtos, cliente e carrinho, pagamento e resumo), com a confirmação na tela de cada produto adicionado e o total do carrinho sempre à vista.',
+        ],
+        [
+            'date' => '2026-11-06',
             'type' => 'correcao',
             'title' => 'Desconto e crediário corretos nas vendas',
             'description' => 'O desconto aplicado no caixa agora é salvo na venda e entra no total, nas parcelas e na entrada do crediário, e cancelar uma venda devolve o estoque e cancela as parcelas em aberto.',

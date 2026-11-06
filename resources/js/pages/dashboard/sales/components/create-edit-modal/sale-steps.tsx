@@ -18,14 +18,14 @@ export function SaleSteps({ current, reachable, onSelect }: SaleStepsProps) {
                             <li
                                 aria-hidden
                                 className={cn(
-                                    'mt-4 h-0.5 flex-1 rounded-full transition-colors',
+                                    'mt-4 h-0.5 min-w-3 flex-1 rounded-full transition-colors',
                                     index <= current
                                         ? 'bg-accent'
                                         : 'bg-border',
                                 )}
                             />
                         ) : null}
-                        <li className="flex w-24 shrink-0 flex-col items-center gap-1.5 text-center sm:w-32">
+                        <li className="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center sm:w-32">
                             <button
                                 type="button"
                                 disabled={!isAvailable}
@@ -56,7 +56,7 @@ export function SaleSteps({ current, reachable, onSelect }: SaleStepsProps) {
                             <div>
                                 <p
                                     className={cn(
-                                        'text-xs font-medium sm:text-sm',
+                                        'text-[11px] leading-tight font-medium sm:text-sm',
                                         isCurrent || isDone
                                             ? 'text-foreground'
                                             : 'text-muted-foreground',

@@ -1,5 +1,9 @@
 import {
     Ban,
+    Banknote,
+    CalendarClock,
+    CreditCard,
+    QrCode,
     CircleCheck,
     Coins,
     History,
@@ -20,10 +24,12 @@ import { NamesCell } from '../components/names-cell';
 import { SaleStatusChip } from '../components/sale-status-chip';
 import type {
     AppliedDiscount,
+    CheckoutPaymentOption,
     HistoryEventConfig,
     HistoryEventMap,
     SaleDialogMode,
     SaleDialogText,
+    SalePaymentAnswer,
     SaleRow,
     SaleStatus,
     SaleStep,
@@ -99,12 +105,22 @@ export const PAYMENT_METHOD_OPTIONS: FieldOption[] = Object.entries(
     PAYMENT_METHOD_LABELS,
 ).map(([value, label]) => ({ value, label }));
 
-export const CHECKOUT_PAYMENT_OPTIONS = [
-    { value: 'money', label: 'Dinheiro' },
-    { value: 'pix', label: 'PIX' },
-    { value: 'card', label: 'Cartão' },
-    { value: 'crediario', label: 'Crediário' },
-] as const;
+export const CHECKOUT_PAYMENT_OPTIONS: CheckoutPaymentOption[] = [
+    { value: 'money', label: 'Dinheiro', hint: 'Na hora', icon: Banknote },
+    { value: 'pix', label: 'PIX', hint: 'Transferência', icon: QrCode },
+    {
+        value: 'card',
+        label: 'Cartão',
+        hint: 'Débito ou crédito',
+        icon: CreditCard,
+    },
+    {
+        value: 'crediario',
+        label: 'Crediário',
+        hint: 'Entrada e parcelas',
+        icon: CalendarClock,
+    },
+];
 
 export const DATE_COLUMN: ServerColumn<SaleRow> = {
     key: 'date',
@@ -311,3 +327,16 @@ export const SALE_STEP_HINTS: Record<SaleStepKey, string> = {
     payment: 'Confira a forma de pagamento para continuar.',
     summary: '',
 };
+
+export const SALE_PAYMENT_ANSWERS: SalePaymentAnswer[] = [
+    {
+        value: 'pending',
+        label: 'Pendente',
+        description: 'Ainda não pagou',
+    },
+    {
+        value: 'completed',
+        label: 'Paga',
+        description: 'Já recebi o pagamento',
+    },
+];

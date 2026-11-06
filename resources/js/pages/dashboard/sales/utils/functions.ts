@@ -797,6 +797,7 @@ export function toPreviewSale(draft: SaleDraft): Sale {
         installment_value: draft.installmentValue ?? null,
         crediario_entry: draft.crediarioEntry ?? null,
         first_installment_date: draft.firstInstallmentDate ?? null,
+        notes: draft.notes,
         items: draft.lineItems.map((item, index) => ({
             id: index + 1,
             product_id: Number(item.productId) || 0,
