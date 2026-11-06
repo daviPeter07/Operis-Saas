@@ -58,8 +58,8 @@ class SaleService
                 $this->settlePaidInstallments($sale, $userId, $data);
             }
 
-            // Always deduct stock on creation, regardless of status (including crediário)
-            $this->applyStock($sale, [], $sale->items->toArray(), StockMovementType::Sale, $userId);
+            // Stock leaves on creation, whatever the status (including crediário).
+            $this->stockMovementService->reconcile($companyId, $sale->id, $this->quantitiesByProduct($data['items']), StockMovementType::Sale, $userId);
             // If all crediário installments are already settled, mark the sale as completed (stock already deducted)
             if ($paymentMethod === 'crediario') {
                 $allSettled = $sale->receivables()->whereNotIn('status', [FinancialStatus::Received->value, FinancialStatus::Cancelled->value])->doesntExist();
@@ -88,7 +88,8 @@ class SaleService
             $previouslyReceived = $sale->payment_method === 'crediario'
                 ? $sale->receivables()->where('status', FinancialStatus::Received->value)->pluck('installment_number')
                 : collect();
-            $previousItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
+            // What this sale holds out of stock now; it is available again for the edited items.
+            $previousItems = $this->stockMovementService->outstandingByProduct($sale->id);
             $this->assertStockAvailability(
                 $data['items'],
                 $previousItems,
@@ -132,14 +133,8 @@ class SaleService
                 }
             }
 
-            // If a completed sale is set back to pending, revert stock
-            if ($previousStatus === SaleStatus::Completed->value && $sale->status !== SaleStatus::Completed->value) {
-                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleEdit, $userId, true);
-            } elseif ($sale->status === SaleStatus::Completed->value) {
-                // Adjust stock diff when items change on a completed sale
-                $newItems = $sale->items()->get()->keyBy('product_id')->map(fn ($item): float => (float) $item->quantity)->all();
-                $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
-            }
+            // Stock follows the items only: a status change (completed <-> pending) moves nothing.
+            $this->stockMovementService->reconcile($sale->company_id, $sale->id, $this->quantitiesByProduct($data['items']), StockMovementType::SaleEdit, $userId);
 
             $this->history->syncStatus($sale);
 
@@ -347,33 +342,16 @@ class SaleService
         return $data['date'];
     }
 
-    private function applyStock(Sale $sale, array $oldItems, array $newItems, StockMovementType $type, int $userId, bool $reverse = false): void
+    /**
+     * @param  array<int, array{product_id:int|string, quantity:float|int|string}>  $items
+     * @return array<int, float> product id => total quantity (lines of the same product added up)
+     */
+    private function quantitiesByProduct(array $items): array
     {
-        $items = $reverse ? $oldItems : $newItems;
-
-        foreach ($items as $item) {
-            $product = Product::query()->findOrFail($item['product_id']);
-            $delta = $reverse ? (float) $item['quantity'] : -(float) $item['quantity'];
-            $this->stockMovementService->register($product, $delta, $type, $sale->id, $userId);
-        }
-    }
-
-    private function applyStockDiff(Sale $sale, array $previousItems, array $newItems, int $userId): void
-    {
-        $productIds = collect(array_keys($previousItems))->merge(array_keys($newItems))->unique();
-
-        foreach ($productIds as $productId) {
-            $previous = $previousItems[$productId] ?? 0.0;
-            $current = $newItems[$productId] ?? 0.0;
-            $diff = $current - $previous;
-
-            if ($diff === 0.0) {
-                continue;
-            }
-
-            $product = Product::query()->findOrFail($productId);
-            $this->stockMovementService->register($product, -$diff, StockMovementType::SaleEdit, $sale->id, $userId);
-        }
+        return collect($items)
+            ->groupBy(fn (array $item): int => (int) $item['product_id'])
+            ->map(fn ($group): float => round((float) $group->sum(fn (array $item): float => (float) $item['quantity']), 2))
+            ->all();
     }
 
     /**
@@ -386,10 +364,7 @@ class SaleService
             return;
         }
 
-        $requestedByProduct = collect($items)
-            ->groupBy(fn (array $item): int => (int) $item['product_id'])
-            ->map(fn ($group): float => (float) $group->sum(fn (array $item): float => (float) $item['quantity']))
-            ->all();
+        $requestedByProduct = $this->quantitiesByProduct($items);
 
         $insufficientItems = [];
 
