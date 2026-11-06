@@ -14,7 +14,7 @@ import { customersQueryKey } from '@/hooks/use-customers';
 import { productsQueryKey } from '@/hooks/use-products';
 import type { SaleMutationInput } from '@/hooks/use-sales';
 import { receivablesQueryKey, salesQueryKey } from '@/hooks/use-sales';
-import { formatCurrencyBR, formatDateTimeManaus } from '@/lib/format';
+import { formatDateTimeManaus } from '@/lib/format';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
 import type { Customer } from '@/schemas/customer';
 import type { Product } from '@/schemas/product';
@@ -34,6 +34,10 @@ import {
     parseCurrencyInput,
     parsePercentInput,
 } from '@/utils/form-fields';
+import {
+    splitInstallments,
+    splitSaleInstallments,
+} from '@/utils/sale-installments';
 import { calculateSaleProfit } from '@/utils/sale-profit';
 import { todayString } from '@/utils/sales-dialog';
 import { NamesCell } from '../components/names-cell';
@@ -570,12 +574,16 @@ export function useSaleForm(
     const availableCredit = selectedClient?.availableCredit ?? 0;
     const creditEnabled = Boolean(selectedClient?.creditEnabled);
     const entryCheck = makeCrediarioEntrySchema(total).safeParse(entry);
+    const installmentAmounts = splitInstallments(
+        financed,
+        effectiveInstallments,
+    );
     const crediario = {
         entry,
         financed,
         installments: effectiveInstallments,
-        installmentValue: roundMoney(financed / effectiveInstallments),
-        installmentAmounts: splitInstallments(financed, effectiveInstallments),
+        installmentValue: installmentAmounts[0],
+        installmentAmounts,
         maxInstallments,
         availableCredit,
         creditEnabled,
@@ -877,17 +885,6 @@ export function addDaysToDate(date: string, days: number): string {
     return format(addDays(parseLocalDate(date), days), 'yyyy-MM-dd');
 }
 
-// Same split as the API: equal installments, leftover cents on the last one.
-export function splitInstallments(financed: number, count: number): number[] {
-    const installments = Math.max(1, count);
-    const base = roundMoney(financed / installments);
-    const last = roundMoney(financed - base * (installments - 1));
-
-    return Array.from({ length: installments }, (_, index) =>
-        index === installments - 1 ? last : base,
-    );
-}
-
 // Keeps the saved receivables when the edit did not change the split.
 function pickInstallmentAmounts(saved: number[], computed: number[]): number[] {
     const sum = (amounts: number[]) =>
@@ -919,27 +916,5 @@ export function getSaleInstallmentAmounts(
         return saved;
     }
 
-    const financed = Math.max(0, sale.total - toNumber(sale.crediario_entry));
-
-    return splitInstallments(financed, sale.installments ?? 1);
-}
-
-export function describeInstallments(amounts: number[]): string {
-    if (amounts.length === 0) {
-        return '-';
-    }
-
-    const [first] = amounts;
-    const last = amounts[amounts.length - 1];
-    const head = amounts.slice(0, -1);
-
-    if (amounts.every((amount) => amount === first)) {
-        return `${amounts.length}x de ${formatCurrencyBR(first)}`;
-    }
-
-    if (head.every((amount) => amount === first)) {
-        return `${head.length}x de ${formatCurrencyBR(first)} + 1x de ${formatCurrencyBR(last)}`;
-    }
-
-    return amounts.map(formatCurrencyBR).join(' + ');
+    return splitSaleInstallments(sale);
 }

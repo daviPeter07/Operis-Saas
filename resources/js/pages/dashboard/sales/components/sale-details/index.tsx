@@ -5,9 +5,9 @@ import {
     formatDateTimeManaus,
 } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
+import { describeInstallments } from '@/utils/sale-installments';
 import { PAYMENT_METHOD_LABELS } from '../../utils/constants';
 import {
-    describeInstallments,
     formatOptionalDateTime,
     getSaleInstallmentAmounts,
     getSaleProfit,

@@ -6,6 +6,10 @@ import {
     translateStatus,
 } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
+import {
+    describeInstallments,
+    splitSaleInstallments,
+} from '@/utils/sale-installments';
 
 export type ThermalPaperWidth = '58mm' | '80mm';
 
@@ -30,14 +34,11 @@ function renderInstallmentSummary(sale: Sale): string | null {
         return null;
     }
 
-    const amount = formatCurrencyBR(
-        Number(sale.installment_value ?? sale.total),
-    );
     const firstDate = sale.first_installment_date
         ? formatDateBR(sale.first_installment_date)
         : formatDateBR(sale.date);
 
-    return `${sale.installments}x de ${amount} - primeira parcela em ${firstDate}`;
+    return `${describeInstallments(splitSaleInstallments(sale))} - primeira parcela em ${firstDate}`;
 }
 
 function resolveProductLabel(item: NonNullable<Sale['items']>[number]): string {

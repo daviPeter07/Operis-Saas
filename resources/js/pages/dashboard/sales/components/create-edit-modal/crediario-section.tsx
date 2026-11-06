@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { formatCurrencyBR } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { formatCurrencyInput } from '@/utils/form-fields';
+import { describeInstallments } from '@/utils/sale-installments';
 import { SALE_MESSAGES } from '../../utils/constants';
-import { describeInstallments } from '../../utils/functions';
 import type { CrediarioSectionProps } from '../../utils/types';
 
 export function CrediarioSection({
