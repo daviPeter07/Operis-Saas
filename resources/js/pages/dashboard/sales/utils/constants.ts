@@ -24,6 +24,7 @@ import type {
     HistoryEventMap,
     SaleDialogMode,
     SaleDialogText,
+    SalePaymentAnswer,
     SaleRow,
     SaleStatus,
     SaleStep,
@@ -311,3 +312,16 @@ export const SALE_STEP_HINTS: Record<SaleStepKey, string> = {
     payment: 'Confira a forma de pagamento para continuar.',
     summary: '',
 };
+
+export const SALE_PAYMENT_ANSWERS: SalePaymentAnswer[] = [
+    {
+        value: 'pending',
+        label: 'Pendente',
+        description: 'Ainda não pagou',
+    },
+    {
+        value: 'completed',
+        label: 'Paga',
+        description: 'Já recebi o pagamento',
+    },
+];

@@ -329,6 +329,12 @@ export type PaymentStepProps = {
     onEditClient: () => void;
 };
 
+export type SalePaymentAnswer = {
+    value: SaleDraft['status'];
+    label: string;
+    description: string;
+};
+
 export type SummaryStepProps = {
     draft: SaleDraft;
     status: SaleDraft['status'];
