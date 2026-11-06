@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { customersQueryKey } from '@/hooks/use-customers';
 import { productsQueryKey } from '@/hooks/use-products';
+import { servicesQueryKey } from '@/hooks/use-services';
 import type { Sale } from '@/schemas/sale';
 import { saleService } from '@/services/sales';
 
@@ -22,7 +23,8 @@ export type SaleMutationInput = {
     paid_installments?: number[];
     allow_negative_stock?: boolean;
     items: Array<{
-        product_id: number;
+        product_id?: number;
+        service_id?: number;
         quantity: number;
         unit_price: number;
     }>;
@@ -51,6 +53,7 @@ export function useCreateSale() {
                 queryKey: receivablesQueryKey,
             });
             await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+            await queryClient.invalidateQueries({ queryKey: servicesQueryKey });
             await queryClient.invalidateQueries({
                 queryKey: customersQueryKey,
             });
@@ -75,6 +78,7 @@ export function useUpdateSale() {
                 queryKey: receivablesQueryKey,
             });
             await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+            await queryClient.invalidateQueries({ queryKey: servicesQueryKey });
             await queryClient.invalidateQueries({
                 queryKey: customersQueryKey,
             });
@@ -93,6 +97,7 @@ export function useDeleteSale() {
                 queryKey: receivablesQueryKey,
             });
             await queryClient.invalidateQueries({ queryKey: productsQueryKey });
+            await queryClient.invalidateQueries({ queryKey: servicesQueryKey });
             await queryClient.invalidateQueries({
                 queryKey: customersQueryKey,
             });

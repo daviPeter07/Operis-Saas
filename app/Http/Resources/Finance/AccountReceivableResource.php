@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Finance;
 
 use App\Http\Resources\ApiResource;
+use App\Models\SaleItem;
 use Illuminate\Http\Request;
 
 class AccountReceivableResource extends ApiResource
@@ -16,7 +17,7 @@ class AccountReceivableResource extends ApiResource
         }
 
         $items = $sale->items
-            ->pluck('product.name')
+            ->map(fn (SaleItem $item): ?string => $item->displayName())
             ->filter()
             ->unique()
             ->values();

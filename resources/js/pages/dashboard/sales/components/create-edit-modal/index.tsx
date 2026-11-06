@@ -7,6 +7,7 @@ import { useCustomers } from '@/hooks/use-customers';
 import { useProducts } from '@/hooks/use-products';
 import type { SaleMutationInput } from '@/hooks/use-sales';
 import { useCreateSale, useUpdateSale } from '@/hooks/use-sales';
+import { useServices } from '@/hooks/use-services';
 import {
     SALE_DIALOG_TEXT,
     STOCK_WARNING_FALLBACK,
@@ -38,6 +39,7 @@ export function CreateEditModal({
 }: CreateEditModalProps) {
     const { data: customers = [] } = useCustomers();
     const { data: products = [] } = useProducts();
+    const { data: services = [] } = useServices();
     const { data: receivables = [] } = useAccountReceivables();
     const createSale = useCreateSale();
     const updateSale = useUpdateSale();
@@ -117,6 +119,7 @@ export function CreateEditModal({
                         customers={customers}
                         clients={clients}
                         products={products.map(toUiProduct)}
+                        services={services}
                         paidInstallments={getPaidInstallments(saleReceivables)}
                         savedInstallmentAmounts={getInstallmentAmounts(
                             saleReceivables,

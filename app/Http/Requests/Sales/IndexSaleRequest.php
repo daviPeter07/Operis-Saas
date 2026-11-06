@@ -23,6 +23,7 @@ class IndexSaleRequest extends TableIndexRequest
     {
         return [
             'id' => ['integer', 'min:1'],
+            'service_id' => ['integer', 'min:1'],
             'customer' => ['string', 'max:255'],
             'product' => ['string', 'max:255'],
             'category_id' => ['integer'],

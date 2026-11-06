@@ -8,7 +8,9 @@ import {
     Receipt,
     Settings,
     ShoppingCart,
+    Store,
     Tags,
+    Wrench,
     TrendingUp,
     Truck,
     Users,
@@ -94,6 +96,11 @@ const navMetaByModule: Record<
         icon: Tags,
         description: 'Agrupe produtos por categorias para facilitar a gestão.',
     },
+    services: {
+        icon: Wrench,
+        description:
+            'Cadastre os serviços oferecidos e acompanhe quantos já foram feitos.',
+    },
     'accounts-receivable': {
         icon: CreditCard,
         description: 'Veja recebimentos pendentes e valores a receber.',
@@ -101,6 +108,10 @@ const navMetaByModule: Record<
     'accounts-payable': {
         icon: Receipt,
         description: 'Acompanhe despesas, contas e pagamentos pendentes.',
+    },
+    store: {
+        icon: Store,
+        description: 'Em breve: sua loja virtual com os produtos do estoque.',
     },
     team: {
         icon: UsersRound,

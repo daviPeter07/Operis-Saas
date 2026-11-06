@@ -1,4 +1,11 @@
-import { Minus, PackageOpen, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import {
+    Minus,
+    PackageOpen,
+    Plus,
+    ShoppingCart,
+    Trash2,
+    Wrench,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCurrencyBR } from '@/lib/format';
 import type { CheckoutSectionProps } from '../../utils/types';
@@ -17,13 +24,13 @@ export function CartSection({ form }: CheckoutSectionProps) {
             description={
                 unitsCount > 0
                     ? `${unitsCount} ${unitsCount === 1 ? 'unidade' : 'unidades'} · ajuste as quantidades`
-                    : 'Nenhum produto ainda'
+                    : 'Nenhum item ainda'
             }
         >
             {form.lineItems.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-8 text-center text-sm text-muted-foreground">
                     <PackageOpen aria-hidden className="size-6" />
-                    Volte para Produtos e escolha os itens da venda.
+                    Volte para o primeiro passo e escolha produtos ou serviços.
                 </div>
             ) : (
                 <ul className="divide-y rounded-xl border">
@@ -33,13 +40,20 @@ export function CartSection({ form }: CheckoutSectionProps) {
                             className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3"
                         >
                             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold text-muted-foreground">
-                                {item.productName.slice(0, 2).toUpperCase()}
+                                {item.kind === 'service' ? (
+                                    <Wrench aria-hidden className="size-4" />
+                                ) : (
+                                    item.productName.slice(0, 2).toUpperCase()
+                                )}
                             </span>
                             <div className="min-w-0 flex-1 basis-32">
                                 <p className="truncate text-sm font-medium">
                                     {item.productName}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
+                                    {item.kind === 'service'
+                                        ? 'Serviço · '
+                                        : ''}
                                     {formatCurrencyBR(item.unitPrice)} cada
                                 </p>
                             </div>

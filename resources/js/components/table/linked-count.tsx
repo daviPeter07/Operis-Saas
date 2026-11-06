@@ -5,6 +5,7 @@ type LinkedCountProps = {
     href: string;
     singular: string;
     plural: string;
+    title?: string;
 };
 
 export function LinkedCount({
@@ -12,6 +13,7 @@ export function LinkedCount({
     href,
     singular,
     plural,
+    title = `Ver ${plural} no estoque`,
 }: LinkedCountProps) {
     const label = `${count} ${count === 1 ? singular : plural}`;
 
@@ -20,7 +22,7 @@ export function LinkedCount({
     }
 
     return (
-        <RecordLink href={href} title={`Ver ${plural} no estoque`}>
+        <RecordLink href={href} title={title}>
             {label}
         </RecordLink>
     );

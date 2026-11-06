@@ -11,8 +11,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatCurrencyBR } from '@/lib/format';
-import { applyFieldMask, parseCurrencyInput } from '@/utils/form-fields';
-import { toMoneyInput } from '../../utils/functions';
+import {
+    applyFieldMask,
+    parseCurrencyInput,
+    toMoneyInput,
+} from '@/utils/form-fields';
 import type { AddProductDialogProps } from '../../utils/types';
 
 export function AddProductDialog({

@@ -36,10 +36,11 @@ A aplicação é **multiempresa**: cada usuário trabalha dentro de uma empresa 
 
 | Módulo | O que faz |
 |---|---|
-| 🛒 **Vendas** | Venda com múltiplos itens, PIX, dinheiro, cartão e **crediário** com entrada e parcelas; checagem de estoque; recibo para **impressora térmica** e fatura em PDF |
+| 🛒 **Vendas** | Venda com múltiplos itens (produtos e serviços), PIX, dinheiro, cartão e **crediário** com entrada e parcelas; checagem de estoque; recibo para **impressora térmica** e fatura em PDF |
 | 📦 **Compras** | Entrada de mercadorias com preço de custo, pagamento à vista ou **boleto (30/60/90/120 dias)**, status faturada/paga |
 | 🏷️ **Estoque** | Produtos, categorias e marcas, com histórico de movimentações gerado automaticamente por vendas, compras, edições e cancelamentos |
 | 👥 **Cadastros** | Clientes (com limite de crédito) e fornecedores, pessoa física ou jurídica |
+| 🔧 **Serviços** | Serviços com valor e custo opcional (serviço terceirizado), vendidos junto com os produtos; a tabela mostra quantas vezes cada um já foi feito |
 | 💰 **Contas a receber** | Parcelas geradas pelas vendas, baixa total ou parcial, estorno e sincronização com o status da venda |
 | 💸 **Contas a pagar** | Parcelas geradas pelas compras, baixa total ou parcial, estorno e sincronização com o status da compra |
 | 📊 **Relatórios** | Vendas, produtos mais vendidos, vendas por categoria e marca, estoque atual, inadimplência, pagamentos por método e maiores compradores |
@@ -394,6 +395,16 @@ Ajustes feitos depois de conferir o sistema com os dados reais da DG Computer.
 **14. Vendas pagas que continuavam pendentes**
 - **Antes:** 3 vendas no crediário tinham todas as parcelas recebidas mas continuavam como pendentes.
 - **Correção e hoje:** viram concluídas, com a conclusão no histórico.
+
+## 🔧 Serviços (novembro de 2026)
+
+Novo cadastro básico, para o que a empresa vende sem ser produto (formatação, manutenção de impressora, instalação).
+
+- **Cadastro:** nome, descrição, valor, custo e status (ativo/inativo). O custo é opcional: fica em branco quando o serviço é feito pela própria equipe, e é preenchido quando é terceirizado (a empresa paga alguém para fazer). O lucro da venda desconta esse custo.
+- **Tabela:** Nome, Descrição, Valor, Custo, Realizados e Status, com editar e excluir. "Realizados" soma quantas vezes o serviço foi vendido (vendas canceladas não contam) e abre a lista de vendas filtrada nesse serviço.
+- **Na venda:** o primeiro passo tem "Produtos | Serviços". O serviço entra com quantidade e com o valor sugerido do cadastro, que pode ser alterado. Serviços não mexem no estoque; o resto (desconto, crediário, contas a receber, recibo) funciona igual aos produtos. Só serviços ativos aparecem para escolher.
+- **Excluir:** um serviço que já foi vendido não pode ser excluído, para não sumir das vendas antigas; nesse caso ele é inativado.
+- **Relatórios:** serviços entram no relatório de vendas e no histórico do cliente, mas não em "Produtos mais vendidos" nem nas vendas por categoria/marca.
 
 ## 🧱 Stack
 

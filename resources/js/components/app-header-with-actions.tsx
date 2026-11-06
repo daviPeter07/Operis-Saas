@@ -6,6 +6,7 @@ import {
     ShoppingCart,
     Receipt,
     Tags,
+    Wrench,
     Building2,
     Sun,
     Moon,
@@ -37,6 +38,7 @@ const quickActions = [
     { key: 'create-expense', label: 'Adicionar Despesa', icon: Receipt },
     { key: 'create-brand', label: 'Adicionar Marca', icon: Building2 },
     { key: 'create-category', label: 'Adicionar Categoria', icon: Tags },
+    { key: 'create-service', label: 'Adicionar Serviço', icon: Wrench },
 ];
 
 export function AppHeaderWithActions({
@@ -62,6 +64,9 @@ export function AppHeaderWithActions({
             ),
             'create-category': withAppBasePath(
                 '/dashboard/categories?action=create-category',
+            ),
+            'create-service': withAppBasePath(
+                '/dashboard/services?action=create-service',
             ),
         };
 

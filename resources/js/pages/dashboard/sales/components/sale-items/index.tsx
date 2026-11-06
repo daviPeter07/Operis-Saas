@@ -8,6 +8,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { formatCurrencyBR } from '@/lib/format';
+import { getSaleItemName, isServiceItem } from '@/utils/sale-items';
 import type { SaleItemsProps } from '../../utils/types';
 
 export function SaleItems({ sale }: SaleItemsProps) {
@@ -24,7 +25,7 @@ export function SaleItems({ sale }: SaleItemsProps) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Produto</TableHead>
+                                <TableHead>Item</TableHead>
                                 <TableHead>Categoria</TableHead>
                                 <TableHead>Marca</TableHead>
                                 <TableHead className="text-right">
@@ -42,8 +43,14 @@ export function SaleItems({ sale }: SaleItemsProps) {
                             {items.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell className="font-medium">
-                                        {item.product_name ??
-                                            `#${item.product_id}`}
+                                        <span className="inline-flex flex-wrap items-center gap-2">
+                                            {getSaleItemName(item)}
+                                            {isServiceItem(item) ? (
+                                                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                                    Serviço
+                                                </span>
+                                            ) : null}
+                                        </span>
                                     </TableCell>
                                     <TableCell>
                                         {item.category_name || '-'}
