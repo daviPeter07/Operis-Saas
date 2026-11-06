@@ -16,6 +16,7 @@ import {
     describeInstallments,
     splitSaleInstallments,
 } from '@/utils/sale-installments';
+import { getSaleItemName } from '@/utils/sale-items';
 
 function sanitizeEscPosText(value: string): string {
     return value
@@ -142,8 +143,7 @@ export function buildThermalEscPosLines(
         lines.push('Nenhum item encontrado\n');
     } else {
         for (const item of items) {
-            const productName =
-                item.product_name?.trim() || `Produto #${item.product_id}`;
+            const productName = getSaleItemName(item);
             const categoryName = item.category_name?.trim();
             const quantityLine = `Qtd: ${item.quantity} x ${formatCurrencyBR(Number(item.unit_price))}`;
             const subtotalLine = `Subtotal: ${formatCurrencyBR(Number(item.subtotal))}`;

@@ -38,8 +38,12 @@ class SaleResource extends ApiResource
             'notes' => $this->notes,
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item): array => [
                 'id' => $item->id,
+                'type' => $item->isService() ? 'service' : 'product',
+                'name' => $item->displayName(),
                 'product_id' => $item->product_id,
                 'product_name' => $item->product?->name,
+                'service_id' => $item->service_id,
+                'service_name' => $item->service?->name,
                 'category_name' => $item->product?->category?->name,
                 'brand_name' => $item->product?->brand?->name,
                 'quantity' => $item->quantity,

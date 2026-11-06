@@ -93,6 +93,13 @@ export const defaultWorkspaceNavigation: WorkspaceModule[] = [
         group: 'basic-registrations',
     },
     {
+        key: 'services',
+        label: 'Serviços',
+        href: withAppBasePath('/dashboard/services'),
+        status: 'available',
+        group: 'basic-registrations',
+    },
+    {
         key: 'reports',
         label: 'Relatórios',
         href: withAppBasePath('/dashboard/reports'),
@@ -141,6 +148,11 @@ export const defaultWorkspaceQuickActions: WorkspaceQuickAction[] = [
         key: 'create-brand',
         label: 'Criar Marca',
         description: 'Cadastre uma nova marca no sistema',
+    },
+    {
+        key: 'create-service',
+        label: 'Criar Serviço',
+        description: 'Cadastre um novo serviço no sistema',
     },
 ];
 

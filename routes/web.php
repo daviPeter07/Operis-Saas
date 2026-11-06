@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function (): void {
         ->name('dashboard.suppliers.show');
     Route::inertia('dashboard/categories', 'dashboard/categories/index')->name('dashboard.categories');
     Route::inertia('dashboard/brands', 'dashboard/brands/index')->name('dashboard.brands');
+    Route::inertia('dashboard/services', 'dashboard/services/index')->name('dashboard.services');
     Route::inertia('dashboard/inventory', 'dashboard/inventory/index')->name('dashboard.inventory');
     Route::get('dashboard/inventory/{product}', fn (int $product) => Inertia::render('dashboard/inventory/show', ['productId' => $product]))
         ->whereNumber('product')

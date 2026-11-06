@@ -9,6 +9,8 @@ import { useCreateProduct } from '@/hooks/use-products';
 import { formatCurrencyBR } from '@/lib/format';
 import { CreateEditModal as ClientCreateEditModal } from '@/pages/dashboard/clients/components/create-edit-modal';
 import { CreateEditModal as ProductCreateEditModal } from '@/pages/dashboard/inventory/components/create-edit-modal';
+import { CreateEditModal as ServiceCreateEditModal } from '@/pages/dashboard/services/components/create-edit-modal';
+import type { Service } from '@/schemas/service';
 import type { UiProduct } from '@/types/dashboard-entities';
 import {
     buildSaleDraft,
@@ -17,9 +19,15 @@ import {
     toPreviewSale,
     useSaleForm,
 } from '../../utils/functions';
-import type { AddedToCart, SaleDraft, SaleFormProps } from '../../utils/types';
+import type {
+    AddedToCart,
+    CatalogMode,
+    SaleDraft,
+    SaleFormProps,
+} from '../../utils/types';
 import { PrintPreviewDialog } from '../print-preview-dialog';
 import { AddProductDialog } from './add-product-dialog';
+import { AddServiceDialog } from './add-service-dialog';
 import { CartStep } from './cart-step';
 import { DiscountDialog } from './discount-dialog';
 import { PaymentStep } from './payment-step';
@@ -38,6 +46,7 @@ export function SaleForm({
     customers,
     clients,
     products,
+    services,
     paidInstallments: initialPaidInstallments,
     isSubmitting,
     onCancel,
@@ -55,6 +64,12 @@ export function SaleForm({
     const [lastAdded, setLastAdded] = useState<AddedToCart | null>(null);
     const [addProductKey, setAddProductKey] = useState(0);
     const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
+    const [catalogMode, setCatalogMode] = useState<CatalogMode>('products');
+    const [serviceSearch, setServiceSearch] = useState('');
+    const [catalogService, setCatalogService] = useState<Service | null>(null);
+    const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+    const [addServiceKey, setAddServiceKey] = useState(0);
+    const [isServiceCreateOpen, setIsServiceCreateOpen] = useState(false);
     const [newClientName, setNewClientName] = useState<string | null>(null);
     const [isClientEditOpen, setIsClientEditOpen] = useState(false);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -106,12 +121,25 @@ export function SaleForm({
                         <ProductsStep
                             form={form}
                             products={products}
+                            services={services}
+                            mode={catalogMode}
+                            onModeChange={setCatalogMode}
+                            serviceSearch={serviceSearch}
+                            onServiceSearchChange={setServiceSearch}
                             lastAdded={lastAdded}
                             onViewCart={() => goTo(1)}
                             onDismissAdded={() => setLastAdded(null)}
                             onOpenCreateProduct={() =>
                                 setIsProductCreateOpen(true)
                             }
+                            onOpenCreateService={() =>
+                                setIsServiceCreateOpen(true)
+                            }
+                            onAddService={(service) => {
+                                setCatalogService(service);
+                                setAddServiceKey((key) => key + 1);
+                                setIsAddServiceOpen(true);
+                            }}
                             onAddFromCatalog={(product) => {
                                 setCatalogProduct(product);
                                 setAddProductKey((key) => key + 1);
@@ -203,6 +231,29 @@ export function SaleForm({
                     });
                     setIsAddProductOpen(false);
                 }}
+            />
+
+            <AddServiceDialog
+                key={`service-${addServiceKey}`}
+                open={isAddServiceOpen}
+                onOpenChange={setIsAddServiceOpen}
+                service={catalogService}
+                onConfirm={(service, quantity, price) => {
+                    form.addService(service, quantity, price);
+                    setLastAdded({
+                        id: Date.now(),
+                        productName: service.name,
+                        quantity,
+                    });
+                    setIsAddServiceOpen(false);
+                }}
+            />
+
+            <ServiceCreateEditModal
+                open={isServiceCreateOpen}
+                onOpenChange={setIsServiceCreateOpen}
+                initialName={serviceSearch.trim()}
+                onCreated={(service) => setServiceSearch(service.name)}
             />
 
             <ClientCreateEditModal

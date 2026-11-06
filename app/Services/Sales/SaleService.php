@@ -8,6 +8,7 @@ use App\Enums\StockMovementType;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Service;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\Finance\ReceivableService;
 use App\Services\Products\StockMovementService;
@@ -74,7 +75,7 @@ class SaleService
 
             $this->history->syncStatus($sale);
 
-            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
+            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'items.service', 'customer']);
         });
     }
 
@@ -150,7 +151,7 @@ class SaleService
 
             $this->history->syncStatus($sale);
 
-            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
+            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'items.service', 'customer']);
         });
     }
 
@@ -267,12 +268,20 @@ class SaleService
     private function syncItems(Sale $sale, array $items): void
     {
         foreach ($items as $item) {
+            $productId = $item['product_id'] ?? null;
+            $serviceId = $productId ? null : ($item['service_id'] ?? null);
+            // A service without a cost (done in-house) earns its whole price.
+            $unitCost = $productId
+                ? Product::query()->findOrFail($productId)->cost
+                : (Service::query()->findOrFail($serviceId)->cost ?? 0);
+
             $sale->items()->create([
                 'company_id' => $sale->company_id,
-                'product_id' => $item['product_id'],
+                'product_id' => $productId,
+                'service_id' => $serviceId,
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'unit_cost' => Product::query()->findOrFail($item['product_id'])->cost,
+                'unit_cost' => $unitCost,
                 'subtotal' => (float) $item['quantity'] * (float) $item['unit_price'],
             ]);
         }
@@ -358,11 +367,12 @@ class SaleService
 
     /**
      * @param  array<int, array{product_id:int|string, quantity:float|int|string}>  $items
-     * @return array<int, float> product id => total quantity (lines of the same product added up)
+     * @return array<int, float> product id => total quantity (lines of the same product added up; services never move stock)
      */
     private function quantitiesByProduct(array $items): array
     {
         return collect($items)
+            ->filter(fn (array $item): bool => ! empty($item['product_id']))
             ->groupBy(fn (array $item): int => (int) $item['product_id'])
             ->map(fn ($group): float => round((float) $group->sum(fn (array $item): float => (float) $item['quantity']), 2))
             ->all();

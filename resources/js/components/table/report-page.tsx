@@ -19,6 +19,7 @@ import { todayInAppTimeZone } from '@/lib/app-timezone';
 import { exportToExcelWithColumns, formatCurrency } from '@/lib/export-excel';
 import { exportToPDF } from '@/lib/export-pdf';
 import { formatDateBR, translatePaymentMethod } from '@/lib/format';
+import { getSaleItemName, isServiceItem } from '@/utils/sale-items';
 
 type Row = Record<string, unknown>;
 type ReportViewModel = {
@@ -142,10 +143,7 @@ export function ReportPage({ slug }: ReportPageProps) {
                     client:
                         customerById.get(sale.customer_id ?? -1)?.name ??
                         'Sem cliente',
-                    product:
-                        item.product_name ??
-                        productById.get(item.product_id)?.name ??
-                        '-',
+                    product: getSaleItemName(item),
                     quantity: item.quantity,
                     unitPrice: item.unit_price,
                     total: item.subtotal,
@@ -201,20 +199,23 @@ export function ReportPage({ slug }: ReportPageProps) {
                 { product: string; quantity: number; revenue: number }
             >();
             filteredSales.forEach((sale) => {
-                (sale.items ?? []).forEach((item) => {
-                    const product =
-                        item.product_name ??
-                        productById.get(item.product_id)?.name ??
-                        `#${item.product_id}`;
-                    const current = map.get(product) ?? {
-                        product,
-                        quantity: 0,
-                        revenue: 0,
-                    };
-                    current.quantity += item.quantity;
-                    current.revenue += item.subtotal;
-                    map.set(product, current);
-                });
+                // Services are not products: they have their own count in Serviços.
+                (sale.items ?? [])
+                    .filter((item) => !isServiceItem(item))
+                    .forEach((item) => {
+                        const product =
+                            item.product_name ??
+                            productById.get(item.product_id ?? -1)?.name ??
+                            `#${item.product_id}`;
+                        const current = map.get(product) ?? {
+                            product,
+                            quantity: 0,
+                            revenue: 0,
+                        };
+                        current.quantity += item.quantity;
+                        current.revenue += item.subtotal;
+                        map.set(product, current);
+                    });
             });
             const rows = [...map.values()].sort(
                 (a, b) => b.quantity - a.quantity,
@@ -262,22 +263,26 @@ export function ReportPage({ slug }: ReportPageProps) {
 
         if (slug === 'vendas-categoria' || slug === 'vendas-marca') {
             const rows = filteredSales.flatMap((sale) =>
-                (sale.items ?? []).map((item) => {
-                    const product = productById.get(item.product_id);
-                    const category =
-                        item.category_name ??
-                        categoryById.get(product?.category_id ?? -1) ??
-                        '-';
-                    const brand = brandById.get(product?.brand_id ?? -1) ?? '-';
+                (sale.items ?? [])
+                    .filter((item) => !isServiceItem(item))
+                    .map((item) => {
+                        const product = productById.get(item.product_id ?? -1);
+                        const category =
+                            item.category_name ??
+                            categoryById.get(product?.category_id ?? -1) ??
+                            '-';
+                        const brand =
+                            brandById.get(product?.brand_id ?? -1) ?? '-';
 
-                    return {
-                        group: slug === 'vendas-categoria' ? category : brand,
-                        product: item.product_name ?? product?.name ?? '-',
-                        quantity: item.quantity,
-                        unitPrice: item.unit_price,
-                        total: item.subtotal,
-                    };
-                }),
+                        return {
+                            group:
+                                slug === 'vendas-categoria' ? category : brand,
+                            product: item.product_name ?? product?.name ?? '-',
+                            quantity: item.quantity,
+                            unitPrice: item.unit_price,
+                            total: item.subtotal,
+                        };
+                    }),
             );
             rows.sort((a, b) => {
                 const groupCompare = a.group.localeCompare(b.group);
@@ -671,10 +676,7 @@ export function ReportPage({ slug }: ReportPageProps) {
                       .flatMap((sale) =>
                           (sale.items ?? []).map((item) => ({
                               date: formatDateBR(sale.date),
-                              products:
-                                  item.product_name ??
-                                  productById.get(item.product_id)?.name ??
-                                  '-',
+                              products: getSaleItemName(item),
                               quantity: item.quantity,
                               value: item.subtotal,
                               method: translatePaymentMethod(

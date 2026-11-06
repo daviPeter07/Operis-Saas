@@ -7,6 +7,7 @@ export type WorkspaceModuleKey =
     | 'suppliers'
     | 'categories'
     | 'brands'
+    | 'services'
     | 'inventory'
     | 'purchases'
     | 'accounts-receivable'
@@ -44,7 +45,8 @@ export type WorkspaceQuickActionKey =
     | 'create-sale'
     | 'create-purchase'
     | 'create-expense'
-    | 'create-brand';
+    | 'create-brand'
+    | 'create-service';
 
 export type WorkspaceQuickAction = {
     key: WorkspaceQuickActionKey;

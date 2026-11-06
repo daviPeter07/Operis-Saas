@@ -9,6 +9,7 @@ import {
     Settings,
     ShoppingCart,
     Tags,
+    Wrench,
     TrendingUp,
     Truck,
     Users,
@@ -93,6 +94,11 @@ const navMetaByModule: Record<
     categories: {
         icon: Tags,
         description: 'Agrupe produtos por categorias para facilitar a gestão.',
+    },
+    services: {
+        icon: Wrench,
+        description:
+            'Cadastre os serviços oferecidos e acompanhe quantos já foram feitos.',
     },
     'accounts-receivable': {
         icon: CreditCard,

@@ -16,7 +16,7 @@ class AccountReceivableRepository implements AccountReceivableRepositoryInterfac
     {
         $query = AccountReceivable::query()
             ->forCompany($companyId)
-            ->with(['customer', 'sale.items.product.category']);
+            ->with(['customer', 'sale.items.product.category', 'sale.items.service']);
 
         if ($tableQuery === null) {
             return $query->where('status', '!=', 'cancelled')->latest()->paginate();

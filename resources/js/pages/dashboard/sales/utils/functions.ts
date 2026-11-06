@@ -15,11 +15,13 @@ import { customersQueryKey } from '@/hooks/use-customers';
 import { productsQueryKey } from '@/hooks/use-products';
 import type { SaleMutationInput } from '@/hooks/use-sales';
 import { receivablesQueryKey, salesQueryKey } from '@/hooks/use-sales';
+import { servicesQueryKey } from '@/hooks/use-services';
 import { formatDateBR, formatDateTimeManaus } from '@/lib/format';
 import type { AccountReceivable } from '@/schemas/accountReceivable';
 import type { Customer } from '@/schemas/customer';
 import type { Product } from '@/schemas/product';
 import type { Sale } from '@/schemas/sale';
+import type { Service } from '@/schemas/service';
 import { toNumber } from '@/services/normalizers';
 import { saleService } from '@/services/sales';
 import type { BreadcrumbItem, ServerValidationError } from '@/types';
@@ -34,13 +36,16 @@ import {
     formatPercentInput,
     parseCurrencyInput,
     parsePercentInput,
+    toMoneyInput,
 } from '@/utils/form-fields';
 import {
     splitInstallments,
     splitSaleInstallments,
 } from '@/utils/sale-installments';
+import { getSaleItemName, isServiceItem } from '@/utils/sale-items';
 import { calculateSaleProfit } from '@/utils/sale-profit';
 import { todayString } from '@/utils/sales-dialog';
+import { matchesSearch } from '@/utils/search-text';
 import {
     BRAND_EXPORT_COLUMN,
     CATEGORY_EXPORT_COLUMN,
@@ -162,6 +167,7 @@ export function useCancelSale() {
                     salesQueryKey,
                     receivablesQueryKey,
                     productsQueryKey,
+                    servicesQueryKey,
                     customersQueryKey,
                 ].map((queryKey) =>
                     queryClient.invalidateQueries({ queryKey }),
@@ -191,7 +197,7 @@ export function getSaleProfit(sale: Sale): number {
 
 export function toSaleRow(sale: Sale): SaleRow {
     const items = sale.items ?? [];
-    const productNames = uniqueNames(items.map((item) => item.product_name));
+    const productNames = uniqueNames(items.map(getSaleItemName));
     const categoryNames = uniqueNames(items.map((item) => item.category_name));
     const brandNames = uniqueNames(items.map((item) => item.brand_name));
 
@@ -218,7 +224,7 @@ export function toSaleRow(sale: Sale): SaleRow {
 function productColumn(query: string): ServerColumn<SaleRow> {
     return {
         key: 'productNames',
-        header: 'Produto',
+        header: 'Itens',
         render: (row) =>
             createElement(NamesCell, {
                 names: row.productNames,
@@ -432,12 +438,6 @@ export function toApiPaymentMethod(
     return method;
 }
 
-export function toMoneyInput(value: number): string {
-    return value > 0
-        ? formatCurrencyInput(String(Math.round(value * 100)))
-        : '';
-}
-
 export function toSaleFormInitial(sale?: Sale | null): SaleFormInitial {
     if (!sale) {
         return {
@@ -461,8 +461,10 @@ export function toSaleFormInitial(sale?: Sale | null): SaleFormInitial {
         clientId: sale.customer_id ? String(sale.customer_id) : '',
         lineItems: (sale.items ?? []).map((item) => ({
             id: crypto.randomUUID(),
-            productId: String(item.product_id),
-            productName: item.product_name ?? `#${item.product_id}`,
+            kind: isServiceItem(item) ? 'service' : 'product',
+            productId: item.product_id ? String(item.product_id) : '',
+            serviceId: item.service_id ? String(item.service_id) : '',
+            productName: getSaleItemName(item),
             sku: '',
             quantity: item.quantity,
             unitPrice: item.unit_price,
@@ -534,6 +536,31 @@ export function filterProductsByQuery(
             product.name.toLowerCase().includes(normalizedQuery) ||
             product.sku.toLowerCase().includes(normalizedQuery) ||
             (product.barcode ?? '').toLowerCase().includes(normalizedQuery),
+    );
+}
+
+export function formatPerformedCount(count: number): string {
+    if (count === 0) {
+        return 'Ainda não foi feito';
+    }
+
+    return count === 1 ? 'Feito 1 vez' : `Feito ${count} vezes`;
+}
+
+export function filterServicesByQuery(
+    services: Service[],
+    query: string,
+): Service[] {
+    const active = services.filter((service) => service.status === 'active');
+
+    if (!query.trim()) {
+        return active;
+    }
+
+    return active.filter(
+        (service) =>
+            matchesSearch(service.name, query) ||
+            matchesSearch(service.description ?? '', query),
     );
 }
 
@@ -627,6 +654,7 @@ export function useSaleForm(
         setLineItems((items) => {
             const existing = items.find(
                 (item) =>
+                    item.kind === 'product' &&
                     item.productId === product.id &&
                     item.unitPrice === safePrice,
             );
@@ -643,12 +671,53 @@ export function useSaleForm(
                 ...items,
                 {
                     id: crypto.randomUUID(),
+                    kind: 'product',
                     productId: product.id,
+                    serviceId: '',
                     productName: product.name,
                     sku: product.sku,
                     quantity: safeQuantity,
                     unitPrice: safePrice,
                     unitCost: product.cost,
+                    subtotal: roundMoney(safePrice * safeQuantity),
+                },
+            ];
+        });
+    };
+
+    const addService = (service: Service, quantity: number, price: number) => {
+        const safeQuantity = Math.max(1, Number(quantity) || 1);
+        const safePrice = Math.max(0, Number(price) || 0);
+        const serviceId = String(service.id);
+
+        setLineItems((items) => {
+            const existing = items.find(
+                (item) =>
+                    item.kind === 'service' &&
+                    item.serviceId === serviceId &&
+                    item.unitPrice === safePrice,
+            );
+
+            if (existing) {
+                return items.map((item) =>
+                    item === existing
+                        ? withQuantity(item, item.quantity + safeQuantity)
+                        : item,
+                );
+            }
+
+            return [
+                ...items,
+                {
+                    id: crypto.randomUUID(),
+                    kind: 'service',
+                    productId: '',
+                    serviceId,
+                    productName: service.name,
+                    sku: '',
+                    quantity: safeQuantity,
+                    unitPrice: safePrice,
+                    unitCost: service.cost ?? 0,
                     subtotal: roundMoney(safePrice * safeQuantity),
                 },
             ];
@@ -674,6 +743,7 @@ export function useSaleForm(
         selectedClient,
         lineItems,
         addProduct,
+        addService,
         increaseQuantity: (itemId) => changeQuantity(itemId, 1),
         decreaseQuantity: (itemId) => changeQuantity(itemId, -1),
         removeItem: (itemId) =>
@@ -790,7 +860,9 @@ export function toSaleMutationInput(draft: SaleDraft): SaleMutationInput {
         crediario_entry: isCrediario ? draft.crediarioEntry : undefined,
         paid_installments: isCrediario ? draft.paidInstallments : undefined,
         items: draft.lineItems.map((item) => ({
-            product_id: Number(item.productId),
+            ...(item.kind === 'service'
+                ? { service_id: Number(item.serviceId) }
+                : { product_id: Number(item.productId) }),
             quantity: Number(item.quantity),
             unit_price: Number(item.unitPrice),
         })),
@@ -815,8 +887,12 @@ export function toPreviewSale(draft: SaleDraft): Sale {
         notes: draft.notes,
         items: draft.lineItems.map((item, index) => ({
             id: index + 1,
-            product_id: Number(item.productId) || 0,
-            product_name: item.productName,
+            type: item.kind,
+            name: item.productName,
+            product_id: Number(item.productId) || null,
+            product_name: item.kind === 'product' ? item.productName : null,
+            service_id: Number(item.serviceId) || null,
+            service_name: item.kind === 'service' ? item.productName : null,
             quantity: item.quantity,
             unit_price: item.unitPrice,
             unit_cost: item.unitCost,
