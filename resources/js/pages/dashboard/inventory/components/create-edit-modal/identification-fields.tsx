@@ -1,4 +1,4 @@
-import { Barcode, Plus, Sparkles } from 'lucide-react';
+import { Barcode, Sparkles } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { toast } from 'sonner';
 import { InputSearchComplete } from '@/components/input-search-complete';
@@ -12,39 +12,14 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { generateEan13Code, generateInternalCode } from '@/utils/form-fields';
 import { findOptionLabel } from '../../utils/functions';
 import type {
     IdentificationFieldsProps,
     ProductDialogForm,
-    QuickCreateButtonProps,
     QuickCreateType,
 } from '../../utils/types';
-
-function QuickCreateButton({ label, onClick }: QuickCreateButtonProps) {
-    return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={label}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={onClick}
-                >
-                    <Plus className="h-4 w-4" />
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent>{label}</TooltipContent>
-        </Tooltip>
-    );
-}
+import { QuickCreateButton } from './quick-create-button';
 
 export function IdentificationFields({
     brands,
