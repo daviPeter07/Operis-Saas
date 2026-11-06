@@ -6,6 +6,7 @@ import {
 } from '@/lib/format';
 import type { Sale } from '@/schemas/sale';
 import type { ThermalPaperWidth } from '@/utils/sale-documents';
+import { formatDiscount, hasDiscount } from '@/utils/sale-documents';
 
 function sanitizeEscPosText(value: string): string {
     return value
@@ -194,6 +195,15 @@ export function buildThermalEscPosLines(
             width,
         ).map((line) => `${line}\n`),
     );
+
+    if (hasDiscount(sale)) {
+        lines.push(
+            ...fitRight('Desconto', formatDiscount(sale), width).map(
+                (line) => `${line}\n`,
+            ),
+        );
+    }
+
     lines.push('\x1B\x45\x01');
     lines.push(
         ...fitRight('Total', formatCurrencyBR(Number(sale.total)), width).map(

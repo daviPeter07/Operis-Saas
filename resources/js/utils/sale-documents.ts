@@ -13,6 +13,18 @@ function resolveCustomerName(sale: Sale): string {
     return sale.customer_name?.trim() || `Cliente #${sale.customer_id}`;
 }
 
+export function hasDiscount(sale: Sale): boolean {
+    return Number(sale.discount ?? 0) > 0;
+}
+
+export function formatDiscount(sale: Sale): string {
+    const discount = Number(sale.discount ?? 0);
+
+    return discount > 0
+        ? `- ${formatCurrencyBR(discount)}`
+        : formatCurrencyBR(0);
+}
+
 function renderInstallmentSummary(sale: Sale): string | null {
     if ((sale.installments ?? 1) <= 1) {
         return null;
@@ -119,7 +131,7 @@ function renderDigitalDocumentMarkup(sale: Sale): string {
 
             <section class="digital-summary">
                 <div><span>Valor original</span><strong>${formatCurrencyBR(sale.subtotal)}</strong></div>
-                <div><span>Desconto</span><strong>${formatCurrencyBR(0)}</strong></div>
+                <div><span>Desconto</span><strong>${formatDiscount(sale)}</strong></div>
                 <div><span>Valor final</span><strong>${formatCurrencyBR(sale.total)}</strong></div>
                 <div><span>Valor pago</span><strong>${formatCurrencyBR(sale.status === 'completed' ? sale.total : 0)}</strong></div>
                 <div><span>Valor restante</span><strong>${formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total)}</strong></div>
@@ -200,6 +212,14 @@ function renderThermalDocumentMarkup(
                     <span>Subtotal</span>
                     <strong>${formatCurrencyBR(sale.subtotal)}</strong>
                 </div>
+                ${
+                    hasDiscount(sale)
+                        ? `<div class="receipt-summary-row">
+                    <span>Desconto</span>
+                    <strong>${formatDiscount(sale)}</strong>
+                </div>`
+                        : ''
+                }
                 <div class="receipt-summary-row receipt-summary-row--highlight">
                     <span>Total</span>
                     <strong>${formatCurrencyBR(sale.total)}</strong>
@@ -763,7 +783,7 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
 
     const summaryRows: Array<[string, string]> = [
         ['Valor original', formatCurrencyBR(sale.subtotal)],
-        ['Desconto', formatCurrencyBR(0)],
+        ['Desconto', formatDiscount(sale)],
         ['Valor final', formatCurrencyBR(sale.total)],
         [
             'Valor pago',
