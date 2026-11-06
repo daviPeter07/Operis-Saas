@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Sales;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sales\IndexSaleRequest;
 use App\Http\Requests\Sales\StoreSaleRequest;
 use App\Http\Requests\Sales\UpdateSaleRequest;
 use App\Http\Resources\Sales\SaleResource;
@@ -18,10 +19,10 @@ class SaleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(IndexSaleRequest $request): AnonymousResourceCollection
     {
         return SaleResource::collection(
-            $this->saleService->list(auth()->user()->current_company_id)
+            $this->saleService->list(auth()->user()->current_company_id, $request->tableQuery())
         );
     }
 
@@ -46,7 +47,7 @@ class SaleController extends Controller
     {
         $this->authorize('view', $sale);
 
-        return response()->json(['data' => SaleResource::make($sale->load(['items.product.category', 'customer']))]);
+        return response()->json(['data' => SaleResource::make($sale->load(['items.product.category', 'items.product.brand', 'customer']))]);
     }
 
     /**

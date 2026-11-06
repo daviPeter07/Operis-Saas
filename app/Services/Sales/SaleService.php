@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\Finance\ReceivableService;
 use App\Services\Products\StockMovementService;
+use App\Support\Tables\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -23,9 +24,9 @@ class SaleService
         private readonly ReceivableService $receivableService,
     ) {}
 
-    public function list(int $companyId): LengthAwarePaginator
+    public function list(int $companyId, ?TableQuery $tableQuery = null): LengthAwarePaginator
     {
-        return $this->sales->paginateByCompany($companyId);
+        return $this->sales->paginateByCompany($companyId, $tableQuery);
     }
 
     public function create(int $companyId, int $userId, array $data): Sale
@@ -81,7 +82,7 @@ class SaleService
                 }
             }
 
-            return $sale->refresh()->load(['items.product.category', 'customer']);
+            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
         });
     }
 
@@ -153,7 +154,7 @@ class SaleService
                 $this->applyStockDiff($sale, $previousItems, $newItems, $userId);
             }
 
-            return $sale->refresh()->load(['items.product.category', 'customer']);
+            return $sale->refresh()->load(['items.product.category', 'items.product.brand', 'customer']);
         });
     }
 
