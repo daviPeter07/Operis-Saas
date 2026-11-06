@@ -1,9 +1,5 @@
 import { DetailsField, DetailsSection } from '@/components/details-page';
-import {
-    formatCurrencyBR,
-    formatDateBR,
-    formatDateTimeManaus,
-} from '@/lib/format';
+import { formatCurrencyBR, formatDateBR } from '@/lib/format';
 import { toNumber } from '@/services/normalizers';
 import { describeInstallments } from '@/utils/sale-installments';
 import { PAYMENT_METHOD_LABELS } from '../../utils/constants';
@@ -55,11 +51,6 @@ export function SaleDetails({ sale, receivables }: SaleDetailsProps) {
                               getSaleInstallmentAmounts(sale, receivables),
                           )
                         : `${installments}x`}
-                </DetailsField>
-                <DetailsField label="Entregue em">
-                    {sale.delivered_at
-                        ? formatDateTimeManaus(sale.delivered_at)
-                        : 'Não entregue'}
                 </DetailsField>
                 {entry > 0 ? (
                     <DetailsField label="Entrada">
