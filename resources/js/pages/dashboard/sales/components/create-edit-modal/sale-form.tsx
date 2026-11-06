@@ -87,7 +87,7 @@ export function SaleForm({
 
     return (
         <>
-            <div className="flex h-[min(92dvh,calc(100dvh-1rem))] flex-col">
+            <div className="flex h-[min(92dvh,calc(100dvh-1rem))] min-w-0 flex-col">
                 <div className="space-y-4 border-b px-4 pt-4 pb-3">
                     <DialogHeader className="text-left">
                         <DialogTitle className="text-lg">{title}</DialogTitle>
