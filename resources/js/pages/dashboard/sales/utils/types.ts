@@ -269,6 +269,9 @@ export type StockWarningDialogProps = {
 
 export type PrintPreviewMode = 'digital' | 'thermal';
 
+// Digital receipt saved as an A4 page or as an 80 mm roll, to send to the customer.
+export type PdfFormat = 'a4' | '80mm';
+
 export type PrintPreviewDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;

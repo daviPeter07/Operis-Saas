@@ -59,7 +59,7 @@ function resolveCategorySummary(sale: Sale): string {
     return categories.join(', ') || '-';
 }
 
-function buildInvoiceFileName(sale: Sale): string {
+function buildInvoiceFileName(sale: Sale, suffix = ''): string {
     const customerName = resolveCustomerName(sale)
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -69,7 +69,7 @@ function buildInvoiceFileName(sale: Sale): string {
 
     const number = sale.id > 0 ? sale.id : 'nova';
 
-    return `comprovante-venda-${number}-${customerName || 'cliente'}-${sale.date}.pdf`;
+    return `comprovante-venda-${number}-${customerName || 'cliente'}-${sale.date}${suffix}.pdf`;
 }
 
 const DOCUMENT_PAYMENT_LABELS: Record<string, string> = {
@@ -130,6 +130,32 @@ const RECEIPT_TONE_RGB: Record<
 };
 
 const ACCENT_RGB: [number, number, number] = [228, 132, 74];
+
+/**
+ * What was paid at checkout and what is still open. A pending crediário already received
+ * its entry; looking only at the status printed "Pago R$ 0,00" for it.
+ */
+export function getSaleBalance(sale: Sale): {
+    paid: number;
+    remaining: number;
+} {
+    const total = Number(sale.total ?? 0);
+
+    if (sale.status === 'completed') {
+        return { paid: total, remaining: 0 };
+    }
+
+    if (sale.status === 'cancelled') {
+        return { paid: 0, remaining: 0 };
+    }
+
+    const paid =
+        sale.payment_method === 'crediario'
+            ? Math.min(total, Number(sale.crediario_entry ?? 0))
+            : 0;
+
+    return { paid, remaining: Math.max(0, total - paid) };
+}
 
 export function formatSaleNumber(sale: Sale, prefix = 'Venda '): string {
     return sale.id > 0 ? `${prefix}#${sale.id}` : 'Nova venda';
@@ -439,11 +465,11 @@ function renderThermalDocumentMarkup(
                 </div>
                 <div class="receipt-summary-row">
                     <span>Pago</span>
-                    <strong>${formatCurrencyBR(sale.status === 'completed' ? sale.total : 0)}</strong>
+                    <strong>${formatCurrencyBR(getSaleBalance(sale).paid)}</strong>
                 </div>
                 <div class="receipt-summary-row">
                     <span>Restante</span>
-                    <strong>${formatCurrencyBR(sale.status === 'completed' ? 0 : sale.total)}</strong>
+                    <strong>${formatCurrencyBR(getSaleBalance(sale).remaining)}</strong>
                 </div>
                 <div class="totals__status">Status final: ${translatedStatus}</div>
             </section>
@@ -1206,6 +1232,240 @@ export function downloadSaleInvoicePdf(sale: Sale): void {
     }
 
     doc.save(buildInvoiceFileName(sale));
+}
+
+/**
+ * The thermal receipt as a PDF the size of the paper roll (80 mm wide, as tall as the
+ * content), to send to the customer instead of printing.
+ */
+export function downloadSaleThermalPdf(sale: Sale): void {
+    const pageWidth = 80;
+    const margin = 4;
+    const contentWidth = pageWidth - margin * 2;
+    const lineHeight = 3.6;
+    const customerName = resolveCustomerName(sale);
+    const installmentSummary = renderInstallmentSummary(sale);
+    const translatedStatus = translateStatus(sale.status);
+    const balance = getSaleBalance(sale);
+
+    type Line =
+        | {
+              kind: 'text';
+              text: string;
+              align?: 'left' | 'center';
+              bold?: boolean;
+              size?: number;
+          }
+        | {
+              kind: 'pair';
+              left: string;
+              right: string;
+              bold?: boolean;
+              size?: number;
+          }
+        | { kind: 'separator' }
+        | { kind: 'gap'; height: number };
+
+    const lines: Line[] = [];
+    const title = (text: string) => {
+        lines.push({ kind: 'gap', height: 1 });
+        lines.push({
+            kind: 'text',
+            text: text.toUpperCase(),
+            align: 'center',
+            bold: true,
+        });
+    };
+
+    lines.push({
+        kind: 'text',
+        text: 'COMPROVANTE DE VENDA',
+        align: 'center',
+        bold: true,
+        size: 10,
+    });
+    lines.push({ kind: 'separator' });
+    lines.push({
+        kind: 'pair',
+        left: `Data: ${formatDateBR(sale.date)}`,
+        right: formatSaleNumber(sale, 'Venda: '),
+    });
+    lines.push({ kind: 'gap', height: 1 });
+    lines.push({ kind: 'text', text: 'Cliente' });
+    lines.push({ kind: 'text', text: customerName, bold: true, size: 9.5 });
+
+    title('Produtos');
+    const items = sale.items ?? [];
+
+    if (items.length === 0) {
+        lines.push({ kind: 'text', text: 'Nenhum item encontrado.' });
+    }
+
+    items.forEach((item) => {
+        lines.push({
+            kind: 'pair',
+            left: resolveProductLabel(item),
+            right: formatCurrencyBR(item.subtotal),
+            bold: true,
+        });
+        lines.push({
+            kind: 'pair',
+            left: `${item.quantity}x ${formatCurrencyBR(item.unit_price)}`,
+            right: item.category_name || '-',
+        });
+    });
+
+    lines.push({ kind: 'separator' });
+    title('Pagamento');
+    lines.push({
+        kind: 'text',
+        text: translatePaymentMethod(sale.payment_method),
+    });
+    lines.push({ kind: 'text', text: `Status: ${translatedStatus}` });
+
+    if (installmentSummary) {
+        lines.push({ kind: 'text', text: installmentSummary });
+    }
+
+    lines.push({
+        kind: 'text',
+        text: `Categorias: ${resolveCategorySummary(sale)}`,
+    });
+
+    lines.push({ kind: 'separator' });
+    title('Resumo');
+    lines.push({
+        kind: 'pair',
+        left: 'Subtotal',
+        right: formatCurrencyBR(sale.subtotal),
+    });
+
+    if (hasDiscount(sale)) {
+        lines.push({
+            kind: 'pair',
+            left: 'Desconto',
+            right: formatDiscount(sale),
+        });
+    }
+
+    lines.push({
+        kind: 'pair',
+        left: 'Total',
+        right: formatCurrencyBR(sale.total),
+        bold: true,
+        size: 10.5,
+    });
+    lines.push({
+        kind: 'pair',
+        left: 'Pago',
+        right: formatCurrencyBR(balance.paid),
+    });
+    lines.push({
+        kind: 'pair',
+        left: 'Restante',
+        right: formatCurrencyBR(balance.remaining),
+    });
+    lines.push({ kind: 'text', text: `Status final: ${translatedStatus}` });
+
+    lines.push({ kind: 'separator' });
+    lines.push({
+        kind: 'text',
+        text: 'Obrigado pela preferencia',
+        align: 'center',
+    });
+    lines.push({
+        kind: 'text',
+        text: `Emitido em ${new Date().toLocaleString('pt-BR')}`,
+        align: 'center',
+    });
+
+    const setFont = (doc: jsPDF, bold?: boolean, size?: number) => {
+        doc.setFont('courier', bold ? 'bold' : 'normal');
+        doc.setFontSize(size ?? 8.5);
+    };
+
+    // Lays the lines out once to measure the page height, then again to draw them.
+    const layout = (doc: jsPDF, draw: boolean): number => {
+        let y = margin + 3;
+
+        lines.forEach((line) => {
+            if (line.kind === 'gap') {
+                y += line.height;
+
+                return;
+            }
+
+            if (line.kind === 'separator') {
+                if (draw) {
+                    doc.setLineDashPattern([0.8, 0.8], 0);
+                    doc.setDrawColor(0, 0, 0);
+                    doc.line(margin, y - 1, pageWidth - margin, y - 1);
+                    doc.setLineDashPattern([], 0);
+                }
+
+                y += 2.5;
+
+                return;
+            }
+
+            setFont(doc, line.bold, line.size);
+            const height = lineHeight * ((line.size ?? 8.5) / 8.5);
+
+            if (line.kind === 'text') {
+                const wrapped: string[] = doc.splitTextToSize(
+                    line.text,
+                    contentWidth,
+                );
+
+                wrapped.forEach((text) => {
+                    if (draw) {
+                        doc.text(
+                            text,
+                            line.align === 'center' ? pageWidth / 2 : margin,
+                            y,
+                            { align: line.align ?? 'left' },
+                        );
+                    }
+
+                    y += height;
+                });
+
+                return;
+            }
+
+            const rightWidth = doc.getTextWidth(line.right);
+            const wrapped: string[] = doc.splitTextToSize(
+                line.left,
+                Math.max(10, contentWidth - rightWidth - 2),
+            );
+
+            wrapped.forEach((text, index) => {
+                if (draw) {
+                    doc.text(text, margin, y);
+
+                    if (index === 0) {
+                        doc.text(line.right, pageWidth - margin, y, {
+                            align: 'right',
+                        });
+                    }
+                }
+
+                y += height;
+            });
+        });
+
+        return y + margin;
+    };
+
+    const height = Math.max(
+        60,
+        layout(new jsPDF({ unit: 'mm', format: [pageWidth, 1000] }), false),
+    );
+    const doc = new jsPDF({ unit: 'mm', format: [pageWidth, height] });
+
+    doc.setTextColor(0, 0, 0);
+    layout(doc, true);
+    doc.save(buildInvoiceFileName(sale, '-80mm'));
 }
 
 export function printSaleThermalReceipt(

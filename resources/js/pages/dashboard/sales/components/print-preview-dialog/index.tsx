@@ -19,9 +19,11 @@ import type { ThermalPaperWidth } from '@/utils/sale-documents';
 import {
     buildSaleDocumentPreviewHtml,
     downloadSaleInvoicePdf,
+    downloadSaleThermalPdf,
     printSaleThermalReceipt,
 } from '@/utils/sale-documents';
 import type {
+    PdfFormat,
     PrintPreviewDialogProps,
     PrintPreviewMode,
 } from '../../utils/types';
@@ -34,14 +36,18 @@ export function PrintPreviewDialog({
 }: PrintPreviewDialogProps) {
     const [mode, setMode] = useState<PrintPreviewMode>(initialMode);
     const [paperWidth, setPaperWidth] = useState<ThermalPaperWidth>('58mm');
+    const [pdfFormat, setPdfFormat] = useState<PdfFormat>('a4');
+    const isRollPdf = mode === 'digital' && pdfFormat === '80mm';
 
     const previewDocument = useMemo(() => {
         if (!sale) {
             return '';
         }
 
-        return buildSaleDocumentPreviewHtml(sale, mode, paperWidth);
-    }, [mode, paperWidth, sale]);
+        return isRollPdf
+            ? buildSaleDocumentPreviewHtml(sale, 'thermal', '80mm')
+            : buildSaleDocumentPreviewHtml(sale, mode, paperWidth);
+    }, [isRollPdf, mode, paperWidth, sale]);
 
     return (
         <Dialog
@@ -98,6 +104,47 @@ export function PrintPreviewDialog({
                                     </ToggleGroupItem>
                                 </ToggleGroup>
                             </div>
+
+                            {mode === 'digital' ? (
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium">
+                                        Formato do PDF
+                                    </p>
+                                    <ToggleGroup
+                                        type="single"
+                                        value={pdfFormat}
+                                        onValueChange={(value) => {
+                                            if (
+                                                value === 'a4' ||
+                                                value === '80mm'
+                                            ) {
+                                                setPdfFormat(value);
+                                            }
+                                        }}
+                                        className="grid grid-cols-2 gap-2"
+                                    >
+                                        <ToggleGroupItem
+                                            value="a4"
+                                            variant="outline"
+                                            className="rounded-md border"
+                                        >
+                                            A4
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="80mm"
+                                            variant="outline"
+                                            className="rounded-md border"
+                                        >
+                                            80 mm
+                                        </ToggleGroupItem>
+                                    </ToggleGroup>
+                                    <p className="text-xs text-muted-foreground">
+                                        {pdfFormat === 'a4'
+                                            ? 'Folha inteira, para imprimir.'
+                                            : 'No tamanho do cupom, para enviar ao cliente.'}
+                                    </p>
+                                </div>
+                            ) : null}
 
                             {mode === 'thermal' ? (
                                 <div className="space-y-2">
@@ -163,7 +210,11 @@ export function PrintPreviewDialog({
                                     className="flex-1 sm:flex-none"
                                     onClick={() => {
                                         if (sale) {
-                                            downloadSaleInvoicePdf(sale);
+                                            if (pdfFormat === '80mm') {
+                                                downloadSaleThermalPdf(sale);
+                                            } else {
+                                                downloadSaleInvoicePdf(sale);
+                                            }
                                         }
                                     }}
                                 >
