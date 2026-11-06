@@ -37,29 +37,12 @@ class SaleService
                 (bool) ($data['allow_negative_stock'] ?? false)
             );
 
-            $totals = $this->calculateTotals($data['items']);
             $paymentMethod = $data['payment_method'];
-            $customer = isset($data['customer_id'])
-                ? Customer::query()->find($data['customer_id'])
-                : null;
             $status = $paymentMethod === 'crediario'
                 ? SaleStatus::Pending->value
                 : ($data['status'] ?? SaleStatus::Pending->value);
 
-            $sale = $this->sales->createForCompany($companyId, [
-                'customer_id' => $data['customer_id'] ?? null,
-                'date' => $data['date'],
-                'subtotal' => $totals,
-                'total' => $totals,
-                'status' => $status,
-                'payment_method' => $paymentMethod,
-                'installments' => $this->resolveInstallments($paymentMethod, $data),
-                'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
-                'installment_value' => $data['installment_value'] ?? null,
-                'crediario_entry' => $paymentMethod === 'crediario'
-                    ? (float) ($data['crediario_entry'] ?? 0)
-                    : 0,
-            ]);
+            $sale = $this->sales->createForCompany($companyId, $this->saleAttributes($data, $status));
 
             $this->syncItems($sale, $data['items']);
             $sale->load('customer');
@@ -118,29 +101,12 @@ class SaleService
                 $previousItems,
                 (bool) ($data['allow_negative_stock'] ?? false)
             );
-            $totals = $this->calculateTotals($data['items']);
             $paymentMethod = $data['payment_method'];
-            $customer = isset($data['customer_id'])
-                ? Customer::query()->find($data['customer_id'])
-                : null;
             $nextStatus = $paymentMethod === 'crediario'
                 ? SaleStatus::Pending->value
                 : ($data['status'] ?? $sale->status ?? SaleStatus::Pending->value);
 
-            $sale = $this->sales->update($sale, [
-                'customer_id' => $data['customer_id'] ?? null,
-                'date' => $data['date'],
-                'subtotal' => $totals,
-                'total' => $totals,
-                'status' => $nextStatus,
-                'payment_method' => $paymentMethod,
-                'installments' => $this->resolveInstallments($paymentMethod, $data),
-                'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
-                'installment_value' => $data['installment_value'] ?? null,
-                'crediario_entry' => $paymentMethod === 'crediario'
-                    ? (float) ($data['crediario_entry'] ?? 0)
-                    : 0,
-            ]);
+            $sale = $this->sales->update($sale, $this->saleAttributes($data, $nextStatus));
 
             $sale->items()->delete();
             $this->syncItems($sale, $data['items']);
@@ -221,9 +187,47 @@ class SaleService
         });
     }
 
-    private function calculateTotals(array $items): float
+    /**
+     * Columns shared by create and update. The discount (validated against the items
+     * subtotal by the request) lowers the total, and everything financial derives from
+     * that total: receivables, the crediário entry rule and the installment value.
+     *
+     * @return array<string, mixed>
+     */
+    private function saleAttributes(array $data, string $status): array
     {
-        return collect($items)->sum(fn (array $item): float => (float) $item['quantity'] * (float) $item['unit_price']);
+        $paymentMethod = $data['payment_method'];
+        $customer = isset($data['customer_id'])
+            ? Customer::query()->find($data['customer_id'])
+            : null;
+        $subtotal = $this->calculateSubtotal($data['items']);
+        $discount = round((float) ($data['discount'] ?? 0), 2);
+        $total = round($subtotal - $discount, 2);
+        $installments = $this->resolveInstallments($paymentMethod, $data);
+        $crediarioEntry = $paymentMethod === 'crediario'
+            ? (float) ($data['crediario_entry'] ?? 0)
+            : 0;
+
+        return [
+            'customer_id' => $data['customer_id'] ?? null,
+            'date' => $data['date'],
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'total' => $total,
+            'status' => $status,
+            'payment_method' => $paymentMethod,
+            'installments' => $installments,
+            'first_installment_date' => $this->resolveFirstInstallmentDate($paymentMethod, $data, $customer),
+            'installment_value' => in_array($paymentMethod, ['card_credit', 'crediario'], true)
+                ? round(max(0, $total - $crediarioEntry) / $installments, 2)
+                : ($data['installment_value'] ?? null),
+            'crediario_entry' => $crediarioEntry,
+        ];
+    }
+
+    private function calculateSubtotal(array $items): float
+    {
+        return round(collect($items)->sum(fn (array $item): float => (float) $item['quantity'] * (float) $item['unit_price']), 2);
     }
 
     private function syncItems(Sale $sale, array $items): void

@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests\Sales;
 
+use App\Http\Requests\Sales\Concerns\ValidatesSaleDiscount;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateSaleRequest extends FormRequest
 {
+    use ValidatesSaleDiscount;
+
     public function authorize(): bool
     {
         return auth()->check();
@@ -28,6 +31,7 @@ class UpdateSaleRequest extends FormRequest
             'first_installment_date' => ['nullable', 'date'],
             'installment_value' => ['nullable', 'numeric', 'min:0'],
             'crediario_entry' => ['nullable', 'numeric', 'min:0.01'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
             'paid_installments' => ['nullable', 'array'],
             'paid_installments.*' => ['integer', 'min:1', 'max:24'],
             'allow_negative_stock' => ['sometimes', 'boolean'],

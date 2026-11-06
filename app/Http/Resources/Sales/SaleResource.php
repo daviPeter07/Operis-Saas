@@ -21,6 +21,7 @@ class SaleResource extends ApiResource
             'date' => $this->date?->toDateString(),
             'createdAt' => $this->created_at?->clone()->setTimezone(config('app.business_timezone'))->format('Y-m-d H:i:s'),
             'subtotal' => $this->subtotal,
+            'discount' => (float) $this->discount,
             'total' => $this->total,
             'status' => $this->status,
             'payment_method' => $this->payment_method,
