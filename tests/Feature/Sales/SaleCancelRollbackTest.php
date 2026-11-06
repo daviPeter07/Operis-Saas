@@ -9,7 +9,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 
-test('cancelling completed sale restores stock and cancels receivable', function () {
+test('cancelling completed sale restores stock and keeps the received payment', function () {
     $user = User::factory()->create();
     $company = Company::query()->create([
         'name' => 'Empresa S4',
@@ -54,5 +54,5 @@ test('cancelling completed sale restores stock and cancels receivable', function
 
     expect($product->fresh()->stock)->toBe('10.00');
     expect(Sale::query()->find($saleId)->status)->toBe('cancelled');
-    expect(AccountReceivable::query()->where('sale_id', $saleId)->first()?->status)->toBe('cancelled');
+    expect(AccountReceivable::query()->where('sale_id', $saleId)->first()?->status)->toBe('received');
 });

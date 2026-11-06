@@ -78,11 +78,19 @@ class ReceivableService
         }
     }
 
+    /**
+     * Cancels what the customer still owes on a cancelled sale. Money already received
+     * stays recorded as received.
+     */
     public function cancelFromSale(Sale $sale): void
     {
         $current = $this->receivables->forSale($sale);
 
         foreach ($current as $receivable) {
+            if ($receivable->status === FinancialStatus::Received->value) {
+                continue;
+            }
+
             $receivable->update([
                 'status' => FinancialStatus::Cancelled->value,
             ]);
@@ -147,6 +155,8 @@ class ReceivableService
                 ]);
             }
 
+            $this->ensureSaleIsNotCancelled($receivable);
+
             $previouslyPaid = (float) ($receivable->amount_paid ?? 0);
 
             $receivable->update([
@@ -192,6 +202,8 @@ class ReceivableService
                     'receivable' => 'Conta a receber precisa estar baixada para desfazer a baixa.',
                 ]);
             }
+
+            $this->ensureSaleIsNotCancelled($receivable);
 
             $reversedAmount = (float) ($receivable->amount_paid ?? 0);
 
@@ -258,6 +270,11 @@ class ReceivableService
                 continue;
             }
 
+            // Money received before the sale was cancelled stays received.
+            if ($targetStatus === FinancialStatus::Cancelled->value && $receivable->status === FinancialStatus::Received->value) {
+                continue;
+            }
+
             $receivable->update([
                 'status' => $targetStatus,
                 'amount_paid' => $targetStatus === FinancialStatus::Received->value
@@ -287,6 +304,8 @@ class ReceivableService
                     'receivable' => 'Conta a receber cancelada nao pode receber baixa parcial.',
                 ]);
             }
+
+            $this->ensureSaleIsNotCancelled($receivable);
 
             $remaining = max(0, (float) $receivable->amount - (float) ($receivable->amount_paid ?? 0));
             $amount = (float) $data['amount'];
@@ -340,6 +359,24 @@ class ReceivableService
 
             return $receivable->refresh();
         });
+    }
+
+    /**
+     * Payments of a cancelled sale are frozen: changing them would reopen or complete the sale.
+     */
+    private function ensureSaleIsNotCancelled(AccountReceivable $receivable): void
+    {
+        if ($receivable->sale_id === null) {
+            return;
+        }
+
+        $saleStatus = Sale::query()->whereKey($receivable->sale_id)->value('status');
+
+        if ($saleStatus === SaleStatus::Cancelled->value) {
+            throw ValidationException::withMessages([
+                'receivable' => 'Esta conta pertence a uma venda cancelada e não pode ser alterada.',
+            ]);
+        }
     }
 
     private function resolveSaleItemSummary(Sale $sale): ?string

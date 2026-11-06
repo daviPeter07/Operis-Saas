@@ -150,14 +150,16 @@ class SaleService
     public function cancel(Sale $sale, int $userId): Sale
     {
         return DB::transaction(function () use ($sale, $userId): Sale {
+            // Locked so two cancel requests cannot both give the stock back.
+            $sale = Sale::query()->lockForUpdate()->findOrFail($sale->id);
+
             if ($sale->status === SaleStatus::Cancelled->value) {
                 return $sale;
             }
 
-            if ($sale->status === SaleStatus::Completed->value) {
-                $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleCancel, $userId, true);
-                $this->receivableService->cancelFromSale($sale);
-            }
+            // Stock left on every sale's creation, whatever its status, so it always comes back.
+            $this->stockMovementService->reconcile($sale->company_id, $sale->id, [], StockMovementType::SaleCancel, $userId);
+            $this->receivableService->cancelFromSale($sale);
 
             $sale = $this->sales->update($sale, ['status' => SaleStatus::Cancelled->value]);
             $this->history->syncStatus($sale);
@@ -169,8 +171,8 @@ class SaleService
     public function delete(Sale $sale, int $userId): void
     {
         DB::transaction(function () use ($sale, $userId): void {
-            // Sempre reverter o estoque ao excluir a venda, independente do status
-            $this->applyStock($sale, $sale->items->toArray(), [], StockMovementType::SaleCancel, $userId, true);
+            // Gives back whatever the sale still holds out of stock (nothing when it was cancelled).
+            $this->stockMovementService->reconcile($sale->company_id, $sale->id, [], StockMovementType::SaleCancel, $userId);
 
             $sale->receivables()->delete();
             $sale->items()->delete();
