@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('dashboard/accounts-payable/{payable}', fn (int $payable) => Inertia::render('dashboard/accounts-payable/show', ['payableId' => $payable]))
         ->whereNumber('payable')
         ->name('dashboard.accounts-payable.show');
+    Route::inertia('dashboard/store', 'dashboard/store/index')->name('dashboard.store');
     Route::inertia('dashboard/team', 'dashboard/team')->name('dashboard.team');
     Route::inertia('dashboard/reports', 'dashboard/reports')->name('dashboard.reports');
     Route::inertia('dashboard/reports/vendas', 'dashboard/reports/vendas')->name('dashboard.reports.vendas');

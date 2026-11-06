@@ -12,6 +12,7 @@ export type WorkspaceModuleKey =
     | 'purchases'
     | 'accounts-receivable'
     | 'accounts-payable'
+    | 'store'
     | 'team'
     | 'reports'
     | 'settings';

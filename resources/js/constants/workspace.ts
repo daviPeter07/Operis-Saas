@@ -106,6 +106,12 @@ export const defaultWorkspaceNavigation: WorkspaceModule[] = [
         status: 'available',
     },
     {
+        key: 'store',
+        label: 'Loja',
+        href: withAppBasePath('/dashboard/store'),
+        status: 'coming-soon',
+    },
+    {
         key: 'team',
         label: 'Equipe',
         href: withAppBasePath('/dashboard/team'),

@@ -8,6 +8,7 @@ import {
     Receipt,
     Settings,
     ShoppingCart,
+    Store,
     Tags,
     Wrench,
     TrendingUp,
@@ -107,6 +108,10 @@ const navMetaByModule: Record<
     'accounts-payable': {
         icon: Receipt,
         description: 'Acompanhe despesas, contas e pagamentos pendentes.',
+    },
+    store: {
+        icon: Store,
+        description: 'Em breve: sua loja virtual com os produtos do estoque.',
     },
     team: {
         icon: UsersRound,
