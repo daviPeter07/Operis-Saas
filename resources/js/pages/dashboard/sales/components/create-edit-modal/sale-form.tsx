@@ -17,7 +17,7 @@ import {
     toPreviewSale,
     useSaleForm,
 } from '../../utils/functions';
-import type { SaleDraft, SaleFormProps } from '../../utils/types';
+import type { AddedToCart, SaleDraft, SaleFormProps } from '../../utils/types';
 import { PrintPreviewDialog } from '../print-preview-dialog';
 import { AddProductDialog } from './add-product-dialog';
 import { CartStep } from './cart-step';
@@ -52,6 +52,7 @@ export function SaleForm({
         null,
     );
     const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+    const [lastAdded, setLastAdded] = useState<AddedToCart | null>(null);
     const [addProductKey, setAddProductKey] = useState(0);
     const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
     const [newClientName, setNewClientName] = useState<string | null>(null);
@@ -105,6 +106,9 @@ export function SaleForm({
                         <ProductsStep
                             form={form}
                             products={products}
+                            lastAdded={lastAdded}
+                            onViewCart={() => goTo(1)}
+                            onDismissAdded={() => setLastAdded(null)}
                             onOpenCreateProduct={() =>
                                 setIsProductCreateOpen(true)
                             }
@@ -192,6 +196,11 @@ export function SaleForm({
                 product={catalogProduct}
                 onConfirm={(product, quantity, price) => {
                     form.addProduct(product, quantity, price);
+                    setLastAdded({
+                        id: Date.now(),
+                        productName: product.name,
+                        quantity,
+                    });
                     setIsAddProductOpen(false);
                 }}
             />

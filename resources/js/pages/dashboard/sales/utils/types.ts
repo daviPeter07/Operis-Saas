@@ -293,11 +293,28 @@ export type SaleStepsProps = {
     onSelect: (index: number) => void;
 };
 
+export type AddedToCart = {
+    id: number;
+    productName: string;
+    quantity: number;
+};
+
+export type CartAddedNoticeProps = {
+    added: AddedToCart;
+    itemCount: number;
+    total: number;
+    onViewCart: () => void;
+    onDismiss: () => void;
+};
+
 export type ProductsStepProps = {
     form: SaleFormState;
     products: UiProduct[];
+    lastAdded: AddedToCart | null;
     onAddFromCatalog: (product: UiProduct) => void;
     onOpenCreateProduct: () => void;
+    onViewCart: () => void;
+    onDismissAdded: () => void;
 };
 
 export type CartStepProps = {
