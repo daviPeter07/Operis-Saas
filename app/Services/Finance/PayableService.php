@@ -81,6 +81,20 @@ class PayableService
         ]);
     }
 
+    /**
+     * Keeps the payables of an edited purchase pointing at its current supplier and items
+     * when nothing that defines them (value, dates, payment) changed.
+     */
+    public function syncPurchaseDetails(Purchase $purchase): void
+    {
+        $purchase->payables()
+            ->where('status', '!=', 'cancelled')
+            ->update([
+                'supplier_id' => $purchase->supplier_id,
+                'item' => $this->resolvePurchaseItemSummary($purchase),
+            ]);
+    }
+
     public function cancelFromPurchase(Purchase $purchase): void
     {
         foreach ($this->payables->forPurchase($purchase) as $payable) {
