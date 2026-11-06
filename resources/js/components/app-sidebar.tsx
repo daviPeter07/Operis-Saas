@@ -236,8 +236,16 @@ export function AppSidebar() {
                             const isPending =
                                 pendingPath === navigationItem.href &&
                                 pendingPath !== location.pathname;
+                            // Inner pages (e.g. a product's details) keep their module highlighted.
+                            const isInnerPage =
+                                navigationItem.href !==
+                                    withAppBasePath('/dashboard') &&
+                                location.pathname.startsWith(
+                                    `${navigationItem.href}/`,
+                                );
                             const isActive =
                                 navigationItem.href === location.pathname ||
+                                isInnerPage ||
                                 isPending;
                             const Icon = meta.icon;
 

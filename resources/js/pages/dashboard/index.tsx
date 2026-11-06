@@ -2,6 +2,7 @@ import { router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/dashboard-header';
+import { PageContent } from '@/components/page-content';
 import { AlertsPanel } from '@/features/dashboard/overview/alerts-panel';
 import { ChartsPanel } from '@/features/dashboard/overview/charts-panel';
 import { MetricsGrid } from '@/features/dashboard/overview/metrics-grid';
@@ -27,7 +28,6 @@ import {
 import type { DateRange } from '@/features/dashboard/overview/period-range';
 import { RecentActivity } from '@/features/dashboard/overview/recent-activity';
 import { ViewSwitcher } from '@/features/dashboard/overview/view-switcher';
-import { PageContent } from '@/features/dashboard/page-content';
 import { useAccountPayables } from '@/hooks/use-account-payables';
 import { useAccountReceivables } from '@/hooks/use-account-receivables';
 import { useAlertNavigationMap } from '@/hooks/use-alert-navigation-map';
