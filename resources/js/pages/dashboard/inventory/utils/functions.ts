@@ -1,7 +1,5 @@
 import { router } from '@inertiajs/react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
-import { toast } from 'sonner';
 import type { ServerColumn } from '@/components/table/server-table';
 import { withAppBasePath } from '@/constants/workspace';
 import { productsQueryKey } from '@/hooks/use-products';
@@ -26,7 +24,6 @@ import type {
     ApiParams,
     ProductDialogForm,
     ProductDialogSubmitData,
-    ServerValidationError,
     InventoryFilterOptions,
     InventoryTotals,
     ProductRow,
@@ -258,21 +255,4 @@ export function toProductFormValues(product: Product): ProductDialogForm {
         category_id: String(product.category_id),
         brand_id: product.brand_id ? String(product.brand_id) : '',
     };
-}
-
-export function showServerErrors<TForm extends FieldValues>(
-    form: UseFormReturn<TForm>,
-    error: unknown,
-    fallbackMessage: string,
-): void {
-    const { message, errors } = (error ?? {}) as ServerValidationError;
-    const fields = Object.keys(form.getValues());
-
-    Object.entries(errors ?? {}).forEach(([field, messages]) => {
-        if (fields.includes(field)) {
-            form.setError(field as Path<TForm>, { message: messages[0] });
-        }
-    });
-
-    toast.error(message || fallbackMessage);
 }
