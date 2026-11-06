@@ -234,6 +234,12 @@ Compras ganhou o mesmo cadastro em etapas, a tabela com filtros por coluna e a p
 - **Por quê:** a tela mostrava só o prazo total.
 - **Correção e hoje:** cada opção mostra a quantidade de boletos ("2 boletos, a cada 30 dias, até 05/01/27"), e embaixo aparece a lista de vencimentos com a data e o valor de cada boleto, igual ao que vai para contas a pagar.
 
+### Crediário sem entrada
+
+- **Antes:** a venda no crediário exigia uma entrada maior que zero. Sem entrada, o cadastro mostrava "Informe uma entrada maior que zero" e não deixava avançar, e a API também recusava.
+- **Por quê:** a regra foi escrita supondo que todo crediário tem entrada, nas duas pontas (tela e servidor).
+- **Correção e hoje:** a entrada é **opcional**. Deixando em branco, o valor total é dividido nas parcelas, e o limite de crédito do cliente considera o total. Quando informada, a entrada continua precisando ser menor que o total.
+
 ### Comprovante da venda em PDF de 80 mm
 
 - **Novo:** em "Imprimir Nota" → **Digital**, dá para escolher o formato do PDF: **A4** (folha inteira, para imprimir) ou **80 mm** (no tamanho do cupom da impressora térmica, para enviar ao cliente por WhatsApp ou e-mail). O PDF de 80 mm tem o mesmo conteúdo do cupom térmico e a altura do próprio cupom.

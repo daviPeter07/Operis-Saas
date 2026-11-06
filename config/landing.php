@@ -90,6 +90,12 @@ return [
     'updates' => [
         [
             'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Crediário sem entrada',
+            'description' => 'A entrada do crediário agora é opcional: sem ela, o valor total da venda é dividido nas parcelas.',
+        ],
+        [
+            'date' => '2026-11-06',
             'type' => 'novidade',
             'title' => 'Comprovante em PDF no tamanho do cupom',
             'description' => 'Salve o comprovante da venda em PDF de 80 mm, igual ao cupom da impressora térmica, para enviar ao cliente, e marque no cadastro da compra quais boletos já foram pagos.',
