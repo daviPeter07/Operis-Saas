@@ -188,6 +188,55 @@ Revisão completa do módulo de vendas. Para cada um dos 21 problemas está regi
 - Os descontos de vendas gravadas antes da correção se perderam, porque nunca foram salvos.
 - Vendas pendentes canceladas antes da correção continuam sem o estoque devolvido. O estoque já se movimentou desde então, e ajustar para trás poderia gerar números errados.
 
+## 🛒 Compras no padrão de vendas (novembro de 2026)
+
+Compras ganhou o mesmo cadastro em etapas, a tabela com filtros por coluna e a página de detalhes de vendas. Na revisão apareceram os problemas abaixo, cada um com como era antes, por que acontecia, o que foi feito e como funciona hoje.
+
+### Problemas corrigidos
+
+**1. As observações da compra não eram salvas**
+- **Antes:** o cadastro de compra tinha o campo "Observações", mas o texto sumia depois de salvar.
+- **Por quê:** a tela não enviava o campo e o banco não tinha onde guardá-lo.
+- **Correção e hoje:** coluna `notes` nas compras. As observações ficam salvas, aparecem nos detalhes e no resumo do cadastro, e voltam ao editar.
+
+**2. Excluir uma compra cancelada tirava o estoque de novo**
+- **Antes:** ao cancelar uma compra, os produtos saíam do estoque. Se depois ela fosse excluída, saíam mais uma vez.
+- **Por quê:** o cancelamento e a exclusão retiravam o estoque cada um por conta própria, sem ver o que já tinha saído.
+- **Correção e hoje:** os dois calculam pelas movimentações de estoque da própria compra. O estoque sai uma vez só, em qualquer ordem.
+
+**3. Produto repetido em duas linhas contava só uma no estoque ao editar**
+- **Antes:** ao editar uma compra com o mesmo produto em duas linhas (por exemplo, custos diferentes), o estoque considerava só uma das linhas.
+- **Por quê:** a diferença de estoque era calculada por produto, e a segunda linha sobrescrevia a primeira.
+- **Correção e hoje:** as linhas do mesmo produto são somadas antes de ajustar o estoque.
+
+**4. Editar a compra apagava boletos já pagos**
+- **Antes:** numa compra pendente com, por exemplo, o 1º boleto já pago em contas a pagar, qualquer edição (até só a observação) voltava esse boleto para "pendente".
+- **Por quê:** toda edição apagava as contas a pagar da compra e criava de novo, sem os pagamentos.
+- **Correção e hoje:** as contas a pagar só são refeitas quando muda o que define elas (valor, forma de pagamento, boletos, data ou situação). Editar observação, fornecedor ou itens sem mudar o total mantém os pagamentos. Se a compra tem pagamento registrado e você tenta mudar o valor ou a forma de pagamento, aparece um aviso para desfazer a baixa antes.
+
+**5. Compras canceladas não apareciam na lista**
+- **Antes:** a tela de compras escondia as compras canceladas, sem como filtrar por elas.
+- **Por quê:** a lista removia as canceladas antes de mostrar.
+- **Correção e hoje:** elas aparecem com o status "Cancelada" e podem ser filtradas pela coluna Status.
+
+**6. Compra em dinheiro ficava pendente para sempre**
+- **Antes:** uma compra em dinheiro marcada como pendente ficava pendente, mas a conta a pagar dela já nascia paga.
+- **Por quê:** o sistema sempre registra o pagamento em dinheiro como pago, e nada concluía a compra depois.
+- **Correção e hoje:** no cadastro, compra em dinheiro é sempre registrada como paga.
+
+**7. "60 dias" no boleto não deixava claro quantos boletos eram**
+- **Antes:** as opções eram "30 dias", "60 dias"... e não mostravam que 60 dias significa 2 boletos (um em 30 e outro em 60 dias), nem as datas e os valores.
+- **Por quê:** a tela mostrava só o prazo total.
+- **Correção e hoje:** cada opção mostra a quantidade de boletos ("2 boletos, a cada 30 dias, até 05/01/27"), e embaixo aparece a lista de vencimentos com a data e o valor de cada boleto, igual ao que vai para contas a pagar.
+
+### Melhorias que vieram junto
+
+- **Cadastro da compra em 4 etapas** (Produtos → Fornecedor e carrinho → Pagamento → Resumo), igual ao de vendas, com a confirmação de produto adicionado e o total sempre à vista.
+- **Custo unitário ao adicionar produto**, com o último custo e o preço de venda como referência.
+- **Cadastrar fornecedor pela busca:** digite o nome e escolha "Cadastrar", o fornecedor é criado e já fica selecionado.
+- **Tabela com filtros por coluna** (fornecedor, produto, categoria, marca, status e forma de pagamento) e ordenação por data, vencimento e total. Data e vencimento ficam lado a lado no começo.
+- **Página de detalhes da compra** com resumo, valores (total, pago e em aberto), observações, itens e as contas a pagar com a situação de cada boleto.
+
 ## 🧱 Stack
 
 - **Backend:** Laravel 13 (PHP 8.5), Fortify (autenticação), Sanctum (API com sessão por cookie)
