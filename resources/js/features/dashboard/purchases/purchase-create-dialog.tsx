@@ -9,11 +9,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ProductDialog } from '@/features/dashboard/inventory/product-dialog';
 import { SupplierCreateDialog } from '@/features/dashboard/suppliers/supplier-create-dialog';
 import { useCreateBrand } from '@/hooks/use-brands';
 import { useCreateCategory } from '@/hooks/use-categories';
 import { todayInAppTimeZone } from '@/lib/app-timezone';
+import { ProductDialog } from '@/pages/dashboard/inventory/components/create-edit-modal';
 import type { UiPurchase } from '@/types/dashboard-entities';
 import type { UiProduct } from '@/types/dashboard-entities';
 import type {
