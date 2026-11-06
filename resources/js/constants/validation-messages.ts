@@ -7,4 +7,5 @@ export const VALIDATION_MESSAGES = {
     tooHigh: 'Valor acima do permitido.',
     noSpaces: 'Não use espaços.',
     maxLength: 'Use no máximo :max caracteres.',
+    invalidEmail: 'Informe um e-mail válido.',
 } as const;
