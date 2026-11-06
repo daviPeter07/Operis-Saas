@@ -90,6 +90,18 @@ return [
     'updates' => [
         [
             'date' => '2026-11-06',
+            'type' => 'correcao',
+            'title' => 'Desconto e crediário corretos nas vendas',
+            'description' => 'O desconto aplicado no caixa agora é salvo na venda e entra no total, nas parcelas e na entrada do crediário, e cancelar uma venda devolve o estoque e cancela as parcelas em aberto.',
+        ],
+        [
+            'date' => '2026-11-06',
+            'type' => 'melhoria',
+            'title' => 'Vendas com filtros por coluna e página de detalhes',
+            'description' => 'Filtre as vendas por cliente, produto, categoria, marca, status e forma de pagamento, e veja cada venda numa página própria com itens, parcelas e o histórico de tudo o que aconteceu com ela.',
+        ],
+        [
+            'date' => '2026-11-06',
             'type' => 'melhoria',
             'title' => 'Clientes, fornecedores, categorias e marcas com filtros por coluna',
             'description' => 'Filtre e ordene essas listas direto em cada coluna, veja os detalhes de clientes e fornecedores numa página própria e abra os produtos de uma categoria ou marca com um clique.',
