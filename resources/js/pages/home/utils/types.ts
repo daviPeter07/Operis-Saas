@@ -17,6 +17,33 @@ export type LandingUpdate = {
     description: string;
 };
 
+export type BillingPeriod = 'mês' | 'ano';
+
+export type PricingPlan = {
+    id: string;
+    /** Label on the Mensal | Anual switch. */
+    label: string;
+    name: string;
+    description: string;
+    /** In reais; null while the value is not defined ("Valor em breve"). */
+    price: number | null;
+    /** Previous price, shown struck through above the current one. */
+    originalPrice?: number;
+    period: BillingPeriod;
+    badge?: string;
+};
+
+export type BillingToggleProps = {
+    plans: PricingPlan[];
+    value: BillingPeriod;
+    onChange: (period: BillingPeriod) => void;
+};
+
+export type PlanCardProps = {
+    plan: PricingPlan;
+    benefits: readonly string[];
+};
+
 export type DemoMetric = {
     label: string;
     value: string;

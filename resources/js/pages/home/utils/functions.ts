@@ -1,3 +1,6 @@
+import { SALES_WHATSAPP_NUMBER } from './constants';
+import type { PricingPlan } from './types';
+
 export function formatCurrency(value: number): string {
     return value.toLocaleString('pt-BR', {
         style: 'currency',
@@ -7,6 +10,19 @@ export function formatCurrency(value: number): string {
 
 export const formatWholeCurrency = (value: number): string =>
     formatCurrency(value).replace(',00', '');
+
+/** WhatsApp chat with the plan already named in the message. */
+export function getPlanWhatsAppUrl(plan: PricingPlan): string {
+    const price =
+        plan.price === null
+            ? ''
+            : `, de ${formatWholeCurrency(plan.price)} por ${plan.period}`;
+    const message =
+        `Olá, tudo bem? Vim pelo site de vocês e tenho interesse no ${plan.name.toLowerCase()} do Operis${price}. ` +
+        'Gostaria de saber mais sobre o sistema e como faço para ter acesso.';
+
+    return `https://wa.me/${SALES_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
 
 /** Formats an ISO date (YYYY-MM-DD) without timezone shifts, e.g. "5 de nov. de 2026". */
 export function formatUpdateDate(isoDate: string): string {
