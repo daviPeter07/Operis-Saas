@@ -22,7 +22,12 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { withAppBasePath } from '@/constants/workspace';
 import { login, register } from '@/routes';
-import type { DemoActivity, DemoMetric, LandingUpdateType } from './types';
+import type {
+    DemoActivity,
+    DemoMetric,
+    LandingUpdateType,
+    PricingPlan,
+} from './types';
 
 export const landingLinks = {
     login: withAppBasePath(login().url),
@@ -36,9 +41,38 @@ export const landingNavigation = [
     { label: 'Dúvidas', href: '#duvidas' },
 ] as const;
 
+/** WhatsApp that receives the plan requests (country + area code + number). */
+export const SALES_WHATSAPP_NUMBER = '559299865111';
+
+/**
+ * Monthly plan price in reais. While it is null the card shows "Valor em breve";
+ * set the number here (e.g. 39) to publish it.
+ */
+export const MONTHLY_PLAN_PRICE: number | null = 50;
+
+export const pricingPlans: PricingPlan[] = [
+    {
+        id: 'plano-mensal',
+        label: 'Mensal',
+        name: 'Plano mensal',
+        description: 'Para começar sem compromisso e pagar mês a mês.',
+        price: MONTHLY_PLAN_PRICE,
+        period: 'mês',
+    },
+    {
+        id: 'plano-anual',
+        label: 'Anual',
+        name: 'Plano anual',
+        description:
+            'Para a empresa que quer vender, controlar o estoque e receber em dia.',
+        price: 300,
+        originalPrice: 500,
+        period: 'ano',
+        badge: 'Promocional',
+    },
+];
+
 export const promotionalPlan = {
-    yearlyPrice: 300,
-    monthlyEquivalent: 25,
     benefits: [
         'Vendas no PIX, dinheiro, cartão e crediário com entrada e parcelas',
         'Compras com pagamento à vista ou boleto em 30, 60, 90 ou 120 dias',
