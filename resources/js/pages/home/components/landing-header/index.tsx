@@ -30,17 +30,11 @@ export function LandingHeader() {
                 </nav>
 
                 <div className="flex items-center gap-1 sm:gap-2">
-                    <a
+                    <LandingButton
                         href={landingLinks.login}
-                        className="rounded-lg px-3 py-2 text-sm font-medium text-dg-ink outline-none hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-dg-orange/60"
+                        className="rh-9 px-4"
                     >
                         Entrar
-                    </a>
-                    <LandingButton
-                        href={landingLinks.register}
-                        className="h-9 px-4"
-                    >
-                        Criar conta
                     </LandingButton>
                 </div>
             </div>
