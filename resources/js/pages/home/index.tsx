@@ -1,12 +1,15 @@
 import { Head } from '@inertiajs/react';
 import { useLayoutEffect } from 'react';
 import { lockLightTheme } from '@/hooks/use-appearance';
+import { ComparisonSection } from './components/comparison-section';
 import { DemoSection } from './components/demo-section';
 import { FaqSection } from './components/faq-section';
 import { HeroSection } from './components/hero-section';
 import { LandingFooter } from './components/landing-footer';
 import { LandingHeader } from './components/landing-header';
+import { PainPointsSection } from './components/pain-points-section';
 import { PricingSection } from './components/pricing-section';
+import { StartStepsSection } from './components/start-steps-section';
 import { UpdatesSection } from './components/updates-section';
 import type { HomeProps } from './utils/types';
 
@@ -26,9 +29,12 @@ export default function Home({ seoTitle, faq, updates }: HomeProps) {
                 <LandingHeader />
                 <main className="flex-1">
                     <HeroSection />
+                    <PainPointsSection />
                     <DemoSection />
-                    <UpdatesSection updates={updates} />
+                    <ComparisonSection />
                     <PricingSection />
+                    <StartStepsSection />
+                    <UpdatesSection updates={updates} />
                     <FaqSection questions={faq} />
                 </main>
                 <LandingFooter />

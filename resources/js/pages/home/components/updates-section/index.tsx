@@ -17,7 +17,7 @@ export function UpdatesSection({ updates }: UpdatesSectionProps) {
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
                 <SectionHeading
                     title="Últimas atualizações"
-                    description="O Operis recebe melhorias o tempo todo, sem você precisar instalar nada. Veja o que mudou recentemente."
+                    description="O Operis é atualizado com frequência, sem você instalar nada. Veja o que mudou por último."
                 />
 
                 <ol className="mx-auto mt-12 max-w-3xl pl-2 sm:pl-0">

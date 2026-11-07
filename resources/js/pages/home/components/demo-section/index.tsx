@@ -18,12 +18,13 @@ export function DemoSection() {
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
                 <div className="max-w-2xl">
                     <h2 className="font-display text-3xl leading-tight font-bold tracking-[-0.03em] text-dg-ink sm:text-[2.6rem]">
-                        O mesmo painel no caixa e no bolso
+                        Quanto vendeu, quanto lucrou e quanto falta receber,
+                        logo na primeira tela
                     </h2>
                     <p className="mt-4 text-[1.05rem] leading-relaxed text-neutral-600">
-                        Veja as vendas do mês, o que falta receber e os produtos
-                        que estão acabando assim que entrar. No celular, a tela
-                        se ajusta e o botão de nova venda fica sempre à mão.
+                        O painel também mostra os produtos que estão acabando.
+                        No celular, a conta é a mesma, com o botão de nova venda
+                        sempre à mão.
                     </p>
                 </div>
 

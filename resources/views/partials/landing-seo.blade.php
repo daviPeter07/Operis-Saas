@@ -52,10 +52,10 @@
                     'Vendas no PIX, dinheiro, cartão e crediário',
                     'Controle de estoque automático',
                     'Contas a pagar e a receber',
-                    'Compras com boleto em 30, 60, 90 ou 120 dias',
+                    'Compras à vista ou no boleto, com os vencimentos em contas a pagar',
                     'Cupom para impressora térmica e fatura em PDF',
                     'Relatórios de vendas, estoque e inadimplência',
-                    'Importação de cadastros por planilha',
+                    'Produtos e serviços na mesma venda',
                 ],
                 'offers' => [
                     '@type' => 'Offer',

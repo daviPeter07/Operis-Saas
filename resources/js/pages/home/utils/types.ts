@@ -19,6 +19,42 @@ export type LandingUpdate = {
 
 export type BillingPeriod = 'mês' | 'ano';
 
+export type PainPoint = {
+    icon: LucideIcon;
+    title: string;
+    pain: string;
+    solution: string;
+};
+
+export type ComparisonRow = {
+    question: string;
+    before: string;
+    operis: string;
+};
+
+export type StartStep = {
+    title: string;
+    description: string;
+};
+
+export type LegalSection = {
+    title: string;
+    paragraphs?: string[];
+    items?: string[];
+    /** Closing sentence shown after the list. */
+    note?: string;
+};
+
+export type LegalDocument = {
+    title: string;
+    description: string;
+    sections: LegalSection[];
+};
+
+export type LegalPageProps = {
+    document: LegalDocument;
+};
+
 export type PricingPlan = {
     id: string;
     /** Label on the Mensal | Anual switch. */

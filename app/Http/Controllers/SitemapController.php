@@ -15,6 +15,8 @@ class SitemapController extends Controller
         ['path' => '/', 'changefreq' => 'weekly', 'priority' => '1.0'],
         ['path' => '/register', 'changefreq' => 'monthly', 'priority' => '0.6'],
         ['path' => '/login', 'changefreq' => 'monthly', 'priority' => '0.4'],
+        ['path' => '/termos-de-uso', 'changefreq' => 'yearly', 'priority' => '0.2'],
+        ['path' => '/politica-de-privacidade', 'changefreq' => 'yearly', 'priority' => '0.2'],
     ];
 
     /**

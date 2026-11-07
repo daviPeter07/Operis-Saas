@@ -6,14 +6,15 @@ O Operis é oferecido pela DG Computer (https://www.dgcomputer.com.br) e foi des
 
 ## Funcionalidades
 
-- Vendas no PIX, dinheiro, cartão de débito, cartão de crédito e crediário, com entrada e parcelas.
+- Vendas no PIX, dinheiro, cartão de débito, cartão de crédito e crediário, com ou sem entrada.
+- Serviços vendidos junto com os produtos, com custo opcional para serviços terceirizados.
 - Crediário: as parcelas vão automaticamente para contas a receber, e o relatório de inadimplência mostra os pagamentos atrasados.
-- Compras com pagamento à vista ou boleto em 30, 60, 90 ou 120 dias.
+- Compras com pagamento à vista ou no boleto, com os vencimentos lançados em contas a pagar.
 - Controle de estoque atualizado automaticamente a cada venda, compra, edição ou cancelamento, com histórico de movimentações.
-- Contas a pagar e a receber com baixa total ou parcial e estorno.
+- Contas a pagar e a receber com baixa total, parcial ou em lote, estorno e aviso de contas vencidas.
 - Relatórios de vendas, produtos mais vendidos, vendas por categoria e marca, estoque atual, inadimplência, pagamentos por método e maiores compradores.
-- Cupom para impressora térmica (pelo navegador Chrome ou Edge) e fatura da venda em PDF.
-- Importação de clientes, fornecedores, produtos, marcas e categorias por planilha; exportação de tabelas para Excel e PDF.
+- Cupom para impressora térmica (pelo navegador Chrome ou Edge) e comprovante da venda em PDF (A4 ou 80 mm).
+- Exportação de tabelas para Excel e PDF.
 - Multiempresa: cada empresa tem seus próprios dados, acessíveis só pelos usuários dela.
 
 ## Preço
@@ -26,4 +27,6 @@ O Operis é oferecido pela DG Computer (https://www.dgcomputer.com.br) e foi des
 - [Página inicial do Operis](https://www.dgcomputer.com.br/operis/): apresentação, demonstração, preço e perguntas frequentes.
 - [Criar conta](https://www.dgcomputer.com.br/operis/register)
 - [Entrar no sistema](https://www.dgcomputer.com.br/operis/login)
+- [Termos de uso](https://www.dgcomputer.com.br/operis/termos-de-uso)
+- [Política de privacidade](https://www.dgcomputer.com.br/operis/politica-de-privacidade)
 - [Site da DG Computer](https://www.dgcomputer.com.br)

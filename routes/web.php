@@ -16,6 +16,9 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::inertia('termos-de-uso', 'home/terms')->name('terms');
+Route::inertia('politica-de-privacidade', 'home/privacy')->name('privacy');
+
 Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::middleware(['auth'])->group(function (): void {

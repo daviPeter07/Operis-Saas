@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { withAppBasePath } from '@/constants/workspace';
 import { login } from '@/routes';
 import { store } from '@/routes/two-factor/login';
 
@@ -154,6 +155,28 @@ export function RegisterPageContent() {
                             Criar conta
                         </Button>
                     </div>
+
+                    <p className="text-center text-xs leading-relaxed text-zinc-500">
+                        Ao criar sua conta, você concorda com os{' '}
+                        <a
+                            href={withAppBasePath('/termos-de-uso')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-zinc-300 underline-offset-4 hover:text-accent hover:underline"
+                        >
+                            Termos de uso
+                        </a>{' '}
+                        e a{' '}
+                        <a
+                            href={withAppBasePath('/politica-de-privacidade')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-zinc-300 underline-offset-4 hover:text-accent hover:underline"
+                        >
+                            Política de privacidade
+                        </a>
+                        .
+                    </p>
 
                     <div className="text-center text-sm text-zinc-400">
                         Já tem uma conta?{' '}

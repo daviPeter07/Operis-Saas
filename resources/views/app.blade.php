@@ -1,4 +1,4 @@
-@php($isLightOnlyPage = ($page['component'] ?? null) === 'home/index')
+@php($isLightOnlyPage = str_starts_with($page['component'] ?? '', 'home/'))
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ! $isLightOnlyPage && ($appearance ?? 'system') == 'dark']) @if ($isLightOnlyPage) data-theme-lock="light" @endif>
     <head>
@@ -35,7 +35,7 @@
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
         <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 
-        @if ($isLightOnlyPage)
+        @if (($page['component'] ?? null) === 'home/index')
             @include('partials.landing-seo')
         @elseif (str_starts_with($page['component'] ?? '', 'dashboard'))
             <meta name="robots" content="noindex, nofollow">

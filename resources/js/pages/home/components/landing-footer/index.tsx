@@ -2,18 +2,20 @@ import {
     footerLinkClassName,
     landingLinks,
     landingNavigation,
+    seller,
 } from '../../utils/constants';
+import { getContactWhatsAppUrl } from '../../utils/functions';
 import { OperisBrand } from '../operis-brand';
 
 export function LandingFooter() {
     return (
         <footer className="border-t border-neutral-200 bg-dg-paper">
-            <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
+            <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
                 <div>
                     <OperisBrand />
                     <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-600">
-                        Sistema de gestão de vendas, estoque e financeiro para a
-                        sua empresa.
+                        Estoque, vendas e contas com clientes num sistema só,
+                        para empresas e para quem trabalha por conta própria.
                     </p>
                 </div>
 
@@ -56,6 +58,38 @@ export function LandingFooter() {
                                 Criar conta
                             </a>
                         </li>
+                        <li>
+                            <a
+                                href={getContactWhatsAppUrl()}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={footerLinkClassName}
+                            >
+                                Falar no WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 className="text-sm font-semibold text-dg-ink">Legal</h2>
+                    <ul className="mt-3 space-y-2">
+                        <li>
+                            <a
+                                href={landingLinks.terms}
+                                className={footerLinkClassName}
+                            >
+                                Termos de uso
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href={landingLinks.privacy}
+                                className={footerLinkClassName}
+                            >
+                                Política de privacidade
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -63,8 +97,8 @@ export function LandingFooter() {
             <div className="border-t border-neutral-200">
                 <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-sm text-neutral-500 sm:flex-row sm:justify-between sm:px-6">
                     <p>
-                        © {new Date().getFullYear()} Operis. Todos os direitos
-                        reservados.
+                        © {new Date().getFullYear()} Operis. Vendido por{' '}
+                        {seller.name}, CNPJ {seller.document}, {seller.city}.
                     </p>
                     <p>
                         Desenvolvido pela{' '}

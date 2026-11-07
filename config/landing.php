@@ -243,20 +243,28 @@ return [
             'answer' => 'Não. O Operis funciona no navegador, no computador ou no celular. Basta ter internet e entrar com seu e-mail e senha.',
         ],
         [
-            'question' => 'O que está incluído nos R$ 300 por ano?',
-            'answer' => 'Todos os módulos do sistema: vendas, compras, estoque, clientes, fornecedores, contas a pagar e a receber e relatórios. Não existe módulo cobrado à parte.',
+            'question' => 'Preciso ter empresa para usar?',
+            'answer' => 'Não. O cadastro aceita CPF ou CNPJ, então o Operis serve para empresas e para quem trabalha por conta própria e precisa organizar o estoque e as contas com os clientes.',
+        ],
+        [
+            'question' => 'Como faço para começar?',
+            'answer' => 'Fale com a gente pelo WhatsApp, escolha o plano e liberamos o seu acesso. Depois é só cadastrar os produtos e os clientes e registrar a primeira venda.',
+        ],
+        [
+            'question' => 'O que está incluído no plano?',
+            'answer' => 'Tudo: vendas, crediário, compras, estoque, serviços, clientes, fornecedores, contas a pagar e a receber e relatórios. O plano mensal e o anual têm os mesmos recursos, e não existe módulo cobrado à parte.',
+        ],
+        [
+            'question' => 'Posso cancelar quando quiser?',
+            'answer' => 'No plano mensal, sim: cancele quando quiser, sem multa e sem fidelidade, e use até o fim do mês pago. O plano anual é pago de uma vez e não tem devolução proporcional, mas o acesso continua até o fim do período.',
         ],
         [
             'question' => 'Consigo imprimir o cupom da venda?',
-            'answer' => 'Sim. Com uma impressora térmica ligada ao computador, o cupom sai direto pelo navegador Chrome ou Edge. A venda também pode ser baixada como fatura em PDF.',
+            'answer' => 'Sim. Com uma impressora térmica ligada ao computador, o cupom sai direto pelo navegador Chrome ou Edge. O comprovante também pode ser salvo em PDF para mandar ao cliente pelo WhatsApp.',
         ],
         [
             'question' => 'Como funciona o crediário?',
-            'answer' => 'Na venda, você informa a entrada, o número de parcelas e a data da primeira. O sistema gera as parcelas em contas a receber e mostra no relatório de inadimplência quem está com pagamento atrasado.',
-        ],
-        [
-            'question' => 'Posso trazer os cadastros que já tenho?',
-            'answer' => 'Sim. Clientes, fornecedores, produtos, marcas e categorias podem ser importados de uma planilha, sem digitar tudo de novo.',
+            'answer' => 'Na venda, você escolhe o número de parcelas, a data da primeira e, se quiser, uma entrada. O sistema gera as parcelas em contas a receber e mostra quem está com pagamento atrasado.',
         ],
         [
             'question' => 'Os dados da minha empresa ficam separados?',

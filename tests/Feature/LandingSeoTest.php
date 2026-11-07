@@ -54,7 +54,7 @@ test('sitemap lists the public pages with absolute urls', function () {
         $locations[] = (string) $entry->loc;
     }
 
-    expect($locations)->toBe([url('/').'/', url('/register'), url('/login')]);
+    expect($locations)->toBe([url('/').'/', url('/register'), url('/login'), url('/termos-de-uso'), url('/politica-de-privacidade')]);
 });
 
 test('dashboard pages are kept out of search results', function () {
